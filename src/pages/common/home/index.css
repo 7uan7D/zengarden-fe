@@ -19,7 +19,7 @@
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
-  transition: 0.01s ease-in-out;
+  transition: 0.02s ease-in-out;
 }
 
 .farmer-badge:hover {
