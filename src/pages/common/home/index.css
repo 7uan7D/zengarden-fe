@@ -1,6 +1,3 @@
-/* index.css */
-
-/* Import a modern Google Font */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
 
 * {
@@ -10,11 +7,10 @@
   font-family: 'Poppins', sans-serif;
 }
 
-/* 🏅 Farmer Verified Badge */
 .farmer-badge {
   position: absolute;
-  top: 50px; /* Cùng khoảng cách với logo */
-  right: 20px; /* Đẩy về góc phải */
+  top: 50px;
+  right: 20px;
   display: flex;
   align-items: center;
   background: #83aa6c;
@@ -23,7 +19,7 @@
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
-  transition: 0.3s ease-in-out;
+  transition: 0.01s ease-in-out;
 }
 
 .farmer-badge:hover {
@@ -36,7 +32,6 @@
   height: 20px;
 }
 
-/* 🌿 Smooth gradient background */
 body {
   background: linear-gradient(to bottom, #f9fafb, #e3f2e1);
   color: #333;
@@ -46,14 +41,12 @@ body {
   align-items: center;
 }
 
-/* 🌟 Main container */
 .container {
   text-align: center;
   max-width: 800px;
   padding: 20px;
 }
 
-/* 🖌️ Headings */
 h1 {
   font-size: 2.5rem;
   font-weight: 600;
@@ -67,7 +60,6 @@ p {
   margin-bottom: 20px;
 }
 
-/* 🌿 Logo */
 .logo {
   width: 160px;
   height: auto;
@@ -77,7 +69,6 @@ p {
 }
 
 
-/* 🎨 Button Styling */
 .btn {
   background: #83aa6c;
   color: white;
@@ -86,7 +77,7 @@ p {
   font-weight: 500;
   border-radius: 8px;
   cursor: pointer;
-  transition: 0.3s ease-in-out;
+  transition: 0.01s ease-in-out;
   border: none;
 }
 
@@ -100,7 +91,6 @@ p {
   transform: scale(1.05);
 }
 
-/* 📌 Info Cards */
 .cards {
   display: grid;
   grid-template-columns: 1fr;
@@ -113,21 +103,21 @@ p {
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  transition: 0.3s ease-in-out;
+  transition: 0.01s ease-in-out;
   border-left: 5px solid;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Căn giữa theo chiều ngang */
-  justify-content: space-between; /* Tránh bị lệch */
+  align-items: center;
+  justify-content: space-between;
   text-align: center;
-  min-height: 300px; /* Đảm bảo tất cả card có chiều cao đồng đều */
+  min-height: 300px;
 }
 
 .card-img {
-  width: 200px; /* Điều chỉnh kích thước ảnh */
+  width: 200px;
   height: auto;
-  margin: 0 auto 10px; /* Căn giữa theo chiều ngang và thêm khoảng cách dưới */
-  display: block; /* Giúp ảnh không bị lệch do inline element */
+  margin: 0 auto 10px;
+  display: block;
 }
 
 .card:hover {
@@ -144,12 +134,10 @@ p {
   color: #555;
 }
 
-/* 🌿 Custom colors for cards */
 .card:nth-child(1) { border-color: #f49a8c; }
 .card:nth-child(2) { border-color: #f9af44; }
 .card:nth-child(3) { border-color: #609994; }
 
-/* 📱 Responsive Design */
 @media (min-width: 768px) {
   .cards {
     grid-template-columns: repeat(3, 1fr);
