@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.6",
+    "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.2",
     "@tailwindcss/vite": "^4.0.8",
     "class-variance-authority": "^0.7.1",
@@ -22,7 +24,8 @@
     "react-tsparticles": "^2.12.2",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
-    "tsparticles": "^3.8.1"
+    "tsparticles": "^3.8.1",
+    "vaul": "^1.1.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.19.0",
