@@ -1,15 +1,4 @@
 import { motion } from "framer-motion";
-import { BadgeCheck } from "lucide-react";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import {
   Drawer,
   DrawerClose,
@@ -24,67 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import "./index.css";
+import Header from "../../../components/header/index.jsx";
 
 export default function HeroPage() {
   return (
     <div className="main-container">
-      <img
-        src="/src/assets/logo/zengarden-logo.png"
-        alt="ZenGarden Logo"
-        className="logo"
-      />
-
-      <Sheet>
-        <SheetTrigger asChild>
-          <motion.div
-            className="farmer-badge"
-            whileHover={{ scale: 1.1, rotate: 2 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <BadgeCheck className="icon" />
-            <span>Farmer Verified</span>
-          </motion.div>
-        </SheetTrigger>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Login</SheetTitle>
-            <SheetDescription>
-              Sign in to manage your ZenGarden.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="email" className="text-right">
-                Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="example@email.com"
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="password" className="text-right">
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          <SheetFooter>
-            <SheetClose asChild>
-              <Button type="submit">Login</Button>
-            </SheetClose>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
-      <div className="hero">
+      <Header />
+      <div className="pt-[80px] hero">
         <h1>Welcome to ZenGarden</h1>
         <p>Grow your plants and do tasks every day!</p>
 
@@ -92,7 +27,7 @@ export default function HeroPage() {
           <DrawerTrigger asChild>
             <motion.button
               className="btn"
-              whileHover={{ scale: 1.25 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.5 }}
             >
               Get Started
@@ -107,9 +42,6 @@ export default function HeroPage() {
                 </DrawerDescription>
               </DrawerHeader>
               <div className="grid gap-4">
-                <Label htmlFor="username">Username</Label>
-                <Input id="username" placeholder="Enter your username" />
-
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -117,8 +49,22 @@ export default function HeroPage() {
                   placeholder="example@email.com"
                 />
 
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                />
+
                 <Label htmlFor="password">Password</Label>
                 <Input id="password" type="password" placeholder="••••••••" />
+
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                />
               </div>
               <DrawerFooter className="mt-4">
                 <Button>Sign Up</Button>
