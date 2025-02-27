@@ -1,4 +1,4 @@
-import axios from "./customizeAxios";
+import axios from "../customizeAxios";
 
 export async function LoginService(credentials) {
   const response = await axios.post(`/Auth/login`, credentials);

@@ -3,6 +3,7 @@ import "./App.css";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import HeroPage from "./pages/common/hero/index.jsx";
 import PlayerHome from "./pages/player/home/index.jsx";
+import { Toaster } from "sonner";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -11,10 +12,9 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HeroPage />} />
-      </Routes>
-      <Routes>
         <Route path="/home" element={<PlayerHome />} />
       </Routes>
+      <Toaster expand={true} />
     </BrowserRouter>
   );
 }
