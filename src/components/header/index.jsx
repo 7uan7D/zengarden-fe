@@ -15,6 +15,7 @@ import { BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import "./index.css";
 import { X } from "lucide-react";
 
@@ -22,6 +23,7 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [usePhone, setUsePhone] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -116,15 +118,27 @@ const Header = () => {
                     Sign in to manage your ZenGarden.
                   </SheetDescription>
                 </SheetHeader>
+
+                {/* Toggle để chuyển đổi giữa email và số điện thoại */}
+                <div className="flex items-center justify-between py-2">
+                  <span>Use Phone Number</span>
+                  <Switch checked={usePhone} onCheckedChange={setUsePhone} />
+                </div>
+
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="email" className="text-right">
-                      Email
+                    <Label
+                      htmlFor={usePhone ? "phone" : "email"}
+                      className="text-right"
+                    >
+                      {usePhone ? "Phone" : "Email"}
                     </Label>
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="example@email.com"
+                      id={usePhone ? "phone" : "email"}
+                      type={usePhone ? "tel" : "email"}
+                      placeholder={
+                        usePhone ? "0123456789" : "example@email.com"
+                      }
                       className="col-span-3"
                     />
                   </div>
@@ -140,6 +154,7 @@ const Header = () => {
                     />
                   </div>
                 </div>
+
                 <SheetFooter>
                   <SheetClose asChild>
                     <Button type="submit">Login</Button>
@@ -183,14 +198,12 @@ const Header = () => {
             <Sheet>
               <SheetTrigger asChild>
                 <motion.div
-                  className="farmer-badge flex items-center justify-center gap-2 p-3 border rounded-lg cursor-pointer w-full max-w-[200px]"
-                  whileHover={{ scale: 1.05 }}
+                  className="farmer-badge"
+                  whileHover={{ scale: 1.1, rotate: 2 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <BadgeCheck className="icon text-green-500 size-5" />
-                  <span className="text-sm font-semibold">
-                    Farmer Certified
-                  </span>
+                  <BadgeCheck className="icon" />
+                  <span>Farmer Verified</span>
                 </motion.div>
               </SheetTrigger>
               <SheetContent>
@@ -200,15 +213,27 @@ const Header = () => {
                     Sign in to manage your ZenGarden.
                   </SheetDescription>
                 </SheetHeader>
+
+                {/* Toggle để chuyển đổi giữa email và số điện thoại */}
+                <div className="flex items-center justify-between py-2">
+                  <span>Use Phone Number</span>
+                  <Switch checked={usePhone} onCheckedChange={setUsePhone} />
+                </div>
+
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="email" className="text-right">
-                      Email
+                    <Label
+                      htmlFor={usePhone ? "phone" : "email"}
+                      className="text-right"
+                    >
+                      {usePhone ? "Phone" : "Email"}
                     </Label>
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="example@email.com"
+                      id={usePhone ? "phone" : "email"}
+                      type={usePhone ? "tel" : "email"}
+                      placeholder={
+                        usePhone ? "0123456789" : "example@email.com"
+                      }
                       className="col-span-3"
                     />
                   </div>
@@ -224,6 +249,7 @@ const Header = () => {
                     />
                   </div>
                 </div>
+
                 <SheetFooter>
                   <SheetClose asChild>
                     <Button type="submit">Login</Button>
