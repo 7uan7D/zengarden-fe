@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sheet,
@@ -10,19 +11,35 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { motion } from "framer-motion";
 import { BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
 import "./index.css";
 import { X } from "lucide-react";
+import { LoginService } from "@/services/apiServices/authService";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [credentials, setCredentials] = useState({
+    email: "",
+    phone: "",
+    password: "",
+  });
+  const [error, setError] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
-
+  const [usePhone, setUsePhone] = useState(false);
+  const navigate = useNavigate();
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -33,6 +50,40 @@ const Header = () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
+  // Login
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) setIsLoggedIn(true);
+  }, []);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const payload = { password: credentials.password };
+      if (usePhone) payload.phone = credentials.phone;
+      else payload.email = credentials.email;
+
+      const data = await LoginService(payload);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("refreshToken", data.refreshToken);
+
+      setIsLoggedIn(true);
+      toast.success("Login Successfully");
+
+      navigate("/home");
+    } catch (err) {
+      setError("Please check the information again!");
+      toast.error("Login failed");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    toast.success("Signed out");
+    navigate("/");
+  };
   return (
     <header
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
@@ -93,10 +144,35 @@ const Header = () => {
         {/* Login Button */}
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center">
           {isLoggedIn ? (
-            <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="cursor-pointer">
+                  <AvatarImage
+                    src="https://github.com/shadcn.png"
+                    alt="@shadcn"
+                  />
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => console.log("Profile clicked")}
+                >
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => console.log("Settings clicked")}
+                >
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-red-500"
+                >
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Sheet>
               <SheetTrigger asChild>
@@ -116,35 +192,66 @@ const Header = () => {
                     Sign in to manage your ZenGarden.
                   </SheetDescription>
                 </SheetHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="email" className="text-right">
-                      Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="example@email.com"
-                      className="col-span-3"
-                    />
+
+                <form onSubmit={handleLogin}>
+                  {/* Toggle giữa Email và Phone */}
+                  <div className="flex items-center justify-between py-2">
+                    <span>Use Phone Number</span>
+                    <Switch checked={usePhone} onCheckedChange={setUsePhone} />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="password" className="text-right">
-                      Password
-                    </Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      className="col-span-3"
-                    />
+
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label
+                        htmlFor={usePhone ? "phone" : "email"}
+                        className="text-right"
+                      >
+                        {usePhone ? "Phone Number" : "Email"}
+                      </Label>
+                      <Input
+                        id={usePhone ? "phone" : "email"}
+                        type={usePhone ? "tel" : "email"}
+                        placeholder={
+                          usePhone ? "0123456789" : "example@email.com"
+                        }
+                        className="col-span-3"
+                        value={usePhone ? credentials.phone : credentials.email}
+                        onChange={(e) =>
+                          setCredentials({
+                            ...credentials,
+                            [usePhone ? "phone" : "email"]: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="password" className="text-right">
+                        Password
+                      </Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        className="col-span-3"
+                        value={credentials.password}
+                        onChange={(e) =>
+                          setCredentials({
+                            ...credentials,
+                            password: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
                   </div>
-                </div>
-                <SheetFooter>
-                  <SheetClose asChild>
-                    <Button type="submit">Login</Button>
-                  </SheetClose>
-                </SheetFooter>
+
+                  {error && <p className="text-red-500 text-sm">{error}</p>}
+
+                  <SheetFooter>
+                    <SheetClose asChild>
+                      <Button type="submit">Login</Button>
+                    </SheetClose>
+                  </SheetFooter>
+                </form>
               </SheetContent>
             </Sheet>
           )}
@@ -161,6 +268,8 @@ const Header = () => {
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </button>
+
+          {/* Các link menu */}
           <a
             href="#"
             className="block py-2 text-sm font-semibold text-gray-900"
@@ -179,58 +288,126 @@ const Header = () => {
           >
             Company
           </a>
-          <div className="mt-4 flex justify-center">
-            <Sheet>
-              <SheetTrigger asChild>
-                <motion.div
-                  className="farmer-badge flex items-center justify-center gap-2 p-3 border rounded-lg cursor-pointer w-full max-w-[200px]"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <BadgeCheck className="icon text-green-500 size-5" />
-                  <span className="text-sm font-semibold">
-                    Farmer Certified
-                  </span>
-                </motion.div>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Login</SheetTitle>
-                  <SheetDescription>
-                    Sign in to manage your ZenGarden.
-                  </SheetDescription>
-                </SheetHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="email" className="text-right">
-                      Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="example@email.com"
-                      className="col-span-3"
+
+          {/* Avatar & Farmer Certified Badge */}
+          <div className="mt-6 flex flex-col items-center gap-4">
+            {isLoggedIn ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Avatar className="cursor-pointer">
+                    <AvatarImage
+                      src="https://github.com/shadcn.png"
+                      alt="@shadcn"
                     />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="password" className="text-right">
-                      Password
-                    </Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      className="col-span-3"
-                    />
-                  </div>
-                </div>
-                <SheetFooter>
-                  <SheetClose asChild>
-                    <Button type="submit">Login</Button>
-                  </SheetClose>
-                </SheetFooter>
-              </SheetContent>
-            </Sheet>
+                    <AvatarFallback>CN</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center">
+                  <DropdownMenuItem
+                    onClick={() => console.log("Profile clicked")}
+                  >
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => console.log("Settings clicked")}
+                  >
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-red-500"
+                  >
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Sheet>
+                <SheetTrigger asChild>
+                  <motion.div
+                    className="farmer-badge"
+                    whileHover={{ scale: 1.1, rotate: 2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <BadgeCheck className="icon" />
+                    <span>Farmer Verified</span>
+                  </motion.div>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Login</SheetTitle>
+                    <SheetDescription>
+                      Sign in to manage your ZenGarden.
+                    </SheetDescription>
+                  </SheetHeader>
+
+                  <form onSubmit={handleLogin}>
+                    {/* Toggle giữa Email và Phone */}
+                    <div className="flex items-center justify-between py-2">
+                      <span>Use Phone Number</span>
+                      <Switch
+                        checked={usePhone}
+                        onCheckedChange={setUsePhone}
+                      />
+                    </div>
+
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor={usePhone ? "phone" : "email"}
+                          className="text-right"
+                        >
+                          {usePhone ? "Phone Number" : "Email"}
+                        </Label>
+                        <Input
+                          id={usePhone ? "phone" : "email"}
+                          type={usePhone ? "tel" : "email"}
+                          placeholder={
+                            usePhone ? "0123456789" : "example@email.com"
+                          }
+                          className="col-span-3"
+                          value={
+                            usePhone ? credentials.phone : credentials.email
+                          }
+                          onChange={(e) =>
+                            setCredentials({
+                              ...credentials,
+                              [usePhone ? "phone" : "email"]: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="password" className="text-right">
+                          Password
+                        </Label>
+                        <Input
+                          id="password"
+                          type="password"
+                          placeholder="••••••••"
+                          className="col-span-3"
+                          value={credentials.password}
+                          onChange={(e) =>
+                            setCredentials({
+                              ...credentials,
+                              password: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {error && <p className="text-red-500 text-sm">{error}</p>}
+
+                    <SheetFooter>
+                      <SheetClose asChild>
+                        <Button type="submit">Login</Button>
+                      </SheetClose>
+                    </SheetFooter>
+                  </form>
+                </SheetContent>
+              </Sheet>
+            )}
           </div>
         </div>
       )}
