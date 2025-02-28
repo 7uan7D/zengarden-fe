@@ -40,6 +40,7 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [usePhone, setUsePhone] = useState(false);
   const navigate = useNavigate();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -72,6 +73,7 @@ const Header = () => {
       setIsLoggedIn(true);
       toast.success("Login Successfully");
 
+      setIsSheetOpen(false);
       navigate("/home");
     } catch (err) {
       setError("Please check the information again!");
@@ -174,8 +176,8 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Sheet>
-              <SheetTrigger asChild>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+              <SheetTrigger asChild onClick={() => setIsSheetOpen(true)}>
                 <motion.div
                   className="farmer-badge"
                   whileHover={{ scale: 1.1, rotate: 2 }}
@@ -247,9 +249,7 @@ const Header = () => {
                   {error && <p className="text-red-500 text-sm">{error}</p>}
 
                   <SheetFooter>
-                    <SheetClose asChild>
-                      <Button type="submit">Login</Button>
-                    </SheetClose>
+                    <Button type="submit">Login</Button>{" "}
                   </SheetFooter>
                 </form>
               </SheetContent>
