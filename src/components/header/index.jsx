@@ -71,19 +71,19 @@ const Header = () => {
       localStorage.setItem("refreshToken", data.refreshToken);
 
       setIsLoggedIn(true);
-      toast.success("Login Successfully");
+      toast.success("Login Successfully!");
 
       setIsSheetOpen(false);
       navigate("/home");
     } catch (err) {
       setError("Please check the information again!");
-      toast.error("Login failed");
+      toast.error("Login failed!");
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    toast.success("Signed out");
+    toast.success("Signed out!");
     navigate("/");
   };
   return (
@@ -322,8 +322,8 @@ const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Sheet>
-                <SheetTrigger asChild>
+              <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                <SheetTrigger asChild onClick={() => setIsSheetOpen(true)}>
                   <motion.div
                     className="farmer-badge"
                     whileHover={{ scale: 1.1, rotate: 2 }}
@@ -400,9 +400,7 @@ const Header = () => {
                     {error && <p className="text-red-500 text-sm">{error}</p>}
 
                     <SheetFooter>
-                      <SheetClose asChild>
-                        <Button type="submit">Login</Button>
-                      </SheetClose>
+                      <Button type="submit">Login</Button>{" "}
                     </SheetFooter>
                   </form>
                 </SheetContent>
