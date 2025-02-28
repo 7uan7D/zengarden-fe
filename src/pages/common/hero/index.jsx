@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Drawer,
@@ -14,8 +16,53 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import "./index.css";
 import Header from "../../../components/header/index.jsx";
+import { RegisterService } from "@/services/apiServices/authService";
+import { Toaster, toast } from "sonner";
 
 export default function HeroPage() {
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+    roleId: 2,
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match!");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await RegisterService(formData);
+      const token = response.token;
+
+      if (token) {
+        localStorage.setItem("token", token);
+        toast.success("Registration successful!");
+
+        setTimeout(() => {
+          navigate("/home");
+        }, 500);
+      } else {
+        toast.error("Registration succeeded but no token returned!");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Registration failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="main-container">
       <Header />
@@ -47,6 +94,7 @@ export default function HeroPage() {
                   id="email"
                   type="email"
                   placeholder="example@email.com"
+                  onChange={handleChange}
                 />
 
                 <Label htmlFor="phone">Phone</Label>
@@ -54,26 +102,36 @@ export default function HeroPage() {
                   id="phone"
                   type="tel"
                   placeholder="Enter your phone number"
+                  onChange={handleChange}
                 />
 
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  onChange={handleChange}
+                />
 
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   placeholder="••••••••"
+                  onChange={handleChange}
                 />
               </div>
               <DrawerFooter className="mt-4">
-                <Button>Sign Up</Button>
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? "Signing Up..." : "Sign Up"}
+                </Button>
                 <DrawerClose asChild>
                   <Button variant="outline">Cancel</Button>
                 </DrawerClose>
               </DrawerFooter>
             </div>
           </DrawerContent>
+          <Toaster expand={true} />
         </Drawer>
       </div>
 
