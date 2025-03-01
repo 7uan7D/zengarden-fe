@@ -17,6 +17,14 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import { BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,6 +49,7 @@ const Header = () => {
   const [usePhone, setUsePhone] = useState(false);
   const navigate = useNavigate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [openProfile, setProfileOpen] = useState(false);
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -119,7 +128,7 @@ const Header = () => {
               viewBox="0 0 24 24"
               strokeWidth="1.5"
               stroke="currentColor"
-              aria-hidden="true"
+              inert={!mobileMenuOpen}
             >
               <path
                 strokeLinecap="round"
@@ -146,35 +155,57 @@ const Header = () => {
         {/* Login Button */}
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center">
           {isLoggedIn ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Avatar className="cursor-pointer">
-                  <AvatarImage
-                    src="https://github.com/shadcn.png"
-                    alt="@shadcn"
-                  />
-                  <AvatarFallback>CN</AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => console.log("Profile clicked")}
-                >
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => console.log("Settings clicked")}
-                >
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="text-red-500"
-                >
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Avatar className="cursor-pointer">
+                    <AvatarImage
+                      src="https://github.com/shadcn.png"
+                      alt="@shadcn"
+                    />
+                    <AvatarFallback>CN</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setProfileOpen(true)}>
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => console.log("Settings clicked")}
+                  >
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-red-500"
+                  >
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Dialog chứa Tabs */}
+              <Dialog open={openProfile} onOpenChange={setProfileOpen}>
+                <DialogContent className="dialog-overlay">
+                  <DialogHeader>
+                    <DialogTitle>Profile Settings</DialogTitle>
+                  </DialogHeader>
+
+                  <Tabs defaultValue="account" className="w-[400px]">
+                    <TabsList>
+                      <TabsTrigger value="account">Account</TabsTrigger>
+                      <TabsTrigger value="password">Password</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="account">
+                      Make changes to your account here.
+                    </TabsContent>
+                    <TabsContent value="password">
+                      Change your password here.
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
+              </Dialog>
+            </>
           ) : (
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild onClick={() => setIsSheetOpen(true)}>
@@ -196,7 +227,6 @@ const Header = () => {
                 </SheetHeader>
 
                 <form onSubmit={handleLogin}>
-                  {/* Toggle giữa Email và Phone */}
                   <div className="flex items-center justify-between py-2">
                     <span>Use Phone Number</span>
                     <Switch checked={usePhone} onCheckedChange={setUsePhone} />
@@ -292,35 +322,57 @@ const Header = () => {
           {/* Avatar & Farmer Certified Badge */}
           <div className="mt-6 flex flex-col items-center gap-4">
             {isLoggedIn ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Avatar className="cursor-pointer">
-                    <AvatarImage
-                      src="https://github.com/shadcn.png"
-                      alt="@shadcn"
-                    />
-                    <AvatarFallback>CN</AvatarFallback>
-                  </Avatar>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center">
-                  <DropdownMenuItem
-                    onClick={() => console.log("Profile clicked")}
-                  >
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => console.log("Settings clicked")}
-                  >
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className="text-red-500"
-                  >
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Avatar className="cursor-pointer">
+                      <AvatarImage
+                        src="https://github.com/shadcn.png"
+                        alt="@shadcn"
+                      />
+                      <AvatarFallback>CN</AvatarFallback>
+                    </Avatar>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="center">
+                    <DropdownMenuItem onClick={() => setProfileOpen(true)}>
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => console.log("Settings clicked")}
+                    >
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="text-red-500"
+                    >
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Dialog chứa Tabs */}
+                <Dialog open={openProfile} onOpenChange={setProfileOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Profile Settings</DialogTitle>
+                    </DialogHeader>
+
+                    <Tabs defaultValue="account" className="w-[400px]">
+                      <TabsList>
+                        <TabsTrigger value="account">Account</TabsTrigger>
+                        <TabsTrigger value="password">Password</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="account">
+                        Make changes to your account here.
+                      </TabsContent>
+                      <TabsContent value="password">
+                        Change your password here.
+                      </TabsContent>
+                    </Tabs>
+                  </DialogContent>
+                </Dialog>
+              </>
             ) : (
               <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                 <SheetTrigger asChild onClick={() => setIsSheetOpen(true)}>
