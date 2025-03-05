@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { BarChart, XAxis, YAxis, CartesianGrid, Legend, Tooltip, ResponsiveContainer, Bar, Cell } from 'recharts'
+import { BarChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Bar, Cell } from 'recharts'
 
 const salesChannelData = [
     { name: 'Website', value: 45600 },
@@ -29,7 +29,7 @@ const SalesChannelChart = () => {
                             contentStyle={{ backgroundColor: 'rgba(31, 41, 55, 0.8)', borderColor: '#4B5563' }}
                             itemStyle={{ color: '#E5E7EB' }}
                         />
-                        <Legend />
+                         
                         <Bar dataKey={'value'} fill='#8884D8'>
                             {salesChannelData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

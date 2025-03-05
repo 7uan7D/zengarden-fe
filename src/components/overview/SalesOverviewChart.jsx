@@ -2,18 +2,18 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { motion } from "framer-motion";
 
 const salesData = [
-    { name: 'Jan', sales: 4200 },
-    { name: 'Feb', sales: 3800 },
-    { name: 'Mar', sales: 5100 },
-    { name: 'Apr', sales: 4600 },
-    { name: 'May', sales: 5400 },
-    { name: 'Jun', sales: 7200 },
-    { name: 'Jul', sales: 6100 },
-    { name: 'Aug', sales: 5900 },
-    { name: 'Sep', sales: 6800 },
-    { name: 'Oct', sales: 6300 },
-    { name: 'Nov', sales: 7100 },
-    { name: 'Dec', sales: 6800 },
+    { month: 'Jan', sales: 4200 },
+    { month: 'Feb', sales: 3800 },
+    { month: 'Mar', sales: 5100 },
+    { month: 'Apr', sales: 4600 },
+    { month: 'May', sales: 5400 },
+    { month: 'Jun', sales: 7200 },
+    { month: 'Jul', sales: 6100 },
+    { month: 'Aug', sales: 5900 },
+    { month: 'Sep', sales: 6800 },
+    { month: 'Oct', sales: 6300 },
+    { month: 'Nov', sales: 7100 },
+    { month: 'Dec', sales: 6800 },
 ];
 
 const SalesOverviewChart = () => {
@@ -30,7 +30,7 @@ const SalesOverviewChart = () => {
                 <ResponsiveContainer width={'100%'} height={'100%'}>
                     <LineChart data={salesData} margin={{ right: 20 }}>
                         <CartesianGrid strokeDasharray='3 3' stroke='#4B5563' />
-                        <XAxis dataKey={'name'} stroke='#9CA3AF' />
+                        <XAxis dataKey={'month'} stroke='#9CA3AF' />
                         <YAxis stroke='#9CA3AF' />
                         <Tooltip
                             contentStyle={{ backgroundColor: 'rgba(31, 41, 55, 0.8)', borderColor: '#4B5563' }}
