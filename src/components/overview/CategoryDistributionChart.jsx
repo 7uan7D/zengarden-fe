@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { motion } from "framer-motion"
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts"
 
 const categoryData = [
     { name: 'Electronics', value: 4500 },
@@ -19,7 +19,7 @@ const CategoryDistributionChart = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
         >
-            <h2 className='text-lg font-medium mb-4 text-gray-100'>Category Distribution</h2>
+            <h2 className='text-xl font-semibold mb-4 text-gray-100'>Category Distribution</h2>
 
             <div className='h-80'>
                 <ResponsiveContainer width={'100%'} height={'100%'}>

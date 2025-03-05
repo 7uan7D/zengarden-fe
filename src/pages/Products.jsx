@@ -1,8 +1,8 @@
 import { AlertTriangle, DollarSign, Package, TrendingUp } from "lucide-react"
 import { motion } from "framer-motion"
 
-import AdminHeader from "@/components/adminHeader/AdminHeader"
-import StatCard from "@/components/statCard/StatCard"
+import AdminHeader from "@/components/common/AdminHeader"
+import StatCard from "@/components/common/StatCard"
 import ProductsTable from "@/components/products/ProductsTable"
 import SalesTrendChart from "@/components/products/SalesTrendChart"
 import CategoryDistributionChart from "@/components/overview/CategoryDistributionChart"

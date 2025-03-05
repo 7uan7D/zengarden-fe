@@ -1,8 +1,8 @@
 import { BarChart2, ShoppingBag, Users, Zap } from "lucide-react"
 import { motion } from "framer-motion"
 
-import AdminHeader from "@/components/adminHeader/AdminHeader"
-import StatCard from "@/components/statCard/StatCard"
+import AdminHeader from "@/components/common/AdminHeader"
+import StatCard from "@/components/common/StatCard"
 import CategoryDistributionChart from "@/components/overview/CategoryDistributionChart"
 import SalesOverviewChart from "@/components/overview/SalesOverviewChart"
 import SalesChannelChart from "@/components/overview/SalesChannelChart"

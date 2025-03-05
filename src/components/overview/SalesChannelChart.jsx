@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion'
-import { BarChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Bar, Cell } from 'recharts'
+import { motion } from "framer-motion"
+import { BarChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Bar, Cell } from "recharts"
 
 const salesChannelData = [
     { name: 'Website', value: 45600 },
@@ -17,7 +17,7 @@ const SalesChannelChart = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
         >
-            <h2 className='text-lg font-medium mb-4 text-gray-100'>Sales by Channel</h2>
+            <h2 className='text-xl font-semibold mb-4 text-gray-100'>Sales by Channel</h2>
 
             <div className='h-80'>
                 <ResponsiveContainer width={'100%'} height={'100%'}>

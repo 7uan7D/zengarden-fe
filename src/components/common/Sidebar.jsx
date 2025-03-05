@@ -1,7 +1,7 @@
-import { BarChart2, DollarSign, Menu, Settings, ShoppingBag, ShoppingCart, TrendingUp, Users } from 'lucide-react'
-import React from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { BarChart2, DollarSign, Menu, Settings, ShoppingBag, ShoppingCart, TrendingUp, Users } from "lucide-react"
+import React from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import { Link } from "react-router-dom"
 
 const SIDEBAR_ITEMS = [
     { name: 'Overview', icon: BarChart2, color: '#6366F1', href: '/overview' },
