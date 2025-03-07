@@ -1,5 +1,5 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { motion } from "framer-motion";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
+import { motion } from "framer-motion"
 
 const userGrowthData = [
 	{ month: 'Jan', users: 1000 },
@@ -8,7 +8,7 @@ const userGrowthData = [
 	{ month: 'Apr', users: 3000 },
 	{ month: 'May', users: 4000 },
 	{ month: 'Jun', users: 5000 },
-];
+]
 
 const UserGrowthChart = () => {
 	return (
@@ -47,4 +47,4 @@ const UserGrowthChart = () => {
 	)
 }
 
-export default UserGrowthChart;
+export default UserGrowthChart

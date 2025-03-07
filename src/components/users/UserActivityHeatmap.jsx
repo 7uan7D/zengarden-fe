@@ -1,5 +1,5 @@
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { motion } from "framer-motion";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { motion } from "framer-motion"
 
 const userActivityData = [
 	{ name: 'Mon', '0-4': 20, '4-8': 40, '8-12': 60, '12-16': 80, '16-20': 100, '20-24': 30 },
@@ -9,7 +9,7 @@ const userActivityData = [
 	{ name: 'Fri', '0-4': 60, '4-8': 80, '8-12': 100, '12-16': 120, '16-20': 140, '20-24': 70 },
 	{ name: 'Sat', '0-4': 70, '4-8': 90, '8-12': 110, '12-16': 130, '16-20': 150, '20-24': 80 },
 	{ name: 'Sun', '0-4': 80, '4-8': 100, '8-12': 120, '12-16': 140, '16-20': 160, '20-24': 90 },
-];
+]
 
 const UserActivityHeatmap = () => {
 	return (
@@ -47,4 +47,4 @@ const UserActivityHeatmap = () => {
 	)
 }
 
-export default UserActivityHeatmap;
+export default UserActivityHeatmap

@@ -26,7 +26,7 @@ const Overview = () => {
                     <StatCard name='Conversion Rate' icon={BarChart2} value='12.5%' color='#10B981' />
                 </motion.div>
 
-                {/* charts */}
+                {/* overview charts */}
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-8'>
                     <SalesOverviewChart />
                     <CategoryDistributionChart />

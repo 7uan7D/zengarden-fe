@@ -1,7 +1,7 @@
-import { motion } from "framer-motion";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { motion } from "framer-motion"
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE'];
+const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE']
 
 const userDemographicsData = [
 	{ name: '18-24', value: 20 },
@@ -9,7 +9,7 @@ const userDemographicsData = [
 	{ name: '35-44', value: 25 },
 	{ name: '45-54', value: 15 },
 	{ name: '55+', value: 10 },
-];
+]
 
 const UserDemographicsChart = () => {
 	return (
@@ -51,4 +51,4 @@ const UserDemographicsChart = () => {
 	)
 }
 
-export default UserDemographicsChart;
+export default UserDemographicsChart

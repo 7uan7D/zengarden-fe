@@ -9,6 +9,7 @@ import Sidebar from "./components/common/Sidebar";
 import Overview from "./pages/Overview";
 import Products from "./pages/Products";
 import Users from "./pages/Users";
+import Sales from "./pages/Sales";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -49,6 +50,7 @@ function AdminLayout() {
         <Route path="/overview" element={<Overview />} />
         <Route path="/products" element={<Products />} />
         <Route path="/users" element={<Users /> } />
+        <Route path="/sales" element={<Sales /> } />
       </Routes>
     </div>
   );
@@ -59,7 +61,8 @@ function ConditionalRoutes() {
   const isAdminRoute = 
     location.pathname.startsWith("/overview") || 
     location.pathname.startsWith("/products") ||
-    location.pathname.startsWith("/users");
+    location.pathname.startsWith("/users") ||
+    location.pathname.startsWith("/sales");
 
   return isAdminRoute ? (
     <AdminLayout />
