@@ -5,7 +5,7 @@ const HomePage = () => {
   return (
     <div>
       <Header />
-      <main className="p-6">
+      <main className="p-4 homepage">
         <h1 className="text-2xl font-bold">Welcome to Player Home</h1>
         <p className="text-gray-600">This is the player home page.</p>
       </main>

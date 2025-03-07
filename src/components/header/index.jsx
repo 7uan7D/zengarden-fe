@@ -35,11 +35,10 @@ const Header = () => {
   }, []);
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        isScrolled ? "bg-white shadow-md" : "bg-transparent"
-      }`}
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-white shadow-md" : "bg-transparent"
+        }`}
     >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8 custom-nav">
         {/* Logo */}
         <div className="flex lg:flex-1">
           <a href="#" className="-m-1.5 p-1.5">
@@ -79,13 +78,16 @@ const Header = () => {
 
         {/* Desktop Menu */}
         <div className="hidden lg:flex lg:gap-x-12">
-          <a href="#" className="text-sm font-semibold text-gray-900">
+          <a href="/home" className="text-sm font-semibold text-gray-900">
+            Homepage
+          </a>
+          <a href="/" className="text-sm font-semibold text-gray-900">
             Features
           </a>
-          <a href="#" className="text-sm font-semibold text-gray-900">
+          <a href="/" className="text-sm font-semibold text-gray-900">
             Marketplace
           </a>
-          <a href="#" className="text-sm font-semibold text-gray-900">
+          <a href="/" className="text-sm font-semibold text-gray-900">
             Company
           </a>
         </div>
@@ -161,6 +163,12 @@ const Header = () => {
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </button>
+          <a
+            href="#"
+            className="block py-2 text-sm font-semibold text-gray-900"
+          >
+            Homepage
+          </a>
           <a
             href="#"
             className="block py-2 text-sm font-semibold text-gray-900"
