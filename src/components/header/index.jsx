@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import "./index.css";
 import { X } from "lucide-react";
+import RegisterButton from "@/pages/common/hero/registerButton";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -146,6 +147,7 @@ const Header = () => {
                   <SheetClose asChild>
                     <Button type="submit">Login</Button>
                   </SheetClose>
+                  <RegisterButton />
                 </SheetFooter>
               </SheetContent>
             </Sheet>
@@ -236,6 +238,7 @@ const Header = () => {
                   <SheetClose asChild>
                     <Button type="submit">Login</Button>
                   </SheetClose>
+                  <RegisterButton />
                 </SheetFooter>
               </SheetContent>
             </Sheet>
