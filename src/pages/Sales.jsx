@@ -1,18 +1,18 @@
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"
 
-import AdminHeader from "@/components/common/AdminHeader";
-import StatCard from "@/components/common/StatCard";
-import { CreditCard, DollarSign, ShoppingCart, TrendingUp } from "lucide-react";
-import DailySalesTrend from "@/components/sales/DailySalesTrend";
-import SalesByCategoryChart from "@/components/sales/SalesByCategoryChart";
-import SalesOverviewChart from "@/components/sales/SalesOverviewChart";
+import AdminHeader from "@/components/common/AdminHeader"
+import StatCard from "@/components/common/StatCard"
+import { CreditCard, DollarSign, ShoppingCart, TrendingUp } from "lucide-react"
+import DailySalesTrend from "@/components/sales/DailySalesTrend"
+import SalesByCategoryChart from "@/components/sales/SalesByCategoryChart"
+import SalesOverviewChart from "@/components/sales/SalesOverviewChart"
 
 const salesStats = {
     totalRevenue: '$1,234,567',
     averageOrderValue: '$78.90',
     conversionRate: '3.45%',
     salesGrowth: '12.3%',
-};
+}
 
 const SalesPage = () => {
     return (
