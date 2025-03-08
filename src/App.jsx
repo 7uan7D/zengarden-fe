@@ -5,9 +5,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import HeroPage from "./pages/common/hero/index.jsx";
 import PlayerHome from "./pages/player/home/index.jsx";
 import { Toaster } from "sonner";
+import Sidebar from "./components/common/Sidebar";
 import Overview from "./pages/Overview";
 import Products from "./pages/Products";
-import Sidebar from "./components/sidebar/Sidebar";
+import Users from "./pages/Users";
+import Sales from "./pages/Sales";
+import Orders from "./pages/Orders";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -47,6 +50,9 @@ function AdminLayout() {
       <Routes>
         <Route path="/overview" element={<Overview />} />
         <Route path="/products" element={<Products />} />
+        <Route path="/users" element={<Users />} />
+        <Route path="/sales" element={<Sales />} />
+        <Route path="/orders" element={<Orders />} />
       </Routes>
     </div>
   );
@@ -56,7 +62,10 @@ function ConditionalRoutes() {
   const location = useLocation();
   const isAdminRoute =
     location.pathname.startsWith("/overview") ||
-    location.pathname.startsWith("/products");
+    location.pathname.startsWith("/products") ||
+    location.pathname.startsWith("/users") ||
+    location.pathname.startsWith("/sales") ||
+    location.pathname.startsWith("/orders");
 
   return isAdminRoute ? <AdminLayout /> : <AnimatedRoutes />;
 }
