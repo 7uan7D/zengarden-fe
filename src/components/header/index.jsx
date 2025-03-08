@@ -29,12 +29,24 @@ import { motion } from "framer-motion";
 import { BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import "./index.css";
 import { X } from "lucide-react";
 import { LoginService } from "@/services/apiServices/authService";
+import parseJwt from "@/services/parseJwt";
+import { GetUserInfo } from "@/services/apiServices/userService";
+import { UpdateUserInfo } from "@/services/apiServices/userService";
+import { ChangePassword } from "@/services/apiServices/authService";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -50,6 +62,14 @@ const Header = () => {
   const navigate = useNavigate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [openProfile, setProfileOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [editUser, setEditUser] = useState({
+    userName: "",
+    email: "",
+    phone: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -95,13 +115,100 @@ const Header = () => {
     toast.success("Signed out!");
     navigate("/");
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = parseJwt(token);
+      const userId = decoded?.sub;
+      if (userId) {
+        GetUserInfo(userId)
+          .then((data) => {
+            setUser(data);
+            setEditUser({
+              userName: data.userName || "",
+              email: data.email || "",
+              phone: data.phone || "",
+            });
+          })
+          .catch((error) => console.log("Failed to load user:", error));
+      }
+    }
+  }, []);
+
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setEditUser((prev) => ({
+      ...prev,
+      [id]: value,
+    }));
+  };
+
+  const handleSaveChanges = async () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = parseJwt(token);
+      const userId = decoded?.sub;
+      if (userId) {
+        setIsLoading(true);
+        try {
+          const updatedUser = await UpdateUserInfo({
+            userId: userId,
+            ...editUser,
+          });
+          setUser(updatedUser);
+          toast.success("The information has been updated successfully!");
+        } catch (error) {
+          console.log("Failed to update user:", error);
+          toast.error("Update information failed!");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    }
+  };
+  const [passwords, setPasswords] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    const { currentPassword, newPassword, confirmPassword } = passwords;
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Confirmation password does not match!");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await ChangePassword({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+
+      toast.success("Password changed successfully! Please log in again.");
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      setTimeout(() => navigate("/"), 2000);
+    } catch (error) {
+      console.log("Failed to change password:", error);
+      toast.error(error.response?.data?.message || "Password change failed!");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <header
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
         isScrolled ? "bg-white shadow-md" : "bg-transparent"
       }`}
     >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8 custom-nav">
         {/* Logo */}
         <div className="flex lg:flex-1">
           <a href="#" className="-m-1.5 p-1.5">
@@ -141,13 +248,16 @@ const Header = () => {
 
         {/* Desktop Menu */}
         <div className="hidden lg:flex lg:gap-x-12">
-          <a href="#" className="text-sm font-semibold text-gray-900">
+          <a href="/home" className="text-sm font-semibold text-gray-900">
+            Homepage
+          </a>
+          <a href="/" className="text-sm font-semibold text-gray-900">
             Features
           </a>
-          <a href="#" className="text-sm font-semibold text-gray-900">
+          <a href="/" className="text-sm font-semibold text-gray-900">
             Marketplace
           </a>
-          <a href="#" className="text-sm font-semibold text-gray-900">
+          <a href="/" className="text-sm font-semibold text-gray-900">
             Company
           </a>
         </div>
@@ -188,19 +298,155 @@ const Header = () => {
               <Dialog open={openProfile} onOpenChange={setProfileOpen}>
                 <DialogContent className="dialog-overlay">
                   <DialogHeader>
-                    <DialogTitle>Profile Settings</DialogTitle>
+                    <DialogTitle>Profile</DialogTitle>
                   </DialogHeader>
 
-                  <Tabs defaultValue="account" className="w-[400px]">
-                    <TabsList>
+                  <Tabs defaultValue="account" className="w-[462px]">
+                    <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="account">Account</TabsTrigger>
                       <TabsTrigger value="password">Password</TabsTrigger>
                     </TabsList>
+
                     <TabsContent value="account">
-                      Make changes to your account here.
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Account</CardTitle>
+                          <CardDescription>
+                            View and update your account details here.
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {user ? (
+                            <div className="space-y-2">
+                              <div className="space-y-1">
+                                <Label htmlFor="userName">Username</Label>
+                                <Input
+                                  id="userName"
+                                  value={editUser.userName}
+                                  onChange={handleChange}
+                                  className="bg-white"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label htmlFor="email">Email</Label>
+                                <Input
+                                  id="email"
+                                  value={editUser.email}
+                                  onChange={handleChange}
+                                  className="bg-white"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label htmlFor="phone">Phone</Label>
+                                <Input
+                                  id="phone"
+                                  value={editUser.phone}
+                                  onChange={handleChange}
+                                  className="bg-white"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label>Wallet</Label>
+                                {user?.wallet?.length > 0 ? (
+                                  <ul className="list-disc list-inside text-sm text-gray-700">
+                                    {user.wallet.map((wallet, index) => (
+                                      <li key={index}>{wallet}</li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="text-sm text-gray-500">
+                                    No wallets available
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <p>Loading user data...</p>
+                          )}
+                        </CardContent>
+                        <CardFooter>
+                          <Button
+                            className="bg-[#83aa6c] text-white"
+                            onClick={handleSaveChanges}
+                            disabled={isLoading}
+                          >
+                            {isLoading ? "Saving..." : "Save Changes"}
+                          </Button>
+                        </CardFooter>
+                      </Card>
                     </TabsContent>
+
                     <TabsContent value="password">
-                      Change your password here.
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Password</CardTitle>
+                          <CardDescription>
+                            Change your password here. After saving, you'll be
+                            logged out.
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="space-y-1">
+                            <Label htmlFor="current">Current Password</Label>
+                            <Input
+                              id="current"
+                              type="password"
+                              placeholder="Current Password"
+                              className="bg-white"
+                              value={passwords.currentPassword}
+                              onChange={(e) =>
+                                setPasswords({
+                                  ...passwords,
+                                  currentPassword: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="new">New Password</Label>
+                            <Input
+                              id="new"
+                              type="password"
+                              placeholder="New Password"
+                              className="bg-white"
+                              value={passwords.newPassword}
+                              onChange={(e) =>
+                                setPasswords({
+                                  ...passwords,
+                                  newPassword: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="confirm">
+                              Confirm New Password
+                            </Label>
+                            <Input
+                              id="confirm"
+                              type="password"
+                              placeholder="Confirm New Password"
+                              className="bg-white"
+                              value={passwords.confirmPassword}
+                              onChange={(e) =>
+                                setPasswords({
+                                  ...passwords,
+                                  confirmPassword: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          <Button
+                            onClick={handleChangePassword}
+                            className="bg-[#83aa6c] text-white"
+                            disabled={isLoading}
+                          >
+                            {isLoading ? "Saving..." : "Save Password"}
+                          </Button>
+                        </CardFooter>
+                      </Card>
                     </TabsContent>
                   </Tabs>
                 </DialogContent>
@@ -304,6 +550,12 @@ const Header = () => {
             href="#"
             className="block py-2 text-sm font-semibold text-gray-900"
           >
+            Homepage
+          </a>
+          <a
+            href="#"
+            className="block py-2 text-sm font-semibold text-gray-900"
+          >
             Features
           </a>
           <a
@@ -353,21 +605,157 @@ const Header = () => {
 
                 {/* Dialog chứa Tabs */}
                 <Dialog open={openProfile} onOpenChange={setProfileOpen}>
-                  <DialogContent>
+                  <DialogContent className="dialog-overlay">
                     <DialogHeader>
-                      <DialogTitle>Profile Settings</DialogTitle>
+                      <DialogTitle>Profile</DialogTitle>
                     </DialogHeader>
 
-                    <Tabs defaultValue="account" className="w-[400px]">
-                      <TabsList>
+                    <Tabs defaultValue="account" className="w-[462px]">
+                      <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="account">Account</TabsTrigger>
                         <TabsTrigger value="password">Password</TabsTrigger>
                       </TabsList>
+
                       <TabsContent value="account">
-                        Make changes to your account here.
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Account</CardTitle>
+                            <CardDescription>
+                              View and update your account details here.
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            {user ? (
+                              <div className="space-y-2">
+                                <div className="space-y-1">
+                                  <Label htmlFor="userName">Username</Label>
+                                  <Input
+                                    id="userName"
+                                    value={editUser.userName}
+                                    onChange={handleChange}
+                                    className="bg-white"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label htmlFor="email">Email</Label>
+                                  <Input
+                                    id="email"
+                                    value={editUser.email}
+                                    onChange={handleChange}
+                                    className="bg-white"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label htmlFor="phone">Phone</Label>
+                                  <Input
+                                    id="phone"
+                                    value={editUser.phone}
+                                    onChange={handleChange}
+                                    className="bg-white"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label>Wallet</Label>
+                                  {user?.wallet?.length > 0 ? (
+                                    <ul className="list-disc list-inside text-sm text-gray-700">
+                                      {user.wallet.map((wallet, index) => (
+                                        <li key={index}>{wallet}</li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <p className="text-sm text-gray-500">
+                                      No wallets available
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <p>Loading user data...</p>
+                            )}
+                          </CardContent>
+                          <CardFooter>
+                            <Button
+                              className="bg-[#83aa6c] text-white"
+                              onClick={handleSaveChanges}
+                              disabled={isLoading}
+                            >
+                              {isLoading ? "Saving..." : "Save Changes"}
+                            </Button>
+                          </CardFooter>
+                        </Card>
                       </TabsContent>
+
                       <TabsContent value="password">
-                        Change your password here.
+                        <Card>
+                          <CardHeader>
+                            <CardTitle>Password</CardTitle>
+                            <CardDescription>
+                              Change your password here. After saving, you'll be
+                              logged out.
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-2">
+                            <div className="space-y-1">
+                              <Label htmlFor="current">Current Password</Label>
+                              <Input
+                                id="current"
+                                type="password"
+                                placeholder="Current Password"
+                                className="bg-white"
+                                value={passwords.currentPassword}
+                                onChange={(e) =>
+                                  setPasswords({
+                                    ...passwords,
+                                    currentPassword: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label htmlFor="new">New Password</Label>
+                              <Input
+                                id="new"
+                                type="password"
+                                placeholder="New Password"
+                                className="bg-white"
+                                value={passwords.newPassword}
+                                onChange={(e) =>
+                                  setPasswords({
+                                    ...passwords,
+                                    newPassword: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label htmlFor="confirm">
+                                Confirm New Password
+                              </Label>
+                              <Input
+                                id="confirm"
+                                type="password"
+                                placeholder="Confirm New Password"
+                                className="bg-white"
+                                value={passwords.confirmPassword}
+                                onChange={(e) =>
+                                  setPasswords({
+                                    ...passwords,
+                                    confirmPassword: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                          </CardContent>
+                          <CardFooter>
+                            <Button
+                              onClick={handleChangePassword}
+                              className="bg-[#83aa6c] text-white"
+                              disabled={isLoading}
+                            >
+                              {isLoading ? "Saving..." : "Save Password"}
+                            </Button>
+                          </CardFooter>
+                        </Card>
                       </TabsContent>
                     </Tabs>
                   </DialogContent>
