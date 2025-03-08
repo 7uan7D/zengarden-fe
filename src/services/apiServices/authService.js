@@ -11,6 +11,12 @@ export async function RegisterService(credentials) {
 }
 
 export async function ChangePassword(credentials) {
-  const response = await axios.post(`/Auth/change-password`, credentials);
+  const token = localStorage.getItem("token");
+  const response = await axios.post(`/Auth/change-password`, credentials, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
   return response.data;
 }

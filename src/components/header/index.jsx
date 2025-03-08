@@ -64,7 +64,7 @@ const Header = () => {
   const [openProfile, setProfileOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [editUser, setEditUser] = useState({
-    fullName: "",
+    userName: "",
     email: "",
     phone: "",
   });
@@ -126,7 +126,7 @@ const Header = () => {
           .then((data) => {
             setUser(data);
             setEditUser({
-              fullName: data.fullName || "",
+              userName: data.userName || "",
               email: data.email || "",
               phone: data.phone || "",
             });
@@ -178,30 +178,25 @@ const Header = () => {
     const { currentPassword, newPassword, confirmPassword } = passwords;
 
     if (newPassword !== confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp!");
+      toast.error("Confirmation password does not match!");
       return;
     }
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const response = await ChangePassword(
-        { currentPassword, newPassword, confirmPassword },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // Đảm bảo có Bearer
-            "Content-Type": "application/json", // Đảm bảo Content-Type đúng
-          },
-        }
-      );
+      const response = await ChangePassword({
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
 
-      toast.success("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
+      toast.success("Password changed successfully! Please log in again.");
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
       setTimeout(() => navigate("/"), 2000);
     } catch (error) {
       console.log("Failed to change password:", error);
-      toast.error(error.response?.data?.message || "Đổi mật khẩu thất bại!");
+      toast.error(error.response?.data?.message || "Password change failed!");
     } finally {
       setIsLoading(false);
     }
@@ -321,10 +316,10 @@ const Header = () => {
                           {user ? (
                             <div className="space-y-2">
                               <div className="space-y-1">
-                                <Label htmlFor="fullName">Full Name</Label>
+                                <Label htmlFor="userName">Username</Label>
                                 <Input
-                                  id="fullName"
-                                  value={editUser.fullName}
+                                  id="userName"
+                                  value={editUser.userName}
                                   onChange={handleChange}
                                   className="bg-white"
                                 />
@@ -388,68 +383,66 @@ const Header = () => {
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2">
-                          <form onSubmit={handleChangePassword}>
-                            <div className="space-y-1">
-                              <Label htmlFor="current">Current Password</Label>
-                              <Input
-                                id="current"
-                                type="password"
-                                placeholder="Current Password"
-                                className="bg-white"
-                                value={passwords.currentPassword}
-                                onChange={(e) =>
-                                  setPasswords({
-                                    ...passwords,
-                                    currentPassword: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label htmlFor="new">New Password</Label>
-                              <Input
-                                id="new"
-                                type="password"
-                                placeholder="New Password"
-                                className="bg-white"
-                                value={passwords.newPassword}
-                                onChange={(e) =>
-                                  setPasswords({
-                                    ...passwords,
-                                    newPassword: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <Label htmlFor="confirm">
-                                Confirm New Password
-                              </Label>
-                              <Input
-                                id="confirm"
-                                type="password"
-                                placeholder="Confirm New Password"
-                                className="bg-white"
-                                value={passwords.confirmPassword}
-                                onChange={(e) =>
-                                  setPasswords({
-                                    ...passwords,
-                                    confirmPassword: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <CardFooter>
-                              <Button
-                                type="submit"
-                                className="bg-[#83aa6c] text-white"
-                                disabled={isLoading}
-                              >
-                                {isLoading ? "Saving..." : "Save Password"}
-                              </Button>
-                            </CardFooter>
-                          </form>
+                          <div className="space-y-1">
+                            <Label htmlFor="current">Current Password</Label>
+                            <Input
+                              id="current"
+                              type="password"
+                              placeholder="Current Password"
+                              className="bg-white"
+                              value={passwords.currentPassword}
+                              onChange={(e) =>
+                                setPasswords({
+                                  ...passwords,
+                                  currentPassword: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="new">New Password</Label>
+                            <Input
+                              id="new"
+                              type="password"
+                              placeholder="New Password"
+                              className="bg-white"
+                              value={passwords.newPassword}
+                              onChange={(e) =>
+                                setPasswords({
+                                  ...passwords,
+                                  newPassword: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="confirm">
+                              Confirm New Password
+                            </Label>
+                            <Input
+                              id="confirm"
+                              type="password"
+                              placeholder="Confirm New Password"
+                              className="bg-white"
+                              value={passwords.confirmPassword}
+                              onChange={(e) =>
+                                setPasswords({
+                                  ...passwords,
+                                  confirmPassword: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
                         </CardContent>
+                        <CardFooter>
+                          <Button
+                            onClick={handleChangePassword}
+                            className="bg-[#83aa6c] text-white"
+                            disabled={isLoading}
+                          >
+                            {isLoading ? "Saving..." : "Save Password"}
+                          </Button>
+                        </CardFooter>
                       </Card>
                     </TabsContent>
                   </Tabs>
@@ -626,10 +619,10 @@ const Header = () => {
                             {user ? (
                               <div className="space-y-2">
                                 <div className="space-y-1">
-                                  <Label htmlFor="fullName">Full Name</Label>
+                                  <Label htmlFor="userName">Username</Label>
                                   <Input
-                                    id="fullName"
-                                    value={editUser.fullName}
+                                    id="userName"
+                                    value={editUser.userName}
                                     onChange={handleChange}
                                     className="bg-white"
                                   />
@@ -693,43 +686,64 @@ const Header = () => {
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="space-y-2">
-                            <form>
-                              <div className="space-y-1">
-                                <Label htmlFor="current">
-                                  Current Password
-                                </Label>
-                                <Input
-                                  id="current"
-                                  type="password"
-                                  placeholder="Current Password"
-                                  className="bg-white"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label htmlFor="new">New Password</Label>
-                                <Input
-                                  id="new"
-                                  type="password"
-                                  placeholder="New Password"
-                                  className="bg-white"
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label htmlFor="confirm">
-                                  Confirm New Password
-                                </Label>
-                                <Input
-                                  id="confirm"
-                                  type="password"
-                                  placeholder="Confirm New Password"
-                                  className="bg-white"
-                                />
-                              </div>
-                            </form>
+                            <div className="space-y-1">
+                              <Label htmlFor="current">Current Password</Label>
+                              <Input
+                                id="current"
+                                type="password"
+                                placeholder="Current Password"
+                                className="bg-white"
+                                value={passwords.currentPassword}
+                                onChange={(e) =>
+                                  setPasswords({
+                                    ...passwords,
+                                    currentPassword: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label htmlFor="new">New Password</Label>
+                              <Input
+                                id="new"
+                                type="password"
+                                placeholder="New Password"
+                                className="bg-white"
+                                value={passwords.newPassword}
+                                onChange={(e) =>
+                                  setPasswords({
+                                    ...passwords,
+                                    newPassword: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label htmlFor="confirm">
+                                Confirm New Password
+                              </Label>
+                              <Input
+                                id="confirm"
+                                type="password"
+                                placeholder="Confirm New Password"
+                                className="bg-white"
+                                value={passwords.confirmPassword}
+                                onChange={(e) =>
+                                  setPasswords({
+                                    ...passwords,
+                                    confirmPassword: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
                           </CardContent>
                           <CardFooter>
-                            <Button className="bg-[#83aa6c] text-white">
-                              Save Password
+                            <Button
+                              onClick={handleChangePassword}
+                              className="bg-[#83aa6c] text-white"
+                              disabled={isLoading}
+                            >
+                              {isLoading ? "Saving..." : "Save Password"}
                             </Button>
                           </CardFooter>
                         </Card>

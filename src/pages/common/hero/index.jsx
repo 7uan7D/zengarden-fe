@@ -25,6 +25,7 @@ export default function HeroPage() {
   const [formData, setFormData] = useState({
     email: "",
     phone: "",
+    userName: "",
     password: "",
     confirmPassword: "",
     roleId: 2,
@@ -89,6 +90,14 @@ export default function HeroPage() {
                 </DrawerDescription>
               </DrawerHeader>
               <div className="grid gap-4">
+                <Label htmlFor="userName">Username</Label>
+                <Input
+                  id="userName"
+                  type="userName"
+                  placeholder="Zenman"
+                  onChange={handleChange}
+                />
+
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
