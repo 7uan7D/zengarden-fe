@@ -47,6 +47,7 @@ import parseJwt from "@/services/parseJwt";
 import { GetUserInfo } from "@/services/apiServices/userService";
 import { UpdateUserInfo } from "@/services/apiServices/userService";
 import { ChangePassword } from "@/services/apiServices/authService";
+import RegisterButton from "@/pages/common/hero/registerButton";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -69,6 +70,7 @@ const Header = () => {
     phone: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -254,7 +256,10 @@ const Header = () => {
           <a href="/" className="text-sm font-semibold text-gray-900">
             Features
           </a>
-          <a href="/" className="text-sm font-semibold text-gray-900">
+          <a
+            href="/marketplace"
+            className="text-sm font-semibold text-gray-900"
+          >
             Marketplace
           </a>
           <a href="/" className="text-sm font-semibold text-gray-900">
@@ -525,8 +530,11 @@ const Header = () => {
                   {error && <p className="text-red-500 text-sm">{error}</p>}
 
                   <SheetFooter>
-                    <Button type="submit">Login</Button>{" "}
+                    <Button type="submit">Login</Button>
                   </SheetFooter>
+                  <div className="mt-4 text-left text-sm text-gray-500">
+                    <RegisterButton isOpen={isOpen} setIsOpen={setIsOpen} />
+                  </div>
                 </form>
               </SheetContent>
             </Sheet>
@@ -782,7 +790,6 @@ const Header = () => {
                   </SheetHeader>
 
                   <form onSubmit={handleLogin}>
-                    {/* Toggle giữa Email và Phone */}
                     <div className="flex items-center justify-between py-2">
                       <span>Use Phone Number</span>
                       <Switch
@@ -840,8 +847,11 @@ const Header = () => {
                     {error && <p className="text-red-500 text-sm">{error}</p>}
 
                     <SheetFooter>
-                      <Button type="submit">Login</Button>{" "}
+                      <Button type="submit">Login</Button>
                     </SheetFooter>
+                    <div className="mt-4 text-left text-sm text-gray-500">
+                      <RegisterButton isOpen={isOpen} setIsOpen={setIsOpen} />
+                    </div>
                   </form>
                 </SheetContent>
               </Sheet>
