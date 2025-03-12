@@ -14,7 +14,7 @@ const salesStats = {
     salesGrowth: '12.3%',
 }
 
-const SalesPage = () => {
+const Sales = () => {
     return (
         <div className='flex-1 overflow-auto relative z-10'>
             <AdminHeader title='Sales Dashboard' />
@@ -55,4 +55,4 @@ const SalesPage = () => {
     )
 }
 
-export default SalesPage
+export default Sales
