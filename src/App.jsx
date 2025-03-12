@@ -7,7 +7,7 @@ import PlayerHome from "./pages/player/home/index.jsx";
 import { Toaster } from "sonner";
 import Sidebar from "./components/common/Sidebar";
 import Overview from "./pages/Overview";
-import Products from "./pages/Products";
+import Items from "./pages/Items";
 import Users from "./pages/Users";
 import Sales from "./pages/Sales";
 import Orders from "./pages/Orders";
@@ -53,7 +53,7 @@ function AdminLayout() {
       <Sidebar />
       <Routes>
         <Route path="/overview" element={<Overview />} />
-        <Route path="/products" element={<Products />} />
+        <Route path="/items" element={<Items />} />
         <Route path="/users" element={<Users />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/orders" element={<Orders />} />
@@ -68,7 +68,7 @@ function ConditionalRoutes() {
   const location = useLocation();
   const isAdminRoute =
     location.pathname.startsWith("/overview") ||
-    location.pathname.startsWith("/products") ||
+    location.pathname.startsWith("/items") ||
     location.pathname.startsWith("/users") ||
     location.pathname.startsWith("/sales") ||
     location.pathname.startsWith("/orders") ||

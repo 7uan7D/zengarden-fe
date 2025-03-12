@@ -2,23 +2,23 @@ import { motion } from "framer-motion"
 import { Search, Edit, Trash2 } from "lucide-react"
 import { useState } from "react"
 
-const productsData = [
-    { id: 1, name: 'Wireless Earbuds', category: 'Electronics', price: 59.99, stock: 143, sales: 1200 },
-    { id: 2, name: 'Leather Wallet', category: 'Accessories', price: 39.99, stock: 89, sales: 800 },
-    { id: 3, name: 'Smart Watch', category: 'Electronics', price: 199.99, stock: 56, sales: 650 },
-    { id: 4, name: 'Yoga Mat', category: 'Fitness', price: 29.99, stock: 210, sales: 950 },
-    { id: 5, name: 'Coffee Maker', category: 'Home', price: 79.99, stock: 78, sales: 720 },
+const itemsData = [
+    { id: 1, name: 'Item 1', type: 'Type 1', rarity: 2 , cost: 59, limited: 'Limited' },
+    { id: 2, name: 'Item 2', type: 'Type 2', rarity: 1, cost: 39, limited: 'Unlimited' },
+    { id: 3, name: 'Item 3', type: 'Type 3', rarity: 3, cost: 19, limited: 'Limited' },
+    { id: 4, name: 'Item 4', type: 'Type 4', rarity: 3, cost: 29, limited: 'Limited' },
+    { id: 5, name: 'Item 5', type: 'Type 5', rarity: 1, cost: 79, limited: 'Unlimited' },
 ]
 
-const ProductsTable = () => {
+const ItemsTable = () => {
     const [searchTerm, setSearchTerm] = useState('')
-    const [filteredProducts, setFilteredProducts] = useState(productsData)
+    const [filteredItems, setFilteredItems] = useState(itemsData)
 
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase();
         setSearchTerm(term);
-        const filtered = productsData.filter((product) => product.name.toLowerCase().includes(term) || product.category.toLowerCase().includes(term));
-        setFilteredProducts(filtered);
+        const filtered = itemsData.filter((item) => item.name.toLowerCase().includes(term) || item.type.toLowerCase().includes(term));
+        setFilteredItems(filtered);
     }
 
     return (
@@ -29,11 +29,11 @@ const ProductsTable = () => {
             transition={{ duration: 0.3 }}
         >
             <div className='flex justify-between items-center mb-6'>
-                <h2 className='text-xl font-semibold mb-4 text-gray-100'>Product List</h2>
+                <h2 className='text-xl font-semibold mb-4 text-gray-100'>Item List</h2>
                 <div className='relative'>
                     <input
                         type='text'
-                        placeholder='Search products...'
+                        placeholder='Search items...'
                         className='bg-gray-700 text-white placeholder-gray-400 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
                         onChange={handleSearch}
                         value={searchTerm}
@@ -47,18 +47,18 @@ const ProductsTable = () => {
                     <thead>
                         <tr>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Name</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Category</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Price</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Stock</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Sales</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Type</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Rarity</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Cost</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Limited</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Actions</th>
                         </tr>
                     </thead>
 
                     <tbody className='divide-y divide-gray-700'>
-                        {filteredProducts.map((product) => (
+                        {filteredItems.map((item) => (
                             <motion.tr
-                                key={product.id}
+                                key={item.id}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ duration: 0.3 }}
@@ -66,16 +66,16 @@ const ProductsTable = () => {
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100 flex gap-2 items-center'>
                                     <img
                                         src={`https://banner2.cleanpng.com/20231230/xkg/transparent-cartoon-task-management-to-do-list-productivity-or-yellow-paper-with-task-list-and-1710949246698.webp`}
-                                        alt={product.name}
+                                        alt={item.name}
                                         className='size-10 rounded-full' 
                                     />
-                                    {product.name}
+                                    {item.name}
                                 </td>
 
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{product.category}</td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>${product.price.toFixed(2)}</td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{product.stock}</td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{product.sales}</td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.type}</td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.rarity}</td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.cost} coins</td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.limited}</td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                     <button className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>
                                         <Edit size={18} />
@@ -93,4 +93,4 @@ const ProductsTable = () => {
     )
 }
 
-export default ProductsTable
+export default ItemsTable
