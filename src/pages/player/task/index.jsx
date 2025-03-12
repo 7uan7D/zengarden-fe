@@ -12,7 +12,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 const tasks = {
   simple: ["Drink water", "Read 10 pages", "Meditate"],
@@ -25,7 +36,15 @@ const tasks = {
 };
 
 export default function TaskPage() {
-  const [open, setOpen] = useState(false);
+  const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [taskType, setTaskType] = useState("");
+
+  const handleOpen = (type) => {
+    setTaskType(type);
+    setIsTaskDialogOpen(true);
+  };
+
   return (
     <motion.div
       className="p-6 max-w-6xl mx-auto"
@@ -42,14 +61,13 @@ export default function TaskPage() {
             <a
               href="#"
               className="text-black text-sm hover:underline"
-              onClick={() => setOpen(true)}
+              onClick={() => setIsTreeDialogOpen(true)}
             >
               Change Tree &gt;
             </a>
 
-            {/* Dialog chính chứa hai dialog nhỏ */}
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogContent className="flex gap-4 justify-center">
+            <Dialog open={isTreeDialogOpen} onOpenChange={setIsTreeDialogOpen}>
+              <DialogContent className="max-w-xl w-full flex gap-4 justify-center p-6">
                 {[1, 2].map((tree) => (
                   <div
                     key={tree}
@@ -57,7 +75,7 @@ export default function TaskPage() {
                     onClick={() => alert(`Bạn đã chọn cây ${tree}`)}
                   >
                     <img
-                      src={`/tree-${tree}.png`} // Thay đường dẫn ảnh cây
+                      src={`/tree-${tree}.png`}
                       alt={`Tree ${tree}`}
                       className="w-20 h-20 mx-auto"
                     />
@@ -99,18 +117,54 @@ export default function TaskPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => console.log("Simple Task Selected")}
-              >
+              <DropdownMenuItem onClick={() => handleOpen("Simple Task")}>
                 Simple Task
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => console.log("Complex Task Selected")}
-              >
+              <DropdownMenuItem onClick={() => handleOpen("Complex Task")}>
                 Complex Task
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Create {taskType}</DialogTitle>
+                <DialogDescription>
+                  Fill in the details for your new task.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Task Name</Label>
+                  <Input placeholder="Enter task name" />
+                </div>
+                <div>
+                  <Label>Description</Label>
+                  <Textarea placeholder="Describe your task" />
+                </div>
+                <div>
+                  <Label>Base XP</Label>
+                  <Input type="number" placeholder="Enter XP amount" />
+                </div>
+                <div>
+                  <Label>Duration (minutes)</Label>
+                  <Input type="number" placeholder="Task duration" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsTaskDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button className="bg-green-600 text-white hover:bg-green-700">
+                  Create
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
