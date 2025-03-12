@@ -18,6 +18,7 @@ import TreeXPLog from "./pages/TreeXPLog";
 import UserXPLog from "./pages/UserXPLog";
 import TaskPage from "./pages/player/task/index.jsx";
 import Footer from "./components/footer";
+import Challenges from "./pages/player/challenges";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -43,6 +44,7 @@ function AnimatedRoutes() {
             <Route path="/home" element={<PlayerHome />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/task" element={<TaskPage />} />
+            <Route path="/challenges" element={<Challenges />} />
           </Routes>
         </motion.div>
       </AnimatePresence>
