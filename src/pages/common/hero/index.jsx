@@ -97,7 +97,6 @@ export default function HeroPage() {
                   placeholder="Zenman"
                   onChange={handleChange}
                 />
-
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -105,7 +104,6 @@ export default function HeroPage() {
                   placeholder="example@email.com"
                   onChange={handleChange}
                 />
-
                 <Label htmlFor="phone">Phone</Label>
                 <Input
                   id="phone"
@@ -113,7 +111,6 @@ export default function HeroPage() {
                   placeholder="Enter your phone number"
                   onChange={handleChange}
                 />
-
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
@@ -121,7 +118,6 @@ export default function HeroPage() {
                   placeholder="••••••••"
                   onChange={handleChange}
                 />
-
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
                 <Input
                   id="confirmPassword"
@@ -144,37 +140,103 @@ export default function HeroPage() {
         </Drawer>
       </div>
 
-      <div className="cards">
-        <motion.div className="card" whileHover={{ scale: 1.05 }}>
-          <h2>📝</h2>
-          <h2>Doing Tasks</h2>
-          <img
-            src="/src/assets/images/tasks.png"
-            alt="Achievements"
-            className="card-img"
-          />
-          <p>Do the task and unlock tons of exciting milestones.</p>
+      {/* Phần Gamify Your Life */}
+      <div className="section gamify-section">
+        <motion.div
+          className="gamify-content"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1>Gamify your life</h1>
+          <p>
+            ZenGarden is a free habit-building and productivity app that treats
+            your real life like a game. With in-game rewards and punishments to
+            motivate you and a strong social network to inspire you, ZenGarden
+            can help you achieve your goals to become healthy, hard-working,
+            and happy.
+          </p>
         </motion.div>
-        <motion.div className="card" whileHover={{ scale: 1.05 }}>
-          <h2>🌱</h2>
-          <h2>Grow Plants</h2>
-          <img
-            src="/src/assets/images/grow plants.png"
-            alt="Grow Plants"
-            className="card-img"
-          />
-          <p>Choose a plant and start nurturing your garden.</p>
+        <div className="cards">
+          <motion.div className="card" whileHover={{ scale: 1.05 }}>
+            <h2>Track Your Tasks and Goals📝</h2>
+            <img
+              src="/src/assets/images/tasks.png"
+              alt="Achievements"
+              className="card-img"
+            />
+            <p>
+              Stay accountable by tracking and managing your Tasks, Daily
+              goals, and To-do list with ZenGarden's workspace.
+            </p>
+          </motion.div>
+          <motion.div className="card" whileHover={{ scale: 1.05 }}>
+            <h2>Grow Plants🌱</h2>
+            <img
+              src="/src/assets/images/grow plants.png"
+              alt="Grow Plants"
+              className="card-img"
+            />
+            <p>Choose a plant and start nurturing your garden.</p>
+          </motion.div>
+          <motion.div className="card" whileHover={{ scale: 1.05 }}>
+            <h2>Relax🌿</h2>
+            <img
+              src="/src/assets/images/relax.png"
+              alt="Relax"
+              className="card-img"
+            />
+            <p>Enjoy a peaceful experience with a soothing interface.</p>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Phần Benefits of using ZenGarden */}
+      <div className="section benefits-section">
+        <motion.div
+          className="gamify-content"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <h1>Benefits of using ZenGarden</h1>
+          <p>
+            Using ZenGarden can help you in many ways. Here are some of the
+            benefits of using ZenGarden:
+          </p>
         </motion.div>
-        <motion.div className="card" whileHover={{ scale: 1.05 }}>
-          <h2>🌿</h2>
-          <h2>Relax</h2>
-          <img
-            src="/src/assets/images/relax.png"
-            alt="Relax"
-            className="card-img"
-          />
-          <p>Enjoy a peaceful experience with a soothing interface.</p>
-        </motion.div>
+        <div className="cards">
+          <motion.div className="card" whileHover={{ scale: 1.05 }}>
+            <h2>Track Your Tasks and Goals📝</h2>
+            <img
+              src="/src/assets/images/tasks.png"
+              alt="Achievements"
+              className="card-img"
+            />
+            <p>
+              Stay accountable by tracking and managing your Tasks, Daily
+              goals, and To-do list with ZenGarden's workspace.
+            </p>
+          </motion.div>
+          <motion.div className="card" whileHover={{ scale: 1.05 }}>
+            <h2>Grow Plants🌱</h2>
+            <img
+              src="/src/assets/images/grow plants.png"
+              alt="Grow Plants"
+              className="card-img"
+            />
+            <p>Choose a plant and start nurturing your garden.</p>
+          </motion.div>
+          <motion.div className="card" whileHover={{ scale: 1.05 }}>
+            <h2>Relax🌿</h2>
+            <img
+              src="/src/assets/images/relax.png"
+              alt="Relax"
+              className="card-img"
+            />
+            <p>Enjoy a peaceful experience with a soothing interface.</p>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
