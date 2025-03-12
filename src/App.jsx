@@ -13,6 +13,7 @@ import Sales from "./pages/Sales";
 import Orders from "./pages/Orders";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import Marketplace from "./pages/player/marketplace/index.jsx";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -35,6 +36,7 @@ function AnimatedRoutes() {
         <Routes location={location}>
           <Route path="/" element={<HeroPage />} />
           <Route path="/home" element={<PlayerHome />} />
+          <Route path="/marketplace" element={<Marketplace />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
