@@ -29,14 +29,11 @@ export default function Marketplace() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header cố định trên cùng */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md">
         <Header />
       </div>
 
-      {/* Container chính (đẩy xuống dưới để tránh bị đè) */}
       <div className="flex flex-1 pt-[80px]">
-        {/* Sidebar bên trái */}
         <div
           className="w-64 p-6 bg-gray-50 dark:bg-gray-800 sticky top-[80px] 
               h-[calc(100vh-80px)] overflow-auto rounded-tr-2xl shadow-lg 
@@ -44,7 +41,6 @@ export default function Marketplace() {
         >
           <h2 className="text-xl font-semibold mb-4">Filters</h2>
 
-          {/* Search Input */}
           <Input
             placeholder="Search items..."
             value={search}
@@ -52,7 +48,6 @@ export default function Marketplace() {
             className="mb-4"
           />
 
-          {/* Select Filter */}
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger>
               <SelectValue placeholder="Select filter" />
@@ -65,11 +60,9 @@ export default function Marketplace() {
           </Select>
         </div>
 
-        {/* Nội dung chính */}
         <div className="flex-1 p-6 overflow-auto">
           <h1 className="text-2xl font-bold mb-4">Marketplace</h1>
 
-          {/* Tabs */}
           <Tabs defaultValue={categories[0]}>
             <TabsList className="mb-4">
               {categories.map((cat) => (
@@ -90,7 +83,7 @@ export default function Marketplace() {
                         key={i}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: i * 0.1 }} // Hiệu ứng delay từng card
+                        transition={{ duration: 0.3, delay: i * 0.1 }}
                       >
                         <Popover open={isOpen}>
                           <PopoverTrigger
@@ -99,7 +92,6 @@ export default function Marketplace() {
                             onMouseLeave={() => setIsOpen(false)}
                           >
                             <Card className="relative">
-                              {/* Badge hiển thị Best Seller / Seasonal */}
                               {i === 0 && (
                                 <span className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
                                   Best Seller
