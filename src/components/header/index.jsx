@@ -266,7 +266,7 @@ const Header = () => {
           >
             Marketplace
           </a>
-          <a href="/challenge" className="text-sm font-semibold text-gray-900">
+          <a href="/challenges" className="text-sm font-semibold text-gray-900">
             Challenges
           </a>
         </div>

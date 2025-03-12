@@ -1,0 +1,242 @@
+import { useState } from "react";
+import Header from "@/components/Header";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+    Select,
+    SelectTrigger,
+    SelectValue,
+    SelectContent,
+    SelectItem,
+} from "@/components/ui/select";
+import { Play, BookCheck, BookX, Plus, Crown, Verified, Beaker } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
+import {
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
+} from "@/components/ui/popover";
+
+import { motion } from "framer-motion";
+
+const categories = ["My Challenges", "Get Challenges"];
+
+const userChallengesData = [
+    {
+        id: 1,
+        name: "Taking Surveys",
+        reward: 42,
+        creator: "Red Cross",
+        startDate: "2021-09-01",
+    }
+]
+    
+
+const challengesData = [
+    {
+        id: 1,
+        name: "Taking Surveys",
+        reward: 42,
+        creator: "Red Cross",
+        startDate: "2021-09-01",
+        description:
+            "Participate in short surveys 📓 to contribute to important research and earn rewards. Help make a difference while getting paid!",
+    },
+    {
+        id: 2,
+        name: "Stay Hydrated Challenge",
+        reward: 71,
+        creator: "Blue Sky",
+        startDate: "2021-09-01",
+        description:
+            "Boost your energy, focus, and health by drinking enough water every day! Stay refreshed and feel your best. 🌊💙",
+    },
+    {
+        id: 3,
+        name: "Be Happy Challenge",
+        reward: 66,
+        creator: "Yellow",
+        startDate: "2021-09-01",
+        description:
+            "Embark on a happiness adventure where you complete daily missions to boost your mood, spread positivity, and build lasting joy. Happiness is a skill—let’s level it up! 🌈🚀",
+    },
+    {
+        id: 4,
+        name: "Movie of the Week",
+        reward: 51,
+        creator: "Ollivander",
+        startDate: "2021-09-01",
+        description:
+            "Watch the selected movie of the week and engage in discussions with other participants. Expand your cinematic horizons and connect with fellow film enthusiasts.",
+    },
+];
+
+
+export default function Challenges() {
+    const [search, setSearch] = useState("");
+    const [filter, setFilter] = useState("all");
+
+    return (
+        <div className="min-h-screen flex flex-col">
+            <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md">
+                <Header />
+            </div>
+
+            <div className="flex flex-1 pt-[80px]">
+                <div
+                    className="w-64 p-6 bg-gray-50 dark:bg-gray-800 sticky top-[80px] 
+                    h-[calc(100vh-80px)] overflow-auto rounded-tr-2xl shadow-lg 
+                    border border-gray-300 dark:border-gray-700"
+                >
+                    <h2 className="text-xl font-semibold mb-4">Filters</h2>
+
+                    <Input
+                        placeholder="Search items..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="mb-4"
+                    />
+
+                    <Select value={filter} onValueChange={setFilter}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select filter" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="common">Common</SelectItem>
+                            <SelectItem value="rare">Rare</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="flex-1 p-6 overflow-auto">
+                    <h1 className="text-2xl font-bold mb-4">Challenges</h1>
+
+                    <div className="flex justify-between items-center mb-4">
+                        <p/>
+                        <Button className="bg-green-600 text-white hover:bg-green-700">
+                            <Plus className="h-4 w-4" />
+                            Create Challenges
+                        </Button>
+                    </div>
+
+                    <Tabs defaultValue={categories[0]}>
+                        <TabsList className="mb-4">
+                            {categories.map((cat) => (
+                                <TabsTrigger key={cat} value={cat}>
+                                    {cat}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+
+                        {categories.map((cat) => (
+                            <TabsContent key={cat} value={cat}>
+                                <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4">
+                                    {challengesData.map((item) => {
+                                        const [isOpen, setIsOpen] = useState(false);
+
+                                        return (
+                                            <motion.div
+                                                key={item.id}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.3, delay: item.id * 0.1 }}
+                                            >
+                                                <Popover open={isOpen}>
+                                                    <PopoverTrigger
+                                                        asChild
+                                                        onMouseEnter={() => setIsOpen(true)}
+                                                        onMouseLeave={() => setIsOpen(false)}
+                                                    >
+                                                        <Card className="relative">
+                                                            {item.id === 1 && cat === "Get Challenges" && (
+                                                                <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
+                                                                    Joined
+                                                                </span>
+                                                            )}
+
+                                                            <CardContent className="flex flex-col items-start p-4 cursor-pointer">
+                                                                {/* {cat === "Avatar" ? (
+                                                                    <Avatar className="h-20 w-20 mb-2" />
+                                                                ) : cat === "Background" ? (
+                                                                    <div className="h-32 w-full bg-gray-300 rounded-lg mb-2" />
+                                                                ) : cat === "Music" ? (
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        className="mb-2 bg-white"
+                                                                    >
+                                                                        <Play className="h-6 w-6" /> Play Preview
+                                                                    </Button>
+                                                                ) : (
+                                                                    <div className="h-20 w-20 bg-gray-300 rounded-lg mb-2" />
+                                                                )} */}
+
+                                                                <p className="font-semibold">
+                                                                    {item.name}
+                                                                </p>
+                                                                <p className="text-sm text-gray-500 flex items-center">
+                                                                    Reward: 
+                                                                  
+                                                                    <Beaker className="ml-1" color="darkcyan" />
+                                                                    <span className="font-bold ml-1">{item.reward} EXP</span>
+                                                                    
+                                                                </p>
+
+                                                                <p className="text-sm text-gray-500 flex items-center">
+                                                                    Created by: 
+                                                                    
+                                                                    <span className="font-bold ml-1">{item.creator}</span>
+                                                                    <Verified className="ml-1" color="navy" />
+                                                                </p>
+
+                                                                <p className="text-sm text-gray-500 flex items-center">
+                                                                    Start Date: 
+                                                                    <span className="font-bold ml-1">2021-09-01</span>
+                                                                </p>
+                                                                
+                                                                <p className="text-sm text-gray-500 flex items-center text-left">
+                                                                    {item.description}
+                                                                </p>
+
+                                                                {cat === "My Challenges" ? (
+                                                                    <Button className="mt-2" variant="outline">
+                                                                        <BookX className="mr-2 h-4 w-4" /> Leave Challenge
+                                                                    </Button>
+                                                                ) : (
+                                                                    <Button className="mt-2" variant="outline">
+                                                                        <BookCheck className="mr-2 h-4 w-4" /> Get Challenge
+                                                                    </Button>
+                                                                )}
+                                                            </CardContent>
+                                                        </Card>
+                                                    </PopoverTrigger>
+
+                                                    <PopoverContent
+                                                        className="w-64 text-sm"
+                                                        side="top"
+                                                        align="center"
+                                                    >
+                                                        <p className="font-semibold">
+                                                            {cat} Item 1
+                                                        </p>
+                                                        <p className="text-gray-500">
+                                                            This is a description of the item. It provides
+                                                            details about what this item does and why it’s
+                                                            useful.
+                                                        </p>
+                                                    </PopoverContent>
+                                                </Popover>
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
+                            </TabsContent>
+                        ))}
+                    </Tabs>
+                </div>
+            </div>
+        </div>
+    );
+}
