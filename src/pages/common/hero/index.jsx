@@ -144,7 +144,7 @@ export default function HeroPage() {
         </Drawer>
       </div>
 
-      {/* <div className="cards">
+      <div className="cards">
         <motion.div className="card" whileHover={{ scale: 1.05 }}>
           <h2>📝</h2>
           <h2>Doing Tasks</h2>
@@ -175,7 +175,7 @@ export default function HeroPage() {
           />
           <p>Enjoy a peaceful experience with a soothing interface.</p>
         </motion.div>
-      </div> */}
+      </div>
     </div>
   );
 }

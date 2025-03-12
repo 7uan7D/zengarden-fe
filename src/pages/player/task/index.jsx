@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { CheckCircle } from "lucide-react";
 
 const tasks = {
   simple: ["Drink water", "Read 10 pages", "Meditate"],
@@ -63,7 +64,7 @@ export default function TaskPage() {
               className="text-black text-sm hover:underline"
               onClick={() => setIsTreeDialogOpen(true)}
             >
-              Change Tree &gt;
+              Change Tree 🌳
             </a>
 
             <Dialog open={isTreeDialogOpen} onOpenChange={setIsTreeDialogOpen}>
@@ -178,6 +179,110 @@ export default function TaskPage() {
 }
 
 function TaskColumn({ title, tasks, isDone }) {
+  const [timers, setTimers] = useState({}); // Lưu thời gian còn lại
+  const [running, setRunning] = useState({}); // Lưu trạng thái chạy/tạm dừng
+  const [dialogOpen, setDialogOpen] = useState(false); // Trạng thái mở dialog
+  const [pendingTaskIndex, setPendingTaskIndex] = useState(null); // Lưu task mới được chọn
+
+  // Hàm định dạng thời gian
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  // Hàm kiểm tra xem có task nào đang chạy không
+  const isAnyTaskRunning = () => {
+    return Object.values(timers).some((time) => time > 0);
+  };
+
+  // Hàm bắt đầu timer
+  const startTimer = (taskIndex) => {
+    if (isAnyTaskRunning() && !timers[taskIndex]) {
+      // Nếu có task đang chạy và task này chưa có timer, mở dialog
+      setPendingTaskIndex(taskIndex);
+      setDialogOpen(true);
+    } else {
+      // Nếu không có task nào chạy hoặc task này đã có timer, bắt đầu ngay
+      setTimers((prev) => ({
+        ...prev,
+        [taskIndex]: 600, // 10 phút = 600 giây
+      }));
+      setRunning((prev) => ({
+        ...prev,
+        [taskIndex]: true,
+      }));
+    }
+  };
+
+  // Hàm dừng tất cả timer hiện tại
+  const stopAllTimers = () => {
+    setTimers({});
+    setRunning({});
+  };
+
+  // Hàm xử lý khi người dùng chọn "Yes"
+  const handleSwitchTask = () => {
+    stopAllTimers(); // Dừng tất cả timer hiện tại
+    startTimer(pendingTaskIndex); // Bắt đầu timer cho task mới
+    setDialogOpen(false); // Đóng dialog
+    setPendingTaskIndex(null); // Xóa task đang chờ
+  };
+
+  // Hàm xử lý khi người dùng chọn "No"
+  const handleKeepCurrentTask = () => {
+    setDialogOpen(false); // Đóng dialog
+    setPendingTaskIndex(null); // Xóa task đang chờ
+  };
+
+  // Hàm tạm dừng/tiếp tục timer
+  const toggleTimer = (taskIndex) => {
+    setRunning((prev) => ({
+      ...prev,
+      [taskIndex]: !prev[taskIndex],
+    }));
+  };
+
+  // Hàm dừng và xóa timer
+  const stopTimer = (taskIndex) => {
+    setTimers((prev) => {
+      const newTimers = { ...prev };
+      delete newTimers[taskIndex];
+      return newTimers;
+    });
+    setRunning((prev) => {
+      const newRunning = { ...prev };
+      delete newRunning[taskIndex];
+      return newRunning;
+    });
+  };
+
+  // useEffect để cập nhật timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimers((prev) => {
+        const newTimers = { ...prev };
+        Object.keys(newTimers).forEach((taskIndex) => {
+          if (running[taskIndex] && newTimers[taskIndex] > 0) {
+            newTimers[taskIndex] -= 1;
+          } else if (newTimers[taskIndex] === 0) {
+            delete newTimers[taskIndex];
+            setRunning((prev) => {
+              const newRunning = { ...prev };
+              delete newRunning[taskIndex];
+              return newRunning;
+            });
+          }
+        });
+        return newTimers;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [running]);
+
   return (
     <motion.div
       className="bg-white rounded-lg shadow-md p-4 flex flex-col"
@@ -198,12 +303,56 @@ function TaskColumn({ title, tasks, isDone }) {
             >
               <Card className="p-4 flex justify-between items-center">
                 <span>{task}</span>
-                {!isDone && <Button size="sm">Start Task</Button>}
+                {isDone ? (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="text-sm text-green-600">Completed</span>
+                  </div>
+                ) : timers[index] !== undefined ? (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-sm text-gray-600 cursor-pointer hover:text-gray-800"
+                      onClick={() => toggleTimer(index)}
+                    >
+                      {formatTime(timers[index])}{" "}
+                      {running[index] ? "(Pause)" : "(Resume)"}
+                    </span>
+                    <Button
+                      size="sm"
+                      className="bg-gray-900 text-white hover:bg-gray-700"
+                      onClick={() => stopTimer(index)}
+                    >
+                      Stop
+                    </Button>
+                  </div>
+                ) : (
+                  <Button size="sm" onClick={() => startTimer(index)}>
+                    Start Task
+                  </Button>
+                )}
               </Card>
             </motion.div>
           ))}
         </div>
       </ScrollArea>
+
+      {/* Dialog xác nhận chuyển task */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Switch Task</DialogTitle>
+            <DialogDescription>
+              Do you want to stop the current task and switch to a new one?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleKeepCurrentTask}>
+              No
+            </Button>
+            <Button onClick={handleSwitchTask}>Yes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }
