@@ -16,6 +16,8 @@ import Settings from "./pages/Settings";
 import Marketplace from "./pages/player/marketplace/index.jsx";
 import TreeXPLog from "./pages/TreeXPLog";
 import UserXPLog from "./pages/UserXPLog";
+import TaskPage from "./pages/player/task/index.jsx";
+import Footer from "./components/footer";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -27,21 +29,25 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={location.pathname}
-        variants={pageVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-      >
-        <Routes location={location}>
-          <Route path="/" element={<HeroPage />} />
-          <Route path="/home" element={<PlayerHome />} />
-          <Route path="/marketplace" element={<Marketplace />} />
-        </Routes>
-      </motion.div>
-    </AnimatePresence>
+    <>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={location.pathname}
+          variants={pageVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+        >
+          <Routes location={location}>
+            <Route path="/" element={<HeroPage />} />
+            <Route path="/home" element={<PlayerHome />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/task" element={<TaskPage />} />
+          </Routes>
+        </motion.div>
+      </AnimatePresence>
+      <Footer />
+    </>
   );
 }
 
