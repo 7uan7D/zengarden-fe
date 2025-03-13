@@ -6,6 +6,6 @@ export async function GetUserInfo(userId) {
 }
 
 export async function UpdateUserInfo(userData) {
-  const response = await axios.post(`/User/update-user`, userData);
+  const response = await axios.put(`/User/update-user`, userData);
   return response.data;
 }

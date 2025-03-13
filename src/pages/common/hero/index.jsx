@@ -143,39 +143,6 @@ export default function HeroPage() {
           <Toaster expand={true} />
         </Drawer>
       </div>
-
-      {/* <div className="cards">
-        <motion.div className="card" whileHover={{ scale: 1.05 }}>
-          <h2>📝</h2>
-          <h2>Doing Tasks</h2>
-          <img
-            src="/src/assets/images/tasks.png"
-            alt="Achievements"
-            className="card-img"
-          />
-          <p>Do the task and unlock tons of exciting milestones.</p>
-        </motion.div>
-        <motion.div className="card" whileHover={{ scale: 1.05 }}>
-          <h2>🌱</h2>
-          <h2>Grow Plants</h2>
-          <img
-            src="/src/assets/images/grow plants.png"
-            alt="Grow Plants"
-            className="card-img"
-          />
-          <p>Choose a plant and start nurturing your garden.</p>
-        </motion.div>
-        <motion.div className="card" whileHover={{ scale: 1.05 }}>
-          <h2>🌿</h2>
-          <h2>Relax</h2>
-          <img
-            src="/src/assets/images/relax.png"
-            alt="Relax"
-            className="card-img"
-          />
-          <p>Enjoy a peaceful experience with a soothing interface.</p>
-        </motion.div>
-      </div> */}
     </div>
   );
 }
