@@ -7,13 +7,18 @@ import PlayerHome from "./pages/player/home/index.jsx";
 import { Toaster } from "sonner";
 import Sidebar from "./components/common/Sidebar";
 import Overview from "./pages/Overview";
-import Products from "./pages/Products";
+import Items from "./pages/Items";
 import Users from "./pages/Users";
 import Sales from "./pages/Sales";
 import Orders from "./pages/Orders";
+import Analytics from "./pages/Analytics";
+import Settings from "./pages/Settings";
 import Marketplace from "./pages/player/marketplace/index.jsx";
+import TreeXPLog from "./pages/TreeXPLog";
+import UserXPLog from "./pages/UserXPLog";
 import TaskPage from "./pages/player/task/index.jsx";
 import Footer from "./components/footer";
+import Challenges from "./pages/player/challenges";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -39,6 +44,7 @@ function AnimatedRoutes() {
             <Route path="/home" element={<PlayerHome />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/task" element={<TaskPage />} />
+            <Route path="/challenges" element={<Challenges />} />
           </Routes>
         </motion.div>
       </AnimatePresence>
@@ -57,10 +63,14 @@ function AdminLayout() {
       <Sidebar />
       <Routes>
         <Route path="/overview" element={<Overview />} />
-        <Route path="/products" element={<Products />} />
         <Route path="/users" element={<Users />} />
+        <Route path="/items" element={<Items />} />
+        <Route path="/userXPLog" element={<UserXPLog />} />
+        <Route path="/treeXPLog" element={<TreeXPLog />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </div>
   );
@@ -70,10 +80,14 @@ function ConditionalRoutes() {
   const location = useLocation();
   const isAdminRoute =
     location.pathname.startsWith("/overview") ||
-    location.pathname.startsWith("/products") ||
     location.pathname.startsWith("/users") ||
+    location.pathname.startsWith("/items") ||
+    location.pathname.startsWith("/userXPLog") ||
+    location.pathname.startsWith("/treeXPLog") ||
     location.pathname.startsWith("/sales") ||
-    location.pathname.startsWith("/orders");
+    location.pathname.startsWith("/orders") ||
+    location.pathname.startsWith("/analytics") ||
+    location.pathname.startsWith("/settings");
 
   return isAdminRoute ? <AdminLayout /> : <AnimatedRoutes />;
 }
