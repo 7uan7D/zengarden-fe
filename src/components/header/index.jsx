@@ -48,6 +48,8 @@ import { GetUserInfo } from "@/services/apiServices/userService";
 import { UpdateUserInfo } from "@/services/apiServices/userService";
 import { ChangePassword } from "@/services/apiServices/authService";
 import RegisterButton from "@/pages/common/hero/registerButton";
+import { Progress } from "@/components/ui/progress"; // Kiểm tra đường dẫn
+import { GetUserExperiencesInfo } from "@/services/apiServices/userExperienceService";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -64,6 +66,9 @@ const Header = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [openProfile, setProfileOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [xpToNextLevel, setXpToNextLevel] = useState(50);
+  const [walletBalance, setWalletBalance] = useState(0);
+
   const [editUser, setEditUser] = useState({
     userName: "",
     email: "",
@@ -71,6 +76,8 @@ const Header = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [totalXp, setTotalXp] = useState(0);
+  const [levelId, setLevelId] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -81,6 +88,47 @@ const Header = () => {
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const decoded = parseJwt(token);
+    const userId = decoded?.sub;
+    if (!userId) return;
+
+    GetUserInfo(userId)
+      .then((data) => {
+        setUser(data);
+        setWalletBalance(data.wallet?.balance || 0); // Lấy balance từ user info luôn
+      })
+      .catch((error) => console.log("Failed to load user:", error));
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = parseJwt(token);
+      const userId = decoded?.sub;
+
+      if (userId) {
+        GetUserInfo(userId)
+          .then((data) => {
+            setUser(data);
+          })
+          .catch((error) => console.log("Failed to load user:", error));
+
+        GetUserExperiencesInfo(userId)
+          .then(({ totalXp, levelId }) => {
+            setTotalXp(totalXp);
+            setLevelId(levelId);
+          })
+          .catch((error) =>
+            console.log("Failed to load user experience:", error)
+          );
+      }
+    }
   }, []);
   // Login
   useEffect(() => {
@@ -275,33 +323,73 @@ const Header = () => {
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center">
           {isLoggedIn ? (
             <>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Avatar className="cursor-pointer">
-                    <AvatarImage
-                      src="https://github.com/shadcn.png"
-                      alt="@shadcn"
+              <div className="flex items-center gap-3">
+                {/* Tên người dùng */}
+                <div className="flex flex-col text-sm">
+                  {" "}
+                  {/* Giảm kích thước tổng thể */}
+                  <h2 className="text-base font-bold text-gray-800">
+                    {" "}
+                    {/* Giảm từ text-xl xuống base */}
+                    {user?.userName || "Guest"}
+                  </h2>
+                  {/* Level & Progress Bar */}
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {" "}
+                    {/* Giảm khoảng cách */}
+                    <span className="text-xs font-semibold text-gray-700">
+                      {" "}
+                      {/* Giảm size chữ */}
+                      Level {levelId}
+                    </span>
+                    <Progress
+                      value={(totalXp / xpToNextLevel) * 100}
+                      className="w-24 h-1.5"
                     />
-                    <AvatarFallback>CN</AvatarFallback>
-                  </Avatar>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setProfileOpen(true)}>
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => console.log("Settings clicked")}
-                  >
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className="text-red-500"
-                  >
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <span className="text-xs text-gray-500">
+                      {totalXp} / {xpToNextLevel} XP
+                    </span>
+                  </div>
+                  {/* Coin trong Wallet */}
+                  <div className="mt-0.5 text-xs text-gray-600 flex items-center gap-0.5">
+                    Coins:{" "}
+                    <span className="font-semibold">{walletBalance ?? 0}</span>
+                  </div>
+                </div>
+
+                {/* Avatar + Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Avatar className="cursor-pointer">
+                      <AvatarImage
+                        src={user?.imageUrl || "https://github.com/shadcn.png"}
+                        alt="User Avatar"
+                      />
+                      <AvatarFallback>
+                        {user?.userName
+                          ? user.userName.charAt(0).toUpperCase()
+                          : "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setProfileOpen(true)}>
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => console.log("Settings clicked")}
+                    >
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="text-red-500"
+                    >
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
               {/* Dialog chứa Tabs */}
               <Dialog open={openProfile} onOpenChange={setProfileOpen}>
@@ -591,10 +679,14 @@ const Header = () => {
                   <DropdownMenuTrigger asChild>
                     <Avatar className="cursor-pointer">
                       <AvatarImage
-                        src="https://github.com/shadcn.png"
-                        alt="@shadcn"
+                        src={user?.imageUrl || "https://github.com/shadcn.png"}
+                        alt="User Avatar"
                       />
-                      <AvatarFallback>CN</AvatarFallback>
+                      <AvatarFallback>
+                        {user?.userName
+                          ? user.userName.charAt(0).toUpperCase()
+                          : "U"}
+                      </AvatarFallback>
                     </Avatar>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="center">
