@@ -41,6 +41,10 @@ const challengesData = [
         reward: 42,
         creator: "Red Cross",
         startDate: "2021-09-01",
+        types: [
+            "Survey",
+            "Research",
+        ],
         description:
             "Participate in short surveys 📓 to contribute to important research and earn rewards. Help make a difference while getting paid!",
     },
@@ -50,6 +54,10 @@ const challengesData = [
         reward: 71,
         creator: "Blue Sky",
         startDate: "2021-09-01",
+        types: [
+            "Health",
+            "Wellness",
+        ],
         description:
             "Boost your energy, focus, and health by drinking enough water every day! Stay refreshed and feel your best. 🌊💙",
     },
@@ -59,6 +67,10 @@ const challengesData = [
         reward: 66,
         creator: "Yellow",
         startDate: "2021-09-01",
+        types: [
+            "Happiness",
+            "Wellness",
+        ],
         description:
             "Embark on a happiness adventure where you complete daily missions to boost your mood, spread positivity, and build lasting joy. Happiness is a skill—let’s level it up! 🌈🚀",
     },
@@ -68,6 +80,10 @@ const challengesData = [
         reward: 51,
         creator: "Ollivander",
         startDate: "2021-09-01",
+        types: [
+            "Entertainment",
+            "Film",
+        ],
         description:
             "Watch the selected movie of the week and engage in discussions with other participants. Expand your cinematic horizons and connect with fellow film enthusiasts.",
     },
@@ -114,13 +130,13 @@ export default function Challenges() {
                 <div className="flex-1 p-6 overflow-auto">
                     <h1 className="text-2xl font-bold mb-4">Challenges</h1>
 
-                    <div className="flex justify-between items-center mb-4">
+                    {/* <div className="flex justify-between items-center mb-4">
                         <p/>
                         <Button className="bg-green-600 text-white hover:bg-green-700">
                             <Plus className="h-4 w-4" />
                             Create Challenges
                         </Button>
-                    </div>
+                    </div> */}
 
                     <Tabs defaultValue={categories[0]}>
                         <TabsList className="mb-4">
@@ -194,6 +210,15 @@ export default function Challenges() {
                                                                 <p className="text-sm text-gray-500 flex items-center">
                                                                     Start Date: 
                                                                     <span className="font-bold ml-1">2021-09-01</span>
+                                                                </p>
+                                                                    
+
+                                                                <p className="text-sm text-gray-500 flex items-center">
+                                                                    Types: {item.types.map((type) => (
+                                                                        <span key={type} className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs ml-1">
+                                                                            {type}
+                                                                        </span>
+                                                                    ))}
                                                                 </p>
                                                                 
                                                                 <p className="text-sm text-gray-500 flex items-center text-left">
