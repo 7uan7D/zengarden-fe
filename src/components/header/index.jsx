@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sheet,
@@ -48,7 +48,7 @@ import { GetUserInfo } from "@/services/apiServices/userService";
 import { UpdateUserInfo } from "@/services/apiServices/userService";
 import { ChangePassword } from "@/services/apiServices/authService";
 import RegisterButton from "@/pages/common/hero/registerButton";
-import { Progress } from "@/components/ui/progress"; // Kiểm tra đường dẫn
+import { Progress } from "@/components/ui/progress";
 import { GetUserExperiencesInfo } from "@/services/apiServices/userExperienceService";
 
 const Header = () => {
@@ -63,12 +63,12 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [usePhone, setUsePhone] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [openProfile, setProfileOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [xpToNextLevel, setXpToNextLevel] = useState(50);
   const [walletBalance, setWalletBalance] = useState(0);
-
   const [editUser, setEditUser] = useState({
     userName: "",
     email: "",
@@ -78,7 +78,13 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [totalXp, setTotalXp] = useState(0);
   const [levelId, setLevelId] = useState(null);
-
+  const navItems = [
+    { path: "/task", label: "Tasks" },
+    { path: "/tree", label: "Trees" },
+    { path: "/calendar", label: "Calendar" },
+    { path: "/marketplace", label: "Marketplace" },
+    { path: "/challenges", label: "Challenges" },
+  ];
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -101,7 +107,7 @@ const Header = () => {
     GetUserInfo(userId)
       .then((data) => {
         setUser(data);
-        setWalletBalance(data.wallet?.balance || 0); // Lấy balance từ user info luôn
+        setWalletBalance(data.wallet?.balance || 0);
       })
       .catch((error) => console.log("Failed to load user:", error));
   }, []);
@@ -298,25 +304,21 @@ const Header = () => {
 
         {/* Desktop Menu */}
         <div className="hidden lg:flex lg:gap-x-12">
-          <a href="/task" className="text-sm font-semibold text-gray-900">
-            Tasks
-          </a>
-          <a href="/tree" className="text-sm font-semibold text-gray-900">
-            Trees
-          </a>
-
-          <a href="/calendar" className="text-sm font-semibold text-gray-900">
-            Calendar
-          </a>
-          <a
-            href="/marketplace"
-            className="text-sm font-semibold text-gray-900"
-          >
-            Marketplace
-          </a>
-          <a href="/challenges" className="text-sm font-semibold text-gray-900">
-            Challenges
-          </a>
+          <nav className="hidden lg:flex lg:gap-x-12">
+            {navItems.map((item) => (
+              <div
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={`text-sm font-semibold cursor-pointer transition-colors duration-200 ${
+                  location.pathname === item.path
+                    ? "text-green-600 font-bold"
+                    : "text-gray-900 hover:text-green-600"
+                }`}
+              >
+                {item.label}
+              </div>
+            ))}
+          </nav>
         </div>
 
         {/* Login Button */}
@@ -351,8 +353,12 @@ const Header = () => {
                     </span>
                   </div>
                   {/* Coin trong Wallet */}
-                  <div className="mt-0.5 text-xs text-gray-600 flex items-center gap-0.5">
-                    Coins:{" "}
+                  <div className="mt-0.5 text-xs text-gray-600 flex items-center gap-1">
+                    <img
+                      src="/src/assets/images/coin.png"
+                      alt="Coin"
+                      className="w-4 h-4"
+                    />
                     <span className="font-semibold">{walletBalance ?? 0}</span>
                   </div>
                 </div>
@@ -646,30 +652,21 @@ const Header = () => {
           </button>
 
           {/* Các link menu */}
-          <a
-            href="#"
-            className="block py-2 text-sm font-semibold text-gray-900"
-          >
-            Homepage
-          </a>
-          <a
-            href="#"
-            className="block py-2 text-sm font-semibold text-gray-900"
-          >
-            Features
-          </a>
-          <a
-            href="#"
-            className="block py-2 text-sm font-semibold text-gray-900"
-          >
-            Marketplace
-          </a>
-          <a
-            href="#"
-            className="block py-2 text-sm font-semibold text-gray-900"
-          >
-            Company
-          </a>
+          <div className="lg:hidden">
+            {navItems.map((item) => (
+              <a
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={`block py-2 text-sm font-semibold transition-colors duration-200 ${
+                  location.pathname === item.path
+                    ? "text-green-600 font-bold"
+                    : "text-gray-900 hover:text-green-600"
+                }`}
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
 
           {/* Avatar & Farmer Certified Badge */}
           <div className="mt-6 flex flex-col items-center gap-4">
