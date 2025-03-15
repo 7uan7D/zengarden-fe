@@ -25,7 +25,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +86,12 @@ const Header = () => {
       title: "New Password",
       description: "Enter your new password.",
     },
+  };
+
+  const stepVariants = {
+    initial: { opacity: 0, x: 50 }, // Bắt đầu từ bên phải
+    animate: { opacity: 1, x: 0, transition: { duration: 0.3 } }, // Hiển thị mượt mà
+    exit: { opacity: 0, x: -50, transition: { duration: 0.2 } }, // Rời đi sang trái
   };
 
   const [error, setError] = useState("");
@@ -650,161 +656,190 @@ const Header = () => {
                   </SheetDescription>
                 </SheetHeader>
 
-                {step === "login" && (
-                  <form onSubmit={handleLogin}>
-                    {/* Chọn đăng nhập bằng email hoặc số điện thoại */}
-                    <div className="flex items-center justify-between py-2">
-                      <span>Use Phone Number</span>
-                      <Switch
-                        checked={usePhone}
-                        onCheckedChange={setUsePhone}
-                      />
-                    </div>
-
-                    {/* Ô nhập Email hoặc Phone */}
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label
-                          htmlFor={usePhone ? "phone" : "email"}
-                          className="text-right"
-                        >
-                          {usePhone ? "Phone Number" : "Email"}
-                        </Label>
-                        <Input
-                          id={usePhone ? "phone" : "email"}
-                          type={usePhone ? "tel" : "email"}
-                          placeholder={
-                            usePhone ? "0123456789" : "example@email.com"
-                          }
-                          className="col-span-3"
-                          value={
-                            usePhone ? credentials.phone : credentials.email
-                          }
-                          onChange={(e) =>
-                            setCredentials({
-                              ...credentials,
-                              [usePhone ? "phone" : "email"]: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-
-                      {/* Ô nhập mật khẩu */}
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="password" className="text-right">
-                          Password
-                        </Label>
-                        <Input
-                          id="password"
-                          type="password"
-                          placeholder="••••••••"
-                          className="col-span-3"
-                          value={credentials.password}
-                          onChange={(e) =>
-                            setCredentials({
-                              ...credentials,
-                              password: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    {error && <p className="text-red-500 text-sm">{error}</p>}
-
-                    <SheetFooter>
-                      <Button type="submit" disabled={isLoading}>
-                        Login
-                      </Button>
-                    </SheetFooter>
-
-                    <div className="flex justify-end mt-2">
-                      <span
-                        className="text-sm text-green-600 cursor-pointer"
-                        onClick={() => setStep("forgot")}
-                      >
-                        Forgot Password?
-                      </span>
-                    </div>
-
-                    {/* Nút đăng ký */}
-                    <div className="mt-4 text-left text-sm text-gray-500">
-                      <RegisterButton isOpen={isOpen} setIsOpen={setIsOpen} />
-                    </div>
-                  </form>
-                )}
-
-                {/* Form quên mật khẩu */}
-                {step === "forgot" && (
-                  <div className="grid gap-4">
-                    <Label>Email</Label>
-                    <Input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                    <SheetFooter>
-                      <Button
-                        onClick={handleForgotPassword}
-                        disabled={isLoading}
-                      >
-                        Send OTP
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setStep("login")}
-                      >
-                        Back to Login
-                      </Button>
-                    </SheetFooter>
-                  </div>
-                )}
-
-                {step === "otp" && (
-                  <div className="grid gap-4">
-                    <Label>OTP</Label>
-                    <InputOTP
-                      maxLength={6}
-                      value={otp}
-                      onChange={setOtp}
-                      autoFocus
-                      pattern={REGEXP_ONLY_DIGITS_AND_CHARS} // Bổ sung pattern để đúng chuẩn nhập OTP
-                      className="flex justify-center gap-2"
+                <AnimatePresence mode="wait">
+                  {step === "login" && (
+                    <motion.div
+                      key="login"
+                      variants={stepVariants}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
                     >
-                      <InputOTPGroup>
-                        {[...Array(6)].map((_, i) => (
-                          <InputOTPSlot key={i} index={i} />
-                        ))}
-                      </InputOTPGroup>
-                    </InputOTP>
+                      <form onSubmit={handleLogin}>
+                        <div className="flex items-center justify-between py-2">
+                          <span>Use Phone Number</span>
+                          <Switch
+                            checked={usePhone}
+                            onCheckedChange={setUsePhone}
+                          />
+                        </div>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label
+                              htmlFor={usePhone ? "phone" : "email"}
+                              className="text-right"
+                            >
+                              {usePhone ? "Phone Number" : "Email"}
+                            </Label>
+                            <Input
+                              id={usePhone ? "phone" : "email"}
+                              type={usePhone ? "tel" : "email"}
+                              placeholder={
+                                usePhone ? "0123456789" : "example@email.com"
+                              }
+                              className="col-span-3"
+                              value={
+                                usePhone ? credentials.phone : credentials.email
+                              }
+                              onChange={(e) =>
+                                setCredentials({
+                                  ...credentials,
+                                  [usePhone ? "phone" : "email"]:
+                                    e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="password" className="text-right">
+                              Password
+                            </Label>
+                            <Input
+                              id="password"
+                              type="password"
+                              placeholder="••••••••"
+                              className="col-span-3"
+                              value={credentials.password}
+                              onChange={(e) =>
+                                setCredentials({
+                                  ...credentials,
+                                  password: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                        </div>
+                        {error && (
+                          <p className="text-red-500 text-sm">{error}</p>
+                        )}
+                        <SheetFooter>
+                          <Button type="submit" disabled={isLoading}>
+                            Login
+                          </Button>
+                        </SheetFooter>
+                        <div className="flex justify-end mt-2">
+                          <span
+                            className="text-sm text-green-600 cursor-pointer"
+                            onClick={() => setStep("forgot")}
+                          >
+                            Forgot Password?
+                          </span>
+                        </div>
+                        <div className="mt-4 text-left text-sm text-gray-500">
+                          <RegisterButton
+                            isOpen={isOpen}
+                            setIsOpen={setIsOpen}
+                          />
+                        </div>
+                      </form>
+                    </motion.div>
+                  )}
 
-                    <SheetFooter>
-                      <Button onClick={handleVerifyOTP} disabled={isLoading}>
-                        Verify OTP
-                      </Button>
-                    </SheetFooter>
-                  </div>
-                )}
+                  {step === "forgot" && (
+                    <motion.div
+                      key="forgot"
+                      variants={stepVariants}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                    >
+                      <div className="grid gap-4">
+                        <Label>Email</Label>
+                        <Input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                        <SheetFooter>
+                          <Button
+                            onClick={handleForgotPassword}
+                            disabled={isLoading}
+                          >
+                            Send OTP
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setStep("login")}
+                          >
+                            Back to Login
+                          </Button>
+                        </SheetFooter>
+                      </div>
+                    </motion.div>
+                  )}
 
-                {/* Nhập mật khẩu mới */}
-                {step === "new-password" && (
-                  <div className="grid gap-4">
-                    <Label>New Password</Label>
-                    <Input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                    />
-                    <SheetFooter>
-                      <Button
-                        onClick={handleResetPassword}
-                        disabled={isLoading}
-                      >
-                        Reset Password
-                      </Button>
-                    </SheetFooter>
-                  </div>
-                )}
+                  {step === "otp" && (
+                    <motion.div
+                      key="otp"
+                      variants={stepVariants}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                    >
+                      <div className="grid gap-4">
+                        <Label>OTP</Label>
+                        <InputOTP
+                          maxLength={6}
+                          value={otp}
+                          onChange={setOtp}
+                          autoFocus
+                          className="flex justify-center gap-2"
+                        >
+                          <InputOTPGroup>
+                            {[...Array(6)].map((_, i) => (
+                              <InputOTPSlot key={i} index={i} />
+                            ))}
+                          </InputOTPGroup>
+                        </InputOTP>
+                        <SheetFooter>
+                          <Button
+                            onClick={handleVerifyOTP}
+                            disabled={isLoading}
+                          >
+                            Verify OTP
+                          </Button>
+                        </SheetFooter>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {step === "new-password" && (
+                    <motion.div
+                      key="new-password"
+                      variants={stepVariants}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                    >
+                      <div className="grid gap-4">
+                        <Label>New Password</Label>
+                        <Input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                        />
+                        <SheetFooter>
+                          <Button
+                            onClick={handleResetPassword}
+                            disabled={isLoading}
+                          >
+                            Reset Password
+                          </Button>
+                        </SheetFooter>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </SheetContent>
             </Sheet>
           )}
