@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sheet,
@@ -25,7 +25,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,8 +48,18 @@ import { GetUserInfo } from "@/services/apiServices/userService";
 import { UpdateUserInfo } from "@/services/apiServices/userService";
 import { ChangePassword } from "@/services/apiServices/authService";
 import RegisterButton from "@/pages/common/hero/registerButton";
-import { Progress } from "@/components/ui/progress"; // Kiểm tra đường dẫn
+import { Progress } from "@/components/ui/progress";
 import { GetUserExperiencesInfo } from "@/services/apiServices/userExperienceService";
+import {
+  ForgotPassword,
+  ResetPassword,
+} from "@/services/apiServices/authService";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  REGEXP_ONLY_DIGITS_AND_CHARS,
+} from "@/components/ui/input-otp";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -59,16 +69,41 @@ const Header = () => {
     phone: "",
     password: "",
   });
+  const stepConfig = {
+    login: {
+      title: "Login",
+      description: "Sign in to manage your ZenGarden.",
+    },
+    forgot: {
+      title: "Forgot Password",
+      description: "Enter your email to reset password.",
+    },
+    otp: {
+      title: "Enter OTP",
+      description: "Enter the OTP sent to your email.",
+    },
+    "new-password": {
+      title: "New Password",
+      description: "Enter your new password.",
+    },
+  };
+
+  const stepVariants = {
+    initial: { opacity: 0, x: 50 }, // Bắt đầu từ bên phải
+    animate: { opacity: 1, x: 0, transition: { duration: 0.3 } }, // Hiển thị mượt mà
+    exit: { opacity: 0, x: -50, transition: { duration: 0.2 } }, // Rời đi sang trái
+  };
+
   const [error, setError] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [usePhone, setUsePhone] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [openProfile, setProfileOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [xpToNextLevel, setXpToNextLevel] = useState(50);
   const [walletBalance, setWalletBalance] = useState(0);
-
   const [editUser, setEditUser] = useState({
     userName: "",
     email: "",
@@ -77,8 +112,60 @@ const Header = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [totalXp, setTotalXp] = useState(0);
+  const [step, setStep] = useState("login");
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [levelId, setLevelId] = useState(null);
+  const navItems = [
+    { path: "/task", label: "Tasks" },
+    { path: "/tree", label: "Trees" },
+    { path: "/calendar", label: "Calendar" },
+    { path: "/marketplace", label: "Marketplace" },
+    { path: "/challenges", label: "Challenges" },
+  ];
+  //Forgot Password
+  const handleForgotPassword = async () => {
+    if (!email) return toast.error("Please enter your email!");
 
+    try {
+      await ForgotPassword(email);
+      toast.success("OTP has been sent to your email.");
+      setStep("otp"); // Chuyển sang bước nhập OTP
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to send OTP. Try again!"
+      );
+    }
+  };
+
+  // 🚀 Xác thực OTP (Bước này cần API riêng để kiểm tra OTP, nếu BE không có thì bỏ qua)
+  const handleVerifyOTP = async () => {
+    if (!otp) return toast.error("Please enter OTP!");
+
+    try {
+      // Nếu BE có API riêng để verify OTP thì gọi ở đây, nếu không thì bỏ qua bước này
+      toast.success("OTP verified!");
+      setStep("new-password"); // Chuyển sang bước nhập mật khẩu mới
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Invalid OTP. Try again!");
+    }
+  };
+
+  // 🚀 Đặt lại mật khẩu mới
+  const handleResetPassword = async () => {
+    if (!newPassword) return toast.error("Please enter a new password!");
+    if (!otp) return toast.error("Please enter OTP!"); // OTP cần có để reset password
+
+    try {
+      await ResetPassword(email, otp, newPassword);
+      toast.success("Password reset successful. Please login.");
+      setStep("login"); // Chuyển về màn hình đăng nhập
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to reset password!");
+    }
+  };
+  //Scroll header logic
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -101,7 +188,7 @@ const Header = () => {
     GetUserInfo(userId)
       .then((data) => {
         setUser(data);
-        setWalletBalance(data.wallet?.balance || 0); // Lấy balance từ user info luôn
+        setWalletBalance(data.wallet?.balance || 0);
       })
       .catch((error) => console.log("Failed to load user:", error));
   }, []);
@@ -298,25 +385,21 @@ const Header = () => {
 
         {/* Desktop Menu */}
         <div className="hidden lg:flex lg:gap-x-12">
-          <a href="/task" className="text-sm font-semibold text-gray-900">
-            Tasks
-          </a>
-          <a href="/tree" className="text-sm font-semibold text-gray-900">
-            Trees
-          </a>
-
-          <a href="/calendar" className="text-sm font-semibold text-gray-900">
-            Calendar
-          </a>
-          <a
-            href="/marketplace"
-            className="text-sm font-semibold text-gray-900"
-          >
-            Marketplace
-          </a>
-          <a href="/challenges" className="text-sm font-semibold text-gray-900">
-            Challenges
-          </a>
+          <nav className="hidden lg:flex lg:gap-x-12">
+            {navItems.map((item) => (
+              <div
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={`text-sm font-semibold cursor-pointer transition-colors duration-200 ${
+                  location.pathname === item.path
+                    ? "text-green-600 font-bold"
+                    : "text-gray-900 hover:text-green-600"
+                }`}
+              >
+                {item.label}
+              </div>
+            ))}
+          </nav>
         </div>
 
         {/* Login Button */}
@@ -351,8 +434,12 @@ const Header = () => {
                     </span>
                   </div>
                   {/* Coin trong Wallet */}
-                  <div className="mt-0.5 text-xs text-gray-600 flex items-center gap-0.5">
-                    Coins:{" "}
+                  <div className="mt-0.5 text-xs text-gray-600 flex items-center gap-1">
+                    <img
+                      src="/src/assets/images/coin.png"
+                      alt="Coin"
+                      className="w-4 h-4"
+                    />
                     <span className="font-semibold">{walletBalance ?? 0}</span>
                   </div>
                 </div>
@@ -563,71 +650,196 @@ const Header = () => {
               </SheetTrigger>
               <SheetContent>
                 <SheetHeader>
-                  <SheetTitle>Login</SheetTitle>
+                  <SheetTitle>{stepConfig[step]?.title}</SheetTitle>
                   <SheetDescription>
-                    Sign in to manage your ZenGarden.
+                    {stepConfig[step]?.description}
                   </SheetDescription>
                 </SheetHeader>
 
-                <form onSubmit={handleLogin}>
-                  <div className="flex items-center justify-between py-2">
-                    <span>Use Phone Number</span>
-                    <Switch checked={usePhone} onCheckedChange={setUsePhone} />
-                  </div>
+                <AnimatePresence mode="wait">
+                  {step === "login" && (
+                    <motion.div
+                      key="login"
+                      variants={stepVariants}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                    >
+                      <form onSubmit={handleLogin}>
+                        <div className="flex items-center justify-between py-2">
+                          <span>Use Phone Number</span>
+                          <Switch
+                            checked={usePhone}
+                            onCheckedChange={setUsePhone}
+                          />
+                        </div>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label
+                              htmlFor={usePhone ? "phone" : "email"}
+                              className="text-right"
+                            >
+                              {usePhone ? "Phone Number" : "Email"}
+                            </Label>
+                            <Input
+                              id={usePhone ? "phone" : "email"}
+                              type={usePhone ? "tel" : "email"}
+                              placeholder={
+                                usePhone ? "0123456789" : "example@email.com"
+                              }
+                              className="col-span-3"
+                              value={
+                                usePhone ? credentials.phone : credentials.email
+                              }
+                              onChange={(e) =>
+                                setCredentials({
+                                  ...credentials,
+                                  [usePhone ? "phone" : "email"]:
+                                    e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="password" className="text-right">
+                              Password
+                            </Label>
+                            <Input
+                              id="password"
+                              type="password"
+                              placeholder="••••••••"
+                              className="col-span-3"
+                              value={credentials.password}
+                              onChange={(e) =>
+                                setCredentials({
+                                  ...credentials,
+                                  password: e.target.value,
+                                })
+                              }
+                            />
+                          </div>
+                        </div>
+                        {error && (
+                          <p className="text-red-500 text-sm">{error}</p>
+                        )}
+                        <SheetFooter>
+                          <Button type="submit" disabled={isLoading}>
+                            Login
+                          </Button>
+                        </SheetFooter>
+                        <div className="flex justify-end mt-2">
+                          <span
+                            className="text-sm text-green-600 cursor-pointer"
+                            onClick={() => setStep("forgot")}
+                          >
+                            Forgot Password?
+                          </span>
+                        </div>
+                        <div className="mt-4 text-left text-sm text-gray-500">
+                          <RegisterButton
+                            isOpen={isOpen}
+                            setIsOpen={setIsOpen}
+                          />
+                        </div>
+                      </form>
+                    </motion.div>
+                  )}
 
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor={usePhone ? "phone" : "email"}
-                        className="text-right"
-                      >
-                        {usePhone ? "Phone Number" : "Email"}
-                      </Label>
-                      <Input
-                        id={usePhone ? "phone" : "email"}
-                        type={usePhone ? "tel" : "email"}
-                        placeholder={
-                          usePhone ? "0123456789" : "example@email.com"
-                        }
-                        className="col-span-3"
-                        value={usePhone ? credentials.phone : credentials.email}
-                        onChange={(e) =>
-                          setCredentials({
-                            ...credentials,
-                            [usePhone ? "phone" : "email"]: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="password" className="text-right">
-                        Password
-                      </Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        className="col-span-3"
-                        value={credentials.password}
-                        onChange={(e) =>
-                          setCredentials({
-                            ...credentials,
-                            password: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
+                  {step === "forgot" && (
+                    <motion.div
+                      key="forgot"
+                      variants={stepVariants}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                    >
+                      <div className="grid gap-4">
+                        <Label>Email</Label>
+                        <Input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                        <SheetFooter>
+                          <Button
+                            onClick={handleForgotPassword}
+                            disabled={isLoading}
+                          >
+                            Send OTP
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setStep("login")}
+                          >
+                            Back to Login
+                          </Button>
+                        </SheetFooter>
+                      </div>
+                    </motion.div>
+                  )}
 
-                  {error && <p className="text-red-500 text-sm">{error}</p>}
+                  {step === "otp" && (
+                    <motion.div
+                      key="otp"
+                      variants={stepVariants}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                    >
+                      <div className="grid gap-4">
+                        <Label>OTP</Label>
+                        <InputOTP
+                          maxLength={6}
+                          value={otp}
+                          onChange={setOtp}
+                          autoFocus
+                          className="flex justify-center gap-2"
+                        >
+                          <InputOTPGroup>
+                            {[...Array(6)].map((_, i) => (
+                              <InputOTPSlot key={i} index={i} />
+                            ))}
+                          </InputOTPGroup>
+                        </InputOTP>
+                        <SheetFooter>
+                          <Button
+                            onClick={handleVerifyOTP}
+                            disabled={isLoading}
+                          >
+                            Verify OTP
+                          </Button>
+                        </SheetFooter>
+                      </div>
+                    </motion.div>
+                  )}
 
-                  <SheetFooter>
-                    <Button type="submit">Login</Button>
-                  </SheetFooter>
-                  <div className="mt-4 text-left text-sm text-gray-500">
-                    <RegisterButton isOpen={isOpen} setIsOpen={setIsOpen} />
-                  </div>
-                </form>
+                  {step === "new-password" && (
+                    <motion.div
+                      key="new-password"
+                      variants={stepVariants}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                    >
+                      <div className="grid gap-4">
+                        <Label>New Password</Label>
+                        <Input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                        />
+                        <SheetFooter>
+                          <Button
+                            onClick={handleResetPassword}
+                            disabled={isLoading}
+                          >
+                            Reset Password
+                          </Button>
+                        </SheetFooter>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </SheetContent>
             </Sheet>
           )}
@@ -646,30 +858,21 @@ const Header = () => {
           </button>
 
           {/* Các link menu */}
-          <a
-            href="#"
-            className="block py-2 text-sm font-semibold text-gray-900"
-          >
-            Homepage
-          </a>
-          <a
-            href="#"
-            className="block py-2 text-sm font-semibold text-gray-900"
-          >
-            Features
-          </a>
-          <a
-            href="#"
-            className="block py-2 text-sm font-semibold text-gray-900"
-          >
-            Marketplace
-          </a>
-          <a
-            href="#"
-            className="block py-2 text-sm font-semibold text-gray-900"
-          >
-            Company
-          </a>
+          <div className="lg:hidden">
+            {navItems.map((item) => (
+              <a
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={`block py-2 text-sm font-semibold transition-colors duration-200 ${
+                  location.pathname === item.path
+                    ? "text-green-600 font-bold"
+                    : "text-gray-900 hover:text-green-600"
+                }`}
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
 
           {/* Avatar & Farmer Certified Badge */}
           <div className="mt-6 flex flex-col items-center gap-4">
