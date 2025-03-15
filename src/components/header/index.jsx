@@ -50,6 +50,16 @@ import { ChangePassword } from "@/services/apiServices/authService";
 import RegisterButton from "@/pages/common/hero/registerButton";
 import { Progress } from "@/components/ui/progress";
 import { GetUserExperiencesInfo } from "@/services/apiServices/userExperienceService";
+import {
+  ForgotPassword,
+  ResetPassword,
+} from "@/services/apiServices/authService";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  REGEXP_ONLY_DIGITS_AND_CHARS,
+} from "@/components/ui/input-otp";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -59,6 +69,25 @@ const Header = () => {
     phone: "",
     password: "",
   });
+  const stepConfig = {
+    login: {
+      title: "Login",
+      description: "Sign in to manage your ZenGarden.",
+    },
+    forgot: {
+      title: "Forgot Password",
+      description: "Enter your email to reset password.",
+    },
+    otp: {
+      title: "Enter OTP",
+      description: "Enter the OTP sent to your email.",
+    },
+    "new-password": {
+      title: "New Password",
+      description: "Enter your new password.",
+    },
+  };
+
   const [error, setError] = useState("");
   const [isScrolled, setIsScrolled] = useState(false);
   const [usePhone, setUsePhone] = useState(false);
@@ -77,6 +106,10 @@ const Header = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [totalXp, setTotalXp] = useState(0);
+  const [step, setStep] = useState("login");
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [levelId, setLevelId] = useState(null);
   const navItems = [
     { path: "/task", label: "Tasks" },
@@ -85,6 +118,48 @@ const Header = () => {
     { path: "/marketplace", label: "Marketplace" },
     { path: "/challenges", label: "Challenges" },
   ];
+  //Forgot Password
+  const handleForgotPassword = async () => {
+    if (!email) return toast.error("Please enter your email!");
+
+    try {
+      await ForgotPassword(email);
+      toast.success("OTP has been sent to your email.");
+      setStep("otp"); // Chuyển sang bước nhập OTP
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to send OTP. Try again!"
+      );
+    }
+  };
+
+  // 🚀 Xác thực OTP (Bước này cần API riêng để kiểm tra OTP, nếu BE không có thì bỏ qua)
+  const handleVerifyOTP = async () => {
+    if (!otp) return toast.error("Please enter OTP!");
+
+    try {
+      // Nếu BE có API riêng để verify OTP thì gọi ở đây, nếu không thì bỏ qua bước này
+      toast.success("OTP verified!");
+      setStep("new-password"); // Chuyển sang bước nhập mật khẩu mới
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Invalid OTP. Try again!");
+    }
+  };
+
+  // 🚀 Đặt lại mật khẩu mới
+  const handleResetPassword = async () => {
+    if (!newPassword) return toast.error("Please enter a new password!");
+    if (!otp) return toast.error("Please enter OTP!"); // OTP cần có để reset password
+
+    try {
+      await ResetPassword(email, otp, newPassword);
+      toast.success("Password reset successful. Please login.");
+      setStep("login"); // Chuyển về màn hình đăng nhập
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to reset password!");
+    }
+  };
+  //Scroll header logic
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -569,71 +644,167 @@ const Header = () => {
               </SheetTrigger>
               <SheetContent>
                 <SheetHeader>
-                  <SheetTitle>Login</SheetTitle>
+                  <SheetTitle>{stepConfig[step]?.title}</SheetTitle>
                   <SheetDescription>
-                    Sign in to manage your ZenGarden.
+                    {stepConfig[step]?.description}
                   </SheetDescription>
                 </SheetHeader>
 
-                <form onSubmit={handleLogin}>
-                  <div className="flex items-center justify-between py-2">
-                    <span>Use Phone Number</span>
-                    <Switch checked={usePhone} onCheckedChange={setUsePhone} />
-                  </div>
+                {step === "login" && (
+                  <form onSubmit={handleLogin}>
+                    {/* Chọn đăng nhập bằng email hoặc số điện thoại */}
+                    <div className="flex items-center justify-between py-2">
+                      <span>Use Phone Number</span>
+                      <Switch
+                        checked={usePhone}
+                        onCheckedChange={setUsePhone}
+                      />
+                    </div>
 
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label
-                        htmlFor={usePhone ? "phone" : "email"}
-                        className="text-right"
+                    {/* Ô nhập Email hoặc Phone */}
+                    <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label
+                          htmlFor={usePhone ? "phone" : "email"}
+                          className="text-right"
+                        >
+                          {usePhone ? "Phone Number" : "Email"}
+                        </Label>
+                        <Input
+                          id={usePhone ? "phone" : "email"}
+                          type={usePhone ? "tel" : "email"}
+                          placeholder={
+                            usePhone ? "0123456789" : "example@email.com"
+                          }
+                          className="col-span-3"
+                          value={
+                            usePhone ? credentials.phone : credentials.email
+                          }
+                          onChange={(e) =>
+                            setCredentials({
+                              ...credentials,
+                              [usePhone ? "phone" : "email"]: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+
+                      {/* Ô nhập mật khẩu */}
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="password" className="text-right">
+                          Password
+                        </Label>
+                        <Input
+                          id="password"
+                          type="password"
+                          placeholder="••••••••"
+                          className="col-span-3"
+                          value={credentials.password}
+                          onChange={(e) =>
+                            setCredentials({
+                              ...credentials,
+                              password: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {error && <p className="text-red-500 text-sm">{error}</p>}
+
+                    <SheetFooter>
+                      <Button type="submit" disabled={isLoading}>
+                        Login
+                      </Button>
+                    </SheetFooter>
+
+                    <div className="flex justify-end mt-2">
+                      <span
+                        className="text-sm text-green-600 cursor-pointer"
+                        onClick={() => setStep("forgot")}
                       >
-                        {usePhone ? "Phone Number" : "Email"}
-                      </Label>
-                      <Input
-                        id={usePhone ? "phone" : "email"}
-                        type={usePhone ? "tel" : "email"}
-                        placeholder={
-                          usePhone ? "0123456789" : "example@email.com"
-                        }
-                        className="col-span-3"
-                        value={usePhone ? credentials.phone : credentials.email}
-                        onChange={(e) =>
-                          setCredentials({
-                            ...credentials,
-                            [usePhone ? "phone" : "email"]: e.target.value,
-                          })
-                        }
-                      />
+                        Forgot Password?
+                      </span>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="password" className="text-right">
-                        Password
-                      </Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="••••••••"
-                        className="col-span-3"
-                        value={credentials.password}
-                        onChange={(e) =>
-                          setCredentials({
-                            ...credentials,
-                            password: e.target.value,
-                          })
-                        }
-                      />
+
+                    {/* Nút đăng ký */}
+                    <div className="mt-4 text-left text-sm text-gray-500">
+                      <RegisterButton isOpen={isOpen} setIsOpen={setIsOpen} />
                     </div>
-                  </div>
+                  </form>
+                )}
 
-                  {error && <p className="text-red-500 text-sm">{error}</p>}
-
-                  <SheetFooter>
-                    <Button type="submit">Login</Button>
-                  </SheetFooter>
-                  <div className="mt-4 text-left text-sm text-gray-500">
-                    <RegisterButton isOpen={isOpen} setIsOpen={setIsOpen} />
+                {/* Form quên mật khẩu */}
+                {step === "forgot" && (
+                  <div className="grid gap-4">
+                    <Label>Email</Label>
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                    <SheetFooter>
+                      <Button
+                        onClick={handleForgotPassword}
+                        disabled={isLoading}
+                      >
+                        Send OTP
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setStep("login")}
+                      >
+                        Back to Login
+                      </Button>
+                    </SheetFooter>
                   </div>
-                </form>
+                )}
+
+                {step === "otp" && (
+                  <div className="grid gap-4">
+                    <Label>OTP</Label>
+                    <InputOTP
+                      maxLength={6}
+                      value={otp}
+                      onChange={setOtp}
+                      autoFocus
+                      pattern={REGEXP_ONLY_DIGITS_AND_CHARS} // Bổ sung pattern để đúng chuẩn nhập OTP
+                      className="flex justify-center gap-2"
+                    >
+                      <InputOTPGroup>
+                        {[...Array(6)].map((_, i) => (
+                          <InputOTPSlot key={i} index={i} />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
+
+                    <SheetFooter>
+                      <Button onClick={handleVerifyOTP} disabled={isLoading}>
+                        Verify OTP
+                      </Button>
+                    </SheetFooter>
+                  </div>
+                )}
+
+                {/* Nhập mật khẩu mới */}
+                {step === "new-password" && (
+                  <div className="grid gap-4">
+                    <Label>New Password</Label>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    <SheetFooter>
+                      <Button
+                        onClick={handleResetPassword}
+                        disabled={isLoading}
+                      >
+                        Reset Password
+                      </Button>
+                    </SheetFooter>
+                  </div>
+                )}
               </SheetContent>
             </Sheet>
           )}

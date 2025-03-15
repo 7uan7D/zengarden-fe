@@ -18,5 +18,18 @@ export async function ChangePassword(credentials) {
       "Content-Type": "application/json",
     },
   });
+
+  return response.data;
+}
+export async function ForgotPassword(email) {
+  const response = await axios.post(`/Auth/forgot-password`, { email });
+  return response.data;
+}
+export async function ResetPassword(email, otp, newPassword) {
+  const response = await axios.post(`/Auth/reset-password`, {
+    email,
+    otp,
+    newPassword,
+  });
   return response.data;
 }
