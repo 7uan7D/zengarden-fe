@@ -1,5 +1,10 @@
 import axios from "../customizeAxios";
 
+export async function GetAllUsers() {
+  const response = await axios.get("/User");
+  return response.data;
+}
+
 export async function GetUserInfo(userId) {
   const response = await axios.get(`/User/${userId}`);
   return response.data;

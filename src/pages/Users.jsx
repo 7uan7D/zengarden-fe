@@ -7,14 +7,11 @@ import UsersTable from "@/components/users/UsersTable";
 import UserGrowthChart from "@/components/users/UserGrowthChart";
 import UserActivityHeatmap from "@/components/users/UserActivityHeatmap";
 import UserDemographicsChart from "@/components/users/UserDemographicsChart";
-// import UserGrowthChart from "../components/users/UserGrowthChart";
-// import UserActivityHeatmap from "../components/users/UserActivityHeatmap";
-// import UserDemographicsChart from "../components/users/UserDemographicsChart";
 
 const userStats = {
-    totalUsers: 152845,
-    newUsersToday: 243,
-    activeUsers: 98520,
+    totalUsers: 15,
+    newUsersToday: 3,
+    activeUsers: 12,
     churnRate: "2.4%",
 };
 

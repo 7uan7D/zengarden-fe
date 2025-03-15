@@ -1,26 +1,36 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Search } from "lucide-react"
-
-const userData = [
-    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Customer', status: 'Active' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Admin', status: 'Active' },
-    { id: 3, name: 'Bob Johnson', email: 'bob@example.com', role: 'Customer', status: 'Inactive' },
-    { id: 4, name: 'Alice Brown', email: 'alice@example.com', role: 'Customer', status: 'Active' },
-    { id: 5, name: 'Charlie Wilson', email: 'charlie@example.com', role: 'Moderator', status: 'Active' },
-]
+import { GetAllUsers, GetUserInfo } from "@/services/apiServices/userService"
 
 const UsersTable = () => {
+    const [userData, setUserData] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
-    const [filteredUsers, setFilteredUsers] = useState(userData)
+    const [filteredUsers, setFilteredUsers] = useState(null)
+
+    useEffect(() => {
+        GetAllUsers()
+            .then((data) => {
+                setUserData(data)
+                setFilteredUsers(data)
+            })
+            .catch((error) => console.error("Failed to load users:", error))
+    }, [])
 
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase()
         setSearchTerm(term)
-        const filtered = userData.filter(
-            (user) => user.name.toLowerCase().includes(term) || user.email.toLowerCase().includes(term)
-        )
-        setFilteredUsers(filtered)
+        if (userData) {
+            const filtered = userData.filter(
+                (user) =>
+                    user.userName.toLowerCase().includes(term) ||
+                    user.email.toLowerCase().includes(term)
+            )
+            setFilteredUsers(filtered)
+        }
+    }
+    if (!filteredUsers) {
+        return <div>Loading...</div>;
     }
 
     return (
@@ -49,13 +59,16 @@ const UsersTable = () => {
                     <thead>
                         <tr>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Name
+                                User Name
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Email
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Role
+                            </th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                                Phone
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Status
@@ -78,11 +91,11 @@ const UsersTable = () => {
                                     <div className='flex items-center'>
                                         <div className='flex-shrink-0 h-10 w-10'>
                                             <div className='h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold'>
-                                                {user.name.charAt(0)}
+                                                {user.userName.charAt(0)}
                                             </div>
                                         </div>
                                         <div className='ml-4'>
-                                            <div className='text-sm font-medium text-gray-100'>{user.name}</div>
+                                            <div className='text-sm font-medium text-gray-100'>{user.userName}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -92,18 +105,21 @@ const UsersTable = () => {
                                 </td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap'>
                                     <span className='px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-800 text-blue-100'>
-                                        {user.role}
+                                        {user.roleId}
                                     </span>
+                                </td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap'>
+                                    <div className='text-sm text-gray-300'>{user.phone}</div>
                                 </td>
 
                                 <td className='px-6 py-4 text-left whitespace-nowrap'>
                                     <span
-                                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 'Active'
+                                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 0
                                             ? 'bg-green-800 text-green-100'
                                             : 'bg-red-800 text-red-100'
                                             }`}
                                     >
-                                        {user.status}
+                                        {user.status === 0 ? 'Active' : 'Inactive'}
                                     </span>
                                 </td>
 

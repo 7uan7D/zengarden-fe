@@ -4,14 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-    Select,
-    SelectTrigger,
-    SelectValue,
-    SelectContent,
-    SelectItem,
-} from "@/components/ui/select";
-import { Play, BookCheck, BookX, Plus, Crown, Verified, Beaker } from "lucide-react";
+import { Play, BookCheck, BookX, Plus, Verified, Beaker, Check } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import {
     Popover,
@@ -29,10 +22,9 @@ const userChallengesData = [
         name: "Taking Surveys",
         reward: 42,
         creator: "Red Cross",
-        startDate: "2021-09-01",
+        createdDate: "2021-09-01",
     }
 ]
-    
 
 const challengesData = [
     {
@@ -40,7 +32,7 @@ const challengesData = [
         name: "Taking Surveys",
         reward: 42,
         creator: "Red Cross",
-        startDate: "2021-09-01",
+        createdDate: "2021-09-01",
         types: [
             "Survey",
             "Research",
@@ -53,7 +45,7 @@ const challengesData = [
         name: "Stay Hydrated Challenge",
         reward: 71,
         creator: "Blue Sky",
-        startDate: "2021-09-01",
+        createdDate: "2021-09-01",
         types: [
             "Health",
             "Wellness",
@@ -66,7 +58,7 @@ const challengesData = [
         name: "Be Happy Challenge",
         reward: 66,
         creator: "Yellow",
-        startDate: "2021-09-01",
+        createdDate: "2021-09-01",
         types: [
             "Happiness",
             "Wellness",
@@ -79,7 +71,7 @@ const challengesData = [
         name: "Movie of the Week",
         reward: 51,
         creator: "Ollivander",
-        startDate: "2021-09-01",
+        createdDate: "2021-09-01",
         types: [
             "Entertainment",
             "Film",
@@ -87,12 +79,66 @@ const challengesData = [
         description:
             "Watch the selected movie of the week and engage in discussions with other participants. Expand your cinematic horizons and connect with fellow film enthusiasts.",
     },
+    {
+        id: 5,
+        name: "Music Challenge",
+        reward: 22,
+        creator: "Overture",
+        createdDate: "2021-09-01",
+        types: [
+            "Entertainment",
+            "Music",
+        ],
+        description:
+            "🎵 Listen to the selected music of the week and share your thought with other participants.",
+    },
 ];
 
+const challengeTypesData = [
+    "Health",
+    "Happiness",
+    "Wellness",
+    "Survey",
+    "Research",
+    "Entertainment",
+    "Film",
+    "Music",
+    "Art",
+    "Reading",
+    "Writing",
+    "Learning",
+    "Fitness",
+    // "Nutrition",
+    // "Meditation",
+    // "Sleep",
+    // "Creativity",
+    // "Technology",
+];
 
 export default function Challenges() {
     const [search, setSearch] = useState("");
-    const [filter, setFilter] = useState("all");
+    const [filteredChallengeTypes, setFilteredChallengeTypes] = useState(challengeTypesData);
+    const handleSearch = (e) => {
+        const term = e.target.value.toLowerCase();
+        setSearch(term);
+        const filtered = challengeTypesData.filter((item) => item.toLowerCase().includes(term) || item.toLowerCase().includes(term));
+        setFilteredChallengeTypes(filtered);
+    }
+
+    const [typeFilters, setTypeFilters] = useState([]);
+    const handleTypeFilter = (type) => {
+        if (typeFilters.includes(type)) {
+            setTypeFilters(typeFilters.filter((t) => t !== type));
+        } else {
+            setTypeFilters([...typeFilters, type]);
+        }
+        console.log(filteredChallenges);
+    };
+
+    const filteredChallenges = challengesData.filter((item) => {
+        if (typeFilters.length === 0) return true;
+        return typeFilters.some((type) => item.types.includes(type));
+    });
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -109,22 +155,29 @@ export default function Challenges() {
                     <h2 className="text-xl font-semibold mb-4">Filters</h2>
 
                     <Input
-                        placeholder="Search items..."
+                        placeholder="Search filters..."
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={handleSearch}
                         className="mb-4"
                     />
 
-                    <Select value={filter} onValueChange={setFilter}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select filter" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                            <SelectItem value="common">Common</SelectItem>
-                            <SelectItem value="rare">Rare</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    {/* checkboxes */}
+                    <div className="mt-4">
+                        {filteredChallengeTypes.map((type) => (
+                            <div key={type} className="flex items-center mb-2">
+                                <input
+                                    type="checkbox"
+                                    id={type}
+                                    checked={typeFilters.includes(type)}
+                                    onChange={() => handleTypeFilter(type)}
+                                    className="mr-2 mb-2.5 w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-teal-500 dark:focus:ring-teal-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                />
+                                <label htmlFor={type} className="text-sm mb-2">
+                                    {type}
+                                </label>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="flex-1 p-6 overflow-auto">
@@ -150,31 +203,24 @@ export default function Challenges() {
                         {categories.map((cat) => (
                             <TabsContent key={cat} value={cat}>
                                 <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4">
-                                    {challengesData.map((item) => {
-                                        const [isOpen, setIsOpen] = useState(false);
-
+                                    {filteredChallenges.map((item) => {
                                         return (
                                             <motion.div
                                                 key={item.id}
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
-                                                transition={{ duration: 0.3, delay: item.id * 0.1 }}
+                                                transition={{ duration: 0.3, delay: 0.1 }}
                                             >
-                                                <Popover open={isOpen}>
-                                                    <PopoverTrigger
-                                                        asChild
-                                                        onMouseEnter={() => setIsOpen(true)}
-                                                        onMouseLeave={() => setIsOpen(false)}
-                                                    >
-                                                        <Card className="relative">
-                                                            {item.id === 1 && cat === "Get Challenges" && (
-                                                                <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
-                                                                    Joined
-                                                                </span>
-                                                            )}
+                                                <Popover>
+                                                    <Card className="relative">
+                                                        {item.id === 1 && cat === "Get Challenges" && (
+                                                            <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
+                                                                Joined
+                                                            </span>
+                                                        )}
 
-                                                            <CardContent className="flex flex-col items-start p-4 cursor-pointer">
-                                                                {/* {cat === "Avatar" ? (
+                                                        <CardContent className="flex flex-col items-start p-4 cursor-pointer">
+                                                            {/* {cat === "Avatar" ? (
                                                                     <Avatar className="h-20 w-20 mb-2" />
                                                                 ) : cat === "Background" ? (
                                                                     <div className="h-32 w-full bg-gray-300 rounded-lg mb-2" />
@@ -189,54 +235,53 @@ export default function Challenges() {
                                                                     <div className="h-20 w-20 bg-gray-300 rounded-lg mb-2" />
                                                                 )} */}
 
-                                                                <p className="font-semibold">
-                                                                    {item.name}
-                                                                </p>
-                                                                <p className="text-sm text-gray-500 flex items-center">
-                                                                    Reward: 
-                                                                  
-                                                                    <Beaker className="ml-1" color="darkcyan" />
-                                                                    <span className="font-bold ml-1">{item.reward} EXP</span>
-                                                                    
-                                                                </p>
+                                                            <p className="font-semibold">
+                                                                {item.name}
+                                                            </p>
+                                                            <p className="text-sm text-gray-500 flex items-center">
+                                                                Reward:
 
-                                                                <p className="text-sm text-gray-500 flex items-center">
-                                                                    Created by: 
-                                                                    
-                                                                    <span className="font-bold ml-1">{item.creator}</span>
-                                                                    <Verified className="ml-1" color="navy" />
-                                                                </p>
+                                                                <Beaker className="ml-1" color="darkcyan" />
+                                                                <span className="font-bold ml-1">{item.reward} EXP</span>
 
-                                                                <p className="text-sm text-gray-500 flex items-center">
-                                                                    Start Date: 
-                                                                    <span className="font-bold ml-1">2021-09-01</span>
-                                                                </p>
-                                                                    
+                                                            </p>
 
-                                                                <p className="text-sm text-gray-500 flex items-center">
-                                                                    Types: {item.types.map((type) => (
-                                                                        <span key={type} className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs ml-1">
-                                                                            {type}
-                                                                        </span>
-                                                                    ))}
-                                                                </p>
-                                                                
-                                                                <p className="text-sm text-gray-500 flex items-center text-left">
-                                                                    {item.description}
-                                                                </p>
+                                                            <p className="text-sm text-gray-500 flex items-center">
+                                                                Created by:
 
-                                                                {cat === "My Challenges" ? (
-                                                                    <Button className="mt-2" variant="outline">
-                                                                        <BookX className="mr-2 h-4 w-4" /> Leave Challenge
-                                                                    </Button>
-                                                                ) : (
-                                                                    <Button className="mt-2" variant="outline">
-                                                                        <BookCheck className="mr-2 h-4 w-4" /> Get Challenge
-                                                                    </Button>
-                                                                )}
-                                                            </CardContent>
-                                                        </Card>
-                                                    </PopoverTrigger>
+                                                                <span className="font-bold ml-1">{item.creator}</span>
+                                                                <Verified className="ml-1" color="navy" />
+                                                            </p>
+
+                                                            <p className="text-sm text-gray-500 flex items-center">
+                                                                Created Date:
+                                                                <span className="font-bold ml-1">{item.createdDate}</span>
+                                                            </p>
+
+
+                                                            <p className="text-sm text-gray-500 flex items-center">
+                                                                Types: {item.types.map((type) => (
+                                                                    <span key={type} className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs ml-1">
+                                                                        {type}
+                                                                    </span>
+                                                                ))}
+                                                            </p>
+
+                                                            <p className="text-sm text-gray-500 flex items-center text-left">
+                                                                {item.description}
+                                                            </p>
+
+                                                            {cat === "My Challenges" ? (
+                                                                <Button className="mt-2" variant="outline">
+                                                                    <BookX className="mr-2 h-4 w-4" /> Leave Challenge
+                                                                </Button>
+                                                            ) : (
+                                                                <Button className="mt-2" variant="outline">
+                                                                    <BookCheck className="mr-2 h-4 w-4" /> Get Challenge
+                                                                </Button>
+                                                            )}
+                                                        </CardContent>
+                                                    </Card>
 
                                                     <PopoverContent
                                                         className="w-64 text-sm"
@@ -244,12 +289,10 @@ export default function Challenges() {
                                                         align="center"
                                                     >
                                                         <p className="font-semibold">
-                                                            {cat} Item 1
+                                                            {item.name}
                                                         </p>
-                                                        <p className="text-gray-500">
-                                                            This is a description of the item. It provides
-                                                            details about what this item does and why it’s
-                                                            useful.
+                                                        <p className="text-gray-500 text-left text-sm">
+                                                            {item.description}
                                                         </p>
                                                     </PopoverContent>
                                                 </Popover>
