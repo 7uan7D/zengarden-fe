@@ -22,7 +22,7 @@ const userChallengesData = [
         name: "Taking Surveys",
         reward: 42,
         creator: "Red Cross",
-        startDate: "2021-09-01",
+        createdDate: "2021-09-01",
     }
 ]
 
@@ -32,7 +32,7 @@ const challengesData = [
         name: "Taking Surveys",
         reward: 42,
         creator: "Red Cross",
-        startDate: "2021-09-01",
+        createdDate: "2021-09-01",
         types: [
             "Survey",
             "Research",
@@ -45,7 +45,7 @@ const challengesData = [
         name: "Stay Hydrated Challenge",
         reward: 71,
         creator: "Blue Sky",
-        startDate: "2021-09-01",
+        createdDate: "2021-09-01",
         types: [
             "Health",
             "Wellness",
@@ -58,7 +58,7 @@ const challengesData = [
         name: "Be Happy Challenge",
         reward: 66,
         creator: "Yellow",
-        startDate: "2021-09-01",
+        createdDate: "2021-09-01",
         types: [
             "Happiness",
             "Wellness",
@@ -71,13 +71,26 @@ const challengesData = [
         name: "Movie of the Week",
         reward: 51,
         creator: "Ollivander",
-        startDate: "2021-09-01",
+        createdDate: "2021-09-01",
         types: [
             "Entertainment",
             "Film",
         ],
         description:
             "Watch the selected movie of the week and engage in discussions with other participants. Expand your cinematic horizons and connect with fellow film enthusiasts.",
+    },
+    {
+        id: 5,
+        name: "Music Challenge",
+        reward: 22,
+        creator: "Overture",
+        createdDate: "2021-09-01",
+        types: [
+            "Entertainment",
+            "Music",
+        ],
+        description:
+            "🎵 Listen to the selected music of the week and share your thought with other participants.",
     },
 ];
 
@@ -89,12 +102,12 @@ const challengeTypesData = [
     "Research",
     "Entertainment",
     "Film",
-    // "Music",
-    // "Art",
-    // "Reading",
-    // "Writing",
-    // "Learning",
-    // "Fitness",
+    "Music",
+    "Art",
+    "Reading",
+    "Writing",
+    "Learning",
+    "Fitness",
     // "Nutrition",
     // "Meditation",
     // "Sleep",
@@ -241,8 +254,8 @@ export default function Challenges() {
                                                             </p>
 
                                                             <p className="text-sm text-gray-500 flex items-center">
-                                                                Start Date:
-                                                                <span className="font-bold ml-1">2021-09-01</span>
+                                                                Created Date:
+                                                                <span className="font-bold ml-1">{item.createdDate}</span>
                                                             </p>
 
 

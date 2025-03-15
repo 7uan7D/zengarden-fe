@@ -1,11 +1,15 @@
 import { useState } from "react";
+import { Toaster } from "sonner";
 import "./App.css";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import HeroPage from "./pages/common/hero/index.jsx";
 import PlayerHome from "./pages/player/home/index.jsx";
-import { Toaster } from "sonner";
+import Challenges from "./pages/player/challenges";
+
 import Sidebar from "./components/common/Sidebar";
+import Footer from "./components/footer";
+
 import Overview from "./pages/Overview";
 import Items from "./pages/Items";
 import Users from "./pages/Users";
@@ -17,8 +21,6 @@ import Marketplace from "./pages/player/marketplace/index.jsx";
 import TreeXPLog from "./pages/TreeXPLog";
 import UserXPLog from "./pages/UserXPLog";
 import TaskPage from "./pages/player/task/index.jsx";
-import Footer from "./components/footer";
-import Challenges from "./pages/player/challenges";
 
 const pageVariants = {
   initial: { opacity: 0 },
