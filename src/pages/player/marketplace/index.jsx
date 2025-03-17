@@ -36,7 +36,7 @@ export default function Marketplace() {
       <div className="flex flex-1 pt-[80px]">
         <div
           className="w-64 p-6 bg-gray-50 dark:bg-gray-800 sticky top-[80px] 
-              h-[calc(100vh-80px)] overflow-auto rounded-tr-2xl shadow-lg 
+              h-[calc(100vh-80px)] overflow-auto rounded-br-2xl rounded-tr-2xl shadow-lg 
               border border-gray-300 dark:border-gray-700"
         >
           <h2 className="text-xl font-semibold mb-4">Filters</h2>
