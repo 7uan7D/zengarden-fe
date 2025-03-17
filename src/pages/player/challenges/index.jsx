@@ -170,7 +170,8 @@ export default function Challenges() {
                                     id={type}
                                     checked={typeFilters.includes(type)}
                                     onChange={() => handleTypeFilter(type)}
-                                    className="mr-2 mb-2.5 w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-teal-500 dark:focus:ring-teal-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                    className="mr-2 mb-2.5 w-4 h-4 rounded-sm"
+                                    // className="mr-2 mb-2.5 w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-teal-500 dark:focus:ring-teal-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                                 />
                                 <label htmlFor={type} className="text-sm mb-2">
                                     {type}
