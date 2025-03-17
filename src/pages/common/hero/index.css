@@ -1,4 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"); /* Poppins */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap"); /* Roboto */
+@import url("https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap"); /* Lora */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap"); /* Montserrat */
 
 * {
   margin: 0;
@@ -23,13 +26,12 @@ h1 {
   font-size: 2.5rem;
   font-weight: 600;
   color: #609994;
-  margin-bottom: 10px;
+  white-space: nowrap;
 }
 
 p {
   font-size: 1.2rem;
   color: #666;
-  margin-bottom: 20px;
 }
 
 .btn {
@@ -63,8 +65,8 @@ p {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 100vh; /* Mỗi section chiếm 1 màn hình */
-  padding: 40px 50px;
+  min-height: 95vh; /* Mỗi section chiếm 1 màn hình */
+  padding: 40px 10px;
 }
 
 /* Gamify Section */
@@ -74,24 +76,23 @@ p {
 
 /* Benefits Section */
 .benefits-section {
-  background: #f0f7f0; /* Màu xanh nhạt khác biệt cho Benefits */
+  background:linear-gradient(to bottom, #f9fafb, #e3f2e1);
 }
 
 .gamify-content {
   text-align: center;
   max-width: 600px;
-  margin-bottom: 20px;
 }
 
 .gamify-content h1 {
   font-size: 2.5rem;
   font-weight: 600;
   color: #83aa6c;
-  margin-bottom: 5px;
+  margin-top: 20px;
 }
 
 .gamify-content p {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: #666;
   line-height: 1.6;
 }
@@ -105,26 +106,23 @@ p {
 }
 
 .card {
-  background: white;
   padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  transition: 0.01s ease-in-out;
-  border-left: 5px solid;
-  display: flex;
+  transition: transform 0.01s ease-in-out;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
   text-align: center;
-  min-height: 200px;
+  min-height: 300px; /* Tăng chiều cao tối thiểu để chứa ảnh tốt hơn */
   width: 100%;
+  overflow: hidden; /* Đảm bảo ảnh không tràn ra ngoài */
 }
 
 .card-img {
-  width: 180px;
-  height: 120px;
-  margin: 0 auto 10px;
-  display: block;
+  width: 100%; /* Chiếm toàn bộ chiều rộng của card */
+  height: 250px; /* Chiều cao cố định để đồng nhất giữa các card */
+  object-fit: contain; /* Giữ tỉ lệ ảnh, cắt phần thừa nếu cần */
+  border-radius: 8px; /* Bo góc cho ảnh */
+  margin-bottom: 10px; /* Khoảng cách giữa ảnh và nội dung */
 }
 
 .card:hover {
@@ -132,23 +130,15 @@ p {
 }
 
 .card h2 {
-  font-size: 1.5rem;
-  margin-bottom: 10px;
+  font-size: 1.2rem;
+  font-family: "Lora", serif;
+  font-weight: 700;
 }
 
 .card p {
   font-size: 1rem;
   color: #555;
-}
-
-.card:nth-child(1) {
-  border-color: #f49a8c;
-}
-.card:nth-child(2) {
-  border-color: #f9af44;
-}
-.card:nth-child(3) {
-  border-color: #609994;
+  font-family: "Montserrat", sans-serif;
 }
 
 /* Responsive */

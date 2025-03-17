@@ -159,34 +159,34 @@ export default function HeroPage() {
         </motion.div>
         <div className="cards">
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
-            <h2>Track Your Tasks and Goals📝</h2>
             <img
-              src="/src/assets/images/tasks.png"
+              src="/src/assets/images/task_status.png"
               alt="Achievements"
               className="card-img"
             />
+            <h2>Track Your Tasks and Goals📝</h2>
             <p>
               Stay accountable by tracking and managing your Tasks, Daily
               goals, and To-do list with ZenGarden's workspace.
             </p>
           </motion.div>
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
-            <h2>Grow Plants🌱</h2>
             <img
               src="/src/assets/images/grow plants.png"
               alt="Grow Plants"
               className="card-img"
             />
-            <p>Choose a plant and start nurturing your garden.</p>
+            <h2>Nurture Your Plants and Garden🌱</h2>
+            <p>Pick your favorite plants and watch them flourish as you complete daily tasks. Build a thriving virtual garden that reflects your progress and dedication.</p>
           </motion.div>
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
-            <h2>Relax🌿</h2>
             <img
               src="/src/assets/images/relax.png"
               alt="Relax"
               className="card-img"
             />
-            <p>Enjoy a peaceful experience with a soothing interface.</p>
+            <h2>Relax🌿</h2>
+            <p>Take a moment to unwind with calming visuals and a tranquil atmosphere. ZenGarden offers a stress-free escape to recharge your mind and soul.</p>
           </motion.div>
         </div>
       </div>
@@ -199,42 +199,37 @@ export default function HeroPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1>Benefits of using ZenGarden</h1>
-          <p>
-            Using ZenGarden can help you in many ways. Here are some of the
-            benefits of using ZenGarden:
-          </p>
+          <h1>ZenGarden help Farmers improve</h1>
         </motion.div>
         <div className="cards">
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
-            <h2>Track Your Tasks and Goals📝</h2>
             <img
               src="/src/assets/images/tasks.png"
               alt="Achievements"
               className="card-img"
             />
+            <h2>Boost Your Productivity 🚀</h2>
             <p>
-              Stay accountable by tracking and managing your Tasks, Daily
-              goals, and To-do list with ZenGarden's workspace.
+            Transform your daily tasks into fun challenges. ZenGarden helps you stay focused and get more done with a rewarding system.
             </p>
           </motion.div>
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
-            <h2>Grow Plants🌱</h2>
             <img
               src="/src/assets/images/grow plants.png"
               alt="Grow Plants"
               className="card-img"
             />
-            <p>Choose a plant and start nurturing your garden.</p>
+            <h2>Nurture Your Mind 🌼</h2>
+            <p>Grow virtual plants as you build healthy habits. A calm mind blooms alongside your thriving garden.</p>
           </motion.div>
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
-            <h2>Relax🌿</h2>
             <img
               src="/src/assets/images/relax.png"
               alt="Relax"
               className="card-img"
             />
-            <p>Enjoy a peaceful experience with a soothing interface.</p>
+            <h2>Find Your Zen 🌟</h2>
+            <p>Unwind with a serene interface designed to reduce stress and bring peace to your busy day.</p>
           </motion.div>
         </div>
       </div>
