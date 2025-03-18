@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import "./index.css";
-import Header from "../../../components/header/index.jsx";
 import { RegisterService } from "@/services/apiServices/authService";
 import { Toaster, toast } from "sonner";
 
@@ -66,7 +65,6 @@ export default function HeroPage() {
 
   return (
     <div className="main-container">
-      <Header />
       <div className="pt-[80px] hero">
         <h1>Welcome to ZenGarden</h1>
         <p>Grow your plants and do tasks every day!</p>
@@ -153,8 +151,8 @@ export default function HeroPage() {
             ZenGarden is a free habit-building and productivity app that treats
             your real life like a game. With in-game rewards and punishments to
             motivate you and a strong social network to inspire you, ZenGarden
-            can help you achieve your goals to become healthy, hard-working,
-            and happy.
+            can help you achieve your goals to become healthy, hard-working, and
+            happy.
           </p>
         </motion.div>
         <div className="cards">
@@ -166,8 +164,8 @@ export default function HeroPage() {
             />
             <h2>Track Your Tasks and Goals📝</h2>
             <p>
-              Stay accountable by tracking and managing your Tasks, Daily
-              goals, and To-do list with ZenGarden's workspace.
+              Stay accountable by tracking and managing your Tasks, Daily goals,
+              and To-do list with ZenGarden's workspace.
             </p>
           </motion.div>
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
@@ -177,7 +175,11 @@ export default function HeroPage() {
               className="card-img"
             />
             <h2>Nurture Your Plants and Garden🌱</h2>
-            <p>Pick your favorite plants and watch them flourish as you complete daily tasks. Build a thriving virtual garden that reflects your progress and dedication.</p>
+            <p>
+              Pick your favorite plants and watch them flourish as you complete
+              daily tasks. Build a thriving virtual garden that reflects your
+              progress and dedication.
+            </p>
           </motion.div>
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
             <img
@@ -186,7 +188,11 @@ export default function HeroPage() {
               className="card-img"
             />
             <h2>Relax🌿</h2>
-            <p>Take a moment to unwind with calming visuals and a tranquil atmosphere. ZenGarden offers a stress-free escape to recharge your mind and soul.</p>
+            <p>
+              Take a moment to unwind with calming visuals and a tranquil
+              atmosphere. ZenGarden offers a stress-free escape to recharge your
+              mind and soul.
+            </p>
           </motion.div>
         </div>
       </div>
@@ -210,7 +216,8 @@ export default function HeroPage() {
             />
             <h2>Boost Your Productivity 🚀</h2>
             <p>
-            Transform your daily tasks into fun challenges. ZenGarden helps you stay focused and get more done with a rewarding system.
+              Transform your daily tasks into fun challenges. ZenGarden helps
+              you stay focused and get more done with a rewarding system.
             </p>
           </motion.div>
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
@@ -220,7 +227,10 @@ export default function HeroPage() {
               className="card-img"
             />
             <h2>Nurture Your Mind 🌼</h2>
-            <p>Grow virtual plants as you build healthy habits. A calm mind blooms alongside your thriving garden.</p>
+            <p>
+              Grow virtual plants as you build healthy habits. A calm mind
+              blooms alongside your thriving garden.
+            </p>
           </motion.div>
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
             <img
@@ -229,7 +239,10 @@ export default function HeroPage() {
               className="card-img"
             />
             <h2>Find Your Zen 🌟</h2>
-            <p>Unwind with a serene interface designed to reduce stress and bring peace to your busy day.</p>
+            <p>
+              Unwind with a serene interface designed to reduce stress and bring
+              peace to your busy day.
+            </p>
           </motion.div>
         </div>
       </div>
