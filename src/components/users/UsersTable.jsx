@@ -10,30 +10,28 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "../ui/button"
 import { toast } from "sonner"
+import useUserData from "@/hooks/useUserData"
 
 const UsersTable = () => {
-    const [isLoading, setIsLoading] = useState(false)
-    const [userData, setUserData] = useState(null)
+    const { userData, isLoadingState, error } = useUserData()
     const [searchTerm, setSearchTerm] = useState('')
-    const [filteredUsers, setFilteredUsers] = useState(null)
+    const [filteredUsers, setFilteredUsers] = useState(userData)
     const [openEditUser, setOpenEditUser] = useState(false)
     const [selectedUserId, setSelectedUserId] = useState(null)
     const [openDeleteUser, setOpenDeleteUser] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+
+    useEffect(() => {
+        if (userData) {
+            setFilteredUsers(userData)
+        }
+    }, [userData])
 
     const [editUser, setEditUser] = useState({
         userName: '',
         email: '',
         phone: '',
     })
-
-    useEffect(() => {
-        GetAllUsers()
-            .then((data) => {
-                setUserData(data)
-                setFilteredUsers(data)
-            })
-            .catch((error) => console.error('Failed to load users:', error))
-    }, [])
 
     useEffect(() => {
         if (selectedUserId) {
@@ -73,6 +71,10 @@ const UsersTable = () => {
         return <div>Loading...</div>
     }
 
+    if (error) {
+        return <div>{error.message}</div>
+    }
+
     const handleEditClick = (userId) => {
         setSelectedUserId(userId)
         setOpenEditUser(true)
@@ -88,7 +90,10 @@ const UsersTable = () => {
                 })
                 // setUser(updatedUser)
                 toast.success('The information has been updated successfully!')
-                window.location.reload()
+
+                setTimeout(() => {
+                    window.location.reload()
+                }, 3000)
             } catch (error) {
                 console.log('Failed to update user:', error)
                 toast.error('Update information failed!')
@@ -201,12 +206,12 @@ const UsersTable = () => {
                                     <div className='text-sm text-gray-300'>{user.email}</div>
                                 </td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap'>
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 1
-                                        ? 'bg-green-800 text-green-100' ? user.role === 2 : 'bg-blue-800 text-blue-100'
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.roleId === 1
+                                        ? 'bg-green-800 text-green-100' : user.roleId === 2 ? 'bg-blue-800 text-blue-100'
                                         : 'bg-yellow-800 text-yellow-100'
                                         }`}
                                     >
-                                        {user.role === 1 ? 'Admin' : user.role === 2 ? 'Player' : 'Moderator'}
+                                        {user.roleId === 1 ? 'Admin' : user.roleId === 2 ? 'Player' : 'Moderator'}
                                     </span>
                                 </td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap'>

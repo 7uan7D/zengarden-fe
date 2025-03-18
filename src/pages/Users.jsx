@@ -1,21 +1,34 @@
-import { UserCheck, UserPlus, UsersIcon, UserX } from "lucide-react";
-import { motion } from "framer-motion";
+import { UserCheck, UserPlus, UsersIcon, UserX } from "lucide-react"
+import { motion } from "framer-motion"
 
 import AdminHeader from "@/components/common/AdminHeader"
 import StatCard from "@/components/common/StatCard"
-import UsersTable from "@/components/users/UsersTable";
-import UserGrowthChart from "@/components/users/UserGrowthChart";
-import UserActivityHeatmap from "@/components/users/UserActivityHeatmap";
-import UserDemographicsChart from "@/components/users/UserDemographicsChart";
-
-const userStats = {
-    totalUsers: 15,
-    newUsersToday: 3,
-    activeUsers: 12,
-    churnRate: "2.4%",
-};
+import UsersTable from "@/components/users/UsersTable"
+import UserGrowthChart from "@/components/users/UserGrowthChart"
+import UserActivityHeatmap from "@/components/users/UserActivityHeatmap"
+import UserDemographicsChart from "@/components/users/UserDemographicsChart"
+import useUserData from "@/hooks/useUserData"
 
 const Users = () => {
+    const { userData, isLoading, error } = useUserData()
+
+    const today = new Date().toISOString().split('T')[0]
+
+    const userStats = {
+        totalUsers: userData?.length,
+        newUsersToday: userData?.filter((user) => user.createdAt.split('T')[0] === today).length,
+        activeUsers: userData?.filter((user) => user.status === 0).length,
+        inactiveUsers: userData?.filter((user) => user.status === 1).length,
+    }
+
+    if (isLoading) {
+        return <div></div>
+    }
+
+    if (error) {
+        return <div>{error.message}</div>
+    }
+
     return (
         <div className='flex-1 overflow-auto relative z-10'>
             <AdminHeader title='Users' />
@@ -28,10 +41,10 @@ const Users = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1 }}
                 >
-                    <StatCard name='Total Users' icon={UsersIcon} value={userStats.totalUsers.toLocaleString()} color='#6366F1' />
+                    <StatCard name='Total Users' icon={UsersIcon} value={userStats.totalUsers} color='#6366F1' />
                     <StatCard name='New Users Today' icon={UserPlus} value={userStats.newUsersToday} color='#10B981' />
-                    <StatCard name='Active Users' icon={UserCheck} value={userStats.activeUsers.toLocaleString()} color='#F59E0B' />
-                    <StatCard name='Churn Rate' icon={UserX} value={userStats.churnRate} color='#EF4444' />
+                    <StatCard name='Active Users' icon={UserCheck} value={userStats.activeUsers} color='#F59E0B' />
+                    <StatCard name='Inactive Users' icon={UserX} value={userStats.inactiveUsers} color='#EF4444' />
                 </motion.div>
 
                 {/* users table */}
@@ -40,7 +53,7 @@ const Users = () => {
                 {/* user charts */}
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8'>
                     <UserGrowthChart />
-                    <UserActivityHeatmap />
+                    {/* <UserActivityHeatmap /> */}
                     <UserDemographicsChart />
                 </div>
             </main>
