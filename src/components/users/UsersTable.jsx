@@ -250,7 +250,7 @@ const UsersTable = () => {
                                 </CardHeader>
 
                                 <CardContent className='space-y-2 bg-gray-800'>
-                                    {editUser && !isLoading ? (
+                                    {editUser ? (
                                         <>
                                             <div className='space-y-2'>
                                                 <div className='space-y-1'>
@@ -294,7 +294,7 @@ const UsersTable = () => {
                                             </div>
                                         </>
                                     ) : (
-                                        <div>Loading...</div>
+                                        <p className='text-sm text-gray-500'>Loading user...</p>
                                     )}
                                 </CardContent>
                                 <CardFooter>
@@ -303,7 +303,7 @@ const UsersTable = () => {
                                         onClick={handleSaveChanges}
                                         disabled={isLoading}
                                     >
-                                        {isLoading ? 'Saving...' : 'Save Changes'}
+                                        Save Changes
                                     </Button>
                                 </CardFooter>
                             </Card>
@@ -337,7 +337,7 @@ const UsersTable = () => {
                                         onClick={handleDeleteUser}
                                         disabled={isLoading}
                                     >
-                                        {isLoading ? 'Deleting...' : 'Delete'}
+                                        Delete
                                     </Button>
                                     <Button
                                         className='bg-red-400 text-white ml-2'
