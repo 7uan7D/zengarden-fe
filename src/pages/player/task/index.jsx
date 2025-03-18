@@ -15,7 +15,6 @@ import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogTrigger,
   DialogHeader,
   DialogTitle,
   DialogDescription,
@@ -27,7 +26,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle } from "lucide-react";
 
 const tasks = {
-  simple: ["Drink water", "Read 10 pages", "Meditate"],
+  daily: ["Do exercise", "Drink water", "Clean room"],
+  simple: ["Make lemonade", "Read 10 pages", "Meditate"],
   complex: [
     "Finish project report",
     "Workout 3 times a week",
@@ -48,7 +48,7 @@ export default function TaskPage() {
 
   return (
     <motion.div
-      className="p-6 max-w-6xl mx-auto"
+      className="p-6 max-w-full mx-auto w-full" // Thay max-w-6xl thành max-w-full và thêm w-full
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -57,8 +57,8 @@ export default function TaskPage() {
         <Header />
       </div>
       <div className="pt-20">
-        <div className="bg-white text-black p-6 rounded-lg shadow-md mb-6 flex items-center gap-6 relative mt-6">
-          <div className="absolute top-3 left-[7%] transform -translate-x-1/2">
+        <div className="bg-[#CCFFCC] text-black p-6 rounded-lg shadow-md mb-6 flex items-center gap-6 relative mt-6">
+          <div className="absolute top-1.5 left-[5.5%] transform -translate-x-1/2">
             <a
               href="#"
               className="text-black text-sm hover:underline"
@@ -97,7 +97,7 @@ export default function TaskPage() {
           <div className="flex-1">
             <h2 className="text-xl font-bold">Tree Name - Level 3</h2>
             <p className="text-sm mt-2">Experience</p>
-            <Progress value={40} max={100} className="h-2 bg-[#83aa6c]" />
+            <Progress value={30} max={100} className="h-2 bg-[#83aa6c]" />
             <div className="mt-5 flex items-center gap-2">
               <span className="text-sm">Equipped Items:</span>
               <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded">
@@ -169,7 +169,8 @@ export default function TaskPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4 w-full"> {/* Thay grid-cols-3 thành grid-cols-4 và thêm w-full */}
+        <TaskColumn title="Daily Task" tasks={tasks.daily} />
         <TaskColumn title="Simple Task" tasks={tasks.simple} />
         <TaskColumn title="Complex Task" tasks={tasks.complex} />
         <TaskColumn title="Complete Task" tasks={tasks.done} isDone />
@@ -179,12 +180,11 @@ export default function TaskPage() {
 }
 
 function TaskColumn({ title, tasks, isDone }) {
-  const [timers, setTimers] = useState({}); // Lưu thời gian còn lại
-  const [running, setRunning] = useState({}); // Lưu trạng thái chạy/tạm dừng
-  const [dialogOpen, setDialogOpen] = useState(false); // Trạng thái mở dialog
-  const [pendingTaskIndex, setPendingTaskIndex] = useState(null); // Lưu task mới được chọn
+  const [timers, setTimers] = useState({});
+  const [running, setRunning] = useState({});
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingTaskIndex, setPendingTaskIndex] = useState(null);
 
-  // Hàm định dạng thời gian
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -193,22 +193,18 @@ function TaskColumn({ title, tasks, isDone }) {
       .padStart(2, "0")}`;
   };
 
-  // Hàm kiểm tra xem có task nào đang chạy không
   const isAnyTaskRunning = () => {
     return Object.values(timers).some((time) => time > 0);
   };
 
-  // Hàm bắt đầu timer
   const startTimer = (taskIndex) => {
     if (isAnyTaskRunning() && !timers[taskIndex]) {
-      // Nếu có task đang chạy và task này chưa có timer, mở dialog
       setPendingTaskIndex(taskIndex);
       setDialogOpen(true);
     } else {
-      // Nếu không có task nào chạy hoặc task này đã có timer, bắt đầu ngay
       setTimers((prev) => ({
         ...prev,
-        [taskIndex]: 600, // 10 phút = 600 giây
+        [taskIndex]: 600,
       }));
       setRunning((prev) => ({
         ...prev,
@@ -217,27 +213,23 @@ function TaskColumn({ title, tasks, isDone }) {
     }
   };
 
-  // Hàm dừng tất cả timer hiện tại
   const stopAllTimers = () => {
     setTimers({});
     setRunning({});
   };
 
-  // Hàm xử lý khi người dùng chọn "Yes"
   const handleSwitchTask = () => {
-    stopAllTimers(); // Dừng tất cả timer hiện tại
-    startTimer(pendingTaskIndex); // Bắt đầu timer cho task mới
-    setDialogOpen(false); // Đóng dialog
-    setPendingTaskIndex(null); // Xóa task đang chờ
+    stopAllTimers();
+    startTimer(pendingTaskIndex);
+    setDialogOpen(false);
+    setPendingTaskIndex(null);
   };
 
-  // Hàm xử lý khi người dùng chọn "No"
   const handleKeepCurrentTask = () => {
-    setDialogOpen(false); // Đóng dialog
-    setPendingTaskIndex(null); // Xóa task đang chờ
+    setDialogOpen(false);
+    setPendingTaskIndex(null);
   };
 
-  // Hàm tạm dừng/tiếp tục timer
   const toggleTimer = (taskIndex) => {
     setRunning((prev) => ({
       ...prev,
@@ -245,7 +237,6 @@ function TaskColumn({ title, tasks, isDone }) {
     }));
   };
 
-  // Hàm dừng và xóa timer
   const stopTimer = (taskIndex) => {
     setTimers((prev) => {
       const newTimers = { ...prev };
@@ -259,7 +250,6 @@ function TaskColumn({ title, tasks, isDone }) {
     });
   };
 
-  // useEffect để cập nhật timer
   useEffect(() => {
     const interval = setInterval(() => {
       setTimers((prev) => {
@@ -285,7 +275,7 @@ function TaskColumn({ title, tasks, isDone }) {
 
   return (
     <motion.div
-      className="bg-white rounded-lg shadow-md p-4 flex flex-col"
+      className="bg-white rounded-lg shadow-lg p-4 flex flex-col h-full" // Thêm h-full để đảm bảo cột đầy chiều cao
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -336,7 +326,6 @@ function TaskColumn({ title, tasks, isDone }) {
         </div>
       </ScrollArea>
 
-      {/* Dialog xác nhận chuyển task */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
