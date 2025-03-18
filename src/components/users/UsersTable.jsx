@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Search } from "lucide-react"
-import { GetAllUsers, GetUserInfo, UpdateUserInfo } from "@/services/apiServices/userService"
+import { DeleteUser, GetAllUsers, GetUserInfo, UpdateUserInfo } from "@/services/apiServices/userService"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -18,6 +18,7 @@ const UsersTable = () => {
     const [filteredUsers, setFilteredUsers] = useState(null)
     const [openEditUser, setOpenEditUser] = useState(false)
     const [selectedUserId, setSelectedUserId] = useState(null)
+    const [openDeleteUser, setOpenDeleteUser] = useState(false)
 
     const [editUser, setEditUser] = useState({
         userName: '',
@@ -36,6 +37,7 @@ const UsersTable = () => {
 
     useEffect(() => {
         if (selectedUserId) {
+            setIsLoading(true)
             GetUserInfo(selectedUserId)
                 .then((data) => setEditUser({
                     userName: data.userName || '',
@@ -43,7 +45,7 @@ const UsersTable = () => {
                     phone: data.phone || '',
                 }))
                 .catch((error) => console.error('Failed to load user info:', error))
-                console.log('Selected User ID:', selectedUserId)
+                .finally(() => setIsLoading(false))
         }
     }, [selectedUserId])
 
@@ -90,6 +92,27 @@ const UsersTable = () => {
             } catch (error) {
                 console.log('Failed to update user:', error)
                 toast.error('Update information failed!')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+    }
+
+    const handleDeleteClick = (userId) => {
+        setSelectedUserId(userId)
+        setOpenDeleteUser(true)
+    }
+
+    const handleDeleteUser = async () => {
+        if (selectedUserId) {
+            setIsLoading(true)
+            try {
+                await DeleteUser(selectedUserId)
+                toast.success('User has been deleted successfully!')
+                window.location.reload()
+            } catch (error) {
+                console.log('Failed to delete user:', error)
+                toast.error('Delete user failed!')
             } finally {
                 setIsLoading(false)
             }
@@ -203,7 +226,7 @@ const UsersTable = () => {
 
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                     <button onClick={() => handleEditClick(user.userId)} className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>Edit</button>
-                                    <button className='text-red-400 hover:text-red-300 bg-transparent'>Delete</button>
+                                    <button onClick={() => handleDeleteClick(user.userId)} className='text-red-400 hover:text-red-300 bg-transparent'>Delete</button>
                                 </td>
                             </motion.tr>
                         ))}
@@ -221,14 +244,13 @@ const UsersTable = () => {
                         <TabsContent className='p-4'>
                             <Card className='bg-gray-800 text-white'>
                                 <CardHeader>
-                                    {/* <CardTitle>Edit User</CardTitle> */}
                                     <CardDescription className='text-gray-400'>
                                         View and update your user details here.
                                     </CardDescription>
                                 </CardHeader>
 
                                 <CardContent className='space-y-2 bg-gray-800'>
-                                    {editUser ? (
+                                    {editUser && !isLoading ? (
                                         <>
                                             <div className='space-y-2'>
                                                 <div className='space-y-1'>
@@ -287,9 +309,48 @@ const UsersTable = () => {
                             </Card>
                         </TabsContent>
                     </Tabs>
-
                 </DialogContent>
+            </Dialog>
+            
+            <Dialog open={openDeleteUser} onOpenChange={setOpenDeleteUser}>
+                <DialogContent className='dialog-overlay bg-gray-800 text-white'>
+                    <DialogHeader>
+                        <DialogTitle>Delete User</DialogTitle>
+                    </DialogHeader>
 
+                    <Tabs className='w-[462px]'>
+                        <TabsContent className='p-4'>
+                            <Card className='bg-gray-800 text-white'>
+                                <CardHeader>
+                                    <CardDescription className='text-gray-400'>
+                                        Delete your selected user.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className='space-y-2 bg-gray-800'>
+                                    <div className='space-y-1'>
+                                        <Label>Are you sure you want to delete this user?</Label>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button
+                                        className='bg-[#83aa6c] text-white'
+                                        onClick={handleDeleteUser}
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? 'Deleting...' : 'Delete'}
+                                    </Button>
+                                    <Button
+                                        className='bg-red-400 text-white ml-2'
+                                        onClick={() => setOpenDeleteUser(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                        
+                </DialogContent>
             </Dialog>
         </motion.div>
     )
