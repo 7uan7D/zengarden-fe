@@ -160,21 +160,20 @@ export default function Challenges() {
                         onChange={handleSearch}
                         className="mb-4"
                     />
-                    
+
                     {/* checkboxes */}
                     <div className="mt-4">
                         {filteredChallengeTypes.map((type) => (
                             <div key={type} className="flex items-center mb-2">
-                                <div className="relative"> {/* Added relative wrapper for absolute pseudo-element */}
+                                <div className="relative">
                                     <input
                                         type="checkbox"
                                         id={type}
                                         checked={typeFilters.includes(type)}
                                         onChange={() => handleTypeFilter(type)}
-                                        className="peer sr-only" // hidden input, peer for pseudo-element
+                                        className="peer sr-only"
                                     />
                                     <div className="mb-2.5 w-4 h-4 border border-gray-300 rounded-sm peer-checked:bg-teal-600 peer-checked:border-teal-600">
-                                        {/* visible checkbox, styled with tailwind */}
                                         <svg
                                             className="absolute hidden w-3 h-3 text-white pointer-events-none peer-checked:block top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
                                             aria-hidden="true"
