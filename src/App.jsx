@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import HeroPage from "./pages/common/hero/index.jsx";
 import PlayerHome from "./pages/player/home/index.jsx";
+import FAQ from "./pages/faq/index.jsx";
 import { Toaster } from "sonner";
 import Sidebar from "./components/common/Sidebar";
 import Overview from "./pages/Overview";
@@ -18,6 +19,7 @@ import TreeXPLog from "./pages/TreeXPLog";
 import UserXPLog from "./pages/UserXPLog";
 import TaskPage from "./pages/player/task/index.jsx";
 import Footer from "./components/footer";
+import Header from "./components/header";
 import Challenges from "./pages/player/challenges";
 
 const pageVariants = {
@@ -31,6 +33,7 @@ function AnimatedRoutes() {
 
   return (
     <>
+      <Header />
       <AnimatePresence mode="wait">
         <motion.div
           key={location.pathname}
@@ -41,6 +44,7 @@ function AnimatedRoutes() {
         >
           <Routes location={location}>
             <Route path="/" element={<HeroPage />} />
+            <Route path="/faq" element={<FAQ />} />
             <Route path="/home" element={<PlayerHome />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/task" element={<TaskPage />} />
