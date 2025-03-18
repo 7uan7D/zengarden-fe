@@ -7,11 +7,8 @@ import HeroPage from "./pages/common/hero/index.jsx";
 import PlayerHome from "./pages/player/home/index.jsx";
 import FAQ from "./pages/faq/index.jsx";
 import Calendar from "./pages/player/calendar";
-import { Toaster } from "sonner";
-import Challenges from "./pages/player/challenges";
 import Sidebar from "./components/common/Sidebar";
 import Footer from "./components/footer";
-
 import Overview from "./pages/Overview";
 import Items from "./pages/Items";
 import Users from "./pages/Users";
@@ -23,7 +20,6 @@ import Marketplace from "./pages/player/marketplace/index.jsx";
 import TreeXPLog from "./pages/TreeXPLog";
 import UserXPLog from "./pages/UserXPLog";
 import TaskPage from "./pages/player/task/index.jsx";
-import Footer from "./components/footer";
 import Header from "./components/header";
 import Challenges from "./pages/player/challenges";
 
