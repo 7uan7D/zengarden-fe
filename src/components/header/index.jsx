@@ -315,6 +315,9 @@ const Header = () => {
           <a href="/challenges" className="text-sm font-semibold text-gray-900">
             Challenges
           </a>
+          <a href="/faq" className="text-sm font-semibold text-gray-900">
+            Help
+          </a>
         </div>
 
         {/* Login Button */}
