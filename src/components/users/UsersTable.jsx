@@ -1,26 +1,127 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Search } from "lucide-react"
-
-const userData = [
-    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Customer', status: 'Active' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Admin', status: 'Active' },
-    { id: 3, name: 'Bob Johnson', email: 'bob@example.com', role: 'Customer', status: 'Inactive' },
-    { id: 4, name: 'Alice Brown', email: 'alice@example.com', role: 'Customer', status: 'Active' },
-    { id: 5, name: 'Charlie Wilson', email: 'charlie@example.com', role: 'Moderator', status: 'Active' },
-]
+import { DeleteUser, GetAllUsers, GetUserInfo, UpdateUserInfo } from "@/services/apiServices/userService"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "../ui/button"
+import { toast } from "sonner"
+import useUserData from "@/hooks/useUserData"
 
 const UsersTable = () => {
+    const { userData, isLoadingState, error } = useUserData()
     const [searchTerm, setSearchTerm] = useState('')
     const [filteredUsers, setFilteredUsers] = useState(userData)
+    const [openEditUser, setOpenEditUser] = useState(false)
+    const [selectedUserId, setSelectedUserId] = useState(null)
+    const [openDeleteUser, setOpenDeleteUser] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+
+    useEffect(() => {
+        if (userData) {
+            setFilteredUsers(userData)
+        }
+    }, [userData])
+
+    const [editUser, setEditUser] = useState({
+        userName: '',
+        email: '',
+        phone: '',
+    })
+
+    useEffect(() => {
+        if (selectedUserId) {
+            setIsLoading(true)
+            GetUserInfo(selectedUserId)
+                .then((data) => setEditUser({
+                    userName: data.userName || '',
+                    email: data.email || '',
+                    phone: data.phone || '',
+                }))
+                .catch((error) => console.error('Failed to load user info:', error))
+                .finally(() => setIsLoading(false))
+        }
+    }, [selectedUserId])
+
+    const handleChange = (e) => {
+        const { id, value } = e.target
+        setEditUser((prev) => ({
+            ...prev,
+            [id]: value,
+        }))
+    }
 
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase()
         setSearchTerm(term)
-        const filtered = userData.filter(
-            (user) => user.name.toLowerCase().includes(term) || user.email.toLowerCase().includes(term)
-        )
-        setFilteredUsers(filtered)
+        if (userData) {
+            const filtered = userData.filter(
+                (user) =>
+                    user.userName.toLowerCase().includes(term) ||
+                    user.email.toLowerCase().includes(term)
+            )
+            setFilteredUsers(filtered)
+        }
+    }
+    if (!filteredUsers) {
+        return <div>Loading...</div>
+    }
+
+    if (error) {
+        return <div>{error.message}</div>
+    }
+
+    const handleEditClick = (userId) => {
+        setSelectedUserId(userId)
+        setOpenEditUser(true)
+    }
+
+    const handleSaveChanges = async () => {
+        if (selectedUserId) {
+            setIsLoading(true)
+            try {
+                await UpdateUserInfo({
+                    userId: selectedUserId,
+                    ...editUser,
+                })
+                // setUser(updatedUser)
+                toast.success('The information has been updated successfully!')
+
+                setTimeout(() => {
+                    window.location.reload()
+                }, 3000)
+            } catch (error) {
+                console.log('Failed to update user:', error)
+                toast.error('Update information failed!')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+    }
+
+    const handleDeleteClick = (userId) => {
+        setSelectedUserId(userId)
+        setOpenDeleteUser(true)
+    }
+
+    const handleDeleteUser = async () => {
+        if (selectedUserId) {
+            setIsLoading(true)
+            try {
+                await DeleteUser(selectedUserId)
+                toast.success('User has been deleted successfully!')
+                window.location.reload()
+            } catch (error) {
+                console.log('Failed to delete user:', error)
+                toast.error('Delete user failed!')
+            } finally {
+                setIsLoading(false)
+            }
+        }
     }
 
     return (
@@ -49,13 +150,16 @@ const UsersTable = () => {
                     <thead>
                         <tr>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Name
+                                User Name
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Email
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Role
+                            </th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                                Phone
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Status
@@ -77,12 +181,23 @@ const UsersTable = () => {
                                 <td className='px-6 py-4 text-left whitespace-nowrap'>
                                     <div className='flex items-center'>
                                         <div className='flex-shrink-0 h-10 w-10'>
-                                            <div className='h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold'>
-                                                {user.name.charAt(0)}
-                                            </div>
+                                            <Avatar className='cursor-pointer'>
+                                                <AvatarImage
+                                                    src={user?.imageUrl || 'https://github.com/shadcn.png'}
+                                                    alt='User Avatar'
+                                                />
+                                                <AvatarFallback>
+                                                    {user?.userName
+                                                        ? user.userName.charAt(0).toUpperCase()
+                                                        : 'U'}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            {/* <div className='h-10 w-10 rounded-full bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center text-white font-semibold'>
+                                                {user.userName.charAt(0)}
+                                            </div> */}
                                         </div>
                                         <div className='ml-4'>
-                                            <div className='text-sm font-medium text-gray-100'>{user.name}</div>
+                                            <div className='text-sm font-medium text-gray-100'>{user.userName}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -91,31 +206,157 @@ const UsersTable = () => {
                                     <div className='text-sm text-gray-300'>{user.email}</div>
                                 </td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap'>
-                                    <span className='px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-800 text-blue-100'>
-                                        {user.role}
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.roleId === 1
+                                        ? 'bg-green-800 text-green-100' : user.roleId === 2 ? 'bg-blue-800 text-blue-100'
+                                        : 'bg-yellow-800 text-yellow-100'
+                                        }`}
+                                    >
+                                        {user.roleId === 1 ? 'Admin' : user.roleId === 2 ? 'Player' : 'Moderator'}
                                     </span>
+                                </td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap'>
+                                    <div className='text-sm text-gray-300'>{user.phone}</div>
                                 </td>
 
                                 <td className='px-6 py-4 text-left whitespace-nowrap'>
                                     <span
-                                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 'Active'
+                                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.status === 0
                                             ? 'bg-green-800 text-green-100'
                                             : 'bg-red-800 text-red-100'
                                             }`}
                                     >
-                                        {user.status}
+                                        {user.status === 0 ? 'Active' : 'Inactive'}
                                     </span>
                                 </td>
 
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                    <button className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>Edit</button>
-                                    <button className='text-red-400 hover:text-red-300 bg-transparent'>Delete</button>
+                                    <button onClick={() => handleEditClick(user.userId)} className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>Edit</button>
+                                    <button onClick={() => handleDeleteClick(user.userId)} className='text-red-400 hover:text-red-300 bg-transparent'>Delete</button>
                                 </td>
                             </motion.tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+
+            <Dialog open={openEditUser} onOpenChange={setOpenEditUser}>
+                <DialogContent className='dialog-overlay bg-gray-800 text-white'>
+                    <DialogHeader>
+                        <DialogTitle>Edit User</DialogTitle>
+                    </DialogHeader>
+
+                    <Tabs className='w-[462px]'>
+                        <TabsContent className='p-4'>
+                            <Card className='bg-gray-800 text-white'>
+                                <CardHeader>
+                                    <CardDescription className='text-gray-400'>
+                                        View and update your user details here.
+                                    </CardDescription>
+                                </CardHeader>
+
+                                <CardContent className='space-y-2 bg-gray-800'>
+                                    {editUser ? (
+                                        <>
+                                            <div className='space-y-2'>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='userName'>Username</Label>
+                                                    <Input
+                                                        id='userName'
+                                                        value={editUser.userName}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='email'>Email</Label>
+                                                    <Input
+                                                        id='email'
+                                                        value={editUser.email}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='phone'>Phone</Label>
+                                                    <Input
+                                                        id='phone'
+                                                        value={editUser.phone}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                {/* <div className='space-y-1'>
+                                                    <Label>Wallet</Label>
+                                                    {user?.wallet?.length > 0 ? (
+                                                        <ul className='list-disc list-inside text-sm text-gray-700'>
+                                                            {user.wallet.map((wallet, index) => (
+                                                                <li key={index}>{wallet}</li>
+                                                            ))}
+                                                        </ul>
+                                                    ) : (
+                                                        <p className='text-sm text-gray-500'>
+                                                            No wallets available
+                                                        </p>
+                                                    )}
+                                                </div> */}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className='text-sm text-gray-500'>Loading user...</p>
+                                    )}
+                                </CardContent>
+                                <CardFooter>
+                                    <Button
+                                        className='bg-[#83aa6c] text-white'
+                                        onClick={handleSaveChanges}
+                                        disabled={isLoading}
+                                    >
+                                        Save Changes
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                </DialogContent>
+            </Dialog>
+            
+            <Dialog open={openDeleteUser} onOpenChange={setOpenDeleteUser}>
+                <DialogContent className='dialog-overlay bg-gray-800 text-white'>
+                    <DialogHeader>
+                        <DialogTitle>Delete User</DialogTitle>
+                    </DialogHeader>
+
+                    <Tabs className='w-[462px]'>
+                        <TabsContent className='p-4'>
+                            <Card className='bg-gray-800 text-white'>
+                                <CardHeader>
+                                    <CardDescription className='text-gray-400'>
+                                        Delete your selected user.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className='space-y-2 bg-gray-800'>
+                                    <div className='space-y-1'>
+                                        <Label>Are you sure you want to delete this user?</Label>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button
+                                        className='bg-[#83aa6c] text-white'
+                                        onClick={handleDeleteUser}
+                                        disabled={isLoading}
+                                    >
+                                        Delete
+                                    </Button>
+                                    <Button
+                                        className='bg-red-400 text-white ml-2'
+                                        onClick={() => setOpenDeleteUser(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                        
+                </DialogContent>
+            </Dialog>
         </motion.div>
     )
 }

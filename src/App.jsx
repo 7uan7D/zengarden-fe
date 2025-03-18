@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Toaster } from "sonner";
 import "./App.css";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -7,7 +8,10 @@ import PlayerHome from "./pages/player/home/index.jsx";
 import FAQ from "./pages/faq/index.jsx";
 import Calendar from "./pages/player/calendar";
 import { Toaster } from "sonner";
+import Challenges from "./pages/player/challenges";
 import Sidebar from "./components/common/Sidebar";
+import Footer from "./components/footer";
+
 import Overview from "./pages/Overview";
 import Items from "./pages/Items";
 import Users from "./pages/Users";
