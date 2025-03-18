@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import HeroPage from "./pages/common/hero/index.jsx";
 import PlayerHome from "./pages/player/home/index.jsx";
 import FAQ from "./pages/faq/index.jsx";
+import Calendar from "./pages/player/calendar";
 import { Toaster } from "sonner";
 import Sidebar from "./components/common/Sidebar";
 import Overview from "./pages/Overview";
@@ -45,6 +46,7 @@ function AnimatedRoutes() {
           <Routes location={location}>
             <Route path="/" element={<HeroPage />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/calendar" element={<Calendar />} />
             <Route path="/home" element={<PlayerHome />} />
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/task" element={<TaskPage />} />
