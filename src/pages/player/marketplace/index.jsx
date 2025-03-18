@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Header from "@/components/Header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,9 +28,7 @@ export default function Marketplace() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md">
-        <Header />
-      </div>
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md"></div>
 
       <div className="flex flex-1 pt-[80px]">
         <div
@@ -101,8 +98,10 @@ export default function Marketplace() {
                                 </span>
                               )}
                               {i === 1 && (
-                                <span className="absolute top-0.5 left-[2px] bg-green-500 text-white text-xs font-bold px-5 py-1 
-                                transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow">
+                                <span
+                                  className="absolute top-0.5 left-[2px] bg-green-500 text-white text-xs font-bold px-5 py-1 
+                                transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
+                                >
                                   Seasonal
                                 </span>
                               )}

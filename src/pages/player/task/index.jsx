@@ -2,7 +2,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import Header from "@/components/header";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
 import {
@@ -53,9 +52,7 @@ export default function TaskPage() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md">
-        <Header />
-      </div>
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md"></div>
       <div className="pt-20">
         <div className="bg-[#CCFFCC] text-black p-6 rounded-lg shadow-md mb-6 flex items-center gap-6 relative mt-6">
           <div className="absolute top-1.5 left-[5.5%] transform -translate-x-1/2">
@@ -169,7 +166,9 @@ export default function TaskPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 w-full"> {/* Thay grid-cols-3 thành grid-cols-4 và thêm w-full */}
+      <div className="grid grid-cols-4 gap-4 w-full">
+        {" "}
+        {/* Thay grid-cols-3 thành grid-cols-4 và thêm w-full */}
         <TaskColumn title="Daily Task" tasks={tasks.daily} />
         <TaskColumn title="Simple Task" tasks={tasks.simple} />
         <TaskColumn title="Complex Task" tasks={tasks.complex} />
