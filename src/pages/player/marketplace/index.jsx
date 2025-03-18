@@ -91,14 +91,18 @@ export default function Marketplace() {
                             onMouseEnter={() => setIsOpen(true)}
                             onMouseLeave={() => setIsOpen(false)}
                           >
-                            <Card className="relative">
+                            <Card className="relative overflow-hidden">
                               {i === 0 && (
-                                <span className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
+                                <span
+                                  className="absolute top-1 left-[1px] bg-yellow-500 text-white text-xs font-bold px-5 py-1 
+                                  transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
+                                >
                                   Best Seller
                                 </span>
                               )}
                               {i === 1 && (
-                                <span className="absolute top-2 left-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
+                                <span className="absolute top-0.5 left-[2px] bg-green-500 text-white text-xs font-bold px-5 py-1 
+                                transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow">
                                   Seasonal
                                 </span>
                               )}
