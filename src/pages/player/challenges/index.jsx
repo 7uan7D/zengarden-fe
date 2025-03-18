@@ -165,15 +165,33 @@ export default function Challenges() {
                     <div className="mt-4">
                         {filteredChallengeTypes.map((type) => (
                             <div key={type} className="flex items-center mb-2">
-                                <input
-                                    type="checkbox"
-                                    id={type}
-                                    checked={typeFilters.includes(type)}
-                                    onChange={() => handleTypeFilter(type)}
-                                    className="mr-2 mb-2.5 w-4 h-4 rounded-sm"
-                                    // className="mr-2 mb-2.5 w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-teal-500 dark:focus:ring-teal-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-                                />
-                                <label htmlFor={type} className="text-sm mb-2">
+                                <div className="relative">
+                                    <input
+                                        type="checkbox"
+                                        id={type}
+                                        checked={typeFilters.includes(type)}
+                                        onChange={() => handleTypeFilter(type)}
+                                        className="peer sr-only"
+                                    />
+                                    <div className="mb-2.5 w-4 h-4 border border-gray-300 rounded-sm peer-checked:bg-teal-600 peer-checked:border-teal-600">
+                                        <svg
+                                            className="absolute hidden w-3 h-3 text-white pointer-events-none peer-checked:block top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                                            aria-hidden="true"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 16 12"
+                                        >
+                                            <path
+                                                stroke="currentColor"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth="2"
+                                                d="M1 5.917 5.724 10.5 15 1.5"
+                                            />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <label htmlFor={type} className="ml-2 text-sm mb-2">
                                     {type}
                                 </label>
                             </div>

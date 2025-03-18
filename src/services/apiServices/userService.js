@@ -14,3 +14,8 @@ export async function UpdateUserInfo(userData) {
   const response = await axios.put(`/User/update-user`, userData);
   return response.data;
 }
+
+export async function DeleteUser(userId) {
+  const response = await axios.delete(`/User/${userId}`);
+  return response.data;
+}
