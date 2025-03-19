@@ -114,7 +114,9 @@ const UsersTable = () => {
             try {
                 await DeleteUser(selectedUserId)
                 toast.success('User has been deleted successfully!')
-                window.location.reload()
+                setTimeout(() => {
+                    window.location.reload()
+                }, 3000)
             } catch (error) {
                 console.log('Failed to delete user:', error)
                 toast.error('Delete user failed!')

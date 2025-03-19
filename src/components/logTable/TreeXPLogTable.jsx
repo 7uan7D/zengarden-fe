@@ -1,6 +1,6 @@
-import { GetAllTreeXPLogs, UpdateTreeXPLog } from "@/services/apiServices/treeXPLogService"
+import { DeleteTreeXPLog, GetAllTreeXPLogs, UpdateTreeXPLog } from "@/services/apiServices/treeXPLogService"
 import { motion } from "framer-motion"
-import { Search, Edit, Trash2 } from "lucide-react"
+import { Search, Edit, Trash2, Delete } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -50,6 +50,16 @@ const TreeXPLogTable = () => {
         }
     }, [treeXPLogData])
 
+    const handleChange = (e) => {
+        const { id, value } = e.target
+        setEditLog((prev) => ({
+            ...prev,
+            [id]: value,
+        }))
+
+        console.log(editLog)
+    }
+
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase()
         setSearchTerm(term)
@@ -63,16 +73,6 @@ const TreeXPLogTable = () => {
 
     if (error) {
         return <div>{error.message}</div>
-    }
-    
-    const handleChange = (e) => {
-        const { id, value } = e.target
-        setEditLog((prev) => ({
-            ...prev,
-            [id]: value,
-        }))
-
-        console.log(editLog)
     }
 
     const handleEditClick = (logId) => {
@@ -97,6 +97,29 @@ const TreeXPLogTable = () => {
                 setIsLoading(false)
             }
         }
+    }
+
+    const handleDeleteClick = (logId) => {
+        setSelectedLogId(logId)
+        setOpenDeleteLog(true)
+    }
+
+    const handleDeleteLog = async () => {
+        if (selectedLogId) {
+            setIsLoading(true)
+            try {
+                await DeleteTreeXPLog(selectedLogId)
+                toast.success('The log has been deleted successfully!')
+                setTimeout(() => {
+                    window.location.reload()
+                }, 3000)
+            } catch (error) {
+                console.log('Failed to delete log:', error)
+                toast.error('Delete log failed!')
+            } finally {
+                setIsLoading(false)
+            }
+        }    
     }
 
     return (
@@ -176,7 +199,7 @@ const TreeXPLogTable = () => {
                                     <button onClick={() => handleEditClick(item.logId)} className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>
                                         <Edit size={18} />
                                     </button>
-                                    <button className='text-red-400 hover:text-red-300 bg-transparent'>
+                                    <button onClick={() => handleDeleteClick(item.logId)} className='text-red-400 hover:text-red-300 bg-transparent'>
                                         <Trash2 size={18} />
                                     </button>
                                 </td>
@@ -186,7 +209,110 @@ const TreeXPLogTable = () => {
                 </table>
             </div>
 
-            
+            <Dialog open={openEditLog} onOpenChange={setOpenEditLog}>
+                <DialogContent className='dialog-overlay bg-gray-800 text-white'>
+                    <DialogHeader>
+                        <DialogTitle>Edit Log</DialogTitle>
+                    </DialogHeader>
+
+                    <Tabs className='w-[462px]'>
+                        <TabsContent className='p-4'>
+                            <Card className='bg-gray-800 text-white'>
+                                <CardHeader>
+                                    <CardDescription className='text-gray-400'>
+                                        View and update your log details here.
+                                    </CardDescription>
+                                </CardHeader>
+
+                                <CardContent className='space-y-2 bg-gray-800'>
+                                    {editLog ? (
+                                        <>
+                                            <div className='space-y-2'>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='taskId'>Task id</Label>
+                                                    <Input
+                                                        id='taskId'
+                                                        value={editLog.taskId}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='activityType'>Activity Type</Label>
+                                                    <Input
+                                                        id='activityType'
+                                                        value={editLog.activityType}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='xpAmount'>Experience Amount</Label>
+                                                    <Input
+                                                        id='xpAmount'
+                                                        value={editLog.xpAmount}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className='text-sm text-gray-500'>Loading log...</p>
+                                    )}
+                                </CardContent>
+                                <CardFooter>
+                                    <Button
+                                        className='bg-[#83aa6c] text-white'
+                                        onClick={handleSaveChanges}
+                                        disabled={isLoading}
+                                    >
+                                        Save Changes
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={openDeleteLog} onOpenChange={setOpenDeleteLog}>
+                <DialogContent className='dialog-overlay bg-gray-800 text-white'>
+                    <DialogHeader>
+                        <DialogTitle>Delete Log</DialogTitle>
+                    </DialogHeader>
+
+                    <Tabs className='w-[462px]'>
+                        <TabsContent className='p-4'>
+                            <Card className='bg-gray-800 text-white'>
+                                <CardHeader>
+                                    <CardDescription className='text-gray-400'>
+                                        Delete your selected log.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className='space-y-2 bg-gray-800'>
+                                    <div className='space-y-1'>
+                                        <Label>Are you sure you want to delete this log?</Label>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button
+                                        className='bg-[#83aa6c] text-white'
+                                        onClick={handleDeleteLog}
+                                        disabled={isLoading}
+                                    >
+                                        Delete
+                                    </Button>
+                                    <Button
+                                        className='bg-red-400 text-white ml-2'
+                                        onClick={() => setOpenDeleteLog(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+
+                </DialogContent>
+            </Dialog>
         </motion.div>
     )
 }
