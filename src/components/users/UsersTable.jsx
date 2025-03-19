@@ -175,7 +175,7 @@ const UsersTable = () => {
                     <tbody className='divide-y divide-gray-700'>
                         {filteredUsers.map((user) => (
                             <motion.tr
-                                key={user.id}
+                                key={user.userId}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ duration: 0.3 }}

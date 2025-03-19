@@ -1,6 +1,6 @@
 import { DeleteTreeXPLog, GetAllTreeXPLogs, UpdateTreeXPLog } from "@/services/apiServices/treeXPLogService"
 import { motion } from "framer-motion"
-import { Search, Edit, Trash2, Delete } from "lucide-react"
+import { Search, Edit, Trash2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "../ui/button"
 import { toast } from "sonner"
+import { GetTaskById } from "@/services/apiServices/taskService"
 
 const TreeXPLogTable = () => {
     const [treeXPLogData, setTreeXPLogData] = useState(null)
@@ -33,7 +34,6 @@ const TreeXPLogTable = () => {
             try {
                 const data = await GetAllTreeXPLogs()
                 setTreeXPLogData(data)
-                console.log(data)
                 setIsLoading(false)
             } catch (err) {
                 setError(err)
@@ -154,7 +154,7 @@ const TreeXPLogTable = () => {
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Created At</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Updated At</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Tasks</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Actions</th>
+                            {/* <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Actions</th> */}
                         </tr>
                     </thead>
 
@@ -194,22 +194,25 @@ const TreeXPLogTable = () => {
                                     minute: 'numeric',
                                     second: 'numeric',
                                 })}</td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.tasks}</td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                    task
+                                    {/* {taskNames[item.taskId] || 'Loading...'} */}
+                                </td>
+                                {/* <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                     <button onClick={() => handleEditClick(item.logId)} className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>
                                         <Edit size={18} />
                                     </button>
                                     <button onClick={() => handleDeleteClick(item.logId)} className='text-red-400 hover:text-red-300 bg-transparent'>
                                         <Trash2 size={18} />
                                     </button>
-                                </td>
+                                </td> */}
                             </motion.tr>
                         ))}
                     </tbody>
                 </table>
             </div>
 
-            <Dialog open={openEditLog} onOpenChange={setOpenEditLog}>
+            {/* <Dialog open={openEditLog} onOpenChange={setOpenEditLog}>
                 <DialogContent className='dialog-overlay bg-gray-800 text-white'>
                     <DialogHeader>
                         <DialogTitle>Edit Log</DialogTitle>
@@ -245,7 +248,7 @@ const TreeXPLogTable = () => {
                                                     />
                                                 </div>
                                                 <div className='space-y-1'>
-                                                    <Label htmlFor='xpAmount'>Experience Amount</Label>
+                                                    <Label htmlFor='xpAmount'>Experience Amount (XP)</Label>
                                                     <Input
                                                         id='xpAmount'
                                                         value={editLog.xpAmount}
@@ -312,7 +315,7 @@ const TreeXPLogTable = () => {
                     </Tabs>
 
                 </DialogContent>
-            </Dialog>
+            </Dialog> */}
         </motion.div>
     )
 }
