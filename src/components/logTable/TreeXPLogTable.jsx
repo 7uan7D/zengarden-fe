@@ -1,24 +1,102 @@
+import { GetAllTreeXPLogs, UpdateTreeXPLog } from "@/services/apiServices/treeXPLogService"
 import { motion } from "framer-motion"
 import { Search, Edit, Trash2 } from "lucide-react"
-import { useState } from "react"
-
-const treeXPLogData = [
-    { id: 1, userId: 'User 1', taskId: 'Task 1', activityType: 2 , XPAmount: 59, createdAt: 'create time' },
-    { id: 2, userId: 'User 2', taskId: 'Task 2', activityType: 1, XPAmount: 39, createdAt: 'create time' },
-    { id: 3, userId: 'User 3', taskId: 'Task 3', activityType: 3, XPAmount: 19, createdAt: 'create time' },
-    { id: 4, userId: 'User 4', taskId: 'Task 4', activityType: 3, XPAmount: 29, createdAt: 'create time' },
-    { id: 5, userId: 'User 5', taskId: 'Task 5', activityType: 1, XPAmount: 79, createdAt: 'create time' },
-]
+import { useEffect, useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "../ui/button"
+import { toast } from "sonner"
 
 const TreeXPLogTable = () => {
+    const [treeXPLogData, setTreeXPLogData] = useState(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [filteredLogs, setFilteredLogs] = useState(treeXPLogData)
+    const [openEditLog, setOpenEditLog] = useState(false)
+    const [selectedLogId, setSelectedLogId] = useState(null)
+    const [openDeleteLog, setOpenDeleteLog] = useState(false)
+    const [editLog, setEditLog] = useState({
+        logId: '',
+        taskId: '',
+        activityType: '',
+        xpAmount: '',
+        tasks: '',
+    })
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true)
+            try {
+                const data = await GetAllTreeXPLogs()
+                setTreeXPLogData(data)
+                console.log(data)
+                setIsLoading(false)
+            } catch (err) {
+                setError(err)
+                setIsLoading(false)
+            }
+        }
+
+        fetchData()
+    }, [])
+
+    useEffect(() => {
+        if(treeXPLogData) {
+            setFilteredLogs(treeXPLogData)
+        }
+    }, [treeXPLogData])
 
     const handleSearch = (e) => {
-        const term = e.target.value.toLowerCase();
-        setSearchTerm(term);
-        const filtered = treeXPLogData.filter((item) => item.userId.toLowerCase().includes(term) || item.taskId.toLowerCase().includes(term));
-        setFilteredLogs(filtered);
+        const term = e.target.value.toLowerCase()
+        setSearchTerm(term)
+        const filtered = treeXPLogData.filter((item) => item.logId.toLowerCase().includes(term) || item.taskId.toLowerCase().includes(term))
+        setFilteredLogs(filtered)
+    }
+
+    if (!filteredLogs) {
+        return <div>Loading...</div>
+    }
+
+    if (error) {
+        return <div>{error.message}</div>
+    }
+    
+    const handleChange = (e) => {
+        const { id, value } = e.target
+        setEditLog((prev) => ({
+            ...prev,
+            [id]: value,
+        }))
+
+        console.log(editLog)
+    }
+
+    const handleEditClick = (logId) => {
+        setSelectedLogId(logId)
+        setOpenEditLog(true)
+    }
+
+    const handleSaveChanges = async () => {
+        if (selectedLogId) {
+            setIsLoading(true)
+            try {
+                await UpdateTreeXPLog(selectedLogId, editLog)
+                toast.success('The information has been updated successfully!')
+
+                setTimeout(() => {
+                    window.location.reload()
+                }, 3000)
+            } catch (error) {
+                console.log('Failed to update log:', error)
+                toast.error('Update information failed!')
+            } finally {
+                setIsLoading(false)
+            }
+        }
     }
 
     return (
@@ -46,11 +124,13 @@ const TreeXPLogTable = () => {
                 <table className='min-w-full divide-y divide-gray-700'>
                     <thead>
                         <tr>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>User Id</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Log Id</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Task Id</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Activity Type</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>XP Amount</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Created At</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Updated At</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Tasks</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Actions</th>
                         </tr>
                     </thead>
@@ -58,26 +138,42 @@ const TreeXPLogTable = () => {
                     <tbody className='divide-y divide-gray-700'>
                         {filteredLogs.map((item) => (
                             <motion.tr
-                                key={item.id}
+                                key={item.logId}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ duration: 0.3 }}
                             >
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100 flex gap-2 items-center'>
-                                    <img
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                    {/* <img
                                         src={`https://banner2.cleanpng.com/20231230/xkg/transparent-cartoon-task-management-to-do-list-productivity-or-yellow-paper-with-task-list-and-1710949246698.webp`}
-                                        alt={item.userId}
+                                        alt={item.logId}
                                         className='size-10 rounded-full' 
-                                    />
-                                    {item.userId}
+                                    /> */}
+                                    {item.logId}
                                 </td>
 
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.taskId}</td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.activityType}</td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.XPAmount} XP</td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.createdAt}</td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.xpAmount} XP</td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{new Date(item.createdAt).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                    hour: 'numeric',
+                                    minute: 'numeric',
+                                    second: 'numeric',
+                                })}</td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{new Date(item.updatedAt).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                    hour: 'numeric',
+                                    minute: 'numeric',
+                                    second: 'numeric',
+                                })}</td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.tasks}</td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                    <button className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>
+                                    <button onClick={() => handleEditClick(item.logId)} className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>
                                         <Edit size={18} />
                                     </button>
                                     <button className='text-red-400 hover:text-red-300 bg-transparent'>
@@ -89,6 +185,8 @@ const TreeXPLogTable = () => {
                     </tbody>
                 </table>
             </div>
+
+            
         </motion.div>
     )
 }
