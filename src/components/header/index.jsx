@@ -239,6 +239,7 @@ const Header = () => {
 
       setIsSheetOpen(false);
       navigate("/home");
+      window.location.reload();
     } catch (err) {
       setError("Please check the information again!");
       toast.error("Login failed!");
@@ -249,6 +250,7 @@ const Header = () => {
     localStorage.removeItem("token");
     toast.success("Signed out!");
     navigate("/");
+    window.location.reload();
   };
 
   useEffect(() => {
