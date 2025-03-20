@@ -23,26 +23,65 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle } from "lucide-react";
-
-const tasks = {
-  daily: ["Do exercise", "Drink water", "Clean room"],
-  simple: ["Make lemonade", "Read 10 pages", "Meditate"],
-  complex: [
-    "Finish project report",
-    "Workout 3 times a week",
-    "Plan monthly budget",
-  ],
-  done: ["Submit assignment", "Clean the house"],
-};
+import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
+import parseJwt from "@/services/parseJwt";
 
 export default function TaskPage() {
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [taskType, setTaskType] = useState("");
+  const [currentTree, setCurrentTree] = useState(1);
+  const [userTrees, setUserTrees] = useState([]);
+  const selectedTree = userTrees.find(
+    (tree) => tree.userTreeId === currentTree
+  );
+  useEffect(() => {
+    const fetchTrees = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        const userId = parseJwt(token).sub;
+        const responseData = await GetUserTreeByUserId(userId);
+        if (responseData) {
+          setUserTrees(responseData);
+        }
+      }
+    };
 
+    fetchTrees();
+  }, []);
+
+  useEffect(() => {
+    if (userTrees.length > 0) {
+      const savedTreeId = localStorage.getItem("selectedTreeId");
+      const found = userTrees.find(
+        (tree) => tree.userTreeId === parseInt(savedTreeId)
+      );
+      if (found) {
+        setCurrentTree(found.userTreeId);
+      } else {
+        // Nếu không tìm thấy cây đã lưu, mặc định chọn cây đầu tiên
+        setCurrentTree(userTrees[0].userTreeId);
+        localStorage.setItem("selectedTreeId", userTrees[0].userTreeId);
+      }
+    }
+  }, [userTrees]);
+  const tasks = {
+    daily: ["Do exercise", "Drink water", "Clean room"],
+    simple: ["Make lemonade", "Read 10 pages", "Meditate"],
+    complex: [
+      "Finish project report",
+      "Workout 3 times a week",
+      "Plan monthly budget",
+    ],
+    done: ["Submit assignment", "Clean the house"],
+  };
   const handleOpen = (type) => {
     setTaskType(type);
     setIsTaskDialogOpen(true);
+  };
+
+  const handleOpenDialog = () => {
+    setIsTreeDialogOpen(true);
   };
 
   return (
@@ -55,59 +94,114 @@ export default function TaskPage() {
       <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md"></div>
       <div className="pt-20">
         <div className="bg-[#CCFFCC] text-black p-6 rounded-lg shadow-md mb-6 flex items-center gap-6 relative mt-6">
-          <div className="absolute top-1.5 left-[5.5%] transform -translate-x-1/2">
-            <a
-              href="#"
-              className="text-black text-sm hover:underline"
-              onClick={() => setIsTreeDialogOpen(true)}
-            >
-              Change Tree 🌳
-            </a>
+          {/* Hình cây chính */}
+          <div className="relative cursor-pointer" onClick={handleOpenDialog}>
+            <img
+              src={`/tree-${currentTree}.png`}
+              alt="Your Tree"
+              className="w-32 h-32 mx-auto hover:scale-105 transition-transform"
+            />
+          </div>
 
-            <Dialog open={isTreeDialogOpen} onOpenChange={setIsTreeDialogOpen}>
-              <DialogContent className="max-w-xl w-full flex gap-4 justify-center p-6">
-                {[1, 2].map((tree) => (
+          {/* Dialog chọn cây */}
+          <Dialog open={isTreeDialogOpen} onOpenChange={setIsTreeDialogOpen}>
+            <DialogContent className="max-w-xl w-full flex gap-4 justify-center p-6 flex-wrap">
+              <DialogTitle className="text-center w-full">
+                Choose your tree
+              </DialogTitle>
+
+              {userTrees.map((tree) => {
+                const totalNeeded = tree.totalXp + tree.xpToNextLevel;
+                const progress =
+                  totalNeeded > 0 ? (tree.totalXp / totalNeeded) * 100 : 0;
+
+                return (
                   <div
-                    key={tree}
+                    key={tree.userTreeId}
                     className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
-                    onClick={() => alert(`Bạn đã chọn cây ${tree}`)}
+                    onClick={() => {
+                      setCurrentTree(tree.userTreeId);
+                      localStorage.setItem("selectedTreeId", tree.userTreeId);
+                      setIsTreeDialogOpen(false);
+                    }}
                   >
                     <img
-                      src={`/tree-${tree}.png`}
-                      alt={`Tree ${tree}`}
+                      src={`/tree-${tree.userTreeId}.png`} // hoặc thay bằng ảnh mặc định
+                      alt={`${tree.name}`}
                       className="w-20 h-20 mx-auto"
                     />
-                    <h3 className="font-bold mt-2">Tree {tree}</h3>
-                    <p>Level: {tree * 2}</p>
+                    <h3 className="font-bold mt-2">{tree.name}</h3>
+                    <p>Level: {tree.levelId}</p>
                     <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
                       <div
                         className="h-full bg-green-500 rounded-full"
-                        style={{ width: `${tree * 30}%` }}
+                        style={{ width: `${progress}%` }}
                       />
                     </div>
+                    <p className="text-sm mt-1">
+                      XP: {tree.totalXp} / {totalNeeded}
+                    </p>
                   </div>
-                ))}
-              </DialogContent>
-            </Dialog>
-          </div>
-          <div className="w-24 h-24 bg-gray-300 rounded-full relative"></div>
+                );
+              })}
+            </DialogContent>
+          </Dialog>
+
+          {/* Thông tin cây và trang */}
           <div className="flex-1">
-            <h2 className="text-xl font-bold">Tree Name - Level 3</h2>
-            <p className="text-sm mt-2">Experience</p>
-            <Progress value={30} max={100} className="h-2 bg-[#83aa6c]" />
-            <div className="mt-5 flex items-center gap-2">
-              <span className="text-sm">Equipped Items:</span>
-              <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded">
-                Item 1
-              </span>
-              <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded">
-                Item 2
-              </span>
-              <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded">
-                Item 3
-              </span>
-            </div>
+            {selectedTree ? (
+              <>
+                <h2 className="text-xl font-bold">
+                  {selectedTree.name} - Level {selectedTree.levelId}
+                </h2>
+                <p className="text-sm mt-2 font-semibold">Experience</p>
+                <div className="relative w-full h-4 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                  <div
+                    className="h-full bg-[#83aa6c] transition-all duration-700 ease-out"
+                    style={{
+                      width: `${
+                        (selectedTree.totalXp /
+                          (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
+                        100
+                      }%`,
+                    }}
+                  />
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-out"
+                    style={{
+                      left: `min(calc(${
+                        (selectedTree.totalXp /
+                          (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
+                        100
+                      }% - 40px), calc(100% - 86px))`,
+                      // 80px là chiều rộng ước tính của box, căn chỉnh cho không bị tràn
+                    }}
+                  >
+                    <span className="text-xs font-bold bg-white px-2 py-1 rounded-full shadow-md border border-gray-300 whitespace-nowrap">
+                      {selectedTree.totalXp} /{" "}
+                      {selectedTree.totalXp + selectedTree.xpToNextLevel} XP
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-5 flex items-center gap-2">
+                  <span className="text-sm">Equipped Items:</span>
+                  <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded">
+                    Item 1
+                  </span>
+                  <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded">
+                    Item 2
+                  </span>
+                  <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded">
+                    Item 3
+                  </span>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm italic">Haven't chosen any tree yet</p>
+            )}
           </div>
+
+          {/* Button tạo task */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button className="absolute right-6 top-6 bg-black text-white hover:bg-gray-800">
@@ -124,6 +218,7 @@ export default function TaskPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Dialog tạo task */}
           <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
             <DialogContent className="max-w-lg">
               <DialogHeader>
