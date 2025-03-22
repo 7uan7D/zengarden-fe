@@ -641,7 +641,7 @@ const Header = () => {
               <SheetTrigger asChild onClick={() => setIsSheetOpen(true)}>
                 <motion.div
                   className="farmer-badge"
-                  whileHover={{ scale: 1.1, rotate: 2 }}
+                  whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <BadgeCheck className="icon" />
