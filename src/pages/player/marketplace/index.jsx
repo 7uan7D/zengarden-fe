@@ -121,10 +121,6 @@ export default function Marketplace() {
                                 ) : (
                                   <div className="h-20 w-20 bg-gray-300 rounded-lg mb-2" />
                                 )}
-
-                                <p className="font-semibold">
-                                  {cat} Item {i + 1}
-                                </p>
                                 <p className="text-sm text-gray-500 flex items-center">
                                   <img
                                     src="/src/assets/images/coin.png"

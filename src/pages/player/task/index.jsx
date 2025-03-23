@@ -160,21 +160,19 @@ export default function TaskPage() {
                   <div
                     className="h-full bg-[#83aa6c] transition-all duration-700 ease-out"
                     style={{
-                      width: `${
-                        (selectedTree.totalXp /
+                      width: `${(selectedTree.totalXp /
                           (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
                         100
-                      }%`,
+                        }%`,
                     }}
                   />
                   <div
                     className="absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-out"
                     style={{
-                      left: `min(calc(${
-                        (selectedTree.totalXp /
+                      left: `min(calc(${(selectedTree.totalXp /
                           (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
                         100
-                      }% - 40px), calc(100% - 86px))`,
+                        }% - 40px), calc(100% - 86px))`,
                       // 80px là chiều rộng ước tính của box, căn chỉnh cho không bị tràn
                     }}
                   >
@@ -210,6 +208,9 @@ export default function TaskPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleOpen("Daily Task")}>
+                Daily Task
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleOpen("Simple Task")}>
                 Simple Task
               </DropdownMenuItem>

@@ -435,15 +435,6 @@ const Header = () => {
                       {totalXp} / {xpToNextLevel} XP
                     </span>
                   </div>
-                  {/* Coin trong Wallet */}
-                  <div className="mt-0.5 text-xs text-gray-600 flex items-center gap-1">
-                    <img
-                      src="/src/assets/images/coin.png"
-                      alt="Coin"
-                      className="w-4 h-4"
-                    />
-                    <span className="font-semibold">{walletBalance ?? 0}</span>
-                  </div>
                 </div>
 
                 {/* Avatar + Dropdown */}
@@ -478,6 +469,15 @@ const Header = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                {/* Coin trong Wallet */}
+                <div className="mt-0.5 text-xs text-gray-600 flex items-center gap-1">
+                    <img
+                      src="/src/assets/images/coin.png"
+                      alt="Coin"
+                      className="w-4 h-4"
+                    />
+                    <span className="font-semibold text-base">{walletBalance ?? 0}</span>
+                  </div>
               </div>
 
               {/* Dialog chứa Tabs */}
