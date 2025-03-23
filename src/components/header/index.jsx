@@ -224,6 +224,7 @@ const Header = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
       const payload = { password: credentials.password };
@@ -236,13 +237,14 @@ const Header = () => {
 
       setIsLoggedIn(true);
       toast.success("Login Successfully!");
-
       setIsSheetOpen(false);
       navigate("/home");
       window.location.reload();
     } catch (err) {
       setError("Please check the information again!");
       toast.error("Login failed!");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -724,7 +726,14 @@ const Header = () => {
                         )}
                         <SheetFooter>
                           <Button type="submit" disabled={isLoading}>
-                            Login
+                            {isLoading ? (
+                              <div className="flex items-center gap-2">
+                                <span className="animate-spin w-4 h-4 border-2 border-t-transparent border-white rounded-full" />
+                                Loading...
+                              </div>
+                            ) : (
+                              "Login"
+                            )}
                           </Button>
                         </SheetFooter>
                         <div className="flex justify-end mt-2">
