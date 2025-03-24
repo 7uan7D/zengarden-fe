@@ -25,6 +25,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle } from "lucide-react";
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
+import { GetAllTrees } from "@/services/apiServices/treesService";
+import { CreateUserTree } from "@/services/apiServices/userTreesService";
+import { toast } from "sonner";
 import parseJwt from "@/services/parseJwt";
 
 export default function TaskPage() {
@@ -33,9 +36,42 @@ export default function TaskPage() {
   const [taskType, setTaskType] = useState("");
   const [currentTree, setCurrentTree] = useState(0);
   const [userTrees, setUserTrees] = useState([]);
+  const [trees, setTrees] = useState([]);
+
   const selectedTree = userTrees.find(
     (tree) => tree.userTreeId === currentTree
   );
+  const treeLevel = selectedTree?.levelId;
+  const finalTreeId = selectedTree?.finalTreeId;
+  const selectedFinalTree = trees.find((t) => t.treeId === finalTreeId);
+  const treeImageSrc =
+    treeLevel < 4
+      ? `/src/assets/images/lv${treeLevel}.png`
+      : selectedFinalTree?.imageUrl || "/src/assets/images/default.png";
+  const progressPercent = selectedTree
+    ? (selectedTree.totalXp /
+        (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
+      100
+    : 0;
+
+  const safeProgress = Math.min(Math.max(progressPercent, 3), 97);
+  const [newTreeName, setNewTreeName] = useState("");
+  const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    const fetchTrees = async () => {
+      try {
+        const allTrees = await GetAllTrees();
+        setTrees(allTrees);
+      } catch (error) {
+        console.error("Error fetching trees:", error);
+      }
+    };
+
+    fetchTrees();
+  }, []);
+
   useEffect(() => {
     const fetchTrees = async () => {
       const token = localStorage.getItem("token");
@@ -85,6 +121,32 @@ export default function TaskPage() {
     setIsTreeDialogOpen(true);
   };
 
+  const handleCreateTree = async () => {
+    try {
+      setIsCreating(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("You are not logged in!");
+        return;
+      }
+
+      const userId = parseJwt(token).sub;
+      const result = await CreateUserTree(userId, newTreeName);
+
+      if (result) {
+        toast.success("Tree created successfully!");
+        setIsCreateTreeDialogOpen(false);
+        setNewTreeName("");
+        const updatedUserTrees = await GetUserTreeByUserId(userId);
+        setUserTrees(updatedUserTrees);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("An error occurred while creating the tree!");
+    } finally {
+      setIsCreating(false);
+    }
+  };
   return (
     <motion.div
       className="p-6 max-w-full mx-auto w-full" // Thay max-w-6xl thành max-w-full và thêm w-full
@@ -96,11 +158,22 @@ export default function TaskPage() {
       <div className="pt-20">
         <div className="bg-[#CCFFCC] text-black p-6 rounded-lg shadow-md mb-6 flex items-center gap-6 relative mt-6">
           {/* Hình cây */}
-          <div className="relative cursor-pointer" onClick={handleOpenDialog}>
+          <div
+            className="relative cursor-pointer"
+            onClick={() => {
+              if (userTrees.length === 0) {
+                // Nếu chưa có cây, mở luôn dialog tạo cây
+                setIsTreeDialogOpen(false);
+                setIsCreateTreeDialogOpen(true);
+              } else {
+                // Nếu có rồi thì mở dialog chọn cây
+                setIsTreeDialogOpen(true);
+              }
+            }}
+          >
             <img
-              src={currentTree ? `/tree-${currentTree}.png` : addIcon}
-              alt="Your Tree"
-              className="w-32 h-32 mx-auto hover:scale-105 transition-transform"
+              src={userTrees.length > 0 ? treeImageSrc : addIcon}
+              className="w-32 h-32 mx-auto hover:scale-105 transition-transform rounded-full border-4 border-green-300 shadow-md"
             />
           </div>
 
@@ -111,40 +184,100 @@ export default function TaskPage() {
                 Choose your tree
               </DialogTitle>
 
-              {userTrees.map((tree) => {
-                const totalNeeded = tree.totalXp + tree.xpToNextLevel;
-                const progress =
-                  totalNeeded > 0 ? (tree.totalXp / totalNeeded) * 100 : 0;
+              {userTrees
+                .filter((tree) => tree.treeStatus === "Growing")
+                .map((tree) => {
+                  const totalNeeded = tree.totalXp + tree.xpToNextLevel;
+                  const progress =
+                    totalNeeded > 0 ? (tree.totalXp / totalNeeded) * 100 : 0;
 
-                return (
-                  <div
-                    key={tree.userTreeId}
-                    className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
-                    onClick={() => {
-                      setCurrentTree(tree.userTreeId);
-                      localStorage.setItem("selectedTreeId", tree.userTreeId);
-                      setIsTreeDialogOpen(false);
-                    }}
-                  >
-                    <img
-                      src={`/tree-${tree.userTreeId}.png`} // hoặc thay bằng ảnh mặc định
-                      alt={`${tree.name}`}
-                      className="w-20 h-20 mx-auto"
-                    />
-                    <h3 className="font-bold mt-2">{tree.name}</h3>
-                    <p>Level: {tree.levelId}</p>
-                    <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
-                      <div
-                        className="h-full bg-green-500 rounded-full"
-                        style={{ width: `${progress}%` }}
+                  const finalTree = trees.find(
+                    (t) => t.treeId === tree.finalTreeId
+                  );
+                  const treeImageSrc =
+                    tree.levelId < 4
+                      ? `/src/assets/images/lv${tree.levelId}.png`
+                      : finalTree?.imageUrl || "/src/assets/images/default.png";
+
+                  return (
+                    <div
+                      key={tree.userTreeId}
+                      className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
+                      onClick={() => {
+                        setCurrentTree(tree.userTreeId);
+                        localStorage.setItem("selectedTreeId", tree.userTreeId);
+                        setIsTreeDialogOpen(false);
+                      }}
+                    >
+                      <img
+                        src={treeImageSrc}
+                        alt={`${tree.name}`}
+                        className="w-20 h-20 mx-auto rounded-full border-2 border-green-300 shadow-sm"
                       />
+                      <h3 className="font-bold mt-2">{tree.name}</h3>
+                      <p>Level: {tree.levelId}</p>
+                      <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
+                        <div
+                          className="h-full bg-green-500 rounded-full"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                      <p className="text-sm mt-1">
+                        XP: {tree.totalXp} / {totalNeeded}
+                      </p>
                     </div>
-                    <p className="text-sm mt-1">
-                      XP: {tree.totalXp} / {totalNeeded}
-                    </p>
-                  </div>
-                );
-              })}
+                  );
+                })}
+
+              {/* Chỉ hiện AddIcon nếu cây đang Growing < 2 */}
+              {userTrees.filter((tree) => tree.treeStatus === "Growing")
+                .length < 2 && (
+                <div
+                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
+                  onClick={() => {
+                    setIsTreeDialogOpen(false);
+                    setIsCreateTreeDialogOpen(true);
+                  }}
+                >
+                  <img
+                    src={addIcon}
+                    alt="Add New Tree"
+                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+                  />
+                  <h3 className="font-bold mt-2 text-green-600">
+                    Create New Tree
+                  </h3>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* dialog tạo cây */}
+          <Dialog
+            open={isCreateTreeDialogOpen}
+            onOpenChange={setIsCreateTreeDialogOpen}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create a new tree</DialogTitle>
+                <DialogDescription>Fill in the tree details</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Label htmlFor="treeName">Tree Name</Label>
+                <Input
+                  id="treeName"
+                  placeholder="Enter tree name"
+                  value={newTreeName}
+                  onChange={(e) => setNewTreeName(e.target.value)}
+                />
+                <Button
+                  onClick={handleCreateTree}
+                  className="w-full"
+                  disabled={isCreating}
+                >
+                  {isCreating ? "Creating..." : "Create"}
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
 
@@ -160,20 +293,18 @@ export default function TaskPage() {
                   <div
                     className="h-full bg-[#83aa6c] transition-all duration-700 ease-out"
                     style={{
-                      width: `${(selectedTree.totalXp /
+                      width: `${
+                        (selectedTree.totalXp /
                           (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
                         100
-                        }%`,
+                      }%`,
                     }}
                   />
                   <div
                     className="absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-out"
                     style={{
-                      left: `min(calc(${(selectedTree.totalXp /
-                          (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
-                        100
-                        }% - 40px), calc(100% - 86px))`,
-                      // 80px là chiều rộng ước tính của box, căn chỉnh cho không bị tràn
+                      left: `${safeProgress}%`,
+                      transform: "translate(-50%, -50%)",
                     }}
                   >
                     <span className="text-xs font-bold bg-white px-2 py-1 rounded-full shadow-md border border-gray-300 whitespace-nowrap">
