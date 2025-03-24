@@ -152,7 +152,7 @@ const TreeCard = ({ tree }) => {
             <div className="relative w-full">
                 {/* Tăng kích cỡ thanh process */}
               <Progress value={progress} className="w-full h-6" />
-              <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-800 font-medium">
+              <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-800 font-medium bg-white bg-opacity-50">
                 {progressText}
               </span>
             </div>

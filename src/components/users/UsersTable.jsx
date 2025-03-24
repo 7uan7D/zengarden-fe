@@ -114,7 +114,9 @@ const UsersTable = () => {
             try {
                 await DeleteUser(selectedUserId)
                 toast.success('User has been deleted successfully!')
-                window.location.reload()
+                setTimeout(() => {
+                    window.location.reload()
+                }, 3000)
             } catch (error) {
                 console.log('Failed to delete user:', error)
                 toast.error('Delete user failed!')
@@ -173,7 +175,7 @@ const UsersTable = () => {
                     <tbody className='divide-y divide-gray-700'>
                         {filteredUsers.map((user) => (
                             <motion.tr
-                                key={user.id}
+                                key={user.userId}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ duration: 0.3 }}
