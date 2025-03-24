@@ -9,17 +9,17 @@ import "../home/index.css";
 // Dữ liệu mẫu cho danh sách cây
 const treeData = {
   legendary: [
-    { id: 19, name: "Tree of Life", image: "/tree-19.png", level: 4, xp: 0, maxXp: 0, description: "A mythical tree of eternal vitality.", owned: true }, // Sở hữu
+    { id: 19, name: "Tree of Life", image: "/tree-19.png", level: 4, xp: 0, maxXp: 0, description: "A mythical tree of eternal vitality.", owned: true },
     { id: 20, name: "Golden Apple", image: "/tree-20.png", level: 1, xp: 0, maxXp: 100, description: "Bears fruit of pure gold.", owned: false },
   ],
   epic: [
     { id: 15, name: "Baobab", image: "/tree-15.png", level: 1, xp: 0, maxXp: 100, description: "Massive trunk stores water for years.", owned: false },
     { id: 16, name: "Sequoia", image: "/tree-16.png", level: 1, xp: 0, maxXp: 100, description: "One of the tallest trees in the world.", owned: false },
-    { id: 17, name: "Dragon Tree", image: "/tree-17.png", level: 3, xp: 1700, maxXp: 2000, description: "Exotic with red sap like blood.", owned: true }, // Sở hữu
+    { id: 17, name: "Dragon Tree", image: "/tree-17.png", level: 3, xp: 1700, maxXp: 2000, description: "Exotic with red sap like blood.", owned: true },
     { id: 18, name: "Ginkgo", image: "/tree-18.png", level: 1, xp: 0, maxXp: 100, description: "Ancient tree with fan-shaped leaves.", owned: false },
   ],
   rare: [
-    { id: 9, name: "Bamboo", image: "/tree-9.png", level: 2, xp: 800, maxXp: 1000, description: "Fast-growing and versatile plant.", owned: true }, // Sở hữu
+    { id: 9, name: "Bamboo", image: "/tree-9.png", level: 2, xp: 800, maxXp: 1000, description: "Fast-growing and versatile plant.", owned: true },
     { id: 10, name: "Cypress", image: "/tree-10.png", level: 1, xp: 0, maxXp: 100, description: "Tall and slender, often near water.", owned: false },
     { id: 11, name: "Yew", image: "/tree-11.png", level: 1, xp: 0, maxXp: 100, description: "Dark green needles with red berries.", owned: false },
     { id: 12, name: "Sycamore", image: "/tree-12.png", level: 1, xp: 0, maxXp: 100, description: "Wide canopy with mottled bark.", owned: false },
@@ -28,7 +28,7 @@ const treeData = {
   ],
   common: [
     { id: 1, name: "Oak", image: "/tree-1.png", level: 1, xp: 0, maxXp: 100, description: "A sturdy tree commonly found in forests.", owned: false },
-    { id: 2, name: "Birch", image: "/tree-2.png", level: 1, xp: 80, maxXp: 100, description: "Known for its white bark and elegant shape.", owned: true }, // Sở hữu
+    { id: 2, name: "Birch", image: "/tree-2.png", level: 1, xp: 80, maxXp: 100, description: "Known for its white bark and elegant shape.", owned: true },
     { id: 3, name: "Maple", image: "/tree-3.png", level: 1, xp: 0, maxXp: 100, description: "Famous for its vibrant autumn leaves.", owned: false },
     { id: 4, name: "Pine", image: "/tree-4.png", level: 1, xp: 0, maxXp: 100, description: "An evergreen tree with strong wood.", owned: false },
     { id: 5, name: "Willow", image: "/tree-5.png", level: 1, xp: 0, maxXp: 100, description: "Graceful branches that sway in the wind.", owned: false },
@@ -106,6 +106,7 @@ const Tree = () => {
 const TreeCard = ({ tree }) => {
   const [isOpen, setIsOpen] = useState(false);
   const progress = tree.level === 4 ? 100 : (tree.xp / tree.maxXp) * 100;
+  const progressText = tree.level === 4 ? "Level Max" : `${tree.xp}/${tree.maxXp} XP`;
 
   return (
     <motion.div
@@ -125,9 +126,15 @@ const TreeCard = ({ tree }) => {
               <p className={`font-semibold ${tree.owned ? "text-gray-800" : "text-gray-500"}`}>
                 {tree.name}
               </p>
-              <Progress value={progress} className="w-full mt-2" />
+              <div className="relative w-full mt-2">
+                <Progress value={progress} className="w-full h-6" />
+                {/*Hiển thị màu chữ của xp ngoài và màu thanh tiến độ*/}
+                <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-800 font-medium bg-white bg-opacity-50">
+                  {progressText}
+                </span>
+              </div>
               <p className="text-sm text-gray-500 mt-1">
-                {tree.level === 4 ? "Level 4" : `Level ${tree.level}, ${tree.xp}/${tree.maxXp} XP`}
+                {tree.level === 4 ? "Level 4" : `Level ${tree.level}`}
               </p>
             </CardContent>
           </Card>
@@ -142,12 +149,15 @@ const TreeCard = ({ tree }) => {
             <h3 className={`text-lg font-semibold ${tree.owned ? "text-gray-800" : "text-gray-500"}`}>
               {tree.name}
             </h3>
-            <Progress
-              value={tree.level === 4 ? 100 : (tree.xp / tree.maxXp) * 100}
-              className="w-full"
-            />
+            <div className="relative w-full">
+                {/* Tăng kích cỡ thanh process */}
+              <Progress value={progress} className="w-full h-6" />
+              <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-800 font-medium">
+                {progressText}
+              </span>
+            </div>
             <p className="text-sm text-gray-600">
-              {tree.level === 4 ? "Level 4" : `Level ${tree.level}, ${tree.xp}/${tree.maxXp} XP`}
+              {tree.level === 4 ? "Level 4" : `Level ${tree.level}`}
             </p>
             <p className="text-sm text-gray-500 text-center">{tree.description}</p>
             {!tree.owned && (
