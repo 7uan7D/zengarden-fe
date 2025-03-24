@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
+import addIcon from "@/assets/images/add.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,7 +31,7 @@ export default function TaskPage() {
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [taskType, setTaskType] = useState("");
-  const [currentTree, setCurrentTree] = useState(1);
+  const [currentTree, setCurrentTree] = useState(0);
   const [userTrees, setUserTrees] = useState([]);
   const selectedTree = userTrees.find(
     (tree) => tree.userTreeId === currentTree
@@ -94,10 +95,10 @@ export default function TaskPage() {
       <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md"></div>
       <div className="pt-20">
         <div className="bg-[#CCFFCC] text-black p-6 rounded-lg shadow-md mb-6 flex items-center gap-6 relative mt-6">
-          {/* Hình cây chính */}
+          {/* Hình cây */}
           <div className="relative cursor-pointer" onClick={handleOpenDialog}>
             <img
-              src={`/tree-${currentTree}.png`}
+              src={currentTree ? `/tree-${currentTree}.png` : addIcon}
               alt="Your Tree"
               className="w-32 h-32 mx-auto hover:scale-105 transition-transform"
             />

@@ -38,7 +38,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import "./index.css";
+import "@/components/header/index.css";
 import { X } from "lucide-react";
 import { LoginService } from "@/services/apiServices/authService";
 import parseJwt from "@/services/parseJwt";
@@ -224,6 +224,7 @@ const Header = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
       const payload = { password: credentials.password };
@@ -236,13 +237,14 @@ const Header = () => {
 
       setIsLoggedIn(true);
       toast.success("Login Successfully!");
-
       setIsSheetOpen(false);
       navigate("/home");
       window.location.reload();
     } catch (err) {
       setError("Please check the information again!");
       toast.error("Login failed!");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -433,6 +435,15 @@ const Header = () => {
                       {totalXp} / {xpToNextLevel} XP
                     </span>
                   </div>
+                  {/* Coin trong Wallet */}
+                  <div className="mt-0.5 text-xs text-gray-600 flex items-center gap-1">
+                    <img
+                      src="/src/assets/images/coin.png"
+                      alt="Coin"
+                      className="w-4 h-4"
+                    />
+                    <span className="font-semibold">{walletBalance ?? 0}</span>
+                  </div>
                 </div>
 
                 {/* Avatar + Dropdown */}
@@ -467,17 +478,7 @@ const Header = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                {/* Coin trong Wallet */}
-                <div className="mt-0.5 text-xs text-gray-600 flex items-center gap-1">
-                    <img
-                      src="/src/assets/images/coin.png"
-                      alt="Coin"
-                      className="w-4 h-4"
-                    />
-                    <span className="font-semibold text-base">{walletBalance ?? 0}</span>
-                  </div>
               </div>
-
               {/* Dialog chứa Tabs */}
               <Dialog open={openProfile} onOpenChange={setProfileOpen}>
                 <DialogContent className="dialog-overlay">
@@ -641,7 +642,7 @@ const Header = () => {
               <SheetTrigger asChild onClick={() => setIsSheetOpen(true)}>
                 <motion.div
                   className="farmer-badge"
-                  whileHover={{ scale: 1.1, rotate: 2 }}
+                  whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <BadgeCheck className="icon" />
@@ -724,7 +725,14 @@ const Header = () => {
                         )}
                         <SheetFooter>
                           <Button type="submit" disabled={isLoading}>
-                            Login
+                            {isLoading ? (
+                              <div className="flex items-center gap-2">
+                                <span className="animate-spin w-4 h-4 border-2 border-t-transparent border-white rounded-full" />
+                                Loading...
+                              </div>
+                            ) : (
+                              "Login"
+                            )}
                           </Button>
                         </SheetFooter>
                         <div className="flex justify-end mt-2">

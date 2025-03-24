@@ -73,8 +73,8 @@ export default function HeroPage() {
           <DrawerTrigger asChild>
             <motion.button
               className="btn"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.5 }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
             >
               Get Started
             </motion.button>

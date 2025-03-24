@@ -16,15 +16,23 @@ import parseJwt from "@/services/parseJwt";
 import { toast } from "sonner";
 import { Calendar, ShoppingCart, Leaf, Trophy, Clock } from "lucide-react";
 import "../home/index.css";
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 const HomePage = () => {
   const [showAvatarDialog, setShowAvatarDialog] = useState(false);
   const [user, setUser] = useState(null);
 
   // === 1. Tách bộ đếm riêng biệt cho từng task ===
-  const [timers, setTimers] = useState({ daily: null, simple: null, complex: null });
-  const [isRunning, setIsRunning] = useState({ daily: false, simple: false, complex: false });
+  const [timers, setTimers] = useState({
+    daily: null,
+    simple: null,
+    complex: null,
+  });
+  const [isRunning, setIsRunning] = useState({
+    daily: false,
+    simple: false,
+    complex: false,
+  });
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -68,7 +76,15 @@ const HomePage = () => {
           } else if (newTimers[taskType] === 0) {
             newTimers[taskType] = null;
             setIsRunning((prev) => ({ ...prev, [taskType]: false }));
-            toast.success(`Task '${taskType === "daily" ? "Do exercise" : taskType === "simple" ? "Make Lemonade" : "Workout 3 times a week"}' completed!`);
+            toast.success(
+              `Task '${
+                taskType === "daily"
+                  ? "Do exercise"
+                  : taskType === "simple"
+                  ? "Make Lemonade"
+                  : "Workout 3 times a week"
+              }' completed!`
+            );
           }
         });
         return newTimers;
@@ -80,28 +96,30 @@ const HomePage = () => {
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
   };
 
-  const handleAvatarSelect = async (avatar) => {
-    if (!user) return;
+  // const handleAvatarSelect = async (avatar) => {
+  //   if (!user) return;
 
-    try {
-      const updatedUser = await UpdateUserInfo({
-        userId: user.userId,
-        imageUrl: `/src/assets/avatars/${avatar}.png`,
-      });
-      setUser(updatedUser);
-      setShowAvatarDialog(false);
-      toast.success("Avatar updated successfully!");
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    } catch (error) {
-      console.error("Failed to update avatar:", error);
-      toast.error("Failed to update avatar!");
-    }
-  };
+  //   try {
+  //     const updatedUser = await UpdateUserInfo({
+  //       userId: user.userId,
+  //       imageUrl: `/src/assets/avatars/${avatar}.png`,
+  //     });
+  //     setUser(updatedUser);
+  //     setShowAvatarDialog(false);
+  //     toast.success("Avatar updated successfully!");
+  //     setTimeout(() => {
+  //       window.location.reload();
+  //     }, 500);
+  //   } catch (error) {
+  //     console.error("Failed to update avatar:", error);
+  //     toast.error("Failed to update avatar!");
+  //   }
+  // };
 
   return (
     <motion.div
@@ -143,7 +161,8 @@ const HomePage = () => {
                         className="text-sm text-gray-600 cursor-pointer hover:text-gray-800"
                         onClick={() => toggleTimer("daily")}
                       >
-                        {formatTime(timers.daily)} {isRunning.daily ? "(Pause)" : "(Resume)"}
+                        {formatTime(timers.daily)}{" "}
+                        {isRunning.daily ? "(Pause)" : "(Resume)"}
                       </span>
                       <Button
                         size="sm"
@@ -175,7 +194,8 @@ const HomePage = () => {
                         className="text-sm text-gray-600 cursor-pointer hover:text-gray-800"
                         onClick={() => toggleTimer("simple")}
                       >
-                        {formatTime(timers.simple)} {isRunning.simple ? "(Pause)" : "(Resume)"}
+                        {formatTime(timers.simple)}{" "}
+                        {isRunning.simple ? "(Pause)" : "(Resume)"}
                       </span>
                       <Button
                         size="sm"
@@ -206,7 +226,8 @@ const HomePage = () => {
                         className="text-sm text-gray-600 cursor-pointer hover:text-gray-800"
                         onClick={() => toggleTimer("complex")}
                       >
-                        {formatTime(timers.complex)} {isRunning.complex ? "(Pause)" : "(Resume)"}
+                        {formatTime(timers.complex)}{" "}
+                        {isRunning.complex ? "(Pause)" : "(Resume)"}
                       </span>
                       <Button
                         size="sm"
@@ -229,10 +250,8 @@ const HomePage = () => {
               </div>
             </CardContent>
             {/* === 2. Sửa màu và hiển thị chữ cho nút View === */}
-            <Button  className="mt-2 text-white bg-gray-900 hover:bg-gray-700">
-              <Link to="/task">
-              View All Tasks
-              </Link>
+            <Button className="mt-2 text-white bg-gray-900 hover:bg-gray-700">
+              <Link to="/task">View All Tasks</Link>
             </Button>
           </Card>
         </motion.div>
@@ -261,9 +280,7 @@ const HomePage = () => {
               </div>
             </CardContent>
             <Button className="mt-2 text-white bg-gray-900 hover:bg-gray-700">
-              <Link to="/tree">
-              Manage Trees
-              </Link>
+              <Link to="/tree">Manage Trees</Link>
             </Button>
           </Card>
         </motion.div>
@@ -278,7 +295,9 @@ const HomePage = () => {
             <CardContent className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="w-5 h-5 text-blue-600" />
-                <h2 className="text-xl font-semibold text-gray-800">Calendar</h2>
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Calendar
+                </h2>
               </div>
               <p className="text-gray-600 mb-4">Upcoming events:</p>
               <ul className="text-sm text-gray-600">
@@ -287,9 +306,7 @@ const HomePage = () => {
               </ul>
             </CardContent>
             <Button className="mt-2 text-white bg-gray-900 hover:bg-gray-700">
-              <Link to="/calendar">
-              View Calendar
-              </Link>
+              <Link to="/calendar">View Calendar</Link>
             </Button>
           </Card>
         </motion.div>
@@ -323,9 +340,7 @@ const HomePage = () => {
               </div>
             </CardContent>
             <Button className="mt-2 text-white bg-gray-900 hover:bg-gray-700">
-              <Link to="/marketplace">
-              View Marketplace
-              </Link>
+              <Link to="/marketplace">View Marketplace</Link>
             </Button>
           </Card>
         </motion.div>
@@ -349,16 +364,14 @@ const HomePage = () => {
               <p className="text-sm text-gray-500">Reward: 71 EXP</p>
             </CardContent>
             <Button className="mt-2 text-white bg-gray-900 hover:bg-gray-700">
-              <Link to="/challenges">
-              View Challenges
-              </Link>
+              <Link to="/challenges">View Challenges</Link>
             </Button>
           </Card>
         </motion.div>
       </div>
 
       {/* Avatar Dialog */}
-      <Dialog open={showAvatarDialog} onOpenChange={setShowAvatarDialog}>
+      {/* <Dialog open={showAvatarDialog} onOpenChange={setShowAvatarDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Choose Your Avatar</DialogTitle>
@@ -390,7 +403,7 @@ const HomePage = () => {
             </motion.div>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </motion.div>
   );
 };
