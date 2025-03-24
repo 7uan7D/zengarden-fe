@@ -22,6 +22,7 @@ import UserXPLog from "./pages/UserXPLog";
 import TaskPage from "./pages/player/task/index.jsx";
 import Header from "./components/header";
 import Challenges from "./pages/player/challenges";
+import Tree from "./pages/player/tree/index.jsx";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -46,6 +47,7 @@ function AnimatedRoutes() {
           <Routes location={location}>
             <Route path="/" element={<HeroPage />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/tree" element={<Tree />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/home" element={<PlayerHome />} />
             <Route path="/marketplace" element={<Marketplace />} />

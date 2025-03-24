@@ -15,14 +15,12 @@ import {
 import parseJwt from "@/services/parseJwt";
 import { toast } from "sonner";
 import { Calendar, ShoppingCart, Leaf, Trophy, Clock } from "lucide-react";
+import { Link } from "react-router-dom";
 import "../home/index.css";
-import { Link } from 'react-router-dom';
 
 const HomePage = () => {
   const [showAvatarDialog, setShowAvatarDialog] = useState(false);
   const [user, setUser] = useState(null);
-
-  // === 1. Tách bộ đếm riêng biệt cho từng task ===
   const [timers, setTimers] = useState({ daily: null, simple: null, complex: null });
   const [isRunning, setIsRunning] = useState({ daily: false, simple: false, complex: false });
 
@@ -41,10 +39,9 @@ const HomePage = () => {
       .catch((error) => console.error("Failed to load user:", error));
   }, []);
 
-  // Logic Timer cho từng task
   const startTimer = (taskType) => {
     if (!timers[taskType]) {
-      setTimers((prev) => ({ ...prev, [taskType]: 600 })); // 10 phút
+      setTimers((prev) => ({ ...prev, [taskType]: 600 }));
       setIsRunning((prev) => ({ ...prev, [taskType]: true }));
     }
   };
@@ -68,7 +65,15 @@ const HomePage = () => {
           } else if (newTimers[taskType] === 0) {
             newTimers[taskType] = null;
             setIsRunning((prev) => ({ ...prev, [taskType]: false }));
-            toast.success(`Task '${taskType === "daily" ? "Do exercise" : taskType === "simple" ? "Make Lemonade" : "Workout 3 times a week"}' completed!`);
+            toast.success(
+              `Task '${
+                taskType === "daily"
+                  ? "Do exercise"
+                  : taskType === "simple"
+                  ? "Make Lemonade"
+                  : "Workout 3 times a week"
+              }' completed!`
+            );
           }
         });
         return newTimers;
@@ -118,12 +123,13 @@ const HomePage = () => {
       </div>
 
       {/* Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {/* Task Widget */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
+          className="lg:col-span-3 md:col-span-1" // Chiếm 3 cột trên LG, 1 cột trên MD
         >
           <Card className="p-4 h-full flex flex-col">
             <CardContent className="flex-1">
@@ -132,7 +138,6 @@ const HomePage = () => {
                 <h2 className="text-xl font-semibold text-gray-800">Tasks</h2>
               </div>
               <p className="text-gray-600 mb-4">Your current tasks:</p>
-              {/* === 3. Sửa màu task-type thành đen === */}
               <div className="task-container">
                 <span className="task-type daily">Daily</span>
                 <Card className="task-detail p-4 flex justify-between items-center">
@@ -154,7 +159,6 @@ const HomePage = () => {
                       </Button>
                     </div>
                   ) : (
-                    // === 3. Sửa màu nút Start thành đen ===
                     <Button
                       size="sm"
                       className="bg-black text-white hover:bg-gray-800"
@@ -228,11 +232,8 @@ const HomePage = () => {
                 </Card>
               </div>
             </CardContent>
-            {/* === 2. Sửa màu và hiển thị chữ cho nút View === */}
-            <Button  className="mt-2 text-white bg-gray-900 hover:bg-gray-700">
-              <Link to="/task">
-              View All Tasks
-              </Link>
+            <Button className="mt-2 text-white bg-gray-900 hover:bg-gray-700">
+              <Link to="/task">View All Tasks</Link>
             </Button>
           </Card>
         </motion.div>
@@ -242,28 +243,21 @@ const HomePage = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
+          className="lg:col-span-2 md:col-span-1" // Chiếm 2 cột trên LG, 1 cột trên MD
         >
           <Card className="p-4 h-full flex flex-col">
-            <CardContent className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
+            <CardContent className="flex-1 text-left">
+              <div personally className="flex items-center gap-2 mb-2">
                 <Leaf className="w-5 h-5 text-green-600" />
                 <h2 className="text-xl font-semibold text-gray-800">Trees</h2>
               </div>
               <p className="text-gray-600 mb-4">Your growing tree:</p>
-              <div className="text-center">
-                <img
-                  src="/tree-1.png"
-                  alt="Tree"
-                  className="w-24 h-24 mx-auto mb-2"
-                />
-                <p className="font-semibold">Oak - Level 3</p>
-                <p className="text-sm text-gray-500">120 / 200 XP</p>
-              </div>
+              <img src="/tree-1.png" alt="Tree" className="w-24 h-24 mb-2" />
+              <p className="font-semibold">Oak - Level 3</p>
+              <p className="text-sm text-gray-500">120 / 200 XP</p>
             </CardContent>
             <Button className="mt-2 text-white bg-gray-900 hover:bg-gray-700">
-              <Link to="/tree">
-              Manage Trees
-              </Link>
+              <Link to="/tree">Manage Trees</Link>
             </Button>
           </Card>
         </motion.div>
@@ -273,9 +267,10 @@ const HomePage = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
+          className="lg:col-span-2 md:col-span-1" // Chiếm 2 cột trên LG, 1 cột trên MD
         >
           <Card className="p-4 h-full flex flex-col">
-            <CardContent className="flex-1">
+            <CardContent className="flex-1 text-left">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="w-5 h-5 text-blue-600" />
                 <h2 className="text-xl font-semibold text-gray-800">Calendar</h2>
@@ -287,9 +282,7 @@ const HomePage = () => {
               </ul>
             </CardContent>
             <Button className="mt-2 text-white bg-gray-900 hover:bg-gray-700">
-              <Link to="/calendar">
-              View Calendar
-              </Link>
+              <Link to="/calendar">View Calendar</Link>
             </Button>
           </Card>
         </motion.div>
@@ -299,33 +292,24 @@ const HomePage = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
+          className="lg:col-span-1 md:col-span-1" // Chiếm 1 cột
         >
           <Card className="p-4 h-full flex flex-col">
-            <CardContent className="flex-1">
+            <CardContent className="flex-1 text-left">
               <div className="flex items-center gap-2 mb-2">
                 <ShoppingCart className="w-5 h-5 text-purple-600" />
-                <h2 className="text-xl font-semibold text-gray-800">
-                  Marketplace
-                </h2>
+                <h2 className="text-xl font-semibold text-gray-800">Marketplace</h2>
               </div>
               <p className="text-gray-600 mb-4">Best Seller item:</p>
-              <div className="text-center">
-                <div className="h-16 w-16 bg-gray-300 rounded-lg mx-auto mb-2"></div>
-                <p className="font-semibold">Items Item 1</p>
-                <p className="text-sm text-gray-500 flex items-center justify-center">
-                  <img
-                    src="/src/assets/images/coin.png"
-                    alt="Coin"
-                    className="w-5 h-5 mr-1"
-                  />
-                  100
-                </p>
-              </div>
+              <div className="h-16 w-16 bg-gray-300 rounded-lg mb-2"></div>
+              <p className="font-semibold">Items Item 1</p>
+              <p className="text-sm text-gray-500 flex items-center">
+                <img src="/src/assets/images/coin.png" alt="Coin" className="w-5 h-5 mr-1" />
+                100
+              </p>
             </CardContent>
             <Button className="mt-2 text-white bg-gray-900 hover:bg-gray-700">
-              <Link to="/marketplace">
-              View Marketplace
-              </Link>
+              <Link to="/marketplace">View Marketplace</Link>
             </Button>
           </Card>
         </motion.div>
@@ -335,23 +319,20 @@ const HomePage = () => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
+          className="lg:col-span-2 md:col-span-1" // Chiếm 2 cột trên LG, 1 cột trên MD
         >
           <Card className="p-4 h-full flex flex-col">
-            <CardContent className="flex-1">
+            <CardContent className="flex-1 text-left">
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="w-5 h-5 text-yellow-600" />
-                <h2 className="text-xl font-semibold text-gray-800">
-                  Challenges
-                </h2>
+                <h2 className="text-xl font-semibold text-gray-800">Challenges</h2>
               </div>
               <p className="text-gray-600 mb-4">Active challenge:</p>
               <p className="font-semibold">Stay Hydrated</p>
               <p className="text-sm text-gray-500">Reward: 71 EXP</p>
             </CardContent>
             <Button className="mt-2 text-white bg-gray-900 hover:bg-gray-700">
-              <Link to="/challenges">
-              View Challenges
-              </Link>
+              <Link to="/challenges">View Challenges</Link>
             </Button>
           </Card>
         </motion.div>
