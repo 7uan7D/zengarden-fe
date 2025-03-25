@@ -58,6 +58,7 @@ import {
   InputOTPSlot,
   REGEXP_ONLY_DIGITS_AND_CHARS,
 } from "@/components/ui/input-otp";
+import { useUserExperience } from "@/context/UserExperienceContext";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -109,12 +110,10 @@ const Header = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [totalXp, setTotalXp] = useState(0);
   const [step, setStep] = useState("login");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [levelId, setLevelId] = useState(null);
   const navItems = [
     { path: "/task", label: "Tasks" },
     { path: "/tree", label: "Trees" },
@@ -122,6 +121,7 @@ const Header = () => {
     { path: "/marketplace", label: "Marketplace" },
     { path: "/challenges", label: "Challenges" },
   ];
+  const { totalXp, levelId, refreshXp } = useUserExperience();
   //Forgot Password
   const handleForgotPassword = async () => {
     if (!email) return toast.error("Please enter your email!");
@@ -203,15 +203,6 @@ const Header = () => {
             setUser(data);
           })
           .catch((error) => console.log("Failed to load user:", error));
-
-        GetUserExperiencesInfo(userId)
-          .then(({ totalXp, levelId }) => {
-            setTotalXp(totalXp);
-            setLevelId(levelId);
-          })
-          .catch((error) =>
-            console.log("Failed to load user experience:", error)
-          );
       }
     }
   }, []);
@@ -408,41 +399,41 @@ const Header = () => {
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center">
           {isLoggedIn ? (
             <>
-              {/* Coin trong Wallet */}
-              <div className="mt-0.5 text-base text-gray-600 flex items-center gap-1 mr-5">
-                    <img
-                      src="/src/assets/images/coin.png"
-                      alt="Coin"
-                      className="w-4 h-4"
-                    />
-                    <span className="font-semibold">{walletBalance ?? 0}</span>
-                  </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {/* Tên người dùng */}
-                <div className="flex flex-col text-sm">
+                <div className="flex flex-col text-xs">
                   {" "}
                   {/* Giảm kích thước tổng thể */}
-                  <h2 className="text-base font-bold text-gray-800">
+                  <h2 className="text-sm font-bold text-gray-800">
                     {" "}
                     {/* Giảm từ text-xl xuống base */}
                     {user?.userName || "Guest"}
                   </h2>
                   {/* Level & Progress Bar */}
-                  <div className="flex items-center gap-1 mt-0.5">
+                  <div className="flex items-center gap-1 mt-0">
                     {" "}
                     {/* Giảm khoảng cách */}
-                    <span className="text-xs font-semibold text-gray-700">
+                    <span className="text-[11px] font-semibold text-gray-700">
                       {" "}
                       {/* Giảm size chữ */}
                       Level {levelId}
                     </span>
                     <Progress
                       value={(totalXp / xpToNextLevel) * 100}
-                      className="w-24 h-1.5"
+                      className="w-20 h-1"
                     />
-                    <span className="text-xs text-gray-500">
+                    <span className="text-[11px] text-gray-500">
                       {totalXp} / {xpToNextLevel} XP
                     </span>
+                  </div>
+                  {/* Coin trong Wallet */}
+                  <div className="mt-0 text-[11px] text-gray-600 flex items-center gap-0.5">
+                    <img
+                      src="/src/assets/images/coin.png"
+                      alt="Coin"
+                      className="w-4 h-4"
+                    />
+                    <span className="font-semibold">{walletBalance ?? 0}</span>
                   </div>
                 </div>
 

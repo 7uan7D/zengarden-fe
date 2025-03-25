@@ -29,6 +29,8 @@ import { GetAllTrees } from "@/services/apiServices/treesService";
 import { CreateUserTree } from "@/services/apiServices/userTreesService";
 import { toast } from "sonner";
 import parseJwt from "@/services/parseJwt";
+import { useUserExperience } from "@/context/UserExperienceContext";
+import { useTreeExperience } from "@/context/TreeExperienceContext";
 
 export default function TaskPage() {
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
@@ -45,19 +47,14 @@ export default function TaskPage() {
   const finalTreeId = selectedTree?.finalTreeId;
   const selectedFinalTree = trees.find((t) => t.treeId === finalTreeId);
   const treeImageSrc =
-    treeLevel < 4
+    treeLevel && treeLevel < 4
       ? `/src/assets/images/lv${treeLevel}.png`
       : selectedFinalTree?.imageUrl || "/src/assets/images/default.png";
-  const progressPercent = selectedTree
-    ? (selectedTree.totalXp /
-      (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
-    100
-    : 0;
-
-  const safeProgress = Math.min(Math.max(progressPercent, 3), 97);
   const [newTreeName, setNewTreeName] = useState("");
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const { refreshXp } = useUserExperience();
+  const { treeExp, refreshTreeExp } = useTreeExperience();
 
   useEffect(() => {
     const fetchTrees = async () => {
@@ -71,6 +68,14 @@ export default function TaskPage() {
 
     fetchTrees();
   }, []);
+
+  useEffect(() => {
+    if (currentTree) {
+      (async () => {
+        await refreshTreeExp(currentTree);
+      })();
+    }
+  }, [currentTree]);
 
   useEffect(() => {
     const fetchTrees = async () => {
@@ -145,6 +150,8 @@ export default function TaskPage() {
       toast.error("An error occurred while creating the tree!");
     } finally {
       setIsCreating(false);
+      refreshXp();
+      refreshTreeExp(currentTree);
     }
   };
   return (
@@ -232,23 +239,23 @@ export default function TaskPage() {
               {/* Chỉ hiện AddIcon nếu cây đang Growing < 2 */}
               {userTrees.filter((tree) => tree.treeStatus === "Growing")
                 .length < 2 && (
-                  <div
-                    className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
-                    onClick={() => {
-                      setIsTreeDialogOpen(false);
-                      setIsCreateTreeDialogOpen(true);
-                    }}
-                  >
-                    <img
-                      src={addIcon}
-                      alt="Add New Tree"
-                      className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
-                    />
-                    <h3 className="font-bold mt-2 text-green-600">
-                      Create New Tree
-                    </h3>
-                  </div>
-                )}
+                <div
+                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
+                  onClick={() => {
+                    setIsTreeDialogOpen(false);
+                    setIsCreateTreeDialogOpen(true);
+                  }}
+                >
+                  <img
+                    src={addIcon}
+                    alt="Add New Tree"
+                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+                  />
+                  <h3 className="font-bold mt-2 text-green-600">
+                    Create New Tree
+                  </h3>
+                </div>
+              )}
             </DialogContent>
           </Dialog>
 
@@ -285,40 +292,53 @@ export default function TaskPage() {
           <div className="flex-1">
             {selectedTree ? (
               <>
-                <h2 className="text-xl font-bold">
-                  {selectedTree.name} - Level {selectedTree.levelId}
+                <h2 className="text-3xl font-bold text-[#609994] tracking-wide flex items-center gap-3">
+                  {selectedTree.name}
+                  <span className="text-base font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full shadow-inner">
+                    Level {selectedTree.levelId}
+                  </span>
                 </h2>
-                <p className="text-sm mt-2 font-semibold">Experience</p>
-                <div className="relative w-full mt-2">
-  <Progress
-    value={
-      (selectedTree.totalXp /
-        (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
-      100
-    }
-    className="w-full h-6"
-  />
-  <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-800 font-medium bg-white bg-opacity-50">
-    {selectedTree.levelId === 4
-      ? "Level Max"
-      : `${selectedTree.totalXp}/${selectedTree.totalXp + selectedTree.xpToNextLevel} XP`}
-  </span>
-</div>
-                <div className="mt-5 flex items-center gap-2">
-                  <span className="text-sm">Equipped Items:</span>
-                  <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded">
-                    Item 1
+
+                {treeExp && (
+                  <div className="relative w-full mt-3 h-4 rounded-full bg-gray-200 overflow-hidden">
+                    <div
+                      style={{
+                        width: `${
+                          (treeExp.totalXp /
+                            (treeExp.totalXp + treeExp.xpToNextLevel)) *
+                          100
+                        }%`,
+                      }}
+                      className="h-full bg-gradient-to-r from-[#a1d99b] via-[#f9d976] to-[#f49a8c] rounded-full"
+                    ></div>
+                    <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
+                      {selectedTree.levelId === 4
+                        ? "Level Max"
+                        : `${treeExp.totalXp} / ${
+                            treeExp.totalXp + treeExp.xpToNextLevel
+                          } XP`}
+                    </span>
+                  </div>
+                )}
+
+                <div className="mt-5 flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-gray-700">
+                    Equipped Items:
                   </span>
-                  <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded">
-                    Item 2
-                  </span>
-                  <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded">
-                    Item 3
-                  </span>
+                  {[1, 2, 3].map((item) => (
+                    <span
+                      key={item}
+                      className="text-xs bg-[#83aa6c] text-white px-3 py-1 rounded-full shadow hover:opacity-90 transition"
+                    >
+                      Item {item}
+                    </span>
+                  ))}
                 </div>
               </>
             ) : (
-              <p className="text-sm italic">Haven't chosen any tree yet</p>
+              <p className="text-sm italic text-gray-500">
+                Haven't chosen any tree yet
+              </p>
             )}
           </div>
 
