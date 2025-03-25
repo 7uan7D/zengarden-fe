@@ -47,7 +47,6 @@ import { UpdateUserInfo } from "@/services/apiServices/userService";
 import { ChangePassword } from "@/services/apiServices/authService";
 import RegisterButton from "@/pages/common/hero/registerButton";
 import { Progress } from "@/components/ui/progress";
-import { GetUserExperiencesInfo } from "@/services/apiServices/userExperienceService";
 import {
   ForgotPassword,
   ResetPassword,
@@ -56,9 +55,9 @@ import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
-  REGEXP_ONLY_DIGITS_AND_CHARS,
 } from "@/components/ui/input-otp";
 import { useUserExperience } from "@/context/UserExperienceContext";
+import NotificationBell from "@/components/notification/NotificationBell";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -122,6 +121,7 @@ const Header = () => {
     { path: "/challenges", label: "Challenges" },
   ];
   const { totalXp, levelId, refreshXp } = useUserExperience();
+  const [notificationCount, setNotificationCount] = useState(0);
   //Forgot Password
   const handleForgotPassword = async () => {
     if (!email) return toast.error("Please enter your email!");
@@ -438,6 +438,9 @@ const Header = () => {
                 </div>
 
                 {/* Avatar + Dropdown */}
+                <div className="flex items-center gap-4">
+                  <NotificationBell />
+                </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Avatar className="cursor-pointer">
