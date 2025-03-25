@@ -21,8 +21,16 @@ import "../home/index.css";
 const HomePage = () => {
   const [showAvatarDialog, setShowAvatarDialog] = useState(false);
   const [user, setUser] = useState(null);
-  const [timers, setTimers] = useState({ daily: null, simple: null, complex: null });
-  const [isRunning, setIsRunning] = useState({ daily: false, simple: false, complex: false });
+  const [timers, setTimers] = useState({
+    daily: null,
+    simple: null,
+    complex: null,
+  });
+  const [isRunning, setIsRunning] = useState({
+    daily: false,
+    simple: false,
+    complex: false,
+  });
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -85,7 +93,9 @@ const HomePage = () => {
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   const handleAvatarSelect = async (avatar) => {
@@ -148,7 +158,8 @@ const HomePage = () => {
                         className="text-sm text-gray-600 cursor-pointer hover:text-gray-800"
                         onClick={() => toggleTimer("daily")}
                       >
-                        {formatTime(timers.daily)} {isRunning.daily ? "(Pause)" : "(Resume)"}
+                        {formatTime(timers.daily)}{" "}
+                        {isRunning.daily ? "(Pause)" : "(Resume)"}
                       </span>
                       <Button
                         size="sm"
@@ -179,7 +190,8 @@ const HomePage = () => {
                         className="text-sm text-gray-600 cursor-pointer hover:text-gray-800"
                         onClick={() => toggleTimer("simple")}
                       >
-                        {formatTime(timers.simple)} {isRunning.simple ? "(Pause)" : "(Resume)"}
+                        {formatTime(timers.simple)}{" "}
+                        {isRunning.simple ? "(Pause)" : "(Resume)"}
                       </span>
                       <Button
                         size="sm"
@@ -210,7 +222,8 @@ const HomePage = () => {
                         className="text-sm text-gray-600 cursor-pointer hover:text-gray-800"
                         onClick={() => toggleTimer("complex")}
                       >
-                        {formatTime(timers.complex)} {isRunning.complex ? "(Pause)" : "(Resume)"}
+                        {formatTime(timers.complex)}{" "}
+                        {isRunning.complex ? "(Pause)" : "(Resume)"}
                       </span>
                       <Button
                         size="sm"
@@ -273,7 +286,9 @@ const HomePage = () => {
             <CardContent className="flex-1 text-left">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="w-5 h-5 text-blue-600" />
-                <h2 className="text-xl font-semibold text-gray-800">Calendar</h2>
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Calendar
+                </h2>
               </div>
               <p className="text-gray-600 mb-4">Upcoming events:</p>
               <ul className="text-sm text-gray-600">
@@ -298,13 +313,19 @@ const HomePage = () => {
             <CardContent className="flex-1 text-left">
               <div className="flex items-center gap-2 mb-2">
                 <ShoppingCart className="w-5 h-5 text-purple-600" />
-                <h2 className="text-xl font-semibold text-gray-800">Marketplace</h2>
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Marketplace
+                </h2>
               </div>
               <p className="text-gray-600 mb-4">Best Seller item:</p>
               <div className="h-16 w-16 bg-gray-300 rounded-lg mb-2"></div>
               <p className="font-semibold">Items Item 1</p>
               <p className="text-sm text-gray-500 flex items-center">
-                <img src="/src/assets/images/coin.png" alt="Coin" className="w-5 h-5 mr-1" />
+                <img
+                  src="/src/assets/images/coin.png"
+                  alt="Coin"
+                  className="w-5 h-5 mr-1"
+                />
                 100
               </p>
             </CardContent>
@@ -325,7 +346,9 @@ const HomePage = () => {
             <CardContent className="flex-1 text-left">
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="w-5 h-5 text-yellow-600" />
-                <h2 className="text-xl font-semibold text-gray-800">Challenges</h2>
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Challenges
+                </h2>
               </div>
               <p className="text-gray-600 mb-4">Active challenge:</p>
               <p className="font-semibold">Stay Hydrated</p>
@@ -339,7 +362,7 @@ const HomePage = () => {
       </div>
 
       {/* Avatar Dialog */}
-      <Dialog open={showAvatarDialog} onOpenChange={setShowAvatarDialog}>
+      {/* <Dialog open={showAvatarDialog} onOpenChange={setShowAvatarDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Choose Your Avatar</DialogTitle>
@@ -371,7 +394,7 @@ const HomePage = () => {
             </motion.div>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </motion.div>
   );
 };
