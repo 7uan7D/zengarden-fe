@@ -23,6 +23,8 @@ import TaskPage from "./pages/player/task/index.jsx";
 import Header from "./components/header";
 import Challenges from "./pages/player/challenges";
 import Tree from "./pages/player/tree/index.jsx";
+import { UserExperienceProvider } from "@/context/UserExperienceContext";
+import { TreeExperienceProvider } from "./context/TreeExperienceContext";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -34,30 +36,34 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <>
-      <Header />
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={location.pathname}
-          variants={pageVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-        >
-          <Routes location={location}>
-            <Route path="/" element={<HeroPage />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/tree" element={<Tree />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/home" element={<PlayerHome />} />
-            <Route path="/marketplace" element={<Marketplace />} />
-            <Route path="/task" element={<TaskPage />} />
-            <Route path="/challenges" element={<Challenges />} />
-          </Routes>
-        </motion.div>
-      </AnimatePresence>
-      <Footer />
-    </>
+    <UserExperienceProvider>
+      <TreeExperienceProvider>
+        <>
+          <Header />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <Routes location={location}>
+                <Route path="/" element={<HeroPage />} />
+                <Route path="/faq" element={<FAQ />} />
+                <Route path="/tree" element={<Tree />} />
+                <Route path="/calendar" element={<Calendar />} />
+                <Route path="/home" element={<PlayerHome />} />
+                <Route path="/marketplace" element={<Marketplace />} />
+                <Route path="/task" element={<TaskPage />} />
+                <Route path="/challenges" element={<Challenges />} />
+              </Routes>
+            </motion.div>
+          </AnimatePresence>
+          <Footer />
+        </>
+      </TreeExperienceProvider>
+    </UserExperienceProvider>
   );
 }
 
