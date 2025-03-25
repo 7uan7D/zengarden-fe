@@ -50,8 +50,8 @@ export default function TaskPage() {
       : selectedFinalTree?.imageUrl || "/src/assets/images/default.png";
   const progressPercent = selectedTree
     ? (selectedTree.totalXp /
-        (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
-      100
+      (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
+    100
     : 0;
 
   const safeProgress = Math.min(Math.max(progressPercent, 3), 97);
@@ -232,23 +232,23 @@ export default function TaskPage() {
               {/* Chỉ hiện AddIcon nếu cây đang Growing < 2 */}
               {userTrees.filter((tree) => tree.treeStatus === "Growing")
                 .length < 2 && (
-                <div
-                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
-                  onClick={() => {
-                    setIsTreeDialogOpen(false);
-                    setIsCreateTreeDialogOpen(true);
-                  }}
-                >
-                  <img
-                    src={addIcon}
-                    alt="Add New Tree"
-                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
-                  />
-                  <h3 className="font-bold mt-2 text-green-600">
-                    Create New Tree
-                  </h3>
-                </div>
-              )}
+                  <div
+                    className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
+                    onClick={() => {
+                      setIsTreeDialogOpen(false);
+                      setIsCreateTreeDialogOpen(true);
+                    }}
+                  >
+                    <img
+                      src={addIcon}
+                      alt="Add New Tree"
+                      className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+                    />
+                    <h3 className="font-bold mt-2 text-green-600">
+                      Create New Tree
+                    </h3>
+                  </div>
+                )}
             </DialogContent>
           </Dialog>
 
@@ -289,30 +289,21 @@ export default function TaskPage() {
                   {selectedTree.name} - Level {selectedTree.levelId}
                 </h2>
                 <p className="text-sm mt-2 font-semibold">Experience</p>
-                <div className="relative w-full h-4 bg-gray-200 rounded-full mt-1 overflow-hidden">
-                  <div
-                    className="h-full bg-[#83aa6c] transition-all duration-700 ease-out"
-                    style={{
-                      width: `${
-                        (selectedTree.totalXp /
-                          (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
-                        100
-                      }%`,
-                    }}
-                  />
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-out"
-                    style={{
-                      left: `${safeProgress}%`,
-                      transform: "translate(-50%, -50%)",
-                    }}
-                  >
-                    <span className="text-xs font-bold bg-white px-2 py-1 rounded-full shadow-md border border-gray-300 whitespace-nowrap">
-                      {selectedTree.totalXp} /{" "}
-                      {selectedTree.totalXp + selectedTree.xpToNextLevel} XP
-                    </span>
-                  </div>
-                </div>
+                <div className="relative w-full mt-2">
+  <Progress
+    value={
+      (selectedTree.totalXp /
+        (selectedTree.totalXp + selectedTree.xpToNextLevel)) *
+      100
+    }
+    className="w-full h-6"
+  />
+  <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-800 font-medium bg-white bg-opacity-50">
+    {selectedTree.levelId === 4
+      ? "Level Max"
+      : `${selectedTree.totalXp}/${selectedTree.totalXp + selectedTree.xpToNextLevel} XP`}
+  </span>
+</div>
                 <div className="mt-5 flex items-center gap-2">
                   <span className="text-sm">Equipped Items:</span>
                   <span className="text-xs bg-gray-600 text-white px-2 py-1 rounded">

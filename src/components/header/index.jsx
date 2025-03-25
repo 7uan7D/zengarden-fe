@@ -408,6 +408,15 @@ const Header = () => {
         <div className="hidden lg:flex lg:flex-1 lg:justify-end items-center">
           {isLoggedIn ? (
             <>
+              {/* Coin trong Wallet */}
+              <div className="mt-0.5 text-base text-gray-600 flex items-center gap-1 mr-5">
+                    <img
+                      src="/src/assets/images/coin.png"
+                      alt="Coin"
+                      className="w-4 h-4"
+                    />
+                    <span className="font-semibold">{walletBalance ?? 0}</span>
+                  </div>
               <div className="flex items-center gap-3">
                 {/* Tên người dùng */}
                 <div className="flex flex-col text-sm">
@@ -434,15 +443,6 @@ const Header = () => {
                     <span className="text-xs text-gray-500">
                       {totalXp} / {xpToNextLevel} XP
                     </span>
-                  </div>
-                  {/* Coin trong Wallet */}
-                  <div className="mt-0.5 text-xs text-gray-600 flex items-center gap-1">
-                    <img
-                      src="/src/assets/images/coin.png"
-                      alt="Coin"
-                      className="w-4 h-4"
-                    />
-                    <span className="font-semibold">{walletBalance ?? 0}</span>
                   </div>
                 </div>
 
