@@ -1,24 +1,45 @@
-import { useState } from "react"
+import { use, useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Search, Eye } from "lucide-react"
-
-const tasksData = [
-    { taskId: 'ORD001', taskName: 'John Doe', taskTypeName: 'Simple', totalDuration: 2, workDuration: 50, breakTime: 10, startDate: '2025-03-24T15:07:25', endDate: '2025-06-25T15:07:25', status: 'Delivered'},
-    { taskId: 'ORD002', taskName: 'Jane Smith', taskTypeName: 'Complex', totalDuration: 4, workDuration: 30, breakTime: 10, startDate: '2025-03-24T15:07:25', endDate: '2025-06-25T15:07:25', status: 'Processing'},
-    { taskId: 'ORD003', taskName: 'Bob Johnson', taskTypeName: 'Simple', totalDuration: 1, workDuration: 20, breakTime: 10, startDate: '2025-03-24T15:07:25', endDate: '2025-06-25T15:07:25', status: 'Shipped'},
-]
+import useTaskData from "@/hooks/useTaskData"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 const TasksTable = () => {
+    const { taskData, isLoadingState, error } = useTaskData()
     const [searchTerm, setSearchTerm] = useState('')
-    const [filteredTasks, setFilteredTasks] = useState(tasksData)
+    const [filteredTasks, setFilteredTasks] = useState(taskData)
+    const [openStates, setOpenStates] = useState({});
+    const [isLoading, setIsLoading] = useState(false)
+
+    useEffect(() => {
+        if (taskData) {
+            setFilteredTasks(taskData)
+        }
+    }, [taskData])
 
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase()
         setSearchTerm(term)
-        const filtered = tasksData.filter(
+        const filtered = taskData.filter(
             (task) => task.taskId.toLowerCase().includes(term) || task.taskName.toLowerCase().includes(term)
         )
         setFilteredTasks(filtered)
+    }
+
+    const handleMouseEnter = (taskId) => {
+        setOpenStates((prev) => ({ ...prev, [taskId]: true }));
+    };
+
+    const handleMouseLeave = (taskId) => {
+        setOpenStates((prev) => ({ ...prev, [taskId]: false }));
+    };
+
+    if (!filteredTasks) {
+        return <div>Loading...</div>
+    }
+
+    if (error) {
+        return <div>{error.message}</div>
     }
 
     return (
@@ -65,12 +86,6 @@ const TasksTable = () => {
                                 Break Time
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Start Date
-                            </th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                End Date
-                            </th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Status
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
@@ -81,70 +96,95 @@ const TasksTable = () => {
 
                     <tbody className='divide divide-gray-700'>
                         {filteredTasks.map((task) => (
-                            <motion.tr
-                                key={task.taskId}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                    {task.taskId}
-                                </td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                    {task.taskName}
-                                </td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                    {task.taskTypeName}
-                                </td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                    {task.totalDuration}
-                                </td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                    {task.workDuration}
-                                </td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                    {task.breakTime}
-                                </td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                    {new Date(task.startDate).toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric',
-                                        hour: 'numeric',
-                                        minute: 'numeric',
-                                        second: 'numeric',
-                                    })}
-                                </td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                    {new Date(task.endDate).toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric',
-                                        hour: 'numeric',
-                                        minute: 'numeric',
-                                        second: 'numeric',
-                                    })}
-                                </td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                    <span
-                                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${task.status === 'Delivered'
-                                                ? 'bg-green-100 text-green-800'
-                                                : task.status === 'Processing'
-                                                    ? 'bg-yellow-100 text-yellow-800'
-                                                    : task.status === 'Shipped'
-                                                        ? 'bg-blue-100 text-blue-800'
-                                                        : 'bg-red-100 text-red-800'
-                                            }`}
-                                    >
-                                        {task.status}
-                                    </span>
-                                </td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                    <button className='text-indigo-400 hover:text-indigo-300 mr-2'>
-                                        <Eye size={18} />
-                                    </button>
-                                </td>
-                            </motion.tr>
+                            <Popover key={task.taskId} open={openStates[task.taskId]}>
+                                <PopoverTrigger asChild>
+                                    <div style={{ display: 'contents' }}>
+                                        <motion.tr
+                                            key={task.taskId}
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                                {task.taskId}
+                                            </td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                                {task.taskName}
+                                            </td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                                {task.taskTypeName}
+                                            </td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                                {task.totalDuration}
+                                            </td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                                {task.workDuration}
+                                            </td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                                {task.breakTime}
+                                            </td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                                <span
+                                                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${task.status === 'Delivered'
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : task.status === 'Processing'
+                                                            ? 'bg-yellow-100 text-yellow-800'
+                                                            : task.status === 'Shipped'
+                                                                ? 'bg-blue-100 text-blue-800'
+                                                                : 'bg-red-100 text-red-800'
+                                                        }`}
+                                                >
+                                                    {task.status}
+                                                </span>
+                                            </td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                                <button 
+                                                    className='text-indigo-400 hover:text-indigo-300 mr-2'
+                                                    onMouseEnter={() => handleMouseEnter(task.taskId)}
+                                                    onMouseLeave={() => handleMouseLeave(task.taskId)}
+                                                >
+                                                    <Eye size={18}/>
+                                                </button>
+                                            </td>
+                                        </motion.tr>
+                                    </div>
+                                </PopoverTrigger>
+
+                                <PopoverContent
+                                    className='bg-gray-800 text-gray-100 p-4 rounded-lg shadow-lg'
+                                    side='bottom'
+                                    align='end'
+                                >
+                                    <p className="text-gray-200 font-semibold">{task.taskName}</p>
+                                    <p className="text-gray-500 text-left text-sm">
+                                        {task.taskDescription}
+                                    </p>
+                                    <p className="text-gray-300 text-left text-sm">
+                                        Start Date: 
+                                        &nbsp;
+                                        {new Date(task.startDate).toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            second: 'numeric',
+                                        })}
+                                    </p>
+                                    <p className="text-gray-300 text-left text-sm">
+                                        End Date: 
+                                        &nbsp;
+                                        {new Date(task.endDate).toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            second: 'numeric',
+                                        })}
+                                    </p>
+                                </PopoverContent>
+                            </Popover>
                         ))}
                     </tbody>
                 </table>

@@ -1,4 +1,4 @@
-import { CalendarCheck, CheckCircle, Clock, DollarSign } from "lucide-react"
+import { CalendarCheck, CheckCircle, CirclePercent, Clock } from "lucide-react"
 import { motion } from "framer-motion"
 
 import AdminHeader from "@/components/common/AdminHeader"
@@ -6,15 +6,26 @@ import StatCard from "@/components/common/StatCard"
 import DailyOrders from "@/components/tasks/DailyOrders"
 import OrderDistribution from "@/components/tasks/OrderDistribution"
 import TasksTable from "@/components/tasks/TasksTable"
-
-const taskStats = {
-    totalTasks: '1,234',
-    pendingTasks: '56',
-    completedTasks: '1,178',
-    totalRevenue: '$98,765',
-}
+import useTaskData from "@/hooks/useTaskData"
 
 const TasksPage = () => {
+    const { taskData, isLoading, error } = useTaskData()
+
+    const taskStats = {
+        totalTasks: taskData?.length,
+        pendingTasks: taskData?.filter((task) => task.status === 'pending').length,
+        completedTasks: taskData?.filter((task) => task.status === 'completed').length,
+        completedPercentage: taskData?.length > 0 ? (taskData.filter((task) => task.status === 'completed').length / taskData.length) * 100 : 0,
+    }
+
+    if (isLoading) {
+        return <div></div>
+    }
+
+    if (error) {
+        return <div>{error.message}</div>
+    }
+
     return (
         <div className='flex-1 relative z-10 overflow-auto'>
             <AdminHeader title={'Tasks'} />
@@ -34,7 +45,7 @@ const TasksPage = () => {
                         value={taskStats.completedTasks}
                         color='#10B981'
                     />
-                    <StatCard name='Total Revenue' icon={DollarSign} value={taskStats.totalRevenue} color='#EF4444' />
+                    <StatCard name='Completed Percentage' icon={CirclePercent} value={taskStats.completedPercentage} color='#EF4444' />
                 </motion.div>
 
                 <TasksTable />
