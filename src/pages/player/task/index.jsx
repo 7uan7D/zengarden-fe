@@ -192,7 +192,9 @@ export default function TaskPage() {
               </DialogTitle>
 
               {userTrees
-                .filter((tree) => tree.treeStatus === "Growing")
+                .filter(
+                  (tree) => tree.treeStatus === 0 || tree.treeStatus === 1
+                )
                 .map((tree) => {
                   const totalNeeded = tree.totalXp + tree.xpToNextLevel;
                   const progress =
@@ -237,8 +239,9 @@ export default function TaskPage() {
                 })}
 
               {/* Chỉ hiện AddIcon nếu cây đang Growing < 2 */}
-              {userTrees.filter((tree) => tree.treeStatus === "Growing")
-                .length < 2 && (
+              {userTrees.filter(
+                (tree) => tree.treeStatus === 0 || tree.treeStatus === 1
+              ).length < 2 && (
                 <div
                   className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
                   onClick={() => {
