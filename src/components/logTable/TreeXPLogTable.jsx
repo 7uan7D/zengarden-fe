@@ -178,22 +178,26 @@ const TreeXPLogTable = () => {
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.taskId}</td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.activityType}</td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.xpAmount} XP</td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{new Date(item.createdAt).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric',
-                                    hour: 'numeric',
-                                    minute: 'numeric',
-                                    second: 'numeric',
-                                })}</td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{new Date(item.updatedAt).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric',
-                                    hour: 'numeric',
-                                    minute: 'numeric',
-                                    second: 'numeric',
-                                })}</td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                    {new Date(item.createdAt).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                        hour: 'numeric',
+                                        minute: 'numeric',
+                                        second: 'numeric',
+                                    })}
+                                </td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                    {new Date(item.updatedAt).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                        hour: 'numeric',
+                                        minute: 'numeric',
+                                        second: 'numeric',
+                                    })}
+                                </td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                     task
                                     {/* {taskNames[item.taskId] || 'Loading...'} */}
