@@ -162,7 +162,7 @@ export default function TaskPage() {
       transition={{ duration: 0.5 }}
     >
       <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md"></div>
-      <div className="pt-20">
+      <div className="pt-10">
         <div className="bg-[#CCFFCC] text-black p-6 rounded-lg shadow-md mb-6 flex items-center gap-6 relative mt-6">
           {/* Hình cây */}
           <div
@@ -350,9 +350,6 @@ export default function TaskPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleOpen("Daily Task")}>
-                Daily Task
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleOpen("Simple Task")}>
                 Simple Task
               </DropdownMenuItem>

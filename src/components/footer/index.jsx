@@ -3,7 +3,7 @@ import { FaFacebook } from 'react-icons/fa';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#609994] text-white py-8 mt-10">
+    <footer className="bg-[#609994] text-white py-8 mt-5">
       <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-8">
         {/* Cột 1 - Contact */}
         <div>

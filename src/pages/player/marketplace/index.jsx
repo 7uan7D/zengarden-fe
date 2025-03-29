@@ -28,8 +28,6 @@ export default function Marketplace() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md"></div>
-
       <div className="flex flex-1 pt-[80px]">
         <div
           className="w-64 p-6 bg-gray-50 dark:bg-gray-800 sticky top-[80px] 
