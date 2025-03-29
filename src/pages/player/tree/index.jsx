@@ -11,12 +11,11 @@ import {
 import { Leaf, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover"; // Thay Select bằng Popover
+import { Button } from "@/components/ui/button"; // Thêm Button cho PopoverTrigger
 import "../home/index.css";
 
 // Dữ liệu mẫu cho danh sách cây
@@ -96,7 +95,7 @@ const Tree = () => {
   // Render category
   const renderCategory = (category) => {
     const filteredTrees = filterTrees(treeData[category], category);
-    if (filteredTrees.length === 0) return null; // Không hiển thị category nếu không có cây nào phù hợp
+    if (filteredTrees.length === 0) return null;
 
     return (
       <Collapsible
@@ -127,41 +126,89 @@ const Tree = () => {
 
   return (
     <motion.div
-      className="p-6 mt-20 max-w-full mx-auto"
+      className="min-h-screen flex flex-col mt-20"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Header và Filter */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Leaf className="w-6 h-6 text-green-600" />
-          <h1 className="text-3xl font-bold text-gray-800">Your Trees</h1>
-        </div>
-        <div className="flex gap-4">
+      <div className="flex flex-1">
+        {/* Sidebar Filters */}
+        <div
+          className="w-64 p-4 bg-gray-50 dark:bg-gray-800 sticky top-[80px] 
+              h-[calc(100vh-80px)] overflow-auto rounded-br-2xl rounded-tr-2xl shadow-lg 
+              border border-gray-300 dark:border-gray-700"
+        >
+          <h2 className="text-xl font-semibold mb-4">Filters</h2>
+
           <Input
             placeholder="Search trees..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="max-w-xs"
+            className="mb-4"
           />
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filter by rarity" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="common">Common</SelectItem>
-              <SelectItem value="rare">Rare</SelectItem>
-              <SelectItem value="epic">Epic</SelectItem>
-              <SelectItem value="legendary">Legendary</SelectItem>
-            </SelectContent>
-          </Select>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between text-left"
+              >
+                {filter === "all" ? "All" : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-52 p-1">
+              <div className="flex flex-col gap-1">
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("all")}
+                >
+                  All
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("common")}
+                >
+                  Common
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("rare")}
+                >
+                  Rare
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("epic")}
+                >
+                  Epic
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("legendary")}
+                >
+                  Legendary
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 p-6 overflow-auto">
+          <div className="flex items-center gap-2 mb-6">
+            <Leaf className="w-6 h-6 text-green-600" />
+            <h1 className="text-3xl font-bold text-gray-800">Your Trees</h1>
+          </div>
+
+          {getOrderedCategories().map((category) => renderCategory(category))}
         </div>
       </div>
-
-      {/* Hiển thị các category theo thứ tự đã sắp xếp */}
-      {getOrderedCategories().map((category) => renderCategory(category))}
     </motion.div>
   );
 };
@@ -185,7 +232,7 @@ const TreeCard = ({ tree }) => {
               tree.owned ? "" : "opacity-50"
             }`}
           >
-            <CardContent className="text-center">
+            <CardContent className="text-center pb-0  ">
               <img src={tree.image} alt={tree.name} className="w-24 h-24 mb-2 mx-auto" />
               <p className={`font-semibold ${tree.owned ? "text-gray-800" : "text-gray-500"}`}>
                 {tree.name}
