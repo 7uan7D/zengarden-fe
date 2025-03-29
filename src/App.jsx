@@ -23,6 +23,7 @@ import TaskPage from "./pages/player/task/index.jsx";
 import Header from "./components/header";
 import Challenges from "./pages/player/challenges";
 import Tree from "./pages/player/tree/index.jsx";
+import Workspace from "./pages/player/workspace";
 import { UserExperienceProvider } from "@/context/UserExperienceContext";
 import { TreeExperienceProvider } from "./context/TreeExperienceContext";
 
@@ -52,6 +53,7 @@ function AnimatedRoutes() {
                 <Route path="/" element={<HeroPage />} />
                 <Route path="/faq" element={<FAQ />} />
                 <Route path="/tree" element={<Tree />} />
+                <Route path="/workspace" element={<Workspace />} />
                 <Route path="/calendar" element={<Calendar />} />
                 <Route path="/home" element={<PlayerHome />} />
                 <Route path="/marketplace" element={<Marketplace />} />

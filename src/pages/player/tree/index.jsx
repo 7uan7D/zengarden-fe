@@ -136,7 +136,7 @@ const Tree = () => {
         <div
           className="w-64 p-4 bg-gray-50 dark:bg-gray-800 sticky top-[80px] 
               h-[calc(100vh-80px)] overflow-auto rounded-br-2xl rounded-tr-2xl shadow-lg 
-              border border-gray-300 dark:border-gray-700"
+              border border-gray-300 dark:border-gray-700 my-6"
         >
           <h2 className="text-xl font-semibold mb-4">Filters</h2>
 
