@@ -26,6 +26,7 @@ import Tree from "./pages/player/tree/index.jsx";
 import Workspace from "./pages/player/workspace";
 import { UserExperienceProvider } from "@/context/UserExperienceContext";
 import { TreeExperienceProvider } from "./context/TreeExperienceContext";
+import MusicPlayerController from "./components/musicPlayerController";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -35,7 +36,6 @@ const pageVariants = {
 
 function AnimatedRoutes() {
   const location = useLocation();
-
   return (
     <UserExperienceProvider>
       <TreeExperienceProvider>
@@ -109,10 +109,19 @@ function ConditionalRoutes() {
 }
 
 function App() {
-  const [count, setCount] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false); // Trạng thái phát nhạc
+  const [currentIndex, setCurrentIndex] = useState(0); // Chỉ số bài hát
 
   return (
     <BrowserRouter>
+      {/* Đặt MusicPlayerController ở đây để hiển thị trên mọi trang */}
+      <div className="fixed top-4 left-4 z-50">
+        <MusicPlayerController
+          positionClass="fixed top-4 left-4 z-50"
+          setPlaying={setIsPlaying}
+          setCurrentIndex={setCurrentIndex}
+        />
+      </div>
       <ConditionalRoutes />
       <Toaster expand={true} />
     </BrowserRouter>
