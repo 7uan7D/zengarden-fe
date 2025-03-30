@@ -3,7 +3,19 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Leaf } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Leaf, ChevronDown } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover"; // Thay Select bằng Popover
+import { Button } from "@/components/ui/button"; // Thêm Button cho PopoverTrigger
 import "../home/index.css";
 
 // Dữ liệu mẫu cho danh sách cây
@@ -46,67 +58,166 @@ const Tree = () => {
     legendary: "text-orange-500",
   };
 
+  const [openCategories, setOpenCategories] = useState({
+    legendary: true,
+    epic: true,
+    rare: true,
+    common: true,
+  });
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
+
+  const toggleCategory = (category) => {
+    setOpenCategories((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
+  };
+
+  // Hàm lọc cây dựa trên search và filter
+  const filterTrees = (trees, category) => {
+    return trees.filter((tree) => {
+      const matchesSearch = tree.name.toLowerCase().includes(search.toLowerCase());
+      const matchesFilter = filter === "all" || category === filter;
+      return matchesSearch && matchesFilter;
+    });
+  };
+
+  // Danh sách category theo thứ tự mặc định
+  const defaultOrder = ["legendary", "epic", "rare", "common"];
+
+  // Sắp xếp lại thứ tự category dựa trên filter
+  const getOrderedCategories = () => {
+    if (filter === "all") return defaultOrder;
+    return [filter, ...defaultOrder.filter((cat) => cat !== filter)];
+  };
+
+  // Render category
+  const renderCategory = (category) => {
+    const filteredTrees = filterTrees(treeData[category], category);
+    if (filteredTrees.length === 0) return null;
+
+    return (
+      <Collapsible
+        key={category}
+        open={openCategories[category]}
+        onOpenChange={() => toggleCategory(category)}
+      >
+        <CollapsibleTrigger asChild>
+          <div className="flex items-center justify-between mb-4 cursor-pointer">
+            <h2 className={`text-2xl font-semibold ${categoryStyles[category]}`}>
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </h2>
+            <ChevronDown
+              className={`w-5 h-5 transition-transform ${openCategories[category] ? "rotate-180" : ""}`}
+            />
+          </div>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredTrees.map((tree) => (
+              <TreeCard key={tree.id} tree={tree} />
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  };
+
   return (
     <motion.div
-      className="p-6 mt-20 max-w-full mx-auto"
+      className="min-h-screen flex flex-col mt-20"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-6">
-        <Leaf className="w-6 h-6 text-green-600" />
-        <h1 className="text-3xl font-bold text-gray-800">Your Trees</h1>
-      </div>
+      <div className="flex flex-1">
+        {/* Sidebar Filters */}
+        <div
+          className="w-64 p-4 bg-gray-50 dark:bg-gray-800 sticky top-[80px] 
+              h-[calc(100vh-80px)] overflow-auto rounded-br-2xl rounded-tr-2xl shadow-lg 
+              border border-gray-300 dark:border-gray-700 my-6"
+        >
+          <h2 className="text-xl font-semibold mb-4">Filters</h2>
 
-      {/* Legendary Trees */}
-      <div className="mb-8">
-        <h2 className={`text-2xl font-semibold ${categoryStyles.legendary} mb-4`}>Legendary</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {treeData.legendary.map((tree) => (
-            <TreeCard key={tree.id} tree={tree} />
-          ))}
+          <Input
+            placeholder="Search trees..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="mb-4"
+          />
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between text-left"
+              >
+                {filter === "all" ? "All" : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-52 p-1">
+              <div className="flex flex-col gap-1">
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("all")}
+                >
+                  All
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("common")}
+                >
+                  Common
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("rare")}
+                >
+                  Rare
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("epic")}
+                >
+                  Epic
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("legendary")}
+                >
+                  Legendary
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
-      </div>
 
-      {/* Epic Trees */}
-      <div className="mb-8">
-        <h2 className={`text-2xl font-semibold ${categoryStyles.epic} mb-4`}>Epic</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {treeData.epic.map((tree) => (
-            <TreeCard key={tree.id} tree={tree} />
-          ))}
-        </div>
-      </div>
+        {/* Main Content */}
+        <div className="flex-1 p-6 overflow-auto">
+          <div className="flex items-center gap-2 mb-6">
+            <Leaf className="w-6 h-6 text-green-600" />
+            <h1 className="text-3xl font-bold text-gray-800">Your Trees</h1>
+          </div>
 
-      {/* Rare Trees */}
-      <div className="mb-8">
-        <h2 className={`text-2xl font-semibold ${categoryStyles.rare} mb-4`}>Rare</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {treeData.rare.map((tree) => (
-            <TreeCard key={tree.id} tree={tree} />
-          ))}
-        </div>
-      </div>
-
-      {/* Common Trees */}
-      <div className="mb-8">
-        <h2 className={`text-2xl font-semibold ${categoryStyles.common} mb-4`}>Common</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {treeData.common.map((tree) => (
-            <TreeCard key={tree.id} tree={tree} />
-          ))}
+          {getOrderedCategories().map((category) => renderCategory(category))}
         </div>
       </div>
     </motion.div>
   );
 };
 
-// Component TreeCard
+// Component TreeCard (giữ nguyên)
 const TreeCard = ({ tree }) => {
   const [isOpen, setIsOpen] = useState(false);
   const progress = tree.level === 4 ? 100 : (tree.xp / tree.maxXp) * 100;
-  const progressText = tree.level === 4 ? "Level Max" : `${tree.xp}/${tree.maxXp} XP`;
+  const progressText = tree.level === 4 ? "Max XP" : `${tree.xp}/${tree.maxXp} XP`;
 
   return (
     <motion.div
@@ -121,7 +232,7 @@ const TreeCard = ({ tree }) => {
               tree.owned ? "" : "opacity-50"
             }`}
           >
-            <CardContent className="text-center">
+            <CardContent className="text-center pb-0  ">
               <img src={tree.image} alt={tree.name} className="w-24 h-24 mb-2 mx-auto" />
               <p className={`font-semibold ${tree.owned ? "text-gray-800" : "text-gray-500"}`}>
                 {tree.name}

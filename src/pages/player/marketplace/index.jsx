@@ -4,20 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { ShoppingCart, Play } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
-import {
   Popover,
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-
+import { ShoppingCart, Play, ChevronDown } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
 
 const categories = ["Items", "Avatar", "Background", "Music", "Trade"];
@@ -25,16 +17,27 @@ const categories = ["Items", "Avatar", "Background", "Music", "Trade"];
 export default function Marketplace() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState(categories[0]); // Thêm state để điều khiển tab
+
+  // Hàm xử lý khi chọn filter
+  const handleFilterChange = (value) => {
+    setFilter(value);
+    // Nếu value khớp với một category, chuyển sang tab đó
+    const matchedCategory = categories.find(
+      (cat) => cat.toLowerCase() === value.toLowerCase()
+    );
+    if (matchedCategory) {
+      setActiveTab(matchedCategory);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md"></div>
-
       <div className="flex flex-1 pt-[80px]">
         <div
-          className="w-64 p-6 bg-gray-50 dark:bg-gray-800 sticky top-[80px] 
+          className="w-64 p-4 bg-gray-50 dark:bg-gray-800 sticky top-[80px] 
               h-[calc(100vh-80px)] overflow-auto rounded-br-2xl rounded-tr-2xl shadow-lg 
-              border border-gray-300 dark:border-gray-700"
+              border border-gray-300 dark:border-gray-700 my-4"
         >
           <h2 className="text-xl font-semibold mb-4">Filters</h2>
 
@@ -45,22 +48,39 @@ export default function Marketplace() {
             className="mb-4"
           />
 
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select filter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="common">Common</SelectItem>
-              <SelectItem value="rare">Rare</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Popover giống Tree */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between text-left"
+              >
+                {filter === "all" ? "All" : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-52 p-1">
+              <div className="flex flex-col gap-1">
+                {/* Categories */}
+                {categories.map((cat) => (
+                  <Button
+                    key={cat}
+                    variant="ghost"
+                    className="justify-start hover:bg-gray-100 bg-white"
+                    onClick={() => handleFilterChange(cat.toLowerCase())}
+                  >
+                    {cat}
+                  </Button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="flex-1 p-6 overflow-auto">
           <h1 className="text-2xl font-bold mb-4">Marketplace</h1>
 
-          <Tabs defaultValue={categories[0]}>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               {categories.map((cat) => (
                 <TabsTrigger key={cat} value={cat}>
@@ -100,7 +120,7 @@ export default function Marketplace() {
                               {i === 1 && (
                                 <span
                                   className="absolute top-0.5 left-[2px] bg-green-500 text-white text-xs font-bold px-5 py-1 
-                                transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
+                                  transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
                                 >
                                   Seasonal
                                 </span>
@@ -121,6 +141,9 @@ export default function Marketplace() {
                                 ) : (
                                   <div className="h-20 w-20 bg-gray-300 rounded-lg mb-2" />
                                 )}
+                                <p className="font-semibold">
+                                  {cat} Item {i + 1}
+                                </p>
                                 <p className="text-sm text-gray-500 flex items-center">
                                   <img
                                     src="/src/assets/images/coin.png"

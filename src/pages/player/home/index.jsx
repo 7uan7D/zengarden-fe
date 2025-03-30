@@ -19,7 +19,6 @@ import { Link } from "react-router-dom";
 import "../home/index.css";
 
 const HomePage = () => {
-  const [showAvatarDialog, setShowAvatarDialog] = useState(false);
   const [user, setUser] = useState(null);
   const [timers, setTimers] = useState({
     daily: null,
@@ -120,7 +119,7 @@ const HomePage = () => {
 
   return (
     <motion.div
-      className="p-6 mt-20 max-w-full mx-auto homepage"
+      className="p-6 pt-2 mt-20 max-w-full mx-auto homepage"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
