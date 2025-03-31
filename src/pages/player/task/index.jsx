@@ -66,6 +66,8 @@ export default function TaskPage() {
   });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingTask, setPendingTask] = useState(null); // Lưu cả cột và index
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
 
   const selectedTree = userTrees.find(
     (tree) => tree.userTreeId === currentTree
@@ -201,18 +203,10 @@ export default function TaskPage() {
       const taskData = await GetTaskByUserId(payload.sub);
 
       const categorizedTasks = {
-        daily: taskData
-          .filter((task) => task.taskTypeName === "Daily")
-          .map((t) => t.taskName),
-        simple: taskData
-          .filter((task) => task.taskTypeName === "Simple")
-          .map((t) => t.taskName),
-        complex: taskData
-          .filter((task) => task.taskTypeName === "Complex")
-          .map((t) => t.taskName),
-        done: taskData
-          .filter((task) => task.status === 3)
-          .map((t) => t.taskName),
+        daily: taskData.filter((task) => task.taskTypeName === "Daily"),
+        simple: taskData.filter((task) => task.taskTypeName === "Simple"),
+        complex: taskData.filter((task) => task.taskTypeName === "Complex"),
+        done: taskData.filter((task) => task.status === 3),
       };
 
       setTasks(categorizedTasks);
@@ -462,8 +456,14 @@ export default function TaskPage() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
             >
-              <Card className="p-4 flex justify-between items-center">
-                <span>{task}</span>
+              <Card
+                className="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition"
+                onClick={() => {
+                  setSelectedTask(task);
+                  setIsTaskInfoDialogOpen(true);
+                }}
+              >
+                <span>{task.taskName}</span>
                 {isDone ? (
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-5 h-5 text-green-600" />
@@ -629,6 +629,75 @@ export default function TaskPage() {
                   {isCreating ? "Creating..." : "Create"}
                 </Button>
               </div>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={isTaskInfoDialogOpen}
+            onOpenChange={setIsTaskInfoDialogOpen}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{selectedTask?.taskName}</DialogTitle>
+                <DialogDescription>
+                  {selectedTask?.taskDescription}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4 space-y-2">
+                <p>
+                  <strong>Start Date:</strong>{" "}
+                  {new Date(selectedTask?.startDate).toLocaleString()}
+                </p>
+                <p>
+                  <strong>End Date:</strong>{" "}
+                  {new Date(selectedTask?.endDate).toLocaleString()}
+                </p>
+                <p>
+                  <strong>Status:</strong>{" "}
+                  {selectedTask?.status === 3 ? "Completed" : "In Progress"}
+                </p>
+                <p>
+                  <strong>Focus Method:</strong> {selectedTask?.focusMethodName}
+                </p>
+                <p>
+                  <strong>Total Duration:</strong> {selectedTask?.totalDuration}{" "}
+                  minutes
+                </p>
+                <p>
+                  <strong>Work Duration:</strong> {selectedTask?.workDuration}{" "}
+                  minutes
+                </p>
+                <p>
+                  <strong>Break Time:</strong> {selectedTask?.breakTime} minutes
+                </p>
+                <p>
+                  <strong>User Tree Name:</strong> {selectedTask?.userTreeName}
+                </p>
+                <p>
+                  <strong>Task Type:</strong> {selectedTask?.taskTypeName}
+                </p>
+                {selectedTask?.taskNote && (
+                  <p>
+                    <strong>Task Note:</strong> {selectedTask?.taskNote}
+                  </p>
+                )}
+                {selectedTask?.taskResult && (
+                  <p>
+                    <strong>Task Result:</strong> {selectedTask?.taskResult}
+                  </p>
+                )}
+                {selectedTask?.remainingTime !== null && (
+                  <p>
+                    <strong>Remaining Time:</strong>{" "}
+                    {selectedTask?.remainingTime} minutes
+                  </p>
+                )}
+              </div>
+              <DialogFooter>
+                <Button onClick={() => setIsTaskInfoDialogOpen(false)}>
+                  Close
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
 
