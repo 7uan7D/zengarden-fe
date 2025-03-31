@@ -43,6 +43,7 @@ import TimePicker from "react-time-picker";
 import "react-time-picker/dist/TimePicker.css";
 import "react-clock/dist/Clock.css";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
+import { GetTaskByUserId } from "@/services/apiServices/taskService";
 
 export default function TaskPage() {
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
@@ -73,7 +74,7 @@ export default function TaskPage() {
     userTreeId: selectedTree?.userTreeId || null,
     taskName: "",
     taskDescription: "",
-    totalDuration: "", // Tính theo giây
+    totalDuration: "",
     startDate: new Date().toISOString(),
     endDate: new Date().toISOString(),
     workDuration: "",
@@ -170,16 +171,50 @@ export default function TaskPage() {
       }
     }
   }, [userTrees]);
-  const tasks = {
-    daily: ["Do exercise", "Drink water", "Clean room"],
-    simple: ["Make lemonade", "Read 10 pages", "Meditate"],
-    complex: [
-      "Finish project report",
-      "Workout 3 times a week",
-      "Plan monthly budget",
-    ],
-    done: ["Submit assignment", "Clean the house"],
+
+  const [tasks, setTasks] = useState({
+    daily: [],
+    simple: [],
+    complex: [],
+    done: [],
+  });
+
+  const fetchTasks = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    const payload = parseJwt(token);
+    if (!payload?.sub) return;
+
+    try {
+      const taskData = await GetTaskByUserId(payload.sub);
+
+      const categorizedTasks = {
+        daily: taskData
+          .filter((task) => task.taskTypeName === "Daily")
+          .map((t) => t.taskName),
+        simple: taskData
+          .filter((task) => task.taskTypeName === "Simple")
+          .map((t) => t.taskName),
+        complex: taskData
+          .filter((task) => task.taskTypeName === "Complex")
+          .map((t) => t.taskName),
+        done: taskData
+          .filter((task) => task.status === 3)
+          .map((t) => t.taskName),
+      };
+
+      setTasks(categorizedTasks);
+    } catch (error) {
+      console.error("Failed to fetch tasks", error);
+    }
   };
+
+  // Gọi API khi component mount
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
   const handleOpen = (type, taskTypeId) => {
     setTaskType(type);
     setTaskData((prev) => ({
@@ -249,10 +284,12 @@ export default function TaskPage() {
       const response = await CreateTask(taskData);
       console.log("Task created successfully:", response);
       setIsTaskDialogOpen(false); // Đóng dialog sau khi tạo task thành công
+      fetchTasks();
     } catch (error) {
       console.error("Error creating task:", error);
     }
   };
+
   const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
     const selectedDate = date ? new Date(date) : undefined;
     const formattedTime = date
@@ -753,8 +790,6 @@ export default function TaskPage() {
       </div>
 
       <div className="grid grid-cols-4 gap-4 w-full">
-        {" "}
-        {/* Thay grid-cols-3 thành grid-cols-4 và thêm w-full */}
         <TaskColumn title="Daily Task" tasks={tasks.daily} />
         <TaskColumn title="Simple Task" tasks={tasks.simple} />
         <TaskColumn title="Complex Task" tasks={tasks.complex} />
@@ -769,7 +804,6 @@ function TaskColumn({ title, tasks, isDone }) {
   const [running, setRunning] = useState({});
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingTaskIndex, setPendingTaskIndex] = useState(null);
-
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
