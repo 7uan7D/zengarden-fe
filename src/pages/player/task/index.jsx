@@ -2,7 +2,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
 import addIcon from "@/assets/images/add.png";
 import {
@@ -39,10 +38,23 @@ export default function TaskPage() {
   const [currentTree, setCurrentTree] = useState(0);
   const [userTrees, setUserTrees] = useState([]);
   const [trees, setTrees] = useState([]);
+  // Tách trạng thái timers và running theo cột
+  const [timers, setTimers] = useState({
+    daily: {},
+    simple: {},
+    complex: {},
+    done: {},
+  });
+  const [running, setRunning] = useState({
+    daily: {},
+    simple: {},
+    complex: {},
+    done: {},
+  });
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pendingTask, setPendingTask] = useState(null); // Lưu cả cột và index
 
-  const selectedTree = userTrees.find(
-    (tree) => tree.userTreeId === currentTree
-  );
+  const selectedTree = userTrees.find((tree) => tree.userTreeId === currentTree);
   const treeLevel = selectedTree?.levelId;
   const finalTreeId = selectedTree?.finalTreeId;
   const selectedFinalTree = trees.find((t) => t.treeId === finalTreeId);
@@ -56,6 +68,17 @@ export default function TaskPage() {
   const { refreshXp } = useUserExperience();
   const { treeExp, refreshTreeExp } = useTreeExperience();
 
+  const tasks = {
+    daily: ["Do exercise", "Drink water", "Clean room"],
+    simple: ["Make lemonade", "Read 10 pages", "Meditate"],
+    complex: [
+      "Finish project report",
+      "Workout 3 times a week",
+      "Plan monthly budget",
+    ],
+    done: ["Submit assignment", "Clean the house"],
+  };
+
   useEffect(() => {
     const fetchTrees = async () => {
       try {
@@ -65,7 +88,6 @@ export default function TaskPage() {
         console.error("Error fetching trees:", error);
       }
     };
-
     fetchTrees();
   }, []);
 
@@ -88,7 +110,6 @@ export default function TaskPage() {
         }
       }
     };
-
     fetchTrees();
   }, []);
 
@@ -101,22 +122,12 @@ export default function TaskPage() {
       if (found) {
         setCurrentTree(found.userTreeId);
       } else {
-        // Nếu không tìm thấy cây đã lưu, mặc định chọn cây đầu tiên
         setCurrentTree(userTrees[0].userTreeId);
         localStorage.setItem("selectedTreeId", userTrees[0].userTreeId);
       }
     }
   }, [userTrees]);
-  const tasks = {
-    daily: ["Do exercise", "Drink water", "Clean room"],
-    simple: ["Make lemonade", "Read 10 pages", "Meditate"],
-    complex: [
-      "Finish project report",
-      "Workout 3 times a week",
-      "Plan monthly budget",
-    ],
-    done: ["Submit assignment", "Clean the house"],
-  };
+
   const handleOpen = (type) => {
     setTaskType(type);
     setIsTaskDialogOpen(true);
@@ -134,10 +145,8 @@ export default function TaskPage() {
         toast.error("You are not logged in!");
         return;
       }
-
       const userId = parseJwt(token).sub;
       const result = await CreateUserTree(userId, newTreeName);
-
       if (result) {
         toast.success("Tree created successfully!");
         setIsCreateTreeDialogOpen(false);
@@ -154,9 +163,172 @@ export default function TaskPage() {
       refreshTreeExp(currentTree);
     }
   };
+
+  // TaskColumn Logic
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  const isAnyTaskRunning = (column) => {
+    return Object.values(timers[column]).some((time) => time > 0);
+  };
+
+  const startTimer = (column, taskIndex) => {
+    if (isAnyTaskRunning(column) && !timers[column][taskIndex]) {
+      setPendingTask({ column, taskIndex });
+      setDialogOpen(true);
+    } else {
+      setTimers((prev) => ({
+        ...prev,
+        [column]: { ...prev[column], [taskIndex]: 600 },
+      }));
+      setRunning((prev) => ({
+        ...prev,
+        [column]: { ...prev[column], [taskIndex]: true },
+      }));
+    }
+  };
+
+  const stopAllTimers = (column) => {
+    setTimers((prev) => ({
+      ...prev,
+      [column]: {},
+    }));
+    setRunning((prev) => ({
+      ...prev,
+      [column]: {},
+    }));
+  };
+
+  const handleSwitchTask = () => {
+    if (pendingTask) {
+      stopAllTimers(pendingTask.column);
+      startTimer(pendingTask.column, pendingTask.taskIndex);
+      setDialogOpen(false);
+      setPendingTask(null);
+    }
+  };
+
+  const handleKeepCurrentTask = () => {
+    setDialogOpen(false);
+    setPendingTask(null);
+  };
+
+  const toggleTimer = (column, taskIndex) => {
+    setRunning((prev) => ({
+      ...prev,
+      [column]: {
+        ...prev[column],
+        [taskIndex]: !prev[column][taskIndex],
+      },
+    }));
+  };
+
+  const stopTimer = (column, taskIndex) => {
+    setTimers((prev) => {
+      const newTimers = { ...prev[column] };
+      delete newTimers[taskIndex];
+      return { ...prev, [column]: newTimers };
+    });
+    setRunning((prev) => {
+      const newRunning = { ...prev[column] };
+      delete newRunning[taskIndex];
+      return { ...prev, [column]: newRunning };
+    });
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimers((prev) => {
+        const newTimers = { ...prev };
+        Object.keys(newTimers).forEach((column) => {
+          Object.keys(newTimers[column]).forEach((taskIndex) => {
+            if (
+              running[column][taskIndex] &&
+              newTimers[column][taskIndex] > 0
+            ) {
+              newTimers[column][taskIndex] -= 1;
+            } else if (newTimers[column][taskIndex] === 0) {
+              delete newTimers[column][taskIndex];
+              setRunning((prevRunning) => {
+                const newRunning = { ...prevRunning[column] };
+                delete newRunning[taskIndex];
+                return { ...prevRunning, [column]: newRunning };
+              });
+            }
+          });
+        });
+        return newTimers;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [running]);
+
+  const renderTaskColumn = (title, taskList, columnKey, isDone = false) => (
+    <motion.div
+      className="bg-white rounded-lg shadow-lg p-4 flex flex-col h-full"
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <h2 className="text-lg font-semibold mb-3">{title}</h2>
+      <Separator className="mb-3" />
+      <ScrollArea className="h-[400px] overflow-y-auto">
+        <div className="grid gap-3">
+          {taskList.map((task, index) => (
+            <motion.div
+              key={index}
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+            >
+              <Card className="p-4 flex justify-between items-center">
+                <span>{task}</span>
+                {isDone ? (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <span className="text-sm text-green-600">Completed</span>
+                  </div>
+                ) : timers[columnKey][index] !== undefined ? (
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="text-sm text-gray-600 cursor-pointer hover:text-gray-800"
+                      onClick={() => toggleTimer(columnKey, index)}
+                    >
+                      {formatTime(timers[columnKey][index])}{" "}
+                      {running[columnKey][index] ? "(Pause)" : "(Resume)"}
+                    </span>
+                    <Button
+                      size="sm"
+                      className="bg-gray-900 text-white hover:bg-gray-700"
+                      onClick={() => stopTimer(columnKey, index)}
+                    >
+                      Stop
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() => startTimer(columnKey, index)}
+                  >
+                    Start Task
+                  </Button>
+                )}
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </ScrollArea>
+    </motion.div>
+  );
+
   return (
     <motion.div
-      className="p-6 max-w-full mx-auto w-full" // Thay max-w-6xl thành max-w-full và thêm w-full
+      className="p-6 max-w-full mx-auto w-full"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -164,16 +336,13 @@ export default function TaskPage() {
       <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md"></div>
       <div className="pt-10">
         <div className="bg-[#CCFFCC] text-black p-6 rounded-lg shadow-md mb-6 flex items-center gap-6 relative mt-6">
-          {/* Hình cây */}
           <div
             className="relative cursor-pointer"
             onClick={() => {
               if (userTrees.length === 0) {
-                // Nếu chưa có cây, mở luôn dialog tạo cây
                 setIsTreeDialogOpen(false);
                 setIsCreateTreeDialogOpen(true);
               } else {
-                // Nếu có rồi thì mở dialog chọn cây
                 setIsTreeDialogOpen(true);
               }
             }}
@@ -184,20 +353,17 @@ export default function TaskPage() {
             />
           </div>
 
-          {/* Dialog chọn cây */}
           <Dialog open={isTreeDialogOpen} onOpenChange={setIsTreeDialogOpen}>
             <DialogContent className="max-w-xl w-full flex gap-4 justify-center p-6 flex-wrap">
               <DialogTitle className="text-center w-full">
                 Choose your tree
               </DialogTitle>
-
               {userTrees
                 .filter((tree) => tree.treeStatus === "Growing")
                 .map((tree) => {
                   const totalNeeded = tree.totalXp + tree.xpToNextLevel;
                   const progress =
                     totalNeeded > 0 ? (tree.totalXp / totalNeeded) * 100 : 0;
-
                   const finalTree = trees.find(
                     (t) => t.treeId === tree.finalTreeId
                   );
@@ -235,8 +401,6 @@ export default function TaskPage() {
                     </div>
                   );
                 })}
-
-              {/* Chỉ hiện AddIcon nếu cây đang Growing < 2 */}
               {userTrees.filter((tree) => tree.treeStatus === "Growing")
                 .length < 2 && (
                 <div
@@ -259,7 +423,6 @@ export default function TaskPage() {
             </DialogContent>
           </Dialog>
 
-          {/* dialog tạo cây */}
           <Dialog
             open={isCreateTreeDialogOpen}
             onOpenChange={setIsCreateTreeDialogOpen}
@@ -288,7 +451,6 @@ export default function TaskPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Thông tin cây và trang */}
           <div className="flex-1">
             {selectedTree ? (
               <>
@@ -298,7 +460,6 @@ export default function TaskPage() {
                     Level {selectedTree.levelId}
                   </span>
                 </h2>
-
                 {treeExp && (
                   <div className="relative w-full mt-3 h-4 rounded-full bg-gray-200 overflow-hidden">
                     <div
@@ -320,7 +481,6 @@ export default function TaskPage() {
                     </span>
                   </div>
                 )}
-
                 <div className="mt-5 flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-medium text-gray-700">
                     Equipped Items:
@@ -342,7 +502,6 @@ export default function TaskPage() {
             )}
           </div>
 
-          {/* Button tạo task */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button className="absolute right-6 top-6 bg-black text-white hover:bg-gray-800">
@@ -359,7 +518,6 @@ export default function TaskPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Dialog tạo task */}
           <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
             <DialogContent className="max-w-lg">
               <DialogHeader>
@@ -403,177 +561,25 @@ export default function TaskPage() {
       </div>
 
       <div className="grid grid-cols-4 gap-4 w-full">
-        {" "}
-        {/* Thay grid-cols-3 thành grid-cols-4 và thêm w-full */}
-        <TaskColumn title="Daily Task" tasks={tasks.daily} />
-        <TaskColumn title="Simple Task" tasks={tasks.simple} />
-        <TaskColumn title="Complex Task" tasks={tasks.complex} />
-        <TaskColumn title="Complete Task" tasks={tasks.done} isDone />
+        {renderTaskColumn("Daily Task", tasks.daily, "daily")}
+        {renderTaskColumn("Simple Task", tasks.simple, "simple")}
+        {renderTaskColumn("Complex Task", tasks.complex, "complex")}
+        {renderTaskColumn("Complete Task", tasks.done, "done", true)}
       </div>
-    </motion.div>
-  );
-}
-
-function TaskColumn({ title, tasks, isDone }) {
-  const [timers, setTimers] = useState({});
-  const [running, setRunning] = useState({});
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [pendingTaskIndex, setPendingTaskIndex] = useState(null);
-
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
-  const isAnyTaskRunning = () => {
-    return Object.values(timers).some((time) => time > 0);
-  };
-
-  const startTimer = (taskIndex) => {
-    if (isAnyTaskRunning() && !timers[taskIndex]) {
-      setPendingTaskIndex(taskIndex);
-      setDialogOpen(true);
-    } else {
-      setTimers((prev) => ({
-        ...prev,
-        [taskIndex]: 600,
-      }));
-      setRunning((prev) => ({
-        ...prev,
-        [taskIndex]: true,
-      }));
-    }
-  };
-
-  const stopAllTimers = () => {
-    setTimers({});
-    setRunning({});
-  };
-
-  const handleSwitchTask = () => {
-    stopAllTimers();
-    startTimer(pendingTaskIndex);
-    setDialogOpen(false);
-    setPendingTaskIndex(null);
-  };
-
-  const handleKeepCurrentTask = () => {
-    setDialogOpen(false);
-    setPendingTaskIndex(null);
-  };
-
-  const toggleTimer = (taskIndex) => {
-    setRunning((prev) => ({
-      ...prev,
-      [taskIndex]: !prev[taskIndex],
-    }));
-  };
-
-  const stopTimer = (taskIndex) => {
-    setTimers((prev) => {
-      const newTimers = { ...prev };
-      delete newTimers[taskIndex];
-      return newTimers;
-    });
-    setRunning((prev) => {
-      const newRunning = { ...prev };
-      delete newRunning[taskIndex];
-      return newRunning;
-    });
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTimers((prev) => {
-        const newTimers = { ...prev };
-        Object.keys(newTimers).forEach((taskIndex) => {
-          if (running[taskIndex] && newTimers[taskIndex] > 0) {
-            newTimers[taskIndex] -= 1;
-          } else if (newTimers[taskIndex] === 0) {
-            delete newTimers[taskIndex];
-            setRunning((prev) => {
-              const newRunning = { ...prev };
-              delete newRunning[taskIndex];
-              return newRunning;
-            });
-          }
-        });
-        return newTimers;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [running]);
-
-  return (
-    <motion.div
-      className="bg-white rounded-lg shadow-lg p-4 flex flex-col h-full" // Thêm h-full để đảm bảo cột đầy chiều cao
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <h2 className="text-lg font-semibold mb-3">{title}</h2>
-      <Separator className="mb-3" />
-      <ScrollArea className="h-[400px] overflow-y-auto">
-        <div className="grid gap-3">
-          {tasks.map((task, index) => (
-            <motion.div
-              key={index}
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-            >
-              <Card className="p-4 flex justify-between items-center">
-                <span>{task}</span>
-                {isDone ? (
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <span className="text-sm text-green-600">Completed</span>
-                  </div>
-                ) : timers[index] !== undefined ? (
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-sm text-gray-600 cursor-pointer hover:text-gray-800"
-                      onClick={() => toggleTimer(index)}
-                    >
-                      {formatTime(timers[index])}{" "}
-                      {running[index] ? "(Pause)" : "(Resume)"}
-                    </span>
-                    <Button
-                      size="sm"
-                      className="bg-gray-900 text-white hover:bg-gray-700"
-                      onClick={() => stopTimer(index)}
-                    >
-                      Stop
-                    </Button>
-                  </div>
-                ) : (
-                  <Button size="sm" onClick={() => startTimer(index)}>
-                    Start Task
-                  </Button>
-                )}
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </ScrollArea>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Switch Task</DialogTitle>
             <DialogDescription>
-              Do you want to stop the current task and switch to a new one?
+              Bạn có muốn dừng task hiện tại và chuyển sang task mới không?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={handleKeepCurrentTask}>
-              No
+              Không
             </Button>
-            <Button onClick={handleSwitchTask}>Yes</Button>
+            <Button onClick={handleSwitchTask}>Có</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
