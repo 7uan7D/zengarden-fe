@@ -493,7 +493,10 @@ export default function TaskPage() {
                   <div className="flex items-center gap-2">
                     <span
                       className="text-sm text-gray-600 cursor-pointer hover:text-gray-800"
-                      onClick={() => toggleTimer(columnKey, index)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Ngăn sự kiện click lan truyền lên Card
+                        toggleTimer(columnKey, index);
+                      }}
                     >
                       {formatTime(timers[columnKey][index])}{" "}
                       {running[columnKey][index] ? "(Pause)" : "(Resume)"}
@@ -501,7 +504,10 @@ export default function TaskPage() {
                     <Button
                       size="sm"
                       className="bg-gray-900 text-white hover:bg-gray-700"
-                      onClick={() => stopTimer(columnKey, index)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Ngăn sự kiện click lan truyền lên Card
+                        stopTimer(columnKey, index);
+                      }}
                     >
                       Stop
                     </Button>
@@ -509,7 +515,10 @@ export default function TaskPage() {
                 ) : (
                   <Button
                     size="sm"
-                    onClick={() => startTimer(columnKey, index)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Ngăn sự kiện click lan truyền lên Card
+                      startTimer(columnKey, index);
+                    }}
                   >
                     Start Task
                   </Button>
