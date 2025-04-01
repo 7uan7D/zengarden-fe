@@ -846,13 +846,19 @@ export default function TaskPage() {
                     <DateTimePicker
                       label="Start Date"
                       date={taskData.startDate}
-                      onDateChange={(newDate) => handleDateChange("startDate", newDate)}
-                      onTimeChange={(time) => handleTimeChange("startDate", time)}
+                      onDateChange={(newDate) =>
+                        handleDateChange("startDate", newDate)
+                      }
+                      onTimeChange={(time) =>
+                        handleTimeChange("startDate", time)
+                      }
                     />
                     <DateTimePicker
                       label="End Date"
                       date={taskData.endDate}
-                      onDateChange={(newDate) => handleDateChange("endDate", newDate)}
+                      onDateChange={(newDate) =>
+                        handleDateChange("endDate", newDate)
+                      }
                       onTimeChange={(time) => handleTimeChange("endDate", time)}
                     />
                   </div>
