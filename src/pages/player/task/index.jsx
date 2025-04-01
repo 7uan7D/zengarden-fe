@@ -43,6 +43,7 @@ import "react-time-picker/dist/TimePicker.css";
 import "react-clock/dist/Clock.css";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
 import { GetTaskByUserId } from "@/services/apiServices/taskService";
+import "../task/index.css";
 
 // Component DateTimePicker với tối ưu hóa
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
@@ -70,18 +71,21 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="font-medium">{label}</label>
+      <label className="font-medium text-gray-700">{label}</label>
       <div className="flex items-center gap-2">
         {/* Chọn ngày */}
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="w-[150px]">
+            <Button
+              variant="outline"
+              className="w-[150px] h-10 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+            >
               {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
             </Button>
           </PopoverTrigger>
           <PopoverContent
             align="start"
-            className="p-2 shadow-md bg-white rounded-md"
+            className="p-2 shadow-md bg-white rounded-lg"
           >
             <Calendar
               mode="single"
@@ -96,7 +100,9 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
           onChange={handleTimeChange}
           value={formattedTime}
           disableClock={true}
-          className="border rounded-md p-1 w-[80px] text-center"
+          className="h-10 w-[100px] text-center border-gray-300 rounded-lg focus:border-green-500 focus:ring focus:ring-green-200 transition-all"
+          clearIcon={null} // Bỏ icon xóa nếu không cần
+          clockIcon={null} // Bỏ icon đồng hồ nếu không cần
         />
       </div>
     </div>
@@ -196,8 +202,8 @@ export default function TaskPage() {
       ...prev,
       [field]: date
         ? date.toISOString().split("T")[0] +
-          "T" +
-          (prev[field]?.split("T")[1] || "00:00:00.000Z")
+        "T" +
+        (prev[field]?.split("T")[1] || "00:00:00.000Z")
         : null,
     }));
   }, []);
@@ -349,6 +355,8 @@ export default function TaskPage() {
       const response = await CreateTask(taskData);
       console.log("Task created successfully:", response);
       setIsTaskDialogOpen(false);
+      setStep(1);
+      setTaskData({});
       fetchTasks();
     } catch (error) {
       console.error("Error creating task:", error);
@@ -613,23 +621,23 @@ export default function TaskPage() {
               {userTrees.filter(
                 (tree) => tree.treeStatus === 0 || tree.treeStatus === 1
               ).length < 2 && (
-                <div
-                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
-                  onClick={() => {
-                    setIsTreeDialogOpen(false);
-                    setIsCreateTreeDialogOpen(true);
-                  }}
-                >
-                  <img
-                    src={addIcon}
-                    alt="Add New Tree"
-                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
-                  />
-                  <h3 className="font-bold mt-2 text-green-600">
-                    Create New Tree
-                  </h3>
-                </div>
-              )}
+                  <div
+                    className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
+                    onClick={() => {
+                      setIsTreeDialogOpen(false);
+                      setIsCreateTreeDialogOpen(true);
+                    }}
+                  >
+                    <img
+                      src={addIcon}
+                      alt="Add New Tree"
+                      className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+                    />
+                    <h3 className="font-bold mt-2 text-green-600">
+                      Create New Tree
+                    </h3>
+                  </div>
+                )}
             </DialogContent>
           </Dialog>
 
@@ -743,20 +751,18 @@ export default function TaskPage() {
                   <div className="relative w-full mt-3 h-4 rounded-full bg-gray-200 overflow-hidden">
                     <div
                       style={{
-                        width: `${
-                          (treeExp.totalXp /
+                        width: `${(treeExp.totalXp /
                             (treeExp.totalXp + treeExp.xpToNextLevel)) *
                           100
-                        }%`,
+                          }%`,
                       }}
                       className="h-full bg-gradient-to-r from-[#a1d99b] via-[#f9d976] to-[#f49a8c] rounded-full"
                     ></div>
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
                       {selectedTree.levelId === 4
                         ? "Level Max"
-                        : `${treeExp.totalXp} / ${
-                            treeExp.totalXp + treeExp.xpToNextLevel
-                          } XP`}
+                        : `${treeExp.totalXp} / ${treeExp.totalXp + treeExp.xpToNextLevel
+                        } XP`}
                     </span>
                   </div>
                 )}
@@ -798,12 +804,13 @@ export default function TaskPage() {
           </DropdownMenu>
 
           <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
-            <DialogContent className="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>
+            <DialogContent className="max-w-lg bg-white rounded-xl shadow-2xl p-6">
+              {/* Header với gradient và shadow */}
+              <DialogHeader className="relative bg-gradient-to-r from-green-500 to-teal-500 p-4 rounded-t-xl shadow-md">
+                <DialogTitle className="text-2xl font-bold text-white tracking-tight">
                   {step === 3 ? "Confirm Task" : "Create Task"}
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="text-sm text-gray-100 mt-1">
                   {step === 1 && "Fill in the details for your new task."}
                   {step === 2 && "Suggested focus method based on your task."}
                   {step === 3 && "Review and confirm your task details."}
@@ -963,7 +970,7 @@ export default function TaskPage() {
 
               <DialogFooter>
                 {step > 1 && (
-                  <Button variant="ghost" onClick={handleBack}>
+                  <Button variant="ghost" className="bg-white border-black" onClick={handleBack}>
                     Back
                   </Button>
                 )}
