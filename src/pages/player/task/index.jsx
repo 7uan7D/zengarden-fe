@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react"; // Thêm useCallback
 import {
   Dialog,
   DialogContent,
@@ -44,6 +44,65 @@ import "react-clock/dist/Clock.css";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
 import { GetTaskByUserId } from "@/services/apiServices/taskService";
 
+// Component DateTimePicker với tối ưu hóa
+const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const selectedDate = date ? new Date(date) : undefined;
+  const formattedTime = date
+    ? new Date(date).toISOString().split("T")[1].slice(0, 5)
+    : "00:00";
+
+  // Memoize handlers
+  const handleDateSelect = useCallback(
+    (newDate) => {
+      onDateChange(newDate);
+      setIsPopoverOpen(false); // Đóng Popover khi chọn ngày xong
+    },
+    [onDateChange]
+  );
+
+  const handleTimeChange = useCallback(
+    (time) => {
+      onTimeChange(time);
+    },
+    [onTimeChange]
+  );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="font-medium">{label}</label>
+      <div className="flex items-center gap-2">
+        {/* Chọn ngày */}
+        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="w-[150px]">
+              {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="start"
+            className="p-2 shadow-md bg-white rounded-md"
+          >
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+            />
+          </PopoverContent>
+        </Popover>
+
+        {/* Chọn giờ */}
+        <TimePicker
+          onChange={handleTimeChange}
+          value={formattedTime}
+          disableClock={true}
+          className="border rounded-md p-1 w-[80px] text-center"
+        />
+      </div>
+    </div>
+  );
+};
+
 export default function TaskPage() {
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
@@ -65,7 +124,7 @@ export default function TaskPage() {
     done: {},
   });
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [pendingTask, setPendingTask] = useState(null); // Lưu cả cột và index
+  const [pendingTask, setPendingTask] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
 
@@ -98,6 +157,7 @@ export default function TaskPage() {
   });
   const [step, setStep] = useState(1);
   const [focusSuggestion, setFocusSuggestion] = useState(null);
+
   const handleNext = async () => {
     if (step === 1) {
       try {
@@ -129,6 +189,29 @@ export default function TaskPage() {
       [name]: value,
     }));
   };
+
+  // Memoize handleDateChange và handleTimeChange
+  const handleDateChange = useCallback((field, date) => {
+    setTaskData((prev) => ({
+      ...prev,
+      [field]: date
+        ? date.toISOString().split("T")[0] +
+          "T" +
+          (prev[field]?.split("T")[1] || "00:00:00.000Z")
+        : null,
+    }));
+  }, []);
+
+  const handleTimeChange = useCallback((field, time) => {
+    if (!time) return;
+    setTaskData((prev) => ({
+      ...prev,
+      [field]: prev[field]
+        ? prev[field].split("T")[0] + "T" + time + ":00.000Z"
+        : null,
+    }));
+  }, []);
+
   useEffect(() => {
     const fetchTrees = async () => {
       try {
@@ -224,35 +307,14 @@ export default function TaskPage() {
     setTaskType(type);
     setTaskData((prev) => ({
       ...prev,
-      taskTypeId: taskTypeId, // Gán taskTypeId vào dữ liệu task
-      userTreeId: selectedTree?.userTreeId || null, // Cập nhật từ cây đang chọn
+      taskTypeId: taskTypeId,
+      userTreeId: selectedTree?.userTreeId || null,
     }));
     setIsTaskDialogOpen(true);
   };
 
   const handleOpenDialog = () => {
     setIsTreeDialogOpen(true);
-  };
-
-  const handleDateChange = (field, date) => {
-    setTaskData((prev) => ({
-      ...prev,
-      [field]: date
-        ? date.toISOString().split("T")[0] +
-          "T" +
-          (prev[field]?.split("T")[1] || "00:00:00.000Z")
-        : null,
-    }));
-  };
-
-  const handleTimeChange = (field, time) => {
-    if (!time) return;
-    setTaskData((prev) => ({
-      ...prev,
-      [field]: prev[field]
-        ? prev[field].split("T")[0] + "T" + time + ":00.000Z"
-        : null,
-    }));
   };
 
   const handleCreateTree = async () => {
@@ -286,54 +348,12 @@ export default function TaskPage() {
     try {
       const response = await CreateTask(taskData);
       console.log("Task created successfully:", response);
-      setIsTaskDialogOpen(false); // Đóng dialog sau khi tạo task thành công
+      setIsTaskDialogOpen(false);
       fetchTasks();
     } catch (error) {
       console.error("Error creating task:", error);
     }
   };
-
-  const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
-    const selectedDate = date ? new Date(date) : undefined;
-    const formattedTime = date
-      ? new Date(date).toISOString().split("T")[1].slice(0, 5)
-      : "00:00";
-
-    return (
-      <div className="flex flex-col gap-2">
-        <label className="font-medium">{label}</label>
-        <div className="flex items-center gap-2">
-          {/* Chọn ngày */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-[150px]">
-                {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="start"
-              className="p-2 shadow-md bg-white rounded-md"
-            >
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={onDateChange}
-              />
-            </PopoverContent>
-          </Popover>
-
-          {/* Chọn giờ */}
-          <TimePicker
-            onChange={onTimeChange}
-            value={formattedTime}
-            disableClock={true}
-            className="border rounded-md p-1 w-[80px] text-center"
-          />
-        </div>
-      </div>
-    );
-  };
-
   // TaskColumn Logic
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -826,77 +846,20 @@ export default function TaskPage() {
                     <DateTimePicker
                       label="Start Date"
                       date={taskData.startDate}
-                      onDateChange={(newDate) => {
-                        if (newDate) {
-                          const currentDate = new Date(
-                            taskData.startDate || newDate
-                          ); // Giữ giờ nếu có
-                          currentDate.setFullYear(
-                            newDate.getFullYear(),
-                            newDate.getMonth(),
-                            newDate.getDate()
-                          );
-                          setTaskData({
-                            ...taskData,
-                            startDate: currentDate.toISOString(),
-                          });
-                        }
-                      }}
-                      onTimeChange={(time) => {
-                        if (taskData.startDate) {
-                          const currentDate = new Date(taskData.startDate);
-                          const [hours, minutes] = time.split(":").map(Number);
-
-                          currentDate.setHours(hours);
-                          currentDate.setMinutes(minutes);
-                          currentDate.setSeconds(0);
-                          currentDate.setMilliseconds(0);
-
-                          // Giữ nguyên múi giờ cục bộ thay vì chuyển về UTC
-                          setTaskData({
-                            ...taskData,
-                            startDate: currentDate
-                              .toISOString()
-                              .replace("Z", ""),
-                          });
-                        }
-                      }}
+                      onDateChange={(newDate) =>
+                        handleDateChange("startDate", newDate)
+                      }
+                      onTimeChange={(time) =>
+                        handleTimeChange("startDate", time)
+                      }
                     />
                     <DateTimePicker
                       label="End Date"
                       date={taskData.endDate}
-                      onDateChange={(newDate) => {
-                        if (newDate) {
-                          const currentDate = new Date(
-                            taskData.endDate || newDate
-                          );
-                          currentDate.setFullYear(
-                            newDate.getFullYear(),
-                            newDate.getMonth(),
-                            newDate.getDate()
-                          );
-                          setTaskData({
-                            ...taskData,
-                            endDate: currentDate.toISOString(),
-                          });
-                        }
-                      }}
-                      onTimeChange={(time) => {
-                        if (taskData.endDate) {
-                          const currentDate = new Date(taskData.endDate);
-                          const [hours, minutes] = time.split(":").map(Number);
-
-                          currentDate.setHours(hours);
-                          currentDate.setMinutes(minutes);
-                          currentDate.setSeconds(0);
-                          currentDate.setMilliseconds(0);
-
-                          setTaskData({
-                            ...taskData,
-                            endDate: currentDate.toISOString().replace("Z", ""),
-                          });
-                        }
-                      }}
+                      onDateChange={(newDate) =>
+                        handleDateChange("endDate", newDate)
+                      }
+                      onTimeChange={(time) => handleTimeChange("endDate", time)}
                     />
                   </div>
                 </div>
