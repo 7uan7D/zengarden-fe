@@ -363,7 +363,7 @@ const Header = () => {
               viewBox="0 0 24 24"
               strokeWidth="1.5"
               stroke="currentColor"
-              inert={!mobileMenuOpen}
+              hidden={!mobileMenuOpen}
             >
               <path
                 strokeLinecap="round"
