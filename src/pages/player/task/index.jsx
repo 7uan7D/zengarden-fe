@@ -202,8 +202,8 @@ export default function TaskPage() {
       ...prev,
       [field]: date
         ? date.toISOString().split("T")[0] +
-        "T" +
-        (prev[field]?.split("T")[1] || "00:00:00.000Z")
+          "T" +
+          (prev[field]?.split("T")[1] || "00:00:00.000Z")
         : null,
     }));
   }, []);
@@ -621,23 +621,23 @@ export default function TaskPage() {
               {userTrees.filter(
                 (tree) => tree.treeStatus === 0 || tree.treeStatus === 1
               ).length < 2 && (
-                  <div
-                    className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
-                    onClick={() => {
-                      setIsTreeDialogOpen(false);
-                      setIsCreateTreeDialogOpen(true);
-                    }}
-                  >
-                    <img
-                      src={addIcon}
-                      alt="Add New Tree"
-                      className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
-                    />
-                    <h3 className="font-bold mt-2 text-green-600">
-                      Create New Tree
-                    </h3>
-                  </div>
-                )}
+                <div
+                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
+                  onClick={() => {
+                    setIsTreeDialogOpen(false);
+                    setIsCreateTreeDialogOpen(true);
+                  }}
+                >
+                  <img
+                    src={addIcon}
+                    alt="Add New Tree"
+                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+                  />
+                  <h3 className="font-bold mt-2 text-green-600">
+                    Create New Tree
+                  </h3>
+                </div>
+              )}
             </DialogContent>
           </Dialog>
 
@@ -708,7 +708,7 @@ export default function TaskPage() {
                   <strong>Break Time:</strong> {selectedTask?.breakTime} minutes
                 </p>
                 <p>
-                  <strong>User Tree Name:</strong> {selectedTask?.userTreeName}
+                  <strong>Tree:</strong> {selectedTask?.userTreeName}
                 </p>
                 <p>
                   <strong>Task Type:</strong> {selectedTask?.taskTypeName}
@@ -751,18 +751,20 @@ export default function TaskPage() {
                   <div className="relative w-full mt-3 h-4 rounded-full bg-gray-200 overflow-hidden">
                     <div
                       style={{
-                        width: `${(treeExp.totalXp /
+                        width: `${
+                          (treeExp.totalXp /
                             (treeExp.totalXp + treeExp.xpToNextLevel)) *
                           100
-                          }%`,
+                        }%`,
                       }}
                       className="h-full bg-gradient-to-r from-[#a1d99b] via-[#f9d976] to-[#f49a8c] rounded-full"
                     ></div>
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
                       {selectedTree.levelId === 4
                         ? "Level Max"
-                        : `${treeExp.totalXp} / ${treeExp.totalXp + treeExp.xpToNextLevel
-                        } XP`}
+                        : `${treeExp.totalXp} / ${
+                            treeExp.totalXp + treeExp.xpToNextLevel
+                          } XP`}
                     </span>
                   </div>
                 )}
@@ -970,7 +972,11 @@ export default function TaskPage() {
 
               <DialogFooter>
                 {step > 1 && (
-                  <Button variant="ghost" className="bg-white border-black" onClick={handleBack}>
+                  <Button
+                    variant="ghost"
+                    className="bg-white border-black"
+                    onClick={handleBack}
+                  >
                     Back
                   </Button>
                 )}
