@@ -31,20 +31,20 @@ const HomePage = () => {
     complex: false,
   });
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const decoded = parseJwt(token);
-    const userId = decoded?.sub;
+  // useEffect(() => {
+  //   const token = localStorage.getItem("token");
+  //   const decoded = parseJwt(token);
+  //   const userId = decoded?.sub;
 
-    GetUserInfo(userId)
-      .then((data) => {
-        setUser(data);
-        if (!data.imageUrl || data.imageUrl.trim() === "") {
-          setShowAvatarDialog(true);
-        }
-      })
-      .catch((error) => console.error("Failed to load user:", error));
-  }, []);
+  //   GetUserInfo(userId)
+  //     .then((data) => {
+  //       setUser(data);
+  //       if (!data.imageUrl || data.imageUrl.trim() === "") {
+  //         setShowAvatarDialog(true);
+  //       }
+  //     })
+  //     .catch((error) => console.error("Failed to load user:", error));
+  // }, []);
 
   const startTimer = (taskType) => {
     if (!timers[taskType]) {
@@ -97,25 +97,25 @@ const HomePage = () => {
       .padStart(2, "0")}`;
   };
 
-  const handleAvatarSelect = async (avatar) => {
-    if (!user) return;
+  // const handleAvatarSelect = async (avatar) => {
+  //   if (!user) return;
 
-    try {
-      const updatedUser = await UpdateUserInfo({
-        userId: user.userId,
-        imageUrl: `/src/assets/avatars/${avatar}.png`,
-      });
-      setUser(updatedUser);
-      setShowAvatarDialog(false);
-      toast.success("Avatar updated successfully!");
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    } catch (error) {
-      console.error("Failed to update avatar:", error);
-      toast.error("Failed to update avatar!");
-    }
-  };
+  //   try {
+  //     const updatedUser = await UpdateUserInfo({
+  //       userId: user.userId,
+  //       imageUrl: `/src/assets/avatars/${avatar}.png`,
+  //     });
+  //     setUser(updatedUser);
+  //     setShowAvatarDialog(false);
+  //     toast.success("Avatar updated successfully!");
+  //     setTimeout(() => {
+  //       window.location.reload();
+  //     }, 500);
+  //   } catch (error) {
+  //     console.error("Failed to update avatar:", error);
+  //     toast.error("Failed to update avatar!");
+  //   }
+  // };
 
   return (
     <motion.div
