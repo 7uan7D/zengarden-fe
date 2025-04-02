@@ -259,7 +259,7 @@ const HomePage = () => {
         >
           <Card className="p-4 h-full flex flex-col">
             <CardContent className="flex-1 text-left">
-              <div personally className="flex items-center gap-2 mb-2">
+              <div personally="true" className="flex items-center gap-2 mb-2">
                 <Leaf className="w-5 h-5 text-green-600" />
                 <h2 className="text-xl font-semibold text-gray-800">Trees</h2>
               </div>
