@@ -317,8 +317,9 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-white shadow-md" : "bg-transparent"
-        }`}
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        isScrolled ? "bg-white shadow-md" : "bg-transparent"
+      }`}
     >
       <nav className="flex items-center justify-between w-full p-6 py-2 custom-nav">
         {/* Logo và Nav Items */}
@@ -327,8 +328,8 @@ const Header = () => {
             <span className="sr-only">Your Company</span>
             <img
               className="h-12 w-auto"
-              src="/src/assets/logo/zengarden-logo.png"
-              alt=""
+              src="/logo/zengarden-logo.png"
+              alt="Logo"
             />
           </a>
           <div className="hidden lg:flex ml-4 gap-x-8 pl-4">
@@ -336,10 +337,11 @@ const Header = () => {
               <div
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`text-sm font-semibold cursor-pointer transition-colors duration-200 ${location.pathname === item.path
+                className={`text-sm font-semibold cursor-pointer transition-colors duration-200 ${
+                  location.pathname === item.path
                     ? "text-green-600 font-bold"
                     : "text-gray-900 hover:text-green-600"
-                  }`}
+                }`}
               >
                 {item.label}
               </div>
@@ -395,7 +397,7 @@ const Header = () => {
                   </div>
                   <div className="mt-0 text-[11px] text-gray-600 flex items-center gap-0.5">
                     <img
-                      src="/src/assets/images/coin.png"
+                      src="/images/coin.png"
                       alt="Coin"
                       className="w-4 h-4"
                     />
@@ -843,10 +845,11 @@ const Header = () => {
                 <a
                   key={item.path}
                   onClick={() => navigate(item.path)}
-                  className={`block py-2 text-sm font-semibold transition-colors duration-200 ${location.pathname === item.path
+                  className={`block py-2 text-sm font-semibold transition-colors duration-200 ${
+                    location.pathname === item.path
                       ? "text-green-600 font-bold"
                       : "text-gray-900 hover:text-green-600"
-                    }`}
+                  }`}
                 >
                   {item.label}
                 </a>
