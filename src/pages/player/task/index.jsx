@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion";
-import addIcon from "@/assets/images/add.png";
+import addIcon from "/images/add.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -142,8 +142,8 @@ export default function TaskPage() {
   const selectedFinalTree = trees.find((t) => t.treeId === finalTreeId);
   const treeImageSrc =
     treeLevel && treeLevel < 4
-      ? `/src/assets/images/lv${treeLevel}.png`
-      : selectedFinalTree?.imageUrl || "/src/assets/images/default.png";
+      ? `/images/lv${treeLevel}.png`
+      : selectedFinalTree?.imageUrl || "/images/default.png";
   const [newTreeName, setNewTreeName] = useState("");
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -584,8 +584,8 @@ export default function TaskPage() {
                   );
                   const treeImageSrc =
                     tree.levelId < 4
-                      ? `/src/assets/images/lv${tree.levelId}.png`
-                      : finalTree?.imageUrl || "/src/assets/images/default.png";
+                      ? `/images/lv${tree.levelId}.png`
+                      : finalTree?.imageUrl || "/images/default.png";
 
                   return (
                     <div
