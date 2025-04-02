@@ -1,0 +1,8 @@
+.react-time-picker__wrapper {
+  border: none !important;
+}
+.react-time-picker__inputGroup {
+  border: 1px solid #d1d5db !important; /* border-gray-300 */
+  border-radius: 0.5rem !important; /* rounded-lg */
+  height: 2.5rem !important; /* h-10 */
+}
