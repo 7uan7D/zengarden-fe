@@ -1,11 +1,16 @@
-// Workspace.js
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button"; // Thêm Button để làm tab
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
-import MusicPlayerController, { FullMusicPlayer, globalAudioState } from "../../../components/musicPlayerController/index.jsx";
+import MusicPlayerController, {
+  FullMusicPlayer,
+  globalAudioState,
+} from "../../../components/musicPlayerController/index.jsx";
 import "../home/index.css";
+import QuillEditor from "@/components/quill_js/index.jsx";
+import VideoPlayer from "@/components/react_player/index.jsx";
 
 // Danh sách cây mẫu trong vườn
 const gardenTrees = [
@@ -28,6 +33,7 @@ export default function Workspace() {
   const [tasks, setTasks] = useState(initialTasks); // Quản lý danh sách công việc
   const [isPlaying, setIsPlaying] = useState(globalAudioState.isPlaying); // Trạng thái phát nhạc trên UI
   const [currentIndex, setCurrentIndex] = useState(globalAudioState.currentIndex); // Chỉ số bài hát trên UI
+  const [activeTab, setActiveTab] = useState("Your Space"); // State để quản lý tab hiện tại
   const location = useLocation(); // Lấy thông tin đường dẫn hiện tại
 
   // Gán callback để MusicPlayerController có thể cập nhật UI
@@ -46,17 +52,20 @@ export default function Workspace() {
   // Kiểm tra xem có đang ở trang Workspace không
   const isWorkspacePage = location.pathname === "/workspace";
 
+  // Danh sách các tab
+  const tabs = ["Your Space", "Quill_JS", "Watch Videos", "PDF", "Pintura"];
+
   return (
     <div
       className="min-h-screen flex flex-col p-6 bg-gray-100 mt-20"
       style={{
         backgroundImage:
           "url('https://is1-ssl.mzstatic.com/image/thumb/Video211/v4/15/d1/80/15d1804a-1594-b708-3e90-a651a3216e4d/1968720970920101.jpg/3840x2160mv.jpg')",
-        backgroundSize: "cover", // Ảnh nền full màn hình
+        backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
-      {/* Tiêu đề Workspace với hiệu ứng animation */}
+      {/* Tiêu đề Workspace */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -66,94 +75,168 @@ export default function Workspace() {
         <h1 className="text-3xl font-bold text-white drop-shadow-lg">
           Workspace
         </h1>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mt-4 justify-center">
+          {tabs.map((tab) => (
+            <Button
+              key={tab}
+              variant={activeTab === tab ? "default" : "outline"}
+              className={`${
+                activeTab === tab
+                  ? "bg-green-600 text-white"
+                  : "bg-white/80 text-gray-700 hover:bg-gray-200"
+              } transition-all`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </Button>
+          ))}
+        </div>
       </motion.div>
 
+      {/* Nội dung của các tab */}
       <div className="flex flex-1 gap-6">
-        {/* Danh sách công việc */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="w-1/3"
-        >
-          <Card className="bg-white/80 backdrop-blur-md">
-            <CardHeader>
-              <CardTitle>Tasks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-4">
-                {tasks.map((task) => (
-                  <li key={task.id} className="flex items-center gap-2">
-                    <Checkbox
-                      checked={task.completed}
-                      onCheckedChange={() => handleTaskToggle(task.id)} // Chuyển đổi trạng thái khi click
-                    />
-                    <span
-                      className={`${
-                        task.completed ? "line-through text-gray-500" : "" // Gạch ngang nếu hoàn thành
-                      }`}
-                    >
-                      {task.title}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
-        </motion.div>
+        {activeTab === "Your Space" && (
+          <>
+            {/* Danh sách công việc */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="w-1/3"
+            >
+              <Card className="bg-white/80 backdrop-blur-md">
+                <CardHeader>
+                  <CardTitle>Tasks</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-4">
+                    {tasks.map((task) => (
+                      <li key={task.id} className="flex items-center gap-2">
+                        <Checkbox
+                          checked={task.completed}
+                          onCheckedChange={() => handleTaskToggle(task.id)}
+                        />
+                        <span
+                          className={`${
+                            task.completed ? "line-through text-gray-500" : ""
+                          }`}
+                        >
+                          {task.title}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-        {/* Khu vực vườn cây */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="flex-1"
-        >
-          <Card className="bg-white/80 backdrop-blur-md">
-            <CardHeader>
-              <CardTitle>Garden</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                {gardenTrees.map((tree) => (
-                  <div
-                    key={tree.id}
-                    className="flex flex-col items-center p-4 bg-gray-100 rounded-lg"
-                  >
-                    <img
-                      src={tree.image}
-                      alt={tree.name}
-                      className="w-20 h-20 mb-2"
-                      onError={(e) => {
-                        e.target.src =
-                          "https://media.istockphoto.com/id/537418258/vector/tree.jpg?s=612x612&w=0&k=20&c=YMdnc5cGziKA9Aaxq4MVgwcHBs2gajeBZ33bf9FfdZ8="; // Ảnh mặc định nếu lỗi
-                      }}
-                    />
-                    <p className="text-sm font-semibold">{tree.name}</p>
+            {/* Khu vực vườn cây */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="flex-1"
+            >
+              <Card className="bg-white/80 backdrop-blur-md">
+                <CardHeader>
+                  <CardTitle>Garden</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                    {gardenTrees.map((tree) => (
+                      <div
+                        key={tree.id}
+                        className="flex flex-col items-center p-4 bg-gray-100 rounded-lg"
+                      >
+                        <img
+                          src={tree.image}
+                          alt={tree.name}
+                          className="w-20 h-20 mb-2"
+                          onError={(e) => {
+                            e.target.src =
+                              "https://media.istockphoto.com/id/537418258/vector/tree.jpg?s=612x612&w=0&k=20&c=YMdnc5cGziKA9Aaxq4MVgwcHBs2gajeBZ33bf9FfdZ8=";
+                          }}
+                        />
+                        <p className="text-sm font-semibold">{tree.name}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-        {/* Máy phát nhạc đầy đủ (chỉ hiển thị ở trang Workspace) */}
-        {isWorkspacePage && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-            className="w-1/4"
-          >
+            {/* Máy phát nhạc */}
+            {isWorkspacePage && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="w-1/4"
+              >
+                <Card className="bg-white/80 backdrop-blur-md">
+                  <CardHeader>
+                    <CardTitle>Music Player</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FullMusicPlayer
+                      setPlaying={setIsPlaying}
+                      setCurrentIndex={setCurrentIndex}
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </>
+        )}
+
+        {/* Các tab khác để trống */}
+        {activeTab === "Quill_JS" && (
+          <div className="flex-1">
             <Card className="bg-white/80 backdrop-blur-md">
-              <CardHeader>
-                <CardTitle>Music Player</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FullMusicPlayer setPlaying={setIsPlaying} setCurrentIndex={setCurrentIndex} />
+
+              <CardContent className="mt-4">
+                <QuillEditor />
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
+        )}
+        {activeTab === "Watch Videos" && (
+          <div className="flex-1">
+            <Card className="bg-white/80 backdrop-blur-md">
+              <CardHeader>
+                <CardTitle>Watch Videos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <VideoPlayer />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {activeTab === "PDF" && (
+          <div className="flex-1">
+            <Card className="bg-white/80 backdrop-blur-md">
+              <CardHeader>
+                <CardTitle>PDF</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-500">Content coming soon...</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        {activeTab === "Pintura" && (
+          <div className="flex-1">
+            <Card className="bg-white/80 backdrop-blur-md">
+              <CardHeader>
+                <CardTitle>Pintura</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-500">Content coming soon...</p>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </div>
