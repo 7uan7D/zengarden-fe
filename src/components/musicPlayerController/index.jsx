@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight } from "lucide-react";
+import "../musicPlayerController/index.css";
 
 // Danh sách nhạc cố định
 const playlist = [
@@ -160,22 +161,6 @@ export default function MusicPlayerController({ positionClass = "relative", setP
                 </div>
             )}
             {/* CSS nội tuyến cho hiệu ứng chạy ngang */}
-            <style jsx>{`
-                @keyframes marquee {
-                    0% {
-                        transform: translateX(100%);
-                    }
-                    100% {
-                        transform: translateX(-100%);
-                    }
-                }
-                .animate-marquee {
-                    animation: marquee 10s linear infinite;
-                }
-                .animate-marquee:hover {
-                    animation-play-state: paused; /* Dừng khi hover */}
-                }
-            `}</style>
         </div>
     );
 }
