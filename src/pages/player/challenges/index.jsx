@@ -21,6 +21,7 @@ import {
 
 import { motion } from "framer-motion";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
+import { GetAllChallenges } from "@/services/apiServices/challengeService";
 
 const categories = ["My Challenges", "Get Challenges"];
 
@@ -34,58 +35,58 @@ const userChallengesData = [
   },
 ];
 
-const challengesData = [
-  {
-    id: 1,
-    name: "Taking Surveys",
-    reward: 42,
-    creator: "Red Cross",
-    createdDate: "2021-09-01",
-    types: ["Survey", "Research"],
-    description:
-      "Participate in short surveys 📓 to contribute to important research and earn rewards. Help make a difference while getting paid!",
-  },
-  {
-    id: 2,
-    name: "Stay Hydrated Challenge",
-    reward: 71,
-    creator: "Blue Sky",
-    createdDate: "2021-09-01",
-    types: ["Health", "Wellness"],
-    description:
-      "Boost your energy, focus, and health by drinking enough water every day! Stay refreshed and feel your best. 🌊💙",
-  },
-  {
-    id: 3,
-    name: "Be Happy Challenge",
-    reward: 66,
-    creator: "Yellow",
-    createdDate: "2021-09-01",
-    types: ["Happiness", "Wellness"],
-    description:
-      "Embark on a happiness adventure where you complete daily missions to boost your mood, spread positivity, and build lasting joy. Happiness is a skill—let’s level it up! 🌈🚀",
-  },
-  {
-    id: 4,
-    name: "Movie of the Week",
-    reward: 51,
-    creator: "Ollivander",
-    createdDate: "2021-09-01",
-    types: ["Entertainment", "Film"],
-    description:
-      "Watch the selected movie of the week and engage in discussions with other participants. Expand your cinematic horizons and connect with fellow film enthusiasts.",
-  },
-  {
-    id: 5,
-    name: "Music Challenge",
-    reward: 22,
-    creator: "Overture",
-    createdDate: "2021-09-01",
-    types: ["Entertainment", "Music"],
-    description:
-      "🎵 Listen to the selected music of the week and share your thought with other participants.",
-  },
-];
+// const challengesData = [
+//   {
+//     id: 1,
+//     name: "Taking Surveys",
+//     reward: 42,
+//     creator: "Red Cross",
+//     createdDate: "2021-09-01",
+//     types: ["Survey", "Research"],
+//     description:
+//       "Participate in short surveys 📓 to contribute to important research and earn rewards. Help make a difference while getting paid!",
+//   },
+//   {
+//     id: 2,
+//     name: "Stay Hydrated Challenge",
+//     reward: 71,
+//     creator: "Blue Sky",
+//     createdDate: "2021-09-01",
+//     types: ["Health", "Wellness"],
+//     description:
+//       "Boost your energy, focus, and health by drinking enough water every day! Stay refreshed and feel your best. 🌊💙",
+//   },
+//   {
+//     id: 3,
+//     name: "Be Happy Challenge",
+//     reward: 66,
+//     creator: "Yellow",
+//     createdDate: "2021-09-01",
+//     types: ["Happiness", "Wellness"],
+//     description:
+//       "Embark on a happiness adventure where you complete daily missions to boost your mood, spread positivity, and build lasting joy. Happiness is a skill—let’s level it up! 🌈🚀",
+//   },
+//   {
+//     id: 4,
+//     name: "Movie of the Week",
+//     reward: 51,
+//     creator: "Ollivander",
+//     createdDate: "2021-09-01",
+//     types: ["Entertainment", "Film"],
+//     description:
+//       "Watch the selected movie of the week and engage in discussions with other participants. Expand your cinematic horizons and connect with fellow film enthusiasts.",
+//   },
+//   {
+//     id: 5,
+//     name: "Music Challenge",
+//     reward: 22,
+//     creator: "Overture",
+//     createdDate: "2021-09-01",
+//     types: ["Entertainment", "Music"],
+//     description:
+//       "🎵 Listen to the selected music of the week and share your thought with other participants.",
+//   },
+// ];
 
 export default function Challenges() {
   const [search, setSearch] = useState("");
@@ -109,11 +110,12 @@ export default function Challenges() {
   }, []);
   
   const [filteredChallengeTypes, setFilteredChallengeTypes] = useState([]);
+  const [challengeTypesDataNames, setChallengeTypesDataNames] = useState([]);
   useEffect(() => {
     if(challengeTypesData) {
-      const challengeTypesDataNames = challengeTypesData.map(
+      setChallengeTypesDataNames(challengeTypesData.map(
         (type) => type.challengeTypeName
-      );
+      ));
       setFilteredChallengeTypes(challengeTypesDataNames);
     }
   }, [challengeTypesData]);
@@ -138,9 +140,39 @@ export default function Challenges() {
     console.log(filteredChallenges);
   };
 
+  const [challengesData, setChallengesData] = useState([]);
+  useEffect(() => {
+    const fetchChallenges = async () => {
+      // const token = localStorage.getItem("token");
+      // if (!token) return;
+
+      try {
+        const data = await GetAllChallenges();
+        const filteredChallengesStatus = data.filter(
+          (item) => item && item.status === 1
+        );
+        setChallengesData(filteredChallengesStatus);
+      } catch (error) {
+        console.error("Error fetching challenges:", error);
+      }
+    };
+
+    fetchChallenges();
+  }, []);
+
+  // need to be fixed
   const filteredChallenges = challengesData.filter((item) => {
     if (typeFilters.length === 0) return true;
-    return typeFilters.some((type) => item.types.includes(type));
+    // return typeFilters.some((type) => item.types.includes(type));
+
+    // console.log(typeFilters)
+    // return typeFilters.includes(item.challengeTypeName);
+    const selectedTypeIds = challengeTypesData
+    .filter((type) => typeFilters.includes(type.challengeTypeName))
+    .map((type) => type.challengeTypeId);
+
+  // Check if the challenge's challengeTypeId matches any of the selected type IDs
+  return selectedTypeIds.includes(item.challengeTypeId);
   });
 
   return (
@@ -226,14 +258,14 @@ export default function Challenges() {
                   {filteredChallenges.map((item) => {
                     return (
                       <motion.div
-                        key={item.id}
+                        key={item.challengeId}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: 0.1 }}
                       >
                         <Popover>
                           <Card className="relative">
-                            {item.id === 1 && cat === "Get Challenges" && (
+                            {item.challengeId === 1 && cat === "Get Challenges" && (
                               <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
                                 Joined
                               </span>
@@ -255,40 +287,62 @@ export default function Challenges() {
                                                                     <div className="h-20 w-20 bg-gray-300 rounded-lg mb-2" />
                                                                 )} */}
 
-                              <p className="font-semibold">{item.name}</p>
+                              <p className="font-semibold">{item.challengeName}</p>
                               <p className="text-sm text-gray-500 flex items-center">
-                                Reward:
-                                <Beaker className="ml-1" color="darkcyan" />
+                                Reward <Beaker className="ml-1" color="darkcyan" />:
                                 <span className="font-bold ml-1">
                                   {item.reward} EXP
                                 </span>
                               </p>
 
                               <p className="text-sm text-gray-500 flex items-center">
-                                Created by:
+                                Including <Verified className="ml-1" color="navy" />:
                                 <span className="font-bold ml-1">
-                                  {item.creator}
+                                  {item.tasks ? item.tasks.length : 0} task(s)
                                 </span>
-                                <Verified className="ml-1" color="navy" />
+                                
                               </p>
 
                               <p className="text-sm text-gray-500 flex items-center">
-                                Created Date:
+                                Start Date:
                                 <span className="font-bold ml-1">
-                                  {item.createdDate}
+                                  {new Date(item.startDate).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                    hour: 'numeric',
+                                    minute: 'numeric',
+                                    second: 'numeric',
+                                  })}
                                 </span>
                               </p>
 
                               <p className="text-sm text-gray-500 flex items-center">
-                                Types:{" "}
-                                {item.types.map((type) => (
-                                  <span
-                                    key={type}
-                                    className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs ml-1"
-                                  >
-                                    {type}
+                                End Date:
+                                <span className="font-bold ml-1">
+                                  {new Date(item.endDate).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                    hour: 'numeric',
+                                    minute: 'numeric',
+                                    second: 'numeric',
+                                  })}
+                                </span>
+                              </p>
+
+                              <p className="text-sm text-gray-500 flex items-center">
+                                Types: {" "}
+                                  <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs ml-1">
+                                    {/* get challenge type by id */}
+                                    {challengeTypesData
+                                      .filter(
+                                        (type) =>
+                                          type.challengeTypeId ===
+                                          item.challengeTypeId
+                                      )
+                                      .map((type) => type.challengeTypeName)}
                                   </span>
-                                ))}
                               </p>
 
                               <p className="text-sm text-gray-500 flex items-center text-left">
