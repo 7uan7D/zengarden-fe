@@ -131,16 +131,23 @@ const TasksTable = () => {
                                             </td>
                                             <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span
-                                                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${task.status === 'Delivered'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : task.status === 'Processing'
-                                                            ? 'bg-yellow-100 text-yellow-800'
-                                                            : task.status === 'Shipped'
-                                                                ? 'bg-blue-100 text-blue-800'
-                                                                : 'bg-red-100 text-red-800'
-                                                        }`}
+                                                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    ${task.status === 0 ? 'bg-gray-200 text-gray-800'
+                                                        : task.status === 1 ? 'bg-blue-200 text-blue-800'
+                                                            : task.status === 2 ? 'bg-yellow-200 text-yellow-800'
+                                                                : task.status === 3 ? 'bg-green-200 text-green-800'
+                                                                    : task.status === 4 ? 'bg-pink-200 text-pink-800'
+                                                                        : task.status === 5 ? 'bg-purple-200 text-purple-800'
+                                                                            : 'bg-red-200 text-red-800'
+                                                    }`}
                                                 >
-                                                    {task.status}
+                                                    {task.status === 0 ? 'Not Started'
+                                                        : task.status === 1 ? 'In Progress'
+                                                            : task.status === 2 ? 'Paused'
+                                                                : task.status === 3 ? 'Completed'
+                                                                    : task.status === 4 ? 'Failed'
+                                                                        : task.status === 5 ? 'Overdue'
+                                                                            : 'Cancelled'}
                                                 </span>
                                             </td>
                                             <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>

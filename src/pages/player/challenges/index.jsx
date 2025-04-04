@@ -22,6 +22,7 @@ import {
 import { motion } from "framer-motion";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
 import { GetAllChallenges } from "@/services/apiServices/challengeService";
+import { Link } from "react-router-dom";
 
 const categories = ["My Challenges", "Get Challenges"];
 
@@ -207,6 +208,7 @@ export default function Challenges() {
                         transition={{ duration: 0.3, delay: 0.1 }}
                       >
                         <Popover>
+                          <Link to={`/challenges/${item.challengeId}`}>
                           <Card className="relative">
                             {item.challengeId === 1 && cat === "Get Challenges" && (
                               <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
@@ -316,6 +318,8 @@ export default function Challenges() {
                               {item.description}
                             </p>
                           </PopoverContent>
+                          </Link>
+                          
                         </Popover>
                       </motion.div>
                     );

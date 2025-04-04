@@ -27,6 +27,7 @@ import Workspace from "./pages/player/workspace";
 import { UserExperienceProvider } from "@/context/UserExperienceContext";
 import { TreeExperienceProvider } from "./context/TreeExperienceContext";
 import MusicPlayerController from "./components/musicPlayerController";
+import ChallengeDetails from "./pages/player/challenges/ChallengeDetails";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -59,6 +60,7 @@ function AnimatedRoutes() {
                 <Route path="/marketplace" element={<Marketplace />} />
                 <Route path="/task" element={<TaskPage />} />
                 <Route path="/challenges" element={<Challenges />} />
+                <Route path="/challenges/:id" element={<ChallengeDetails />} />
               </Routes>
             </motion.div>
           </AnimatePresence>
