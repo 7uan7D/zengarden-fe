@@ -86,6 +86,9 @@ const TasksTable = () => {
                                 Break Time
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                                Focus Method
+                            </th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Status
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
@@ -122,6 +125,9 @@ const TasksTable = () => {
                                             </td>
                                             <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
                                                 {task.breakTime}
+                                            </td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                                {task.focusMethodName}
                                             </td>
                                             <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span

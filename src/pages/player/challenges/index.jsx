@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { use, useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/popover";
 
 import { motion } from "framer-motion";
+import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
 
 const categories = ["My Challenges", "Get Challenges"];
 
@@ -86,35 +87,41 @@ const challengesData = [
   },
 ];
 
-const challengeTypesData = [
-  "Health",
-  "Happiness",
-  "Wellness",
-  "Survey",
-  "Research",
-  "Entertainment",
-  "Film",
-  "Music",
-  "Art",
-  "Reading",
-  "Writing",
-  "Learning",
-  "Fitness",
-  // "Nutrition",
-  // "Meditation",
-  // "Sleep",
-  // "Creativity",
-  // "Technology",
-];
-
 export default function Challenges() {
   const [search, setSearch] = useState("");
-  const [filteredChallengeTypes, setFilteredChallengeTypes] =
-    useState(challengeTypesData);
+  const [challengeTypesData, setChallengeTypesData] = useState([
+    
+  ]);
+  useEffect(() => {
+    const fetchChallengeTypes = async () => {
+      // const token = localStorage.getItem("token");
+      // if (!token) return;
+  
+      try {
+        const data = await GetAllChallengeTypes();
+        setChallengeTypesData(data);
+      } catch (error) {
+        console.error("Error fetching challenge types:", error);
+      }
+    };
+
+    fetchChallengeTypes();
+  }, []);
+  
+  const [filteredChallengeTypes, setFilteredChallengeTypes] = useState([]);
+  useEffect(() => {
+    if(challengeTypesData) {
+      const challengeTypesDataNames = challengeTypesData.map(
+        (type) => type.challengeTypeName
+      );
+      setFilteredChallengeTypes(challengeTypesDataNames);
+    }
+  }, [challengeTypesData]);
+  
   const handleSearch = (e) => {
     const term = e.target.value.toLowerCase();
     setSearch(term);
-    const filtered = challengeTypesData.filter(
+    const filtered = challengeTypesDataNames.filter(
       (item) =>
         item.toLowerCase().includes(term) || item.toLowerCase().includes(term)
     );
