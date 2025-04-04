@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Verified, Beaker, BookCheck, BookX } from "lucide-react";
+import { Verified, Beaker, BookCheck, BookX, Clock, Coffee, Calendar, Flag, CheckCircle, ClipboardCheck, StickyNote } from "lucide-react";
 import { GetAllChallenges } from "@/services/apiServices/challengeService";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
 
@@ -86,9 +86,9 @@ export default function ChallengeDetails() {
                 <div className="flex-1 p-6 overflow-auto">
                     <h1 className="text-2xl font-bold mb-4">Challenges</h1>
                     <div className="min-h-screen py-8">
-                        <div className="container mx-auto px-4">
-                            <Card>
-                                <CardHeader>
+                        <div className="container mx-auto px-4 flex"> {/* Use flex container */}
+                            <Card className="w-[70%] mr-4">
+                                <CardHeader className="flex flex-col items-start">
                                     <CardTitle className="text-2xl font-bold">{challenge.challengeName}</CardTitle>
                                     {challengeType && (
                                         <CardDescription className="text-gray-500 flex items-center">
@@ -100,38 +100,78 @@ export default function ChallengeDetails() {
                                     )}
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    <p className="text-gray-700">{challenge.description}</p>
-                                    <div className="flex items-center">
-                                        <Beaker className="mr-2 text-darkcyan" />
-                                        <span className="font-semibold">Reward:</span> {challenge.reward} EXP
-                                    </div>
-                                    <div className="flex items-center">
-                                        <Verified className="mr-2 text-navy" />
-                                        <span className="font-semibold">Tasks:</span> {challenge.tasks ? challenge.tasks.length : 0} task(s)
-                                    </div>
-                                    <div className="flex items-center">
-                                        <span className="font-semibold">Start Date:</span>{" "}
-                                        {new Date(challenge.startDate).toLocaleDateString("en-US", {
-                                            month: "short",
-                                            day: "numeric",
-                                            year: "numeric",
-                                            hour: "numeric",
-                                            minute: "numeric",
-                                            second: "numeric",
-                                        })}
-                                    </div>
-                                    <div className="flex items-center">
-                                        <span className="font-semibold">End Date:</span>{" "}
-                                        {new Date(challenge.endDate).toLocaleDateString("en-US", {
-                                            month: "short",
-                                            day: "numeric",
-                                            year: "numeric",
-                                            hour: "numeric",
-                                            minute: "numeric",
-                                            second: "numeric",
-                                        })}
-                                    </div>
+                                    <h2 className="text-lg font-semibold">To do's</h2>
+                                    {/* show tasks content in Cards*/}
+                                    {challenge.tasks && challenge.tasks.length > 0 ? (
+                                        challenge.tasks.map((task, index) => (
+                                            <Card key={index} className="mb-4">
+                                                <CardHeader>
+                                                    <CardTitle className="text-lg font-semibold">{task.taskName}</CardTitle>
+                                                </CardHeader>
+                                                <CardContent className="space-y-2 text-gray-500">
+                                                    <p className="items-center text-sm font-bold">{task.taskDescription}</p>
+                                                    <div className="flex items-center text-sm">
+                                                        <Clock className="mr-2 h-4 w-4" />
+                                                        Duration: {task.workDuration}/{task.totalDuration} min
+                                                        (Work/Total)
+                                                    </div>
+                                                    {task.breakTime > 0 && (
+                                                        <div className="flex items-center text-sm">
+                                                            <Coffee className="mr-2 h-4 w-4" />
+                                                            Break: {task.breakTime} min
+                                                        </div>
+                                                    )}
+                                                    <div className="flex items-center text-sm">
+                                                        <Calendar className="mr-2 h-4 w-4" />
+                                                        Start: {" "}
+                                                        {new Date(challenge.startDate).toLocaleDateString('en-US', {
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            year: 'numeric',
+                                                            hour: 'numeric',
+                                                            minute: 'numeric',
+                                                            second: 'numeric',
+                                                        })}
+                                                    </div>
+                                                    <div className="flex items-center text-sm">
+                                                        <Flag className="mr-2 h-4 w-4" />
+                                                        End: {" "}
+                                                        {new Date(challenge.endDate).toLocaleDateString('en-US', {
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            year: 'numeric',
+                                                            hour: 'numeric',
+                                                            minute: 'numeric',
+                                                            second: 'numeric',
+                                                        })}
+                                                    </div>
+                                                    {task.taskNote && (
+                                                        <div className="flex items-center text-sm">
+                                                            <StickyNote className="mr-2 h-4 w-4" />
+                                                            Note: {task.taskNote}
+                                                        </div>
+                                                    )}
+                                                    {/* <div className="flex items-center text-sm">
+                                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                                        Status: {getStatusText(task.status)}
+                                                    </div> */}
+                                                    {task.taskResult && (
+                                                        <div className="flex items-center text-sm">
+                                                            <ClipboardCheck className="mr-2 h-4 w-4" />
+                                                            Result: {task.taskResult}
+                                                        </div>
+                                                    )}
+                                                </CardContent>
+                                            </Card>
+                                        ))
+                                    ) : (
+                                        <p>No tasks available for this challenge.</p>
+                                    )}
+                                </CardContent>
 
+                            </Card>
+                            <Card className="w-[30%]">
+                                <CardHeader>
                                     <div className="mt-6">
                                         {isJoined ? (
                                             <Button variant="destructive" onClick={handleLeaveChallenge}>
@@ -143,6 +183,52 @@ export default function ChallengeDetails() {
                                             </Button>
                                         )}
                                     </div>
+                                </CardHeader>
+                                <CardContent className="space-y-2">
+                                    <p className="text-sm text-gray-500 flex items-center text-left font-bold">
+                                        {challenge.description}
+                                    </p>
+                                    <p className="text-sm text-gray-500 flex items-center">
+                                        Reward <Beaker className="ml-1" color="darkcyan" />:
+                                        <span className="font-bold ml-1">
+                                            {challenge.reward} EXP
+                                        </span>
+                                    </p>
+
+                                    {/* <p className="text-sm text-gray-500 flex items-center">
+                                        Including <Verified className="ml-1" color="navy" />:
+                                        <span className="font-bold ml-1">
+                                            {challenge.tasks ? challenge.tasks.length : 0} task(s)
+                                        </span>
+                                    </p> */}
+
+                                    <p className="text-sm text-gray-500 flex items-center">
+                                        Start Date:
+                                        <span className="font-bold ml-1">
+                                            {new Date(challenge.startDate).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                                hour: 'numeric',
+                                                minute: 'numeric',
+                                                second: 'numeric',
+                                            })}
+                                        </span>
+                                    </p>
+
+                                    <p className="text-sm text-gray-500 flex items-center">
+                                        End Date:
+                                        <span className="font-bold ml-1">
+                                            {new Date(challenge.endDate).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                                hour: 'numeric',
+                                                minute: 'numeric',
+                                                second: 'numeric',
+                                            })}
+                                        </span>
+                                    </p>
                                 </CardContent>
                             </Card>
                         </div>
@@ -150,6 +236,5 @@ export default function ChallengeDetails() {
                 </div>
             </div>
         </div>
-        
     );
 }

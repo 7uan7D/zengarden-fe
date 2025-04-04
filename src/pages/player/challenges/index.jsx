@@ -277,7 +277,7 @@ export default function Challenges() {
                               </p>
 
                               <p className="text-sm text-gray-500 flex items-center">
-                                Types: {" "}
+                                Type: {" "}
                                   <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs ml-1">
                                     {/* get challenge type by id */}
                                     {challengeTypesData
