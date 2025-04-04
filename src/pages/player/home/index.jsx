@@ -31,20 +31,20 @@ const HomePage = () => {
     complex: false,
   });
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const decoded = parseJwt(token);
-    const userId = decoded?.sub;
+  // useEffect(() => {
+  //   const token = localStorage.getItem("token");
+  //   const decoded = parseJwt(token);
+  //   const userId = decoded?.sub;
 
-    GetUserInfo(userId)
-      .then((data) => {
-        setUser(data);
-        if (!data.imageUrl || data.imageUrl.trim() === "") {
-          setShowAvatarDialog(true);
-        }
-      })
-      .catch((error) => console.error("Failed to load user:", error));
-  }, []);
+  //   GetUserInfo(userId)
+  //     .then((data) => {
+  //       setUser(data);
+  //       if (!data.imageUrl || data.imageUrl.trim() === "") {
+  //         setShowAvatarDialog(true);
+  //       }
+  //     })
+  //     .catch((error) => console.error("Failed to load user:", error));
+  // }, []);
 
   const startTimer = (taskType) => {
     if (!timers[taskType]) {
@@ -97,25 +97,25 @@ const HomePage = () => {
       .padStart(2, "0")}`;
   };
 
-  const handleAvatarSelect = async (avatar) => {
-    if (!user) return;
+  // const handleAvatarSelect = async (avatar) => {
+  //   if (!user) return;
 
-    try {
-      const updatedUser = await UpdateUserInfo({
-        userId: user.userId,
-        imageUrl: `/src/assets/avatars/${avatar}.png`,
-      });
-      setUser(updatedUser);
-      setShowAvatarDialog(false);
-      toast.success("Avatar updated successfully!");
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    } catch (error) {
-      console.error("Failed to update avatar:", error);
-      toast.error("Failed to update avatar!");
-    }
-  };
+  //   try {
+  //     const updatedUser = await UpdateUserInfo({
+  //       userId: user.userId,
+  //       imageUrl: `/src/assets/avatars/${avatar}.png`,
+  //     });
+  //     setUser(updatedUser);
+  //     setShowAvatarDialog(false);
+  //     toast.success("Avatar updated successfully!");
+  //     setTimeout(() => {
+  //       window.location.reload();
+  //     }, 500);
+  //   } catch (error) {
+  //     console.error("Failed to update avatar:", error);
+  //     toast.error("Failed to update avatar!");
+  //   }
+  // };
 
   return (
     <motion.div
@@ -259,7 +259,7 @@ const HomePage = () => {
         >
           <Card className="p-4 h-full flex flex-col">
             <CardContent className="flex-1 text-left">
-              <div personally className="flex items-center gap-2 mb-2">
+              <div personally="true" className="flex items-center gap-2 mb-2">
                 <Leaf className="w-5 h-5 text-green-600" />
                 <h2 className="text-xl font-semibold text-gray-800">Trees</h2>
               </div>
