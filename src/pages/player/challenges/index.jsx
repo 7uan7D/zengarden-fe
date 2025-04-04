@@ -32,61 +32,11 @@ const userChallengesData = [
     reward: 42,
     creator: "Red Cross",
     createdDate: "2021-09-01",
+    types: ["Survey", "Research"],
+    description:
+      "Participate in short surveys 📓 to contribute to important research and earn rewards. Help make a difference while getting paid!",
   },
 ];
-
-// const challengesData = [
-//   {
-//     id: 1,
-//     name: "Taking Surveys",
-//     reward: 42,
-//     creator: "Red Cross",
-//     createdDate: "2021-09-01",
-//     types: ["Survey", "Research"],
-//     description:
-//       "Participate in short surveys 📓 to contribute to important research and earn rewards. Help make a difference while getting paid!",
-//   },
-//   {
-//     id: 2,
-//     name: "Stay Hydrated Challenge",
-//     reward: 71,
-//     creator: "Blue Sky",
-//     createdDate: "2021-09-01",
-//     types: ["Health", "Wellness"],
-//     description:
-//       "Boost your energy, focus, and health by drinking enough water every day! Stay refreshed and feel your best. 🌊💙",
-//   },
-//   {
-//     id: 3,
-//     name: "Be Happy Challenge",
-//     reward: 66,
-//     creator: "Yellow",
-//     createdDate: "2021-09-01",
-//     types: ["Happiness", "Wellness"],
-//     description:
-//       "Embark on a happiness adventure where you complete daily missions to boost your mood, spread positivity, and build lasting joy. Happiness is a skill—let’s level it up! 🌈🚀",
-//   },
-//   {
-//     id: 4,
-//     name: "Movie of the Week",
-//     reward: 51,
-//     creator: "Ollivander",
-//     createdDate: "2021-09-01",
-//     types: ["Entertainment", "Film"],
-//     description:
-//       "Watch the selected movie of the week and engage in discussions with other participants. Expand your cinematic horizons and connect with fellow film enthusiasts.",
-//   },
-//   {
-//     id: 5,
-//     name: "Music Challenge",
-//     reward: 22,
-//     creator: "Overture",
-//     createdDate: "2021-09-01",
-//     types: ["Entertainment", "Music"],
-//     description:
-//       "🎵 Listen to the selected music of the week and share your thought with other participants.",
-//   },
-// ];
 
 export default function Challenges() {
   const [search, setSearch] = useState("");
@@ -160,18 +110,11 @@ export default function Challenges() {
     fetchChallenges();
   }, []);
 
-  // need to be fixed
   const filteredChallenges = challengesData.filter((item) => {
     if (typeFilters.length === 0) return true;
-    // return typeFilters.some((type) => item.types.includes(type));
-
-    // console.log(typeFilters)
-    // return typeFilters.includes(item.challengeTypeName);
     const selectedTypeIds = challengeTypesData
     .filter((type) => typeFilters.includes(type.challengeTypeName))
     .map((type) => type.challengeTypeId);
-
-  // Check if the challenge's challengeTypeId matches any of the selected type IDs
   return selectedTypeIds.includes(item.challengeTypeId);
   });
 
