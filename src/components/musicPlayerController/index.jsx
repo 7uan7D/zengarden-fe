@@ -1,14 +1,8 @@
 // MusicPlayerController.js
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Play,
-  Pause,
-  SkipBack,
-  SkipForward,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight } from "lucide-react";
+import "../musicPlayerController/index.css";
 
 // Danh sách nhạc cố định
 const playlist = [
