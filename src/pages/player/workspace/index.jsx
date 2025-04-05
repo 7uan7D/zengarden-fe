@@ -53,7 +53,7 @@ export default function Workspace() {
   const isWorkspacePage = location.pathname === "/workspace";
 
   // Danh sách các tab
-  const tabs = ["Your Space", "Quill_JS", "Watch Videos", "PDF", "Pintura"];
+  const tabs = ["Your Space", "Rich Text", "Watch Videos", "PDF Editor", "Image Editor"];
 
   return (
     <div
@@ -192,7 +192,7 @@ export default function Workspace() {
         )}
 
         {/* Các tab khác để trống */}
-        {activeTab === "Quill_JS" && (
+        {activeTab === "Rich Text" && (
           <div className="flex-1">
             <Card className="bg-white/80 backdrop-blur-md">
 
@@ -214,7 +214,7 @@ export default function Workspace() {
             </Card>
           </div>
         )}
-        {activeTab === "PDF" && (
+        {activeTab === "PDF Editor" && (
           <div className="flex-1">
             <Card className="bg-white/80 backdrop-blur-md">
               <CardHeader>
@@ -226,7 +226,7 @@ export default function Workspace() {
             </Card>
           </div>
         )}
-        {activeTab === "Pintura" && (
+        {activeTab === "Image Editor" && (
           <div className="flex-1">
             <Card className="bg-white/80 backdrop-blur-md">
               <CardHeader>
