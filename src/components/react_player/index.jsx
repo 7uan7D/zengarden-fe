@@ -85,7 +85,6 @@ const VideoPlayer = () => {
   return (
     <div className="video-player-container">
       <div className="video-display">
-        {console.log("Rendering with selectedVideo:", selectedVideo)}
         {selectedVideo ? (
           <Player
             url={selectedVideo}
@@ -124,15 +123,11 @@ const VideoPlayer = () => {
             <li
               key={video.id} // Key duy nhất để React quản lý danh sách
               className={`video-item ${selectedVideo === video.url ? "active" : ""}`}
+              onClick={() => {
+                handleVideoSelect(video.url);
+              }}
             >
-              <span
-                onClick={() => {
-                  console.log("Clicked video:", video.url); // Debug: In URL khi click
-                  handleVideoSelect(video.url);
-                }}
-              >
-                {video.title}
-              </span>
+              <span>{video.title}</span>
               <Button
                 variant="ghost"
                 className="remove-video-button"
