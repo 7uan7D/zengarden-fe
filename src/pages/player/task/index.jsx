@@ -43,6 +43,7 @@ import "react-time-picker/dist/TimePicker.css";
 import "react-clock/dist/Clock.css";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
 import { GetTaskByUserId } from "@/services/apiServices/taskService";
+import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import "../task/index.css";
 
 // Component DateTimePicker với tối ưu hóa
@@ -219,6 +220,15 @@ export default function TaskPage() {
   }, []);
 
   useEffect(() => {
+    if (currentTree) {
+      const tree = userTrees.find(t => t.userTreeId === currentTree);
+      if (tree) {
+        fetchTasks(tree.userTreeId);
+      }
+    }
+  }, [currentTree]);
+
+  useEffect(() => {
     const fetchTrees = async () => {
       try {
         const allTrees = await GetAllTrees();
@@ -289,7 +299,13 @@ export default function TaskPage() {
     if (!payload?.sub) return;
 
     try {
-      const taskData = await GetTaskByUserId(payload.sub);
+      let taskData = [];
+
+    if (selectedTree) {
+      taskData = await GetTaskByUserTreeId(selectedTree.userTreeId);
+    } else {
+      return;
+    }
 
       const categorizedTasks = {
         daily: taskData.filter((task) => task.taskTypeName === "Daily"),
