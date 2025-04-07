@@ -77,13 +77,16 @@ const TasksTable = () => {
                                 Type
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Total Duration
+                                User Tree
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Work Duration
+                                Total Duration (mins)
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Break Time
+                                Work Duration (mins)
+                            </th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                                Break Time (mins)
                             </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Focus Method
@@ -116,6 +119,9 @@ const TasksTable = () => {
                                             </td>
                                             <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
                                                 {task.taskTypeName}
+                                            </td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                                {task.userTreeName}
                                             </td>
                                             <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
                                                 {task.totalDuration}
@@ -173,8 +179,16 @@ const TasksTable = () => {
                                         {task.taskDescription}
                                     </p>
                                     <p className="text-gray-300 text-left text-sm">
-                                        Start Date: 
-                                        &nbsp;
+                                        <p className="text-gray-300 text-sm font-bold mr-1">Task note:</p> 
+                                        {task.taskNote === null ? 'none' : task.taskNote}
+                                    </p>
+                                    <p className="text-gray-300 text-left text-sm">
+                                        <p className="text-gray-300 text-sm font-bold mr-1">Result:</p> 
+                                        {/* check if taskresult is empty */}
+                                        {task.taskResult === '' ? 'none' : task.taskResult}
+                                    </p>
+                                    <p className="text-gray-300 text-left text-sm">
+                                        <p className="text-gray-300 text-sm font-bold mr-1">Start Date: </p> 
                                         {new Date(task.startDate).toLocaleDateString('en-US', {
                                             month: 'short',
                                             day: 'numeric',
@@ -185,8 +199,7 @@ const TasksTable = () => {
                                         })}
                                     </p>
                                     <p className="text-gray-300 text-left text-sm">
-                                        End Date: 
-                                        &nbsp;
+                                    <p className="text-gray-300 text-sm font-bold mr-1">End Date: </p> 
                                         {new Date(task.endDate).toLocaleDateString('en-US', {
                                             month: 'short',
                                             day: 'numeric',
