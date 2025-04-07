@@ -12,8 +12,8 @@
   border-radius: 8px;
   overflow: hidden;
   width: 100%;
-  max-width: 854px; /* Kích thước chuẩn YouTube (có thể tăng lên 1280px nếu muốn lớn hơn) */
   aspect-ratio: 16 / 9; /* Tỷ lệ khung hình 16:9 */
+  height: 100%;
 }
 
 .no-video {
