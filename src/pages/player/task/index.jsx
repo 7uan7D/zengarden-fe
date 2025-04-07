@@ -221,7 +221,7 @@ export default function TaskPage() {
 
   useEffect(() => {
     if (currentTree) {
-      const tree = userTrees.find(t => t.userTreeId === currentTree);
+      const tree = userTrees.find((t) => t.userTreeId === currentTree);
       if (tree) {
         fetchTasks(tree.userTreeId);
       }
@@ -301,11 +301,11 @@ export default function TaskPage() {
     try {
       let taskData = [];
 
-    if (selectedTree) {
-      taskData = await GetTaskByUserTreeId(selectedTree.userTreeId);
-    } else {
-      return;
-    }
+      if (selectedTree) {
+        taskData = await GetTaskByUserTreeId(selectedTree.userTreeId);
+      } else {
+        return;
+      }
 
       const categorizedTasks = {
         daily: taskData.filter((task) => task.taskTypeName === "Daily"),
@@ -576,10 +576,16 @@ export default function TaskPage() {
               }
             }}
           >
-            <img
-              src={userTrees.length > 0 ? treeImageSrc : addIcon}
-              className="w-32 h-32 mx-auto hover:scale-105 transition-transform rounded-full border-4 border-green-300 shadow-md"
-            />
+            <div className="w-32 h-32 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
+              <img
+                src={userTrees.length > 0 ? treeImageSrc : addIcon}
+                className={`object-contain ${
+                  userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
+                    ? "w-10 h-10"
+                    : "w-30 h-30"
+                }`}
+              />
+            </div>
           </div>
 
           <Dialog open={isTreeDialogOpen} onOpenChange={setIsTreeDialogOpen}>
@@ -613,11 +619,13 @@ export default function TaskPage() {
                         setIsTreeDialogOpen(false);
                       }}
                     >
-                      <img
-                        src={treeImageSrc}
-                        alt={`${tree.name}`}
-                        className="w-20 h-20 mx-auto rounded-full border-2 border-green-300 shadow-sm"
-                      />
+                      <div className="w-20 h-20 mx-auto rounded-full border-2 border-green-300 shadow-sm flex items-center justify-center">
+                        <img
+                          src={treeImageSrc}
+                          alt={`${tree.name}`}
+                          className="w-8 h-8 object-contain"
+                        />
+                      </div>
                       <h3 className="font-bold mt-2">{tree.name}</h3>
                       <p>Level: {tree.levelId}</p>
                       <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
