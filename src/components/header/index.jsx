@@ -444,7 +444,7 @@ const Header = () => {
                         className="justify-start border-none hover:bg-gray-100 focus:border-none focus:ring-0 bg-white"
                         onClick={() => console.log("Settings clicked")}
                       >
-                        Transaction history
+                        Wallet
                       </Button>
                       <Button
                         variant="ghost"

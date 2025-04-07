@@ -37,11 +37,22 @@ const pageVariants = {
 
 function AnimatedRoutes() {
   const location = useLocation();
+  const [isPlaying, setIsPlaying] = useState(false); // Trạng thái phát nhạc
+  const [currentIndex, setCurrentIndex] = useState(0); // Chỉ số bài hát
+
   return (
     <UserExperienceProvider>
       <TreeExperienceProvider>
         <>
           <Header />
+          {/* Đặt MusicPlayerController ở đây để chỉ hiển thị trên các trang không phải admin */}
+          <div className="fixed top-4 left-4 z-50">
+            <MusicPlayerController
+              positionClass="fixed top-4 left-4 z-50"
+              setPlaying={setIsPlaying}
+              setCurrentIndex={setCurrentIndex}
+            />
+          </div>
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -100,7 +111,7 @@ function ConditionalRoutes() {
     location.pathname.startsWith("/overview") ||
     location.pathname.startsWith("/users") ||
     location.pathname.startsWith("/items") ||
-    location.pathname.startsWith("/tasks") ||
+    location.pathname.startsWith("/tasks") || 
     location.pathname.startsWith("/userXPLog") ||
     location.pathname.startsWith("/treeXPLog") ||
     location.pathname.startsWith("/sales") ||
@@ -111,19 +122,8 @@ function ConditionalRoutes() {
 }
 
 function App() {
-  const [isPlaying, setIsPlaying] = useState(false); // Trạng thái phát nhạc
-  const [currentIndex, setCurrentIndex] = useState(0); // Chỉ số bài hát
-
   return (
     <BrowserRouter>
-      {/* Đặt MusicPlayerController ở đây để hiển thị trên mọi trang */}
-      <div className="fixed top-4 left-4 z-50">
-        <MusicPlayerController
-          positionClass="fixed top-4 left-4 z-50"
-          setPlaying={setIsPlaying}
-          setCurrentIndex={setCurrentIndex}
-        />
-      </div>
       <ConditionalRoutes />
       <Toaster expand={true} />
     </BrowserRouter>

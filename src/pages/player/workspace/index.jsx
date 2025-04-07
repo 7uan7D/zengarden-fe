@@ -11,6 +11,7 @@ import MusicPlayerController, {
 import "../home/index.css";
 import QuillEditor from "@/components/quill_js/index.jsx";
 import VideoPlayer from "@/components/react_player/index.jsx";
+import PDFEditor from "@/components/react_pdf/index.jsx";
 
 // Danh sách cây mẫu trong vườn
 const gardenTrees = [
@@ -219,6 +220,7 @@ export default function Workspace() {
             <Card className="bg-white/80 backdrop-blur-md">
               <CardHeader>
                 <CardTitle>PDF</CardTitle>
+                <PDFEditor />
               </CardHeader>
               <CardContent>
                 <p className="text-gray-500">Content coming soon...</p>

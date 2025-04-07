@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useEffect, useCallback } from "react"; // Thêm useCallback
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -46,7 +46,6 @@ import { GetTaskByUserId } from "@/services/apiServices/taskService";
 import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import "../task/index.css";
 
-// Component DateTimePicker với tối ưu hóa
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const selectedDate = date ? new Date(date) : undefined;
@@ -54,11 +53,10 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
     ? new Date(date).toISOString().split("T")[1].slice(0, 5)
     : "00:00";
 
-  // Memoize handlers
   const handleDateSelect = useCallback(
     (newDate) => {
       onDateChange(newDate);
-      setIsPopoverOpen(false); // Đóng Popover khi chọn ngày xong
+      setIsPopoverOpen(false);
     },
     [onDateChange]
   );
@@ -72,9 +70,8 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="font-medium text-gray-700">{label}</label>
+      <Label className="font-medium text-gray-700">{label}</Label>
       <div className="flex items-center gap-2">
-        {/* Chọn ngày */}
         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -84,10 +81,7 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
               {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
             </Button>
           </PopoverTrigger>
-          <PopoverContent
-            align="start"
-            className="p-2 shadow-md bg-white rounded-lg"
-          >
+          <PopoverContent className="p-2 shadow-md bg-white rounded-lg">
             <Calendar
               mode="single"
               selected={selectedDate}
@@ -95,15 +89,13 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
             />
           </PopoverContent>
         </Popover>
-
-        {/* Chọn giờ */}
         <TimePicker
           onChange={handleTimeChange}
           value={formattedTime}
           disableClock={true}
           className="h-10 w-[100px] text-center border-gray-300 rounded-lg focus:border-green-500 focus:ring focus:ring-green-200 transition-all"
-          clearIcon={null} // Bỏ icon xóa nếu không cần
-          clockIcon={null} // Bỏ icon đồng hồ nếu không cần
+          clearIcon={null}
+          clockIcon={null}
         />
       </div>
     </div>
@@ -117,23 +109,25 @@ export default function TaskPage() {
   const [currentTree, setCurrentTree] = useState(0);
   const [userTrees, setUserTrees] = useState([]);
   const [trees, setTrees] = useState([]);
-  // Tách trạng thái timers và running theo cột
   const [timers, setTimers] = useState({
     daily: {},
     simple: {},
     complex: {},
-    done: {},
   });
   const [running, setRunning] = useState({
     daily: {},
     simple: {},
     complex: {},
-    done: {},
   });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingTask, setPendingTask] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
+  const [activeTabs, setActiveTabs] = useState({
+    daily: "all",
+    simple: "all",
+    complex: "all",
+  });
 
   const selectedTree = userTrees.find(
     (tree) => tree.userTreeId === currentTree
@@ -197,7 +191,6 @@ export default function TaskPage() {
     }));
   };
 
-  // Memoize handleDateChange và handleTimeChange
   const handleDateChange = useCallback((field, date) => {
     setTaskData((prev) => ({
       ...prev,
@@ -288,7 +281,6 @@ export default function TaskPage() {
     daily: [],
     simple: [],
     complex: [],
-    done: [],
   });
 
   const fetchTasks = async () => {
@@ -311,7 +303,6 @@ export default function TaskPage() {
         daily: taskData.filter((task) => task.taskTypeName === "Daily"),
         simple: taskData.filter((task) => task.taskTypeName === "Simple"),
         complex: taskData.filter((task) => task.taskTypeName === "Complex"),
-        done: taskData.filter((task) => task.status === 3),
       };
 
       setTasks(categorizedTasks);
@@ -320,7 +311,6 @@ export default function TaskPage() {
     }
   };
 
-  // Gọi API khi component mount
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -378,7 +368,7 @@ export default function TaskPage() {
       console.error("Error creating task:", error);
     }
   };
-  // TaskColumn Logic
+
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -387,18 +377,22 @@ export default function TaskPage() {
       .padStart(2, "0")}`;
   };
 
-  const isAnyTaskRunning = (column) => {
-    return Object.values(timers[column]).some((time) => time > 0);
+  const isAnyTaskRunning = () => {
+    return Object.values(timers).some((column) =>
+      Object.values(column).some((time) => time > 0)
+    );
   };
 
   const startTimer = (column, taskIndex) => {
-    if (isAnyTaskRunning(column) && !timers[column][taskIndex]) {
+    if (isAnyTaskRunning() && !timers[column][taskIndex]) {
       setPendingTask({ column, taskIndex });
       setDialogOpen(true);
     } else {
+      const task = tasks[column][taskIndex];
+      const totalDurationSeconds = task.totalDuration * 60;
       setTimers((prev) => ({
         ...prev,
-        [column]: { ...prev[column], [taskIndex]: 600 },
+        [column]: { ...prev[column], [taskIndex]: totalDurationSeconds },
       }));
       setRunning((prev) => ({
         ...prev,
@@ -407,20 +401,22 @@ export default function TaskPage() {
     }
   };
 
-  const stopAllTimers = (column) => {
-    setTimers((prev) => ({
-      ...prev,
-      [column]: {},
-    }));
-    setRunning((prev) => ({
-      ...prev,
-      [column]: {},
-    }));
+  const stopAllTimers = () => {
+    setTimers({
+      daily: {},
+      simple: {},
+      complex: {},
+    });
+    setRunning({
+      daily: {},
+      simple: {},
+      complex: {},
+    });
   };
 
   const handleSwitchTask = () => {
     if (pendingTask) {
-      stopAllTimers(pendingTask.column);
+      stopAllTimers();
       startTimer(pendingTask.column, pendingTask.taskIndex);
       setDialogOpen(false);
       setPendingTask(null);
@@ -440,19 +436,6 @@ export default function TaskPage() {
         [taskIndex]: !prev[column][taskIndex],
       },
     }));
-  };
-
-  const stopTimer = (column, taskIndex) => {
-    setTimers((prev) => {
-      const newTimers = { ...prev[column] };
-      delete newTimers[taskIndex];
-      return { ...prev, [column]: newTimers };
-    });
-    setRunning((prev) => {
-      const newRunning = { ...prev[column] };
-      delete newRunning[taskIndex];
-      return { ...prev, [column]: newRunning };
-    });
   };
 
   useEffect(() => {
@@ -482,78 +465,145 @@ export default function TaskPage() {
     return () => clearInterval(interval);
   }, [running]);
 
-  const renderTaskColumn = (title, taskList, columnKey, isDone = false) => (
-    <motion.div
-      className="bg-white rounded-lg shadow-lg p-4 flex flex-col h-full"
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <h2 className="text-lg font-semibold mb-3">{title}</h2>
-      <Separator className="mb-3" />
-      <ScrollArea className="h-[400px] overflow-y-auto">
-        <div className="grid gap-3">
-          {taskList.map((task, index) => (
-            <motion.div
-              key={index}
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-            >
-              <Card
-                className="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition"
-                onClick={() => {
-                  setSelectedTask(task);
-                  setIsTaskInfoDialogOpen(true);
-                }}
-              >
-                <span>{task.taskName}</span>
-                {isDone ? (
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-5 h-5 text-green-600" />
-                    <span className="text-sm text-green-600">Completed</span>
-                  </div>
-                ) : timers[columnKey][index] !== undefined ? (
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="text-sm text-gray-600 cursor-pointer hover:text-gray-800"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Ngăn sự kiện click lan truyền lên Card
-                        toggleTimer(columnKey, index);
-                      }}
-                    >
-                      {formatTime(timers[columnKey][index])}{" "}
-                      {running[columnKey][index] ? "(Pause)" : "(Resume)"}
-                    </span>
-                    <Button
-                      size="sm"
-                      className="bg-gray-900 text-white hover:bg-gray-700"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Ngăn sự kiện click lan truyền lên Card
-                        stopTimer(columnKey, index);
-                      }}
-                    >
-                      Stop
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation(); // Ngăn sự kiện click lan truyền lên Card
-                      startTimer(columnKey, index);
-                    }}
-                  >
-                    Start Task
-                  </Button>
-                )}
-              </Card>
-            </motion.div>
-          ))}
+  const renderTaskColumn = (title, taskList, columnKey) => {
+    const filteredTasks =
+      activeTabs[columnKey] === "all"
+        ? taskList
+        : activeTabs[columnKey] === "current"
+        ? taskList.filter((task) => task.status !== 3)
+        : taskList.filter((task) => task.status === 3);
+
+    return (
+      <motion.div
+        className={`task-column ${columnKey}`}
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h2>{title}</h2>
+        <div className="flex gap-2 mb-3">
+          <Button
+            variant={activeTabs[columnKey] === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveTabs({ ...activeTabs, [columnKey]: "all" })}
+          >
+            All
+          </Button>
+          <Button
+            variant={activeTabs[columnKey] === "current" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveTabs({ ...activeTabs, [columnKey]: "current" })}
+          >
+            Current
+          </Button>
+          <Button
+            variant={activeTabs[columnKey] === "complete" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setActiveTabs({ ...activeTabs, [columnKey]: "complete" })}
+          >
+            Complete
+          </Button>
         </div>
-      </ScrollArea>
-    </motion.div>
-  );
+        <Separator className="mb-3" />
+        <ScrollArea className="h-[400px] overflow-y-auto">
+          <div className="grid gap-3">
+            {filteredTasks.map((task, index) => {
+              const totalDurationSeconds = task.totalDuration * 60;
+              const remainingTime = timers[columnKey][index] || totalDurationSeconds;
+              const workDurationSeconds = task.workDuration * 60;
+              const breakTimeSeconds = task.breakTime * 60;
+              const cycleDuration = workDurationSeconds + breakTimeSeconds;
+              const completedCycles = Math.floor((totalDurationSeconds - remainingTime) / cycleDuration);
+              const remainingInCycle = (totalDurationSeconds - remainingTime) % cycleDuration;
+              const workRemaining = remainingInCycle < workDurationSeconds
+                ? workDurationSeconds - remainingInCycle
+                : 0;
+              const breakRemaining = remainingInCycle >= workDurationSeconds
+                ? cycleDuration - remainingInCycle
+                : breakTimeSeconds;
+              const isRunning = timers[columnKey][index] !== undefined;
+
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                >
+                  <Card className="task-item">
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div
+                        className="cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTask(task);
+                          setIsTaskInfoDialogOpen(true);
+                        }}
+                      >
+                        <span className="text-gray-700 font-medium">{task.taskName}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <div className={`progress-bar-container ${isRunning ? "active" : ""}`}>
+                          <div className="progress-bar">
+                            <div
+                              className="work-progress"
+                              style={{
+                                width: `${(task.workDuration / task.totalDuration) * 100 * (completedCycles + (remainingInCycle < workDurationSeconds ? remainingInCycle / workDurationSeconds : 1))}%`,
+                              }}
+                            />
+                            <div
+                              className="break-progress"
+                              style={{
+                                width: `${(task.breakTime / task.totalDuration) * 100 * (completedCycles + (remainingInCycle >= workDurationSeconds ? (remainingInCycle - workDurationSeconds) / breakTimeSeconds : 0))}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <span className="text-sm text-gray-600">
+                          Remaining: {formatTime(remainingTime)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2" onClick={(e) => e.stopPropagation()}>
+                      {isRunning && (
+                        <span className="text-sm text-gray-600">
+                          {workRemaining > 0 ? `Work: ${formatTime(workRemaining)}` : `Break: ${formatTime(breakRemaining)}`}
+                        </span>
+                      )}
+                      {task.status === 3 ? (
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-5 h-5 text-green-600" />
+                          <span className="text-sm text-green-600">Done</span>
+                        </div>
+                      ) : isRunning ? (
+                        <Button
+                          size="sm"
+                          onClick={() => toggleTimer(columnKey, index)}
+                        >
+                          {running[columnKey][index] ? "Pause" : "Resume"}
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => startTimer(columnKey, index)}
+                        >
+                          Start
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      </motion.div>
+    );
+  };
+
+  const progress = treeExp
+    ? (treeExp.totalXp / (treeExp.totalXp + treeExp.xpToNextLevel)) * 100
+    : 0;
 
   return (
     <motion.div
@@ -562,260 +612,63 @@ export default function TaskPage() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md"></div>
-      <div className="pt-10">
-        <div className="bg-[#CCFFCC] text-black p-6 rounded-lg shadow-md mb-6 flex items-center gap-6 relative mt-6">
-          <div
-            className="relative cursor-pointer"
-            onClick={() => {
-              if (userTrees.length === 0) {
-                setIsTreeDialogOpen(false);
-                setIsCreateTreeDialogOpen(true);
-              } else {
-                setIsTreeDialogOpen(true);
-              }
-            }}
-          >
-            <div className="w-32 h-32 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
-              <img
-                src={userTrees.length > 0 ? treeImageSrc : addIcon}
-                className={`object-contain ${
-                  userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
-                    ? "w-10 h-10"
-                    : "w-30 h-30"
-                }`}
-              />
-            </div>
-          </div>
-
-          <Dialog open={isTreeDialogOpen} onOpenChange={setIsTreeDialogOpen}>
-            <DialogContent className="max-w-xl w-full flex gap-4 justify-center p-6 flex-wrap">
-              <DialogTitle className="text-center w-full">
-                Choose your tree
-              </DialogTitle>
-              {userTrees
-                .filter(
-                  (tree) => tree.treeStatus === 0 || tree.treeStatus === 1
-                )
-                .map((tree) => {
-                  const totalNeeded = tree.totalXp + tree.xpToNextLevel;
-                  const progress =
-                    totalNeeded > 0 ? (tree.totalXp / totalNeeded) * 100 : 0;
-                  const finalTree = trees.find(
-                    (t) => t.treeId === tree.finalTreeId
-                  );
-                  const treeImageSrc =
-                    tree.levelId < 4
-                      ? `/images/lv${tree.levelId}.png`
-                      : finalTree?.imageUrl || "/images/default.png";
-
-                  return (
-                    <div
-                      key={tree.userTreeId}
-                      className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
-                      onClick={() => {
-                        setCurrentTree(tree.userTreeId);
-                        localStorage.setItem("selectedTreeId", tree.userTreeId);
-                        setIsTreeDialogOpen(false);
-                      }}
-                    >
-                      <div className="w-20 h-20 mx-auto rounded-full border-2 border-green-300 shadow-sm flex items-center justify-center">
-                        <img
-                          src={treeImageSrc}
-                          alt={`${tree.name}`}
-                          className="w-8 h-8 object-contain"
-                        />
-                      </div>
-                      <h3 className="font-bold mt-2">{tree.name}</h3>
-                      <p>Level: {tree.levelId}</p>
-                      <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
-                        <div
-                          className="h-full bg-green-500 rounded-full"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                      <p className="text-sm mt-1">
-                        XP: {tree.totalXp} / {totalNeeded}
-                      </p>
-                    </div>
-                  );
-                })}
-
-              {/* Chỉ hiện AddIcon nếu cây đang Growing < 2 */}
-              {userTrees.filter(
-                (tree) => tree.treeStatus === 0 || tree.treeStatus === 1
-              ).length < 2 && (
-                <div
-                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
-                  onClick={() => {
-                    setIsTreeDialogOpen(false);
-                    setIsCreateTreeDialogOpen(true);
-                  }}
-                >
-                  <img
-                    src={addIcon}
-                    alt="Add New Tree"
-                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
-                  />
-                  <h3 className="font-bold mt-2 text-green-600">
-                    Create New Tree
-                  </h3>
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
-
-          <Dialog
-            open={isCreateTreeDialogOpen}
-            onOpenChange={setIsCreateTreeDialogOpen}
-          >
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create a new tree</DialogTitle>
-                <DialogDescription>Fill in the tree details</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Label htmlFor="treeName">Tree Name</Label>
-                <Input
-                  id="treeName"
-                  placeholder="Enter tree name"
-                  value={newTreeName}
-                  onChange={(e) => setNewTreeName(e.target.value)}
+      <div className="tree-header">
+        <img
+          src={treeImageSrc}
+          className="tree-image"
+          onClick={() => {
+            if (userTrees.length === 0) {
+              setIsTreeDialogOpen(false);
+              setIsCreateTreeDialogOpen(true);
+            } else {
+              setIsTreeDialogOpen(true);
+            }
+          }}
+        />
+        <div className="flex-1">
+          <h2 className="text-2xl font-semibold text-gray-800">
+            {selectedTree?.name}
+          </h2>
+          <p className="text-sm text-gray-500">Level {selectedTree?.levelId}</p>
+          {treeExp && (
+            <div className="xp-circle">
+              <svg width="80" height="80">
+                <circle className="bg" cx="40" cy="40" r="36" />
+                <circle
+                  className="progress"
+                  cx="40"
+                  cy="40"
+                  r="36"
+                  strokeDasharray="226"
+                  strokeDashoffset={226 - (226 * progress) / 100}
                 />
-                <Button
-                  onClick={handleCreateTree}
-                  className="w-full"
-                  disabled={isCreating}
-                >
-                  {isCreating ? "Creating..." : "Create"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog
-            open={isTaskInfoDialogOpen}
-            onOpenChange={setIsTaskInfoDialogOpen}
-          >
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{selectedTask?.taskName}</DialogTitle>
-                <DialogDescription>
-                  {selectedTask?.taskDescription}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="mt-4 space-y-2">
-                <p>
-                  <strong>Start Date:</strong>{" "}
-                  {new Date(selectedTask?.startDate).toLocaleString()}
-                </p>
-                <p>
-                  <strong>End Date:</strong>{" "}
-                  {new Date(selectedTask?.endDate).toLocaleString()}
-                </p>
-                <p>
-                  <strong>Status:</strong>{" "}
-                  {selectedTask?.status === 3 ? "Completed" : "In Progress"}
-                </p>
-                <p>
-                  <strong>Focus Method:</strong> {selectedTask?.focusMethodName}
-                </p>
-                <p>
-                  <strong>Total Duration:</strong> {selectedTask?.totalDuration}{" "}
-                  minutes
-                </p>
-                <p>
-                  <strong>Work Duration:</strong> {selectedTask?.workDuration}{" "}
-                  minutes
-                </p>
-                <p>
-                  <strong>Break Time:</strong> {selectedTask?.breakTime} minutes
-                </p>
-                <p>
-                  <strong>Tree:</strong> {selectedTask?.userTreeName}
-                </p>
-                <p>
-                  <strong>Task Type:</strong> {selectedTask?.taskTypeName}
-                </p>
-                {selectedTask?.taskNote && (
-                  <p>
-                    <strong>Task Note:</strong> {selectedTask?.taskNote}
-                  </p>
-                )}
-                {selectedTask?.taskResult && (
-                  <p>
-                    <strong>Task Result:</strong> {selectedTask?.taskResult}
-                  </p>
-                )}
-                {selectedTask?.remainingTime !== null && (
-                  <p>
-                    <strong>Remaining Time:</strong>{" "}
-                    {selectedTask?.remainingTime} minutes
-                  </p>
-                )}
-              </div>
-              <DialogFooter>
-                <Button onClick={() => setIsTaskInfoDialogOpen(false)}>
-                  Close
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          <div className="flex-1">
-            {selectedTree ? (
-              <>
-                <h2 className="text-3xl font-bold text-[#609994] tracking-wide flex items-center gap-3">
-                  {selectedTree.name}
-                  <span className="text-base font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full shadow-inner">
-                    Level {selectedTree.levelId}
-                  </span>
-                </h2>
-                {treeExp && (
-                  <div className="relative w-full mt-3 h-4 rounded-full bg-gray-200 overflow-hidden">
-                    <div
-                      style={{
-                        width: `${
-                          (treeExp.totalXp /
-                            (treeExp.totalXp + treeExp.xpToNextLevel)) *
-                          100
-                        }%`,
-                      }}
-                      className="h-full bg-gradient-to-r from-[#a1d99b] via-[#f9d976] to-[#f49a8c] rounded-full"
-                    ></div>
-                    <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
-                      {selectedTree.levelId === 4
-                        ? "Level Max"
-                        : `${treeExp.totalXp} / ${
-                            treeExp.totalXp + treeExp.xpToNextLevel
-                          } XP`}
-                    </span>
-                  </div>
-                )}
-                <div className="mt-5 flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-gray-700">
-                    Equipped Items:
-                  </span>
-                  {[1, 2, 3].map((item) => (
-                    <span
-                      key={item}
-                      className="text-xs bg-[#83aa6c] text-white px-3 py-1 rounded-full shadow hover:opacity-90 transition"
-                    >
-                      Item {item}
-                    </span>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p className="text-sm italic text-gray-500">
-                Haven't chosen any tree yet
-              </p>
-            )}
+              </svg>
+              <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-bold">
+                {treeExp.totalXp}/{treeExp.totalXp + treeExp.xpToNextLevel}
+              </span>
+            </div>
+          )}
+          <div className="mt-5 flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-gray-700">
+              Equipped Items:
+            </span>
+            {[1, 2, 3].map((item) => (
+              <span
+                key={item}
+                className="text-xs bg-[#83aa6c] text-white px-3 py-1 rounded-full shadow hover:opacity-90 transition"
+              >
+                Item {item}
+              </span>
+            ))}
           </div>
-
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleOpenDialog}>
+            Switch Tree
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="absolute right-6 top-6 bg-black text-white hover:bg-gray-800">
+              <Button className="bg-green-600 text-white hover:bg-green-700">
                 Create Task
               </Button>
             </DropdownMenuTrigger>
@@ -828,209 +681,264 @@ export default function TaskPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
-            <DialogContent className="max-w-lg bg-white rounded-xl shadow-2xl p-6">
-              {/* Header với gradient và shadow */}
-              <DialogHeader className="relative bg-gradient-to-r from-green-500 to-teal-500 p-4 rounded-t-xl shadow-md">
-                <DialogTitle className="text-2xl font-bold text-white tracking-tight">
-                  {step === 3 ? "Confirm Task" : "Create Task"}
-                </DialogTitle>
-                <DialogDescription className="text-sm text-gray-100 mt-1">
-                  {step === 1 && "Fill in the details for your new task."}
-                  {step === 2 && "Suggested focus method based on your task."}
-                  {step === 3 && "Review and confirm your task details."}
-                </DialogDescription>
-              </DialogHeader>
-
-              {step === 1 && (
-                <div className="space-y-4">
-                  <div>
-                    <Label>Task Name</Label>
-                    <Input
-                      name="taskName"
-                      placeholder="Enter task name"
-                      value={taskData.taskName}
-                      onChange={(e) =>
-                        setTaskData({ ...taskData, taskName: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Description</Label>
-                    <Textarea
-                      name="taskDescription"
-                      placeholder="Describe your task"
-                      value={taskData.taskDescription}
-                      onChange={(e) =>
-                        setTaskData({
-                          ...taskData,
-                          taskDescription: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Duration (minutes)</Label>
-                    <Input
-                      type="number"
-                      placeholder="Task duration"
-                      value={taskData.totalDuration}
-                      onChange={(e) =>
-                        setTaskData({
-                          ...taskData,
-                          totalDuration: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    <DateTimePicker
-                      label="Start Date"
-                      date={taskData.startDate}
-                      onDateChange={(newDate) =>
-                        handleDateChange("startDate", newDate)
-                      }
-                      onTimeChange={(time) =>
-                        handleTimeChange("startDate", time)
-                      }
-                    />
-                    <DateTimePicker
-                      label="End Date"
-                      date={taskData.endDate}
-                      onDateChange={(newDate) =>
-                        handleDateChange("endDate", newDate)
-                      }
-                      onTimeChange={(time) => handleTimeChange("endDate", time)}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {step === 2 && focusSuggestion && (
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-lg font-semibold">
-                      {focusSuggestion.focusMethodName}
-                    </p>
-                    <p>XP Multiplier: {focusSuggestion.xpMultiplier}</p>
-                    <p className="text-sm text-gray-500">
-                      Min Duration: {focusSuggestion.minDuration} mins, Max
-                      Duration: {focusSuggestion.maxDuration} mins
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Min Break: {focusSuggestion.minBreak} mins, Max Break:{" "}
-                      {focusSuggestion.maxBreak} mins
-                    </p>
-                  </div>
-                  <div>
-                    <Label>Work Duration (minutes)</Label>
-                    <Input
-                      type="number"
-                      min={focusSuggestion.minDuration}
-                      max={focusSuggestion.maxDuration}
-                      value={taskData.workDuration}
-                      onChange={(e) =>
-                        setTaskData({
-                          ...taskData,
-                          workDuration: Number(e.target.value),
-                        })
-                      }
-                    />
-                    <p className="text-sm text-gray-500">
-                      Recommended: {focusSuggestion.defaultDuration} mins
-                    </p>
-                  </div>
-                  <div>
-                    <Label>Break Time (minutes)</Label>
-                    <Input
-                      type="number"
-                      min={focusSuggestion.minBreak}
-                      max={focusSuggestion.maxBreak}
-                      value={taskData.breakTime}
-                      onChange={(e) =>
-                        setTaskData({
-                          ...taskData,
-                          breakTime: Number(e.target.value),
-                        })
-                      }
-                    />
-                    <p className="text-sm text-gray-500">
-                      Recommended: {focusSuggestion.defaultBreak} mins
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {step === 3 && (
-                <div className="space-y-4">
-                  <p>
-                    <strong>Task Name:</strong> {taskData.taskName}
-                  </p>
-                  <p>
-                    <strong>Description:</strong> {taskData.taskDescription}
-                  </p>
-                  <p>
-                    <strong>Total Duration:</strong> {taskData.totalDuration}{" "}
-                    minutes
-                  </p>
-                  <p>
-                    <strong>Start Date:</strong> {taskData.startDate.toString()}
-                  </p>
-                  <p>
-                    <strong>End Date:</strong> {taskData.endDate.toString()}
-                  </p>
-                  <p>
-                    <strong>Focus Method:</strong>{" "}
-                    {focusSuggestion?.focusMethodName}
-                  </p>
-                  <p>
-                    <strong>Work Duration:</strong> {taskData.workDuration}{" "}
-                    minutes
-                  </p>
-                  <p>
-                    <strong>Break Time:</strong> {taskData.breakTime} minutes
-                  </p>
-                </div>
-              )}
-
-              <DialogFooter>
-                {step > 1 && (
-                  <Button
-                    variant="ghost"
-                    className="bg-white border-black"
-                    onClick={handleBack}
-                  >
-                    Back
-                  </Button>
-                )}
-                {step < 3 && (
-                  <Button
-                    className="bg-green-600 text-white hover:bg-green-700"
-                    onClick={handleNext}
-                  >
-                    Next
-                  </Button>
-                )}
-                {step === 3 && (
-                  <Button
-                    className="bg-green-600 text-white hover:bg-green-700"
-                    onClick={() => handleCreateTask(taskData)}
-                  >
-                    Create
-                  </Button>
-                )}
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 w-full">
+      <Dialog open={isTreeDialogOpen} onOpenChange={setIsTreeDialogOpen}>
+        <DialogContent className="max-w-xl w-full flex gap-4 justify-center p-6 flex-wrap">
+          <DialogTitle className="text-center w-full">Choose your tree</DialogTitle>
+          {userTrees
+            .filter((tree) => tree.treeStatus === 0 || tree.treeStatus === 1)
+            .map((tree) => {
+              const totalNeeded = tree.totalXp + tree.xpToNextLevel;
+              const progress = totalNeeded > 0 ? (tree.totalXp / totalNeeded) * 100 : 0;
+              const finalTree = trees.find((t) => t.treeId === tree.finalTreeId);
+              const treeImageSrc =
+                tree.levelId < 4
+                  ? `/src/assets/images/lv${tree.levelId}.png`
+                  : finalTree?.imageUrl || "/src/assets/images/default.png";
+
+              return (
+                <div
+                  key={tree.userTreeId}
+                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
+                  onClick={() => {
+                    setCurrentTree(tree.userTreeId);
+                    localStorage.setItem("selectedTreeId", tree.userTreeId);
+                    setIsTreeDialogOpen(false);
+                  }}
+                >
+                  <img
+                    src={treeImageSrc}
+                    alt={`${tree.name}`}
+                    className="w-20 h-20 mx-auto rounded-full border-2 border-green-300 shadow-sm"
+                  />
+                  <h3 className="font-bold mt-2">{tree.name}</h3>
+                  <p>Level: {tree.levelId}</p>
+                  <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
+                    <div
+                      className="h-full bg-green-500 rounded-full"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <p className="text-sm mt-1">
+                    XP: {tree.totalXp} / {totalNeeded}
+                  </p>
+                </div>
+              );
+            })}
+          {userTrees.filter(
+            (tree) => tree.treeStatus === 0 || tree.treeStatus === 1
+          ).length < 2 && (
+            <div
+              className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
+              onClick={() => {
+                setIsTreeDialogOpen(false);
+                setIsCreateTreeDialogOpen(true);
+              }}
+            >
+              <img
+                src={addIcon}
+                alt="Add New Tree"
+                className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+              />
+              <h3 className="font-bold mt-2 text-green-600">Create New Tree</h3>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateTreeDialogOpen} onOpenChange={setIsCreateTreeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create a new tree</DialogTitle>
+            <DialogDescription>Fill in the tree details</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Label htmlFor="treeName">Tree Name</Label>
+            <Input
+              id="treeName"
+              placeholder="Enter tree name"
+              value={newTreeName}
+              onChange={(e) => setNewTreeName(e.target.value)}
+            />
+            <Button onClick={handleCreateTree} className="w-full" disabled={isCreating}>
+              {isCreating ? "Creating..." : "Create"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isTaskInfoDialogOpen} onOpenChange={setIsTaskInfoDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedTask?.taskName}</DialogTitle>
+            <DialogDescription>{selectedTask?.taskDescription}</DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 space-y-2">
+            <p><strong>Start Date:</strong> {new Date(selectedTask?.startDate).toLocaleString()}</p>
+            <p><strong>End Date:</strong> {new Date(selectedTask?.endDate).toLocaleString()}</p>
+            <p><strong>Status:</strong> {selectedTask?.status === 3 ? "Completed" : "In Progress"}</p>
+            <p><strong>Focus Method:</strong> {selectedTask?.focusMethodName}</p>
+            <p><strong>Total Duration:</strong> {selectedTask?.totalDuration} minutes</p>
+            <p><strong>Work Duration:</strong> {selectedTask?.workDuration} minutes</p>
+            <p><strong>Break Time:</strong> {selectedTask?.breakTime} minutes</p>
+            <p><strong>User Tree Name:</strong> {selectedTask?.userTreeName}</p>
+            <p><strong>Task Type:</strong> {selectedTask?.taskTypeName}</p>
+            {selectedTask?.taskNote && <p><strong>Task Note:</strong> {selectedTask?.taskNote}</p>}
+            {selectedTask?.taskResult && <p><strong>Task Result:</strong> {selectedTask?.taskResult}</p>}
+            {selectedTask?.remainingTime !== null && (
+              <p><strong>Remaining Time:</strong> {selectedTask?.remainingTime} minutes</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsTaskInfoDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+        <DialogContent className="task-dialog">
+          <div className="progress-bar">
+            <div className={`progress-step ${step >= 1 ? "active" : ""}`}></div>
+            <div className={`progress-step ${step >= 2 ? "active" : ""}`}></div>
+            <div className={`progress-step ${step >= 3 ? "active" : ""}`}></div>
+          </div>
+          <DialogHeader>
+            <DialogTitle>{step === 3 ? "Confirm Task" : "Create Task"}</DialogTitle>
+            <DialogDescription>
+              {step === 1 && "Fill in the details for your new task."}
+              {step === 2 && "Suggested focus method based on your task."}
+              {step === 3 && "Review and confirm your task details."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {step === 1 && (
+            <div className="space-y-4">
+              <div>
+                <Label>Task Name</Label>
+                <Input
+                  name="taskName"
+                  placeholder="Enter task name"
+                  value={taskData.taskName}
+                  onChange={(e) => setTaskData({ ...taskData, taskName: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Description</Label>
+                <Textarea
+                  name="taskDescription"
+                  placeholder="Describe your task"
+                  value={taskData.taskDescription}
+                  onChange={(e) =>
+                    setTaskData({ ...taskData, taskDescription: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <Label>Duration (minutes)</Label>
+                <Input
+                  type="number"
+                  placeholder="Task duration"
+                  value={taskData.totalDuration}
+                  onChange={(e) =>
+                    setTaskData({ ...taskData, totalDuration: Number(e.target.value) })
+                  }
+                />
+              </div>
+              <div className="flex flex-col gap-4">
+                <DateTimePicker
+                  label="Start Date"
+                  date={taskData.startDate}
+                  onDateChange={(newDate) => handleDateChange("startDate", newDate)}
+                  onTimeChange={(time) => handleTimeChange("startDate", time)}
+                />
+                <DateTimePicker
+                  label="End Date"
+                  date={taskData.endDate}
+                  onDateChange={(newDate) => handleDateChange("endDate", newDate)}
+                  onTimeChange={(time) => handleTimeChange("endDate", time)}
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 2 && focusSuggestion && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-lg font-semibold">{focusSuggestion.focusMethodName}</p>
+                <p>XP Multiplier: {focusSuggestion.xpMultiplier}</p>
+                <p className="text-sm text-gray-500">
+                  Min Duration: {focusSuggestion.minDuration} mins, Max Duration: {focusSuggestion.maxDuration} mins
+                </p>
+                <p className="text-sm text-gray-500">
+                  Min Break: {focusSuggestion.minBreak} mins, Max Break: {focusSuggestion.maxBreak} mins
+                </p>
+              </div>
+              <div>
+                <Label>Work Duration (minutes)</Label>
+                <Input
+                  type="number"
+                  min={focusSuggestion.minDuration}
+                  max={focusSuggestion.maxDuration}
+                  value={taskData.workDuration}
+                  onChange={(e) =>
+                    setTaskData({ ...taskData, workDuration: Number(e.target.value) })
+                  }
+                />
+                <p className="text-sm text-gray-500">
+                  Recommended: {focusSuggestion.defaultDuration} mins
+                </p>
+              </div>
+              <div>
+                <Label>Break Time (minutes)</Label>
+                <Input
+                  type="number"
+                  min={focusSuggestion.minBreak}
+                  max={focusSuggestion.maxBreak}
+                  value={taskData.breakTime}
+                  onChange={(e) =>
+                    setTaskData({ ...taskData, breakTime: Number(e.target.value) })
+                  }
+                />
+                <p className="text-sm text-gray-500">
+                  Recommended: {focusSuggestion.defaultBreak} mins
+                </p>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-4">
+              <p><strong>Task Name:</strong> {taskData.taskName}</p>
+              <p><strong>Description:</strong> {taskData.taskDescription}</p>
+              <p><strong>Total Duration:</strong> {taskData.totalDuration} minutes</p>
+              <p><strong>Start Date:</strong> {taskData.startDate.toString()}</p>
+              <p><strong>End Date:</strong> {taskData.endDate.toString()}</p>
+              <p><strong>Focus Method:</strong> {focusSuggestion?.focusMethodName}</p>
+              <p><strong>Work Duration:</strong> {taskData.workDuration} minutes</p>
+              <p><strong>Break Time:</strong> {taskData.breakTime} minutes</p>
+            </div>
+          )}
+
+          <DialogFooter>
+            {step > 1 && (
+              <Button variant="outline" onClick={handleBack}>
+                Back
+              </Button>
+            )}
+            {step < 3 && <Button onClick={handleNext}>Next</Button>}
+            {step === 3 && (
+              <Button onClick={() => handleCreateTask(taskData)}>Create</Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <div className="grid grid-cols-3 gap-4 w-full mt-6">
         {renderTaskColumn("Daily Task", tasks.daily, "daily")}
         {renderTaskColumn("Simple Task", tasks.simple, "simple")}
         {renderTaskColumn("Complex Task", tasks.complex, "complex")}
-        {renderTaskColumn("Complete Task", tasks.done, "done", true)}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -1038,14 +946,14 @@ export default function TaskPage() {
           <DialogHeader>
             <DialogTitle>Switch Task</DialogTitle>
             <DialogDescription>
-              Bạn có muốn dừng task hiện tại và chuyển sang task mới không?
+              Do you want to stop the current task and move on to a new one?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={handleKeepCurrentTask}>
-              Không
+              No
             </Button>
-            <Button onClick={handleSwitchTask}>Có</Button>
+            <Button onClick={handleSwitchTask}>Yes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
