@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { motion } from "framer-motion";
-import addIcon from "@/assets/images/add.png";
+import addIcon from "/images/add.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,6 +43,7 @@ import "react-time-picker/dist/TimePicker.css";
 import "react-clock/dist/Clock.css";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
 import { GetTaskByUserId } from "@/services/apiServices/taskService";
+import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import "../task/index.css";
 
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
@@ -136,8 +137,8 @@ export default function TaskPage() {
   const selectedFinalTree = trees.find((t) => t.treeId === finalTreeId);
   const treeImageSrc =
     treeLevel && treeLevel < 4
-      ? `/src/assets/images/lv${treeLevel}.png`
-      : selectedFinalTree?.imageUrl || "/src/assets/images/default.png";
+      ? `/images/lv${treeLevel}.png`
+      : selectedFinalTree?.imageUrl || "/images/default.png";
   const [newTreeName, setNewTreeName] = useState("");
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -212,6 +213,15 @@ export default function TaskPage() {
   }, []);
 
   useEffect(() => {
+    if (currentTree) {
+      const tree = userTrees.find((t) => t.userTreeId === currentTree);
+      if (tree) {
+        fetchTasks(tree.userTreeId);
+      }
+    }
+  }, [currentTree]);
+
+  useEffect(() => {
     const fetchTrees = async () => {
       try {
         const allTrees = await GetAllTrees();
@@ -281,7 +291,13 @@ export default function TaskPage() {
     if (!payload?.sub) return;
 
     try {
-      const taskData = await GetTaskByUserId(payload.sub);
+      let taskData = [];
+
+      if (selectedTree) {
+        taskData = await GetTaskByUserTreeId(selectedTree.userTreeId);
+      } else {
+        return;
+      }
 
       const categorizedTasks = {
         daily: taskData.filter((task) => task.taskTypeName === "Daily"),

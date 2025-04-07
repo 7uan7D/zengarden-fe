@@ -158,7 +158,7 @@ export default function HeroPage() {
         <div className="cards">
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
             <img
-              src="/src/assets/images/task_status.png"
+              src="/images/task_status.png"
               alt="Achievements"
               className="card-img"
             />
@@ -170,7 +170,7 @@ export default function HeroPage() {
           </motion.div>
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
             <img
-              src="/src/assets/images/grow plants.png"
+              src="/images/grow plants.png"
               alt="Grow Plants"
               className="card-img"
             />
@@ -182,11 +182,7 @@ export default function HeroPage() {
             </p>
           </motion.div>
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
-            <img
-              src="/src/assets/images/relax.png"
-              alt="Relax"
-              className="card-img"
-            />
+            <img src="/images/relax.png" alt="Relax" className="card-img" />
             <h2>Relax🌿</h2>
             <p>
               Take a moment to unwind with calming visuals and a tranquil
@@ -210,7 +206,7 @@ export default function HeroPage() {
         <div className="cards">
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
             <img
-              src="/src/assets/images/tasks.png"
+              src="/images/tasks.png"
               alt="Achievements"
               className="card-img"
             />
@@ -222,7 +218,7 @@ export default function HeroPage() {
           </motion.div>
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
             <img
-              src="/src/assets/images/grow plants.png"
+              src="/images/grow plants.png"
               alt="Grow Plants"
               className="card-img"
             />
@@ -233,11 +229,7 @@ export default function HeroPage() {
             </p>
           </motion.div>
           <motion.div className="card" whileHover={{ scale: 1.05 }}>
-            <img
-              src="/src/assets/images/relax.png"
-              alt="Relax"
-              className="card-img"
-            />
+            <img src="/images/relax.png" alt="Relax" className="card-img" />
             <h2>Find Your Zen 🌟</h2>
             <p>
               Unwind with a serene interface designed to reduce stress and bring

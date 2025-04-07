@@ -1,4 +1,4 @@
-import { CalendarCheck, CheckCircle, CirclePercent, Clock } from "lucide-react"
+import { CalendarCheck, CheckCircle, CircleEllipsis, Clock } from "lucide-react"
 import { motion } from "framer-motion"
 
 import AdminHeader from "@/components/common/AdminHeader"
@@ -13,9 +13,9 @@ const TasksPage = () => {
 
     const taskStats = {
         totalTasks: taskData?.length,
-        pendingTasks: taskData?.filter((task) => task.status === 'pending').length,
-        completedTasks: taskData?.filter((task) => task.status === 'completed').length,
-        completedPercentage: taskData?.length > 0 ? (taskData.filter((task) => task.status === 'completed').length / taskData.length) * 100 : 0,
+        notStartedTasks: taskData?.filter((task) => task.status === 0).length,
+        pendingTasks: taskData?.filter((task) => task.status === 2).length,
+        completedTasks: taskData?.filter((task) => task.status === 3).length,
     }
 
     if (isLoading) {
@@ -38,14 +38,9 @@ const TasksPage = () => {
                     transition={{ duration: 1 }}
                 >
                     <StatCard name='Total Tasks' icon={CalendarCheck} value={taskStats.totalTasks} color='#6366F1' />
-                    <StatCard name='Pending Tasks' icon={Clock} value={taskStats.pendingTasks} color='#F59E0B' />
-                    <StatCard
-                        name='Completed Tasks'
-                        icon={CheckCircle}
-                        value={taskStats.completedTasks}
-                        color='#10B981'
-                    />
-                    <StatCard name='Completed Percentage' icon={CirclePercent} value={taskStats.completedPercentage} color='#EF4444' />
+                    <StatCard name='Not Started Tasks' icon={CircleEllipsis} value={taskStats.notStartedTasks} color='#FFFFFF' />
+                    <StatCard name='Paused Tasks' icon={Clock} value={taskStats.pendingTasks} color='#F59E0B' />
+                    <StatCard name='Completed Tasks' icon={CheckCircle} value={taskStats.completedTasks} color='#10B981' />
                 </motion.div>
 
                 <TasksTable />
