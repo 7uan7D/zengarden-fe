@@ -34,6 +34,8 @@ const TasksTable = () => {
         taskDescription: '',
         taskNote: '',
         totalDuration: 0,
+        workDuration: 0,
+        breakTime: 0,
         startDate: '',
         endDate: '',
     })
@@ -48,6 +50,8 @@ const TasksTable = () => {
                     taskDescription: data.taskDescription || '',
                     taskNote: data.taskNote || 'none',
                     totalDuration: data.totalDuration || 0,
+                    workDuration: data.workDuration || 0,
+                    breakTime: data.breakTime || 0,
                     startDate: data.startDate || '',
                     endDate: data.endDate || '',
                 }))
@@ -363,11 +367,29 @@ const TasksTable = () => {
                                                     />
                                                 </div>
                                                 <div className='space-y-1'>
-                                                    <Label htmlFor='totalDuration'>Total Duration (Minutes)</Label>
+                                                    <Label htmlFor='totalDuration'>Total Duration ({'>'} 30 minutes)</Label>
                                                     <Input
                                                         id='totalDuration'
                                                         type='number'
                                                         value={editTask.totalDuration}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='workDuration'>Work Duration (10-120 minutes)</Label>
+                                                    <Input
+                                                        id='workDuration'
+                                                        type='number'
+                                                        value={editTask.workDuration}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='breakTime'>Break Time (5-60 minutes)</Label>
+                                                    <Input
+                                                        id='breakTime'
+                                                        type='number'
+                                                        value={editTask.breakTime}
                                                         onChange={handleChange}
                                                     />
                                                 </div>
