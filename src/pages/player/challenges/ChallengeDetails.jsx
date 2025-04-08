@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Verified, Beaker, BookCheck, BookX, Clock, Coffee, Calendar, Flag, CheckCircle, ClipboardCheck, StickyNote } from "lucide-react";
+import { Verified, Beaker, BookCheck, BookX, Clock, Coffee, Calendar, Flag, CheckCircle, ClipboardCheck, StickyNote, ArrowBigLeft } from "lucide-react";
 import { GetAllChallenges } from "@/services/apiServices/challengeService";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
 
 export default function ChallengeDetails() {
-    const { id } = useParams(); // Get the challenge ID from the URL
+    const { id } = useParams();
     const navigate = useNavigate();
     const [challenge, setChallenge] = useState(null);
     const [challengeType, setChallengeType] = useState(null);
@@ -25,7 +25,6 @@ export default function ChallengeDetails() {
 
                 if (foundChallenge) {
                     setChallenge(foundChallenge);
-                    // Fetch challenge type name
                     const allChallengeTypes = await GetAllChallengeTypes();
                     const foundChallengeType = allChallengeTypes.find(
                         (type) => type.challengeTypeId === foundChallenge.challengeTypeId
@@ -89,7 +88,11 @@ export default function ChallengeDetails() {
                         <div className="container mx-auto px-4 flex"> {/* Use flex container */}
                             <Card className="w-[70%] mr-4">
                                 <CardHeader className="flex flex-col items-start">
-                                    <CardTitle className="text-2xl font-bold">{challenge.challengeName}</CardTitle>
+                                    <CardTitle className="text-2xl font-bold">
+                                        <span className="text-cyan-800">
+                                            {challenge.challengeName}
+                                        </span>
+                                    </CardTitle>
                                     {challengeType && (
                                         <CardDescription className="text-gray-500 flex items-center">
                                             Type:
@@ -101,29 +104,30 @@ export default function ChallengeDetails() {
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <h2 className="text-lg font-semibold">To do's</h2>
-                                    {/* show tasks content in Cards*/}
                                     {challenge.tasks && challenge.tasks.length > 0 ? (
                                         challenge.tasks.map((task, index) => (
                                             <Card key={index} className="mb-4">
                                                 <CardHeader>
-                                                    <CardTitle className="text-lg font-semibold">{task.taskName}</CardTitle>
+                                                    <CardTitle className="text-lg font-semibold text-cyan-800">{task.taskName}</CardTitle>
+                                                    <p className="items-center text-sm font-bold">{task.taskDescription}</p>
                                                 </CardHeader>
                                                 <CardContent className="space-y-2 text-gray-500">
-                                                    <p className="items-center text-sm font-bold">{task.taskDescription}</p>
                                                     <div className="flex items-center text-sm">
                                                         <Clock className="mr-2 h-4 w-4" />
-                                                        Duration: {task.workDuration}/{task.totalDuration} min
+                                                            <p className="text-sm font-bold mr-1">Duration:</p>
+                                                            {task.workDuration}/{task.totalDuration} min
                                                         (Work/Total)
                                                     </div>
                                                     {task.breakTime > 0 && (
                                                         <div className="flex items-center text-sm">
                                                             <Coffee className="mr-2 h-4 w-4" />
-                                                            Break: {task.breakTime} min
+                                                            <p className="text-sm font-bold mr-1">Break:</p>
+                                                            {task.breakTime} min
                                                         </div>
                                                     )}
                                                     <div className="flex items-center text-sm">
                                                         <Calendar className="mr-2 h-4 w-4" />
-                                                        Start: {" "}
+                                                        <p className="text-sm font-bold mr-1">Start:</p>
                                                         {new Date(challenge.startDate).toLocaleDateString('en-US', {
                                                             month: 'short',
                                                             day: 'numeric',
@@ -135,7 +139,7 @@ export default function ChallengeDetails() {
                                                     </div>
                                                     <div className="flex items-center text-sm">
                                                         <Flag className="mr-2 h-4 w-4" />
-                                                        End: {" "}
+                                                        <p className="text-sm font-bold mr-1">End:</p>
                                                         {new Date(challenge.endDate).toLocaleDateString('en-US', {
                                                             month: 'short',
                                                             day: 'numeric',
@@ -148,7 +152,8 @@ export default function ChallengeDetails() {
                                                     {task.taskNote && (
                                                         <div className="flex items-center text-sm">
                                                             <StickyNote className="mr-2 h-4 w-4" />
-                                                            Note: {task.taskNote}
+                                                            <p className="text-sm font-bold mr-1">Note:</p>
+                                                            {task.taskNote}
                                                         </div>
                                                     )}
                                                     {/* <div className="flex items-center text-sm">
@@ -158,7 +163,8 @@ export default function ChallengeDetails() {
                                                     {task.taskResult && (
                                                         <div className="flex items-center text-sm">
                                                             <ClipboardCheck className="mr-2 h-4 w-4" />
-                                                            Result: {task.taskResult}
+                                                            <p className="text-sm font-bold mr-1">Result:</p>
+                                                            {task.taskResult}
                                                         </div>
                                                     )}
                                                 </CardContent>
@@ -173,6 +179,9 @@ export default function ChallengeDetails() {
                             <Card className="w-[30%]">
                                 <CardHeader>
                                     <div className="mt-6">
+                                        <Button className="mr-2" variant="outline" onClick={() => navigate(-1)}>
+                                            <ArrowBigLeft className="mr-2 h-4 w-4" /> Back
+                                        </Button>
                                         {isJoined ? (
                                             <Button variant="destructive" onClick={handleLeaveChallenge}>
                                                 <BookX className="mr-2 h-4 w-4" /> Leave Challenge
@@ -182,6 +191,7 @@ export default function ChallengeDetails() {
                                                 <BookCheck className="mr-2 h-4 w-4" /> Join Challenge
                                             </Button>
                                         )}
+                                        
                                     </div>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
