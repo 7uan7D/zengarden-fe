@@ -385,36 +385,32 @@ export default function TaskPage() {
 
   const startTimer = async (column, taskIndex) => {
     const task = tasks[column][taskIndex];
-    console.log("StartTask => task:", task);
     const totalDurationSeconds = task.totalDuration * 60;
 
     try {
-      await StartTask(task.taskId);
+      await StartTask(task.taskId); // Gọi API trước để chắc ăn
     } catch (error) {
-      console.error("Failed to start task:", error);
+      console.error("❌ Failed to start task:", error);
+      return;
     }
 
-    // ✅ Cập nhật trạng thái task thành 'running'
+    setCurrentTask({
+      column,
+      taskIndex,
+      time: totalDurationSeconds,
+    });
+
+    // Cập nhật status là đang chạy
     setTasks((prev) => {
       const updated = { ...prev };
       updated[column] = [...updated[column]];
       updated[column][taskIndex] = {
         ...updated[column][taskIndex],
-        status: 1, // Running
+        status: 1,
       };
       return updated;
     });
-
-    if (
-      currentTask &&
-      (currentTask.column !== column || currentTask.taskIndex !== taskIndex)
-    ) {
-      setPendingTask({ column, taskIndex });
-      setDialogOpen(true);
-    } else if (!currentTask) {
-      setCurrentTask({ column, taskIndex, time: totalDurationSeconds });
-      setIsRunning(true);
-    }
+    setIsRunning(true);
   };
 
   const stopCurrentTimer = () => {
@@ -484,7 +480,11 @@ export default function TaskPage() {
       setCurrentTask({
         column: columnToUse,
         taskIndex: indexToUse,
-        time: currentTask?.time ?? task.totalDuration * 60,
+        time: task.remainingTime
+          ? typeof task.remainingTime === "string"
+            ? timeStringToSeconds(task.remainingTime)
+            : task.remainingTime * 60
+          : task.totalDuration * 60,
       });
       setIsRunning(true);
     }
@@ -499,6 +499,15 @@ export default function TaskPage() {
           time: prev.time - 1,
         }));
       } else if (currentTask && currentTask.time === 0) {
+        setTasks((prev) => {
+          const updated = { ...prev };
+          updated[currentTask.column] = [...updated[currentTask.column]];
+          updated[currentTask.column][currentTask.taskIndex] = {
+            ...updated[currentTask.column][currentTask.taskIndex],
+            status: 4, // ✅ Đánh dấu task đã hoàn thành
+          };
+          return updated;
+        });
         stopCurrentTimer();
       }
     }, 1000);
@@ -700,6 +709,11 @@ export default function TaskPage() {
     );
   };
 
+  function timeStringToSeconds(timeStr) {
+    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+
   const handleBeforeUnload = (e) => {
     if (isRunning && currentTask) {
       const task = tasks[currentTask.column]?.[currentTask.taskIndex];
@@ -756,7 +770,7 @@ export default function TaskPage() {
           setCurrentTask({
             column,
             taskIndex,
-            time: taskFromBE.remainingTime * 60,
+            time: timeStringToSeconds(taskFromBE.remainingTime),
           });
 
           setIsRunning(false); // Đã pause
@@ -1261,7 +1275,8 @@ export default function TaskPage() {
           <DialogHeader>
             <DialogTitle>Switch Task</DialogTitle>
             <DialogDescription>
-              Do you want to switch to this task? Your current task will be paused.
+              Do you want to switch to this task? Your current task will be
+              paused.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
