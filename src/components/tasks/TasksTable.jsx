@@ -75,7 +75,8 @@ const TasksTable = () => {
             const filtered = taskData.filter(
                 (task) =>
                     task.taskId.toString().includes(term) ||
-                    task.taskName.toLowerCase().includes(term)
+                    task.taskName.toLowerCase().includes(term) ||
+                    task.taskTypeName.toLowerCase().includes(term)
             )
             setFilteredTasks(filtered)
         }
@@ -106,10 +107,6 @@ const TasksTable = () => {
         if (selectedTaskId) {
             setIsLoading(true)
             try {
-                // await UpdateTaskById({
-                //     taskId: selectedTaskId,
-                //     ...editTask,
-                // })
                 await UpdateTaskById(selectedTaskId, editTask)
                 toast.success('The information has been updated successfully!')
 

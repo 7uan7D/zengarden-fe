@@ -2,16 +2,6 @@ import { motion } from "framer-motion"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import useTaskData from "@/hooks/useTaskData"
 
-// const dailyTasksData = [
-//     { date: '07/01', tasks: 45 },
-//     { date: '07/02', tasks: 52 },
-//     { date: '07/03', tasks: 49 },
-//     { date: '07/04', tasks: 60 },
-//     { date: '07/05', tasks: 55 },
-//     { date: '07/06', tasks: 58 },
-//     { date: '07/07', tasks: 62 },
-// ]
-
 const DailyTasks = () => {
     const { taskData, isLoading, error } = useTaskData()
 
@@ -88,7 +78,7 @@ const DailyTasks = () => {
                             itemStyle={{ color: '#E5E7EB' }}
                         />
                         <Legend />
-                        <Line type='monotone' dataKey='tasks' stroke='#8B5CF6' strokeWidth={2} />
+                        <Line type='linear' dataKey='tasks' stroke='#8B5CF6' strokeWidth={2} />
                     </LineChart>
                 </ResponsiveContainer>
             </div>

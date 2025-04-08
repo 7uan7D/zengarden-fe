@@ -89,7 +89,6 @@ const UsersTable = () => {
                     userId: selectedUserId,
                     ...editUser,
                 })
-                // setUser(updatedUser)
                 toast.success('The information has been updated successfully!')
 
                 setTimeout(() => {
