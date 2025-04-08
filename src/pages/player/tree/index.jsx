@@ -134,7 +134,7 @@ const Tree = () => {
   const renderGridView = () => {
     const allTrees = defaultOrder
       .flatMap((category) => filterTrees(treeData[category], category))
-      .sort((a, b) => a.id - b.id); // Sắp xếp theo ID nếu muốn
+      /*.sort((a, b) => a.id - b.id); // Sắp xếp theo ID nếu muốn */
 
     if (allTrees.length === 0) return <p className="text-gray-500">No trees found.</p>;
 
