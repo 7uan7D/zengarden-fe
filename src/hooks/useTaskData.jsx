@@ -11,6 +11,7 @@ const useTaskData = () => {
             setIsLoading(true)
             try {
                 const data = await GetAllTasks()
+                data.sort((a, b) => a.taskId - b.taskId)
                 setTaskData(data)
                 setIsLoading(false)
             } catch (err) {

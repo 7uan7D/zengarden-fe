@@ -3,8 +3,8 @@ import { motion } from "framer-motion"
 
 import AdminHeader from "@/components/common/AdminHeader"
 import StatCard from "@/components/common/StatCard"
-import DailyOrders from "@/components/tasks/DailyOrders"
-import OrderDistribution from "@/components/tasks/OrderDistribution"
+import DailyTasks from "@/components/tasks/DailyTasks"
+import TaskDistribution from "@/components/tasks/TaskDistribution"
 import TasksTable from "@/components/tasks/TasksTable"
 import useTaskData from "@/hooks/useTaskData"
 
@@ -45,9 +45,13 @@ const TasksPage = () => {
 
                 <TasksTable />
 
+                {/* <div className='grid grid-cols-1 lg:grid-cols-1 gap-8 mt-8'>
+                    <TaskDistribution />
+                </div>  */}
+
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8'>
-                    {/* <DailyOrders /> */}
-                    {/* <OrderDistribution /> */}
+                    <DailyTasks />
+                    <TaskDistribution />
                 </div> 
             </main>
         </div>

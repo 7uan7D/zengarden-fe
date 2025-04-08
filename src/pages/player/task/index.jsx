@@ -45,6 +45,7 @@ import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsServ
 import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import { StartTask } from "@/services/apiServices/taskService";
 import { PauseTask } from "@/services/apiServices/taskService";
+import { CompleteTask } from "@/services/apiServices/taskService";
 import "../task/index.css";
 
 // Component con để chọn ngày và giờ cho task
@@ -156,6 +157,8 @@ export default function TaskPage() {
   });
   const [step, setStep] = useState(1); // Bước trong quy trình tạo task
   const [focusSuggestion, setFocusSuggestion] = useState(null);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [taskToComplete, setTaskToComplete] = useState(null);
 
   // Chuyển bước trong dialog tạo task
   const handleNext = async () => {
@@ -599,6 +602,8 @@ export default function TaskPage() {
                   ? cycleDuration - remainingInCycle
                   : breakTimeSeconds;
               const isTaskRunning = isCurrentTask && isRunning;
+              const isAlmostDone = remainingTime <= 10 && remainingTime > 0;
+              const isOutOfTime = remainingTime <= 0;
 
               return (
                 <motion.div
@@ -674,7 +679,24 @@ export default function TaskPage() {
                         </span>
                       )}
 
-                      {task.status === 4 ? (
+                      {(isAlmostDone || isOutOfTime) &&
+                      realTask.status !== 4 ? (
+                        <Button
+                          variant="outline"
+                          className="text-green-600 border-green-600 hover:bg-green-50"
+                          onClick={() => {
+                            setTaskToComplete({
+                              columnKey,
+                              realIndex,
+                              taskName: task.taskName,
+                              taskId: task.taskId,
+                            });
+                            setIsConfirmDialogOpen(true);
+                          }}
+                        >
+                          Complete
+                        </Button>
+                      ) : task.status === 4 ? (
                         <div className="flex items-center gap-2">
                           <CheckCircle className="w-5 h-5 text-green-600" />
                           <span className="text-sm text-green-600">Done</span>
@@ -705,6 +727,68 @@ export default function TaskPage() {
             })}
           </div>
         </ScrollArea>
+        {isConfirmDialogOpen && taskToComplete && selectedTree && (
+          <>
+            {console.log("selectedTree", selectedTree)}
+            <Dialog
+              open={isConfirmDialogOpen}
+              onOpenChange={setIsConfirmDialogOpen}
+            >
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Completion</DialogTitle>
+                  <DialogDescription>
+                    Do you want to complete <b>{taskToComplete.taskName}</b> to
+                    grow the tree <b>{selectedTree.name}</b>?
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsConfirmDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      await CompleteTask(
+                        taskToComplete.taskId,
+                        selectedTree.userTreeId
+                      );
+
+                      const updated = { ...tasks };
+                      updated[taskToComplete.columnKey] = [
+                        ...updated[taskToComplete.columnKey],
+                      ];
+                      updated[taskToComplete.columnKey][
+                        taskToComplete.realIndex
+                      ] = {
+                        ...updated[taskToComplete.columnKey][
+                          taskToComplete.realIndex
+                        ],
+                        status: 4,
+                      };
+                      setTasks(updated);
+
+                      if (
+                        currentTask &&
+                        currentTask.column === taskToComplete.columnKey &&
+                        currentTask.taskIndex === taskToComplete.realIndex
+                      ) {
+                        stopCurrentTimer();
+                      }
+
+                      setIsConfirmDialogOpen(false);
+                      setTaskToComplete(null);
+                    }}
+                  >
+                    Confirm
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
       </motion.div>
     );
   };

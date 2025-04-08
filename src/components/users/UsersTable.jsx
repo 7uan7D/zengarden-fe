@@ -67,6 +67,7 @@ const UsersTable = () => {
             setFilteredUsers(filtered)
         }
     }
+    
     if (!filteredUsers) {
         return <div>Loading...</div>
     }
@@ -175,6 +176,7 @@ const UsersTable = () => {
                     <tbody className='divide-y divide-gray-700'>
                         {filteredUsers.map((user) => (
                             <motion.tr
+                                className='hover:bg-gray-700 rounded-lg transition duration-200'
                                 key={user.userId}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
