@@ -394,13 +394,12 @@ export default function TaskPage() {
       console.error("Failed to start task:", error);
     }
 
-    // ✅ Cập nhật trạng thái task thành 'running'
     setTasks((prev) => {
       const updated = { ...prev };
       updated[column] = [...updated[column]];
       updated[column][taskIndex] = {
         ...updated[column][taskIndex],
-        status: 1, // Running
+        status: 1,
       };
       return updated;
     });
@@ -412,6 +411,7 @@ export default function TaskPage() {
       setPendingTask({ column, taskIndex });
       setDialogOpen(true);
     } else if (!currentTask) {
+      // ✅ Gộp state lại để đảm bảo useEffect chạy đúng
       setCurrentTask({ column, taskIndex, time: totalDurationSeconds });
       setIsRunning(true);
     }
@@ -484,7 +484,11 @@ export default function TaskPage() {
       setCurrentTask({
         column: columnToUse,
         taskIndex: indexToUse,
-        time: currentTask?.time ?? task.totalDuration * 60,
+        time: task.remainingTime
+          ? typeof task.remainingTime === "string"
+            ? timeStringToSeconds(task.remainingTime)
+            : task.remainingTime * 60
+          : task.totalDuration * 60,
       });
       setIsRunning(true);
     }
@@ -700,6 +704,11 @@ export default function TaskPage() {
     );
   };
 
+  function timeStringToSeconds(timeStr) {
+    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+
   const handleBeforeUnload = (e) => {
     if (isRunning && currentTask) {
       const task = tasks[currentTask.column]?.[currentTask.taskIndex];
@@ -756,7 +765,7 @@ export default function TaskPage() {
           setCurrentTask({
             column,
             taskIndex,
-            time: taskFromBE.remainingTime * 60,
+            time: timeStringToSeconds(taskFromBE.remainingTime),
           });
 
           setIsRunning(false); // Đã pause
@@ -1261,7 +1270,8 @@ export default function TaskPage() {
           <DialogHeader>
             <DialogTitle>Switch Task</DialogTitle>
             <DialogDescription>
-              Do you want to switch to this task? Your current task will be paused.
+              Do you want to switch to this task? Your current task will be
+              paused.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
