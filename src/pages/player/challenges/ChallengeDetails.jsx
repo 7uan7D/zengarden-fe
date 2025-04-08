@@ -3,8 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Verified, Beaker, BookCheck, BookX, Clock, Coffee, Calendar, Flag, CheckCircle, ClipboardCheck, StickyNote, ArrowBigLeft } from "lucide-react";
-import { GetAllChallenges } from "@/services/apiServices/challengeService";
+import { GetAllChallenges, GetChallengeById, JoinChallengeById } from "@/services/apiServices/challengeService";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
+import { GetAllUserChallenges } from "@/services/apiServices/userChallengeService";
+import parseJwt from "@/services/parseJwt";
+import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
+import { toast } from "sonner";
 
 export default function ChallengeDetails() {
     const { id } = useParams();
@@ -13,7 +17,38 @@ export default function ChallengeDetails() {
     const [challengeType, setChallengeType] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [isJoined, setIsJoined] = useState(false); // Placeholder for join status
+
+    const token = localStorage.getItem("token");
+    const [userChallengesData, setUserChallengesData] = useState([]);
+    useEffect(() => {
+        const fetchUserChallenges = async () => {
+            if (!token) return;
+
+            try {
+                const data = await GetAllUserChallenges();
+
+                const userId = parseJwt(token).sub;
+                const LoggedUserChallenges = data.filter(challenge => challenge.userId === parseInt(userId));
+
+                const challengeIds = LoggedUserChallenges.map(
+                    (challenge) => challenge.challengeId
+                );
+
+                const challengeData = await Promise.all(
+                    challengeIds.map(async (challengeId) => {
+                        const data = await GetChallengeById(challengeId);
+                        return data;
+                    })
+                );
+
+                setUserChallengesData(challengeData);
+            } catch (error) {
+                console.error("Error fetching challenges:", error);
+            }
+        };
+
+        fetchUserChallenges();
+    }, []);
 
     useEffect(() => {
         const fetchChallengeDetails = async () => {
@@ -48,20 +83,55 @@ export default function ChallengeDetails() {
         // and an API endpoint to check join status.
         // For now, we'll just set a default state.
         // You might fetch user's joined challenges and check if the current ID exists.
-        setIsJoined(id === "1"); // Example: Assume challenge ID 1 is joined
     }, [id]);
 
-    const handleJoinChallenge = () => {
-        // Implement logic to join the challenge (e.g., API call)
-        console.log(`Joining challenge with ID: ${id}`);
-        setIsJoined(true);
-        // Optionally, show a success message
-    };
+    const [UserTrees, setUserTrees] = useState([]);
+    useEffect(() => {
+        const fetchTrees = async () => {
+            if (!token) return;
+            try {
+                const userId = parseJwt(token).sub;
+                const data = await GetUserTreeByUserId(userId);
+                if (data) {
+                    setUserTrees(data);
+                }
+            } catch (error) {
+                console.error("Error fetching user trees:", error);
+            }
+        };
+
+        fetchTrees();
+    }, []);
+
+    const handleJoinChallenge = async (challengeId) => {
+        if (!token) return;
+
+        if (!UserTrees || UserTrees.length === 0 || !UserTrees[0]?.userTreeId) {
+            console.error("User tree is not available.");
+            return;
+        }
+
+        const userTreeId = parseInt(UserTrees[0].userTreeId);
+        console.log("Joining challenge with ID:", challengeId, "userTreeId:", userTreeId);
+
+        try {
+            await JoinChallengeById(challengeId, { userTreeId });
+
+            toast.success("Joined challenge successfully!");
+            setTimeout(() => {
+                window.location.reload()
+            }, 3000);
+
+            // handle join challenge logic here
+        } catch (error) {
+            console.error("Error joining challenge:", error);
+            toast.error("Failed to join challenge. Please try again.");
+        }
+    }
 
     const handleLeaveChallenge = () => {
         // Implement logic to leave the challenge (e.g., API call)
         console.log(`Leaving challenge with ID: ${id}`);
-        setIsJoined(false);
         // Optionally, show a success message
     };
 
@@ -182,12 +252,14 @@ export default function ChallengeDetails() {
                                         <Button className="mr-2" variant="outline" onClick={() => navigate(-1)}>
                                             <ArrowBigLeft className="mr-2 h-4 w-4" /> Back
                                         </Button>
-                                        {isJoined ? (
+                                        {userChallengesData.some(
+                                            (userChallenge) => userChallenge.challengeId === parseInt(id)
+                                        ) ? (
                                             <Button variant="destructive" onClick={handleLeaveChallenge}>
                                                 <BookX className="mr-2 h-4 w-4" /> Leave Challenge
                                             </Button>
                                         ) : (
-                                            <Button onClick={handleJoinChallenge}>
+                                            <Button onClick={() => handleJoinChallenge(id)}>
                                                 <BookCheck className="mr-2 h-4 w-4" /> Join Challenge
                                             </Button>
                                         )}

@@ -11,6 +11,15 @@ export async function GetChallengeById(challengeId) {
 }
 
 export async function JoinChallengeById(challengeId, userTreeId) {
-    const response = await axios.post(`/Challenges/join/${challengeId}`, userTreeId);
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+        `/Challenges/join/${challengeId}`,
+        userTreeId,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
     return response.data;
 }

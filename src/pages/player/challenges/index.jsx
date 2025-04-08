@@ -26,6 +26,7 @@ import { GetAllChallenges, GetChallengeById, JoinChallengeById } from "@/service
 import { GetAllUserChallenges } from "@/services/apiServices/userChallengeService";
 import { Link } from "react-router-dom";
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
+import { toast } from "sonner";
 
 const categories = ["My Challenges", "Get Challenges"];
 
@@ -160,7 +161,7 @@ export default function Challenges() {
   }, []);
 
   // console.log("userChallengeInfo", userChallengeInfo);
-  // console.log("userChallengesData", userChallengesData);
+  console.log("userChallengesData", userChallengesData);
 
   const filteredUserChallenges = userChallengesData.filter((item) => {
     if (typeFilters.length === 0) return true;
@@ -198,16 +199,22 @@ export default function Challenges() {
       return;
     }
 
-    const userTreeId = UserTrees[0].userTreeId;
+    const userTreeId = parseInt(UserTrees[0].userTreeId);
     console.log("Joining challenge with ID:", challengeId, "userTreeId:", userTreeId);
 
     try {
-      const data = await JoinChallengeById(challengeId, { userTreeId: userTreeId });
-      console.log("Join challenge status: ", data);
+      await JoinChallengeById(challengeId, { userTreeId });
+
+      toast.success("Joined challenge successfully!");
+      setTimeout(() => {
+        window.location.reload()
+      }, 2000);
+      
       
       // handle join challenge logic here
     } catch (error) {
       console.error("Error joining challenge:", error);
+      toast.error("Failed to join challenge. Please try again.");
     }
   }
 
@@ -402,17 +409,6 @@ export default function Challenges() {
                                 <p className="text-sm text-gray-500 flex items-center text-left">
                                   {item.description}
                                 </p>
-                                
-                                
-                                {/* if cat === "My Challenges" */}
-                                {cat === "My Challenges" ? (
-                                  <Button className="mt-2" variant="outline">
-                                    <BookX className="mr-2 h-4 w-4" /> Leave
-                                    Challenge
-                                  </Button>
-                                ) : (
-                                  <></>
-                                )}
 
                                 {userChallengesData.some(
                                   (userChallenge) => userChallenge.challengeId === item.challengeId
@@ -534,7 +530,6 @@ export default function Challenges() {
                               </p>
                             </PopoverContent>
                           </Link>
-
                         </Popover>
                       </motion.div>
                     ))
