@@ -46,6 +46,7 @@ import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import { StartTask } from "@/services/apiServices/taskService";
 import "../task/index.css";
 
+// Component con để chọn ngày và giờ cho task
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const selectedDate = date ? new Date(date) : undefined;
@@ -103,6 +104,7 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   );
 };
 
+// Component chính quản lý giao diện Task
 export default function TaskPage() {
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
@@ -111,13 +113,13 @@ export default function TaskPage() {
   const [userTrees, setUserTrees] = useState([]);
   const [trees, setTrees] = useState([]);
 
-  // Trạng thái cho bộ đếm: chỉ theo dõi một task duy nhất
-  const [currentTask, setCurrentTask] = useState(null); // { column, taskIndex, time }
-  const [isRunning, setIsRunning] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [pendingTask, setPendingTask] = useState(null);
-  const [selectedTask, setSelectedTask] = useState(null);
-  const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
+  // State cho bộ đếm thời gian
+  const [currentTask, setCurrentTask] = useState(null); // Task đang chạy
+  const [isRunning, setIsRunning] = useState(false); // Trạng thái chạy/pause
+  const [dialogOpen, setDialogOpen] = useState(false); // Dialog xác nhận chuyển task
+  const [pendingTask, setPendingTask] = useState(null); // Task chờ chuyển
+  const [selectedTask, setSelectedTask] = useState(null); // Task được chọn để xem chi tiết
+  const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false); // Dialog thông tin task
   const [activeTabs, setActiveTabs] = useState({
     daily: "all",
     simple: "all",
@@ -151,9 +153,10 @@ export default function TaskPage() {
     workDuration: "",
     breakTime: "",
   });
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); // Bước trong quy trình tạo task
   const [focusSuggestion, setFocusSuggestion] = useState(null);
 
+  // Chuyển bước trong dialog tạo task
   const handleNext = async () => {
     if (step === 1) {
       try {
@@ -207,6 +210,7 @@ export default function TaskPage() {
     }));
   }, []);
 
+  // Cập nhật task khi thay đổi cây
   useEffect(() => {
     if (currentTree) {
       const tree = userTrees.find((t) => t.userTreeId === currentTree);
@@ -216,6 +220,7 @@ export default function TaskPage() {
     }
   }, [currentTree]);
 
+  // Lấy danh sách cây mẫu
   useEffect(() => {
     const fetchTrees = async () => {
       try {
@@ -228,6 +233,7 @@ export default function TaskPage() {
     fetchTrees();
   }, []);
 
+  // Cập nhật kinh nghiệm cây
   useEffect(() => {
     if (currentTree) {
       (async () => {
@@ -236,6 +242,7 @@ export default function TaskPage() {
     }
   }, [currentTree]);
 
+  // Lấy danh sách cây của người dùng
   useEffect(() => {
     const fetchTrees = async () => {
       const token = localStorage.getItem("token");
@@ -250,6 +257,7 @@ export default function TaskPage() {
     fetchTrees();
   }, []);
 
+  // Cập nhật userTreeId khi chọn cây
   useEffect(() => {
     setTaskData((prev) => ({
       ...prev,
@@ -257,6 +265,7 @@ export default function TaskPage() {
     }));
   }, [selectedTree]);
 
+  // Chọn cây mặc định khi khởi tạo
   useEffect(() => {
     if (userTrees.length > 0) {
       const savedTreeId = localStorage.getItem("selectedTreeId");
@@ -278,6 +287,7 @@ export default function TaskPage() {
     complex: [],
   });
 
+  // Lấy danh sách task theo cây
   const fetchTasks = async (userTreeId) => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -306,6 +316,7 @@ export default function TaskPage() {
     fetchTasks(selectedTree?.userTreeId);
   }, [selectedTree]);
 
+  // Mở dialog tạo task
   const handleOpen = (type, taskTypeId) => {
     setTaskType(type);
     setTaskData((prev) => ({
@@ -320,6 +331,7 @@ export default function TaskPage() {
     setIsTreeDialogOpen(true);
   };
 
+  // Tạo cây mới
   const handleCreateTree = async () => {
     try {
       setIsCreating(true);
@@ -347,6 +359,7 @@ export default function TaskPage() {
     }
   };
 
+  // Tạo task mới
   const handleCreateTask = async () => {
     try {
       const response = await CreateTask(taskData);
@@ -360,6 +373,7 @@ export default function TaskPage() {
     }
   };
 
+  // Định dạng thời gian cho bộ đếm
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -423,6 +437,7 @@ export default function TaskPage() {
     setIsRunning((prev) => !prev);
   };
 
+  // Chạy bộ đếm thời gian
   useEffect(() => {
     const interval = setInterval(() => {
       if (currentTask && isRunning && currentTask.time > 0) {
@@ -437,6 +452,7 @@ export default function TaskPage() {
     return () => clearInterval(interval);
   }, [currentTask, isRunning]);
 
+  // Hiển thị cột task
   const renderTaskColumn = (title, taskList, columnKey) => {
     const filteredTasks =
       activeTabs[columnKey] === "all"
@@ -630,6 +646,7 @@ export default function TaskPage() {
     ? (treeExp.totalXp / (treeExp.totalXp + treeExp.xpToNextLevel)) * 100
     : 0;
 
+  // Giao diện chính
   return (
     <motion.div
       className="p-6 max-w-full mx-auto w-full"
@@ -663,6 +680,7 @@ export default function TaskPage() {
             </div>
           </div>
 
+          {/* Dialog chọn cây */}
           <Dialog open={isTreeDialogOpen} onOpenChange={setIsTreeDialogOpen}>
             <DialogContent className="max-w-xl w-full flex gap-4 justify-center p-6 flex-wrap">
               <DialogTitle className="text-center w-full">
@@ -880,6 +898,7 @@ export default function TaskPage() {
             )}
           </div>
 
+          {/* Dropdown tạo task */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button className="absolute right-6 top-6 bg-black text-white hover:bg-gray-800">
@@ -896,6 +915,7 @@ export default function TaskPage() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Dialog tạo task */}
           <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
             <DialogContent className="max-w-lg bg-white rounded-xl shadow-2xl p-6">
               <DialogHeader className="relative bg-gradient-to-r from-green-500 to-teal-500 p-4 rounded-t-xl shadow-md">
@@ -1092,12 +1112,14 @@ export default function TaskPage() {
         </div>
       </div>
 
+      {/* Hiển thị các cột task */}
       <div className="grid grid-cols-3 gap-4 w-full">
         {renderTaskColumn("Daily Task", tasks.daily, "daily")}
         {renderTaskColumn("Simple Task", tasks.simple, "simple")}
         {renderTaskColumn("Complex Task", tasks.complex, "complex")}
       </div>
 
+      {/* Dialog xác nhận chuyển task */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
