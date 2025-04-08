@@ -36,3 +36,8 @@ export async function StartTask(taskId) {
 
   return response.data;
 }
+
+export async function PauseTask(taskId) {
+  const response = await axios.post(`/Task/pause/${taskId}`);
+  return response.data;
+}

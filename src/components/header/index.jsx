@@ -57,6 +57,7 @@ import {
 } from "@/components/ui/input-otp";
 import { useUserExperience } from "@/context/UserExperienceContext";
 import NotificationBell from "@/components/notification/NotificationBell";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -67,22 +68,10 @@ const Header = () => {
     password: "",
   });
   const stepConfig = {
-    login: {
-      title: "Login",
-      description: "Sign in to manage your ZenGarden.",
-    },
-    forgot: {
-      title: "Forgot Password",
-      description: "Enter your email to reset password.",
-    },
-    otp: {
-      title: "Enter OTP",
-      description: "Enter the OTP sent to your email.",
-    },
-    "new-password": {
-      title: "New Password",
-      description: "Enter your new password.",
-    },
+    login: { title: "Login", description: "Sign in to manage your ZenGarden." },
+    forgot: { title: "Forgot Password", description: "Enter your email to reset password." },
+    otp: { title: "Enter OTP", description: "Enter the OTP sent to your email." },
+    "new-password": { title: "New Password", description: "Enter your new password." },
   };
 
   const stepVariants = {
@@ -101,11 +90,7 @@ const Header = () => {
   const [user, setUser] = useState(null);
   const [xpToNextLevel, setXpToNextLevel] = useState(50);
   const [walletBalance, setWalletBalance] = useState(0);
-  const [editUser, setEditUser] = useState({
-    userName: "",
-    email: "",
-    phone: "",
-  });
+  const [editUser, setEditUser] = useState({ userName: "", email: "", phone: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState("login");
@@ -122,6 +107,31 @@ const Header = () => {
   ];
   const { totalXp, levelId, refreshXp } = useUserExperience();
   const [notificationCount, setNotificationCount] = useState(0);
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+
+  // Dữ liệu mẫu cho Inventory (có thêm description)
+  const inventoryData = {
+    trees: [
+      { id: 1, name: "Oak", image: "/tree-1.png", owned: true, quantity: 2, description: "A sturdy tree with strong wood." },
+      { id: 2, name: "Birch", image: "/tree-2.png", owned: false, description: "A slender tree with white bark." },
+    ],
+    items: [
+      { id: 3, name: "Watering Can", image: "/item-1.png", owned: true, quantity: 1, description: "Used to water your plants." },
+      { id: 4, name: "Fertilizer", image: "/item-2.png", owned: false, description: "Boosts plant growth." },
+    ],
+    backgrounds: [
+      { id: 5, name: "Forest", image: "/bg-1.png", owned: true, quantity: 1, description: "A lush green forest backdrop." },
+      { id: 6, name: "Desert", image: "/bg-2.png", owned: false, description: "A sandy desert scene." },
+    ],
+    music: [
+      { id: 7, name: "Calm Breeze", image: "/music-1.png", owned: true, quantity: 1, description: "Soothing wind sounds." },
+      { id: 8, name: "Rainfall", image: "/music-2.png", owned: false, description: "Gentle rain ambiance." },
+    ],
+    avatars: [
+      { id: 9, name: "Farmer Hat", image: "/avatar-1.png", owned: true, quantity: 1, description: "A classic farmer's hat." },
+      { id: 10, name: "Wizard Robe", image: "/avatar-2.png", owned: false, description: "A mystical robe for wizards." },
+    ],
+  };
 
   const handleForgotPassword = async () => {
     if (!email) return toast.error("Please enter your email!");
@@ -130,9 +140,7 @@ const Header = () => {
       toast.success("OTP has been sent to your email.");
       setStep("otp");
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to send OTP. Try again!"
-      );
+      toast.error(error.response?.data?.message || "Failed to send OTP. Try again!");
     }
   };
 
@@ -315,6 +323,59 @@ const Header = () => {
     }
   };
 
+  // Component InventoryItemCard với Tooltip khi hover
+  const InventoryItemCard = ({ item }) => {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card
+                className={`p-4 flex flex-col items-center cursor-pointer hover:shadow-lg transition-shadow ${
+                  item.owned ? "" : "opacity-50"
+                }`}
+              >
+                <CardContent className="text-center pb-0 relative w-full">
+                  {item.owned && (
+                    <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-semibold rounded-full w-6 h-6 flex items-center justify-center">
+                      {item.quantity}
+                    </span>
+                  )}
+                  <img src={item.image} alt={item.name} className="w-24 h-24 mb-2 mx-auto" />
+                  <p className={`font-semibold ${item.owned ? "text-gray-800" : "text-gray-500"}`}>
+                    {item.name}
+                  </p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="font-semibold">{item.name}</p>
+            <p className="text-sm text-gray-600">{item.description}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
+  // Hàm render Grid cho từng danh mục
+  const renderInventoryGrid = (category) => {
+    const items = inventoryData[category];
+    if (!items || items.length === 0) return <p className="text-gray-500">No items found.</p>;
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {items.map((item) => (
+          <InventoryItemCard key={item.id} item={item} />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <header
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
@@ -408,7 +469,6 @@ const Header = () => {
                 <div className="flex items-center gap-4">
                   <NotificationBell />
                 </div>
-                {/* Thay DropdownMenu bằng Popover */}
                 <Popover>
                   <PopoverTrigger asChild>
                     <Avatar className="cursor-pointer">
@@ -435,7 +495,7 @@ const Header = () => {
                       <Button
                         variant="ghost"
                         className="justify-start border-none hover:bg-gray-100 focus:border-none focus:ring-0 bg-white"
-                        onClick={() => console.log("Settings clicked")}
+                        onClick={() => setIsInventoryOpen(true)}
                       >
                         Inventory
                       </Button>
@@ -547,8 +607,7 @@ const Header = () => {
                         <CardHeader>
                           <CardTitle>Password</CardTitle>
                           <CardDescription>
-                            Change your password here. After saving, you'll be
-                            logged out.
+                            Change your password here. After saving, you'll be logged out.
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2">
@@ -585,9 +644,7 @@ const Header = () => {
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label htmlFor="confirm">
-                              Confirm New Password
-                            </Label>
+                            <Label htmlFor="confirm">Confirm New Password</Label>
                             <Input
                               id="confirm"
                               type="password"
@@ -617,6 +674,41 @@ const Header = () => {
                   </Tabs>
                 </DialogContent>
               </Dialog>
+              {/* Dialog Inventory với Tabs */}
+              <Dialog open={isInventoryOpen} onOpenChange={setIsInventoryOpen}>
+                <DialogContent className="max-w-4xl p-6">
+                  <DialogHeader>
+                    <DialogTitle>Inventory</DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4 flex flex-col md:flex-row gap-6">
+                    <div className="flex-1">{/* Khu vực hiển thị Grid */}</div>
+                    <Tabs defaultValue="trees" className="w-full md:w-1/4">
+                      <TabsList className="grid w-full grid-cols-2 md:grid-cols-1 gap-2">
+                        <TabsTrigger value="trees">Trees</TabsTrigger>
+                        <TabsTrigger value="items">Items</TabsTrigger>
+                        <TabsTrigger value="backgrounds">Backgrounds</TabsTrigger>
+                        <TabsTrigger value="music">Music</TabsTrigger>
+                        <TabsTrigger value="avatars">Avatars</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="trees">
+                        {renderInventoryGrid("trees")}
+                      </TabsContent>
+                      <TabsContent value="items">
+                        {renderInventoryGrid("items")}
+                      </TabsContent>
+                      <TabsContent value="backgrounds">
+                        {renderInventoryGrid("backgrounds")}
+                      </TabsContent>
+                      <TabsContent value="music">
+                        {renderInventoryGrid("music")}
+                      </TabsContent>
+                      <TabsContent value="avatars">
+                        {renderInventoryGrid("avatars")}
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </>
           ) : (
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -633,9 +725,7 @@ const Header = () => {
               <SheetContent>
                 <SheetHeader>
                   <SheetTitle>{stepConfig[step]?.title}</SheetTitle>
-                  <SheetDescription>
-                    {stepConfig[step]?.description}
-                  </SheetDescription>
+                  <SheetDescription>{stepConfig[step]?.description}</SheetDescription>
                 </SheetHeader>
                 <AnimatePresence mode="wait">
                   {step === "login" && (
@@ -649,34 +739,23 @@ const Header = () => {
                       <form onSubmit={handleLogin}>
                         <div className="flex items-center justify-between py-2">
                           <span>Use Phone Number</span>
-                          <Switch
-                            checked={usePhone}
-                            onCheckedChange={setUsePhone}
-                          />
+                          <Switch checked={usePhone} onCheckedChange={setUsePhone} />
                         </div>
                         <div className="grid gap-4 py-4">
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label
-                              htmlFor={usePhone ? "phone" : "email"}
-                              className="text-right"
-                            >
+                            <Label htmlFor={usePhone ? "phone" : "email"} className="text-right">
                               {usePhone ? "Phone Number" : "Email"}
                             </Label>
                             <Input
                               id={usePhone ? "phone" : "email"}
                               type={usePhone ? "tel" : "email"}
-                              placeholder={
-                                usePhone ? "0123456789" : "example@email.com"
-                              }
+                              placeholder={usePhone ? "0123456789" : "example@email.com"}
                               className="col-span-3"
-                              value={
-                                usePhone ? credentials.phone : credentials.email
-                              }
+                              value={usePhone ? credentials.phone : credentials.email}
                               onChange={(e) =>
                                 setCredentials({
                                   ...credentials,
-                                  [usePhone ? "phone" : "email"]:
-                                    e.target.value,
+                                  [usePhone ? "phone" : "email"]: e.target.value,
                                 })
                               }
                             />
@@ -700,9 +779,7 @@ const Header = () => {
                             />
                           </div>
                         </div>
-                        {error && (
-                          <p className="text-red-500 text-sm">{error}</p>
-                        )}
+                        {error && <p className="text-red-500 text-sm">{error}</p>}
                         <SheetFooter>
                           <Button type="submit" disabled={isLoading}>
                             {isLoading ? (
@@ -724,10 +801,7 @@ const Header = () => {
                           </span>
                         </div>
                         <div className="mt-4 text-left text-sm text-gray-500">
-                          <RegisterButton
-                            isOpen={isOpen}
-                            setIsOpen={setIsOpen}
-                          />
+                          <RegisterButton isOpen={isOpen} setIsOpen={setIsOpen} />
                         </div>
                       </form>
                     </motion.div>
@@ -742,22 +816,12 @@ const Header = () => {
                     >
                       <div className="grid gap-4">
                         <Label>Email</Label>
-                        <Input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
+                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                         <SheetFooter>
-                          <Button
-                            onClick={handleForgotPassword}
-                            disabled={isLoading}
-                          >
+                          <Button onClick={handleForgotPassword} disabled={isLoading}>
                             Send OTP
                           </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => setStep("login")}
-                          >
+                          <Button variant="outline" onClick={() => setStep("login")}>
                             Back to Login
                           </Button>
                         </SheetFooter>
@@ -788,10 +852,7 @@ const Header = () => {
                           </InputOTPGroup>
                         </InputOTP>
                         <SheetFooter>
-                          <Button
-                            onClick={handleVerifyOTP}
-                            disabled={isLoading}
-                          >
+                          <Button onClick={handleVerifyOTP} disabled={isLoading}>
                             Verify OTP
                           </Button>
                         </SheetFooter>
@@ -814,10 +875,7 @@ const Header = () => {
                           onChange={(e) => setNewPassword(e.target.value)}
                         />
                         <SheetFooter>
-                          <Button
-                            onClick={handleResetPassword}
-                            disabled={isLoading}
-                          >
+                          <Button onClick={handleResetPassword} disabled={isLoading}>
                             Reset Password
                           </Button>
                         </SheetFooter>
@@ -858,14 +916,11 @@ const Header = () => {
             <div className="mt-6 flex flex-col items-center gap-4">
               {isLoggedIn ? (
                 <>
-                  {/* Thay DropdownMenu bằng Popover trong mobile menu */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Avatar className="cursor-pointer">
                         <AvatarImage
-                          src={
-                            user?.imageUrl || "https://github.com/shadcn.png"
-                          }
+                          src={user?.imageUrl || "https://github.com/shadcn.png"}
                           alt="User Avatar"
                         />
                         <AvatarFallback>
@@ -883,6 +938,13 @@ const Header = () => {
                           onClick={() => setProfileOpen(true)}
                         >
                           Profile
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="justify-start"
+                          onClick={() => setIsInventoryOpen(true)}
+                        >
+                          Inventory
                         </Button>
                         <Button
                           variant="ghost"
@@ -984,15 +1046,12 @@ const Header = () => {
                             <CardHeader>
                               <CardTitle>Password</CardTitle>
                               <CardDescription>
-                                Change your password here. After saving, you'll
-                                be logged out.
+                                Change your password here. After saving, you'll be logged out.
                               </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-2">
                               <div className="space-y-1">
-                                <Label htmlFor="current">
-                                  Current Password
-                                </Label>
+                                <Label htmlFor="current">Current Password</Label>
                                 <Input
                                   id="current"
                                   type="password"
@@ -1024,9 +1083,7 @@ const Header = () => {
                                 />
                               </div>
                               <div className="space-y-1">
-                                <Label htmlFor="confirm">
-                                  Confirm New Password
-                                </Label>
+                                <Label htmlFor="confirm">Confirm New Password</Label>
                                 <Input
                                   id="confirm"
                                   type="password"
@@ -1056,6 +1113,41 @@ const Header = () => {
                       </Tabs>
                     </DialogContent>
                   </Dialog>
+                  {/* Dialog Inventory với Tabs */}
+                  <Dialog open={isInventoryOpen} onOpenChange={setIsInventoryOpen}>
+                    <DialogContent className="max-w-4xl p-6">
+                      <DialogHeader>
+                        <DialogTitle>Inventory</DialogTitle>
+                      </DialogHeader>
+                      <div className="mt-4 flex flex-col md:flex-row gap-6">
+                        <div className="flex-1">{/* Khu vực hiển thị Grid */}</div>
+                        <Tabs defaultValue="trees" className="w-full md:w-1/4">
+                          <TabsList className="grid w-full grid-cols-2 md:grid-cols-1 gap-2">
+                            <TabsTrigger value="trees">Trees</TabsTrigger>
+                            <TabsTrigger value="items">Items</TabsTrigger>
+                            <TabsTrigger value="backgrounds">Backgrounds</TabsTrigger>
+                            <TabsTrigger value="music">Music</TabsTrigger>
+                            <TabsTrigger value="avatars">Avatars</TabsTrigger>
+                          </TabsList>
+                          <TabsContent value="trees">
+                            {renderInventoryGrid("trees")}
+                          </TabsContent>
+                          <TabsContent value="items">
+                            {renderInventoryGrid("items")}
+                          </TabsContent>
+                          <TabsContent value="backgrounds">
+                            {renderInventoryGrid("backgrounds")}
+                          </TabsContent>
+                          <TabsContent value="music">
+                            {renderInventoryGrid("music")}
+                          </TabsContent>
+                          <TabsContent value="avatars">
+                            {renderInventoryGrid("avatars")}
+                          </TabsContent>
+                        </Tabs>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </>
               ) : (
                 <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -1072,36 +1164,24 @@ const Header = () => {
                   <SheetContent>
                     <SheetHeader>
                       <SheetTitle>Login</SheetTitle>
-                      <SheetDescription>
-                        Sign in to manage your ZenGarden.
-                      </SheetDescription>
+                      <SheetDescription>Sign in to manage your ZenGarden.</SheetDescription>
                     </SheetHeader>
                     <form onSubmit={handleLogin}>
                       <div className="flex items-center justify-between py-2">
                         <span>Use Phone Number</span>
-                        <Switch
-                          checked={usePhone}
-                          onCheckedChange={setUsePhone}
-                        />
+                        <Switch checked={usePhone} onCheckedChange={setUsePhone} />
                       </div>
                       <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label
-                            htmlFor={usePhone ? "phone" : "email"}
-                            className="text-right"
-                          >
+                          <Label htmlFor={usePhone ? "phone" : "email"} className="text-right">
                             {usePhone ? "Phone Number" : "Email"}
                           </Label>
                           <Input
                             id={usePhone ? "phone" : "email"}
                             type={usePhone ? "tel" : "email"}
-                            placeholder={
-                              usePhone ? "0123456789" : "example@email.com"
-                            }
+                            placeholder={usePhone ? "0123456789" : "example@email.com"}
                             className="col-span-3"
-                            value={
-                              usePhone ? credentials.phone : credentials.email
-                            }
+                            value={usePhone ? credentials.phone : credentials.email}
                             onChange={(e) =>
                               setCredentials({
                                 ...credentials,

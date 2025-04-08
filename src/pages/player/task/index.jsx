@@ -44,6 +44,7 @@ import "react-clock/dist/Clock.css";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
 import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import { StartTask } from "@/services/apiServices/taskService";
+import { PauseTask } from "@/services/apiServices/taskService";
 import "../task/index.css";
 
 // Component con để chọn ngày và giờ cho task
@@ -393,6 +394,17 @@ export default function TaskPage() {
       console.error("Failed to start task:", error);
     }
 
+    // ✅ Cập nhật trạng thái task thành 'running'
+    setTasks((prev) => {
+      const updated = { ...prev };
+      updated[column] = [...updated[column]];
+      updated[column][taskIndex] = {
+        ...updated[column][taskIndex],
+        status: 1, // Running
+      };
+      return updated;
+    });
+
     if (
       currentTask &&
       (currentTask.column !== column || currentTask.taskIndex !== taskIndex)
@@ -424,17 +436,58 @@ export default function TaskPage() {
     setPendingTask(null);
   };
 
-  const toggleTimer = async () => {
-    if (!isRunning && currentTask) {
-      const task = tasks[currentTask.column][currentTask.taskIndex];
+  const toggleTimer = async (column = null, taskIndex = null) => {
+    const columnToUse = column ?? currentTask?.column;
+    const indexToUse = taskIndex ?? currentTask?.taskIndex;
+
+    if (columnToUse === null || indexToUse === null) return;
+
+    const task = tasks[columnToUse][indexToUse];
+
+    if (isRunning) {
+      // Pause
       try {
-        await StartTask(task.id);
+        await PauseTask(task.taskId);
+      } catch (error) {
+        console.error("Failed to pause task:", error);
+      }
+
+      setTasks((prev) => {
+        const updated = { ...prev };
+        updated[columnToUse] = [...updated[columnToUse]];
+        updated[columnToUse][indexToUse] = {
+          ...updated[columnToUse][indexToUse],
+          status: 2,
+        };
+        return updated;
+      });
+
+      setIsRunning(false);
+    } else {
+      // Resume
+      try {
+        await StartTask(task.taskId);
       } catch (error) {
         console.error("Failed to resume task:", error);
       }
-    }
 
-    setIsRunning((prev) => !prev);
+      setTasks((prev) => {
+        const updated = { ...prev };
+        updated[columnToUse] = [...updated[columnToUse]];
+        updated[columnToUse][indexToUse] = {
+          ...updated[columnToUse][indexToUse],
+          status: 1,
+        };
+        return updated;
+      });
+
+      setCurrentTask({
+        column: columnToUse,
+        taskIndex: indexToUse,
+        time: currentTask?.time ?? task.totalDuration * 60,
+      });
+      setIsRunning(true);
+    }
   };
 
   // Chạy bộ đếm thời gian
@@ -458,8 +511,8 @@ export default function TaskPage() {
       activeTabs[columnKey] === "all"
         ? taskList
         : activeTabs[columnKey] === "current"
-        ? taskList.filter((task) => task.status !== 3)
-        : taskList.filter((task) => task.status === 3);
+        ? taskList.filter((task) => task.status !== 4)
+        : taskList.filter((task) => task.status === 4);
 
     return (
       <motion.div
@@ -508,11 +561,15 @@ export default function TaskPage() {
         <ScrollArea className="h-[400px] overflow-y-auto">
           <div className="grid gap-3">
             {filteredTasks.map((task, index) => {
+              const realIndex = tasks[columnKey].findIndex(
+                (t) => t.taskId === task.taskId
+              );
+              const realTask = tasks[columnKey][realIndex];
               const totalDurationSeconds = task.totalDuration * 60;
               const isCurrentTask =
                 currentTask &&
                 currentTask.column === columnKey &&
-                currentTask.taskIndex === index;
+                currentTask.taskIndex === realIndex;
               const remainingTime = isCurrentTask
                 ? currentTask.time
                 : totalDurationSeconds;
@@ -536,10 +593,10 @@ export default function TaskPage() {
 
               return (
                 <motion.div
-                  key={index}
+                  key={realIndex}
                   initial={{ y: 10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  transition={{ duration: 0.3, delay: realIndex * 0.1 }}
                 >
                   <Card className="task-item">
                     <div className="flex-1 flex flex-col justify-between text-left">
@@ -607,26 +664,27 @@ export default function TaskPage() {
                             : `Break: ${formatTime(breakRemaining)}`}
                         </span>
                       )}
-                      {task.status === 3 ? (
+
+                      {task.status === 4 ? (
                         <div className="flex items-center gap-2">
                           <CheckCircle className="w-5 h-5 text-green-600" />
                           <span className="text-sm text-green-600">Done</span>
                         </div>
-                      ) : task.status === 1 ? (
-                        <Button size="sm" onClick={toggleTimer}>
+                      ) : realTask.status === 1 ? (
+                        <Button
+                          onClick={() => toggleTimer(columnKey, realIndex)}
+                        >
                           Pause
                         </Button>
-                      ) : task.status === 2 ? (
+                      ) : realTask.status === 2 ? (
                         <Button
-                          size="sm"
-                          onClick={() => startTimer(columnKey, index)}
+                          onClick={() => toggleTimer(columnKey, realIndex)}
                         >
                           Resume
                         </Button>
-                      ) : task.status === 0 ? (
+                      ) : realTask.status === 0 ? (
                         <Button
-                          size="sm"
-                          onClick={() => startTimer(columnKey, index)}
+                          onClick={() => startTimer(columnKey, realIndex)}
                         >
                           Start
                         </Button>
@@ -641,6 +699,84 @@ export default function TaskPage() {
       </motion.div>
     );
   };
+
+  const handleBeforeUnload = (e) => {
+    if (isRunning && currentTask) {
+      const task = tasks[currentTask.column]?.[currentTask.taskIndex];
+
+      if (task) {
+        const now = Date.now();
+        const dataToSave = {
+          taskId: task.taskId,
+          column: currentTask.column,
+          taskIndex: currentTask.taskIndex,
+          time: currentTask.time,
+          lastUpdated: now,
+        };
+        localStorage.setItem("pausedTask", JSON.stringify(dataToSave));
+
+        // ✅ Gửi request dùng fetch có keepalive
+        fetch(
+          `https://zengarden-be.onrender.com/api/Task/pause/${task.taskId}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({}),
+            keepalive: true, // Cho phép gửi khi tab đang đóng hoặc refresh
+          }
+        )
+          .then(() => {
+            console.log("Paused task via fetch keepalive");
+          })
+          .catch((err) => {
+            console.error("PauseTask (fetch) failed", err);
+          });
+      }
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isRunning, currentTask, tasks]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("pausedTask");
+    if (saved) {
+      const { taskId, column, taskIndex } = JSON.parse(saved);
+
+      // 🔥 Gọi API để lấy task mới nhất
+      fetch(`https://zengarden-be.onrender.com/api/Task/by-id/${taskId}`)
+        .then((res) => res.json())
+        .then((taskFromBE) => {
+          console.log("[RESTORE] Fetched task from BE:", taskFromBE);
+
+          setCurrentTask({
+            column,
+            taskIndex,
+            time: taskFromBE.remainingTime * 60,
+          });
+
+          setIsRunning(false); // Đã pause
+
+          // Cập nhật vào tasks
+          setTasks((prev) => {
+            const updatedColumn = [...(prev[column] || [])];
+            const targetTask = updatedColumn[taskIndex];
+            if (targetTask) {
+              targetTask.status = 2; // Paused
+              targetTask.remainingTime = taskFromBE.remainingTime;
+            }
+            return {
+              ...prev,
+              [column]: updatedColumn,
+            };
+          });
+        });
+    }
+  }, []);
 
   const progress = treeExp
     ? (treeExp.totalXp / (treeExp.totalXp + treeExp.xpToNextLevel)) * 100
@@ -1125,14 +1261,14 @@ export default function TaskPage() {
           <DialogHeader>
             <DialogTitle>Switch Task</DialogTitle>
             <DialogDescription>
-              Bạn có muốn dừng task hiện tại và chuyển sang task mới không?
+              Do you want to switch to this task? Your current task will be paused.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={handleKeepCurrentTask}>
-              Không
+              No
             </Button>
-            <Button onClick={handleSwitchTask}>Có</Button>
+            <Button onClick={handleSwitchTask}>Yes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
