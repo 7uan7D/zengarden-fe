@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Search, Eye } from "lucide-react"
-import { DeleteTaskById } from "@/services/apiServices/taskService"
+import { DeleteTaskById, GetTaskById, UpdateTaskById } from "@/services/apiServices/taskService"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -28,13 +28,49 @@ const TasksTable = () => {
         }
     }, [taskData])
 
+    const [editTask, setEditTask] = useState({
+        taskId: null,
+        taskName: '',
+        taskDescription: '',
+        taskNote: '',
+        totalDuration: 0,
+        startDate: '',
+        endDate: '',
+    })
+
+    useEffect(() => {
+        if (selectedTaskId) {
+            setIsLoading(true)
+            GetTaskById(selectedTaskId)
+                .then((data) => setEditTask({
+                    taskId: data.taskId || null,
+                    taskName: data.taskName || '',
+                    taskDescription: data.taskDescription || '',
+                    taskNote: data.taskNote || 'none',
+                    totalDuration: data.totalDuration || 0,
+                    startDate: data.startDate || '',
+                    endDate: data.endDate || '',
+                }))
+                .catch((error) => console.error('Failed to load task info:', error))
+                .finally(() => setIsLoading(false))
+        }
+    }, [selectedTaskId])
+
+    const handleChange = (e) => {
+        const { id, value } = e.target
+        setEditTask((prev) => ({
+            ...prev,
+            [id]: value,
+        }))
+    }
+
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase()
         setSearchTerm(term)
-        if(taskData) {
+        if (taskData) {
             const filtered = taskData.filter(
-                (task) => 
-                    task.taskId.toString().includes(term) || 
+                (task) =>
+                    task.taskId.toString().includes(term) ||
                     task.taskName.toLowerCase().includes(term)
             )
             setFilteredTasks(filtered)
@@ -57,13 +93,41 @@ const TasksTable = () => {
         return <div>{error.message}</div>
     }
 
+    const handleEditClick = (taskId) => {
+        setSelectedTaskId(taskId)
+        setOpenEditTask(true)
+    }
+
+    const handleSaveChanges = async () => {
+        if (selectedTaskId) {
+            setIsLoading(true)
+            try {
+                // await UpdateTaskById({
+                //     taskId: selectedTaskId,
+                //     ...editTask,
+                // })
+                await UpdateTaskById(selectedTaskId, editTask)
+                toast.success('The information has been updated successfully!')
+
+                setTimeout(() => {
+                    window.location.reload()
+                }, 3000)
+            } catch (error) {
+                console.log('Failed to update task:', error)
+                toast.error('Update information failed!')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+    }
+
     const handleDeleteClick = (taskId) => {
         setSelectedTaskId(taskId)
         setOpenDeleteTask(true)
     }
 
     const handleDeleteTask = async () => {
-        if(selectedTaskId) {
+        if (selectedTaskId) {
             setIsLoading(true)
             try {
                 await DeleteTaskById(selectedTaskId)
@@ -172,13 +236,13 @@ const TasksTable = () => {
                                                 <span
                                                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                                     ${task.status === 0 ? 'bg-gray-200 text-gray-800'
-                                                        : task.status === 1 ? 'bg-blue-200 text-blue-800'
-                                                            : task.status === 2 ? 'bg-yellow-200 text-yellow-800'
-                                                                : task.status === 3 ? 'bg-green-200 text-green-800'
-                                                                    : task.status === 4 ? 'bg-pink-200 text-pink-800'
-                                                                        : task.status === 5 ? 'bg-purple-200 text-purple-800'
-                                                                            : 'bg-red-200 text-red-800'
-                                                    }`}
+                                                            : task.status === 1 ? 'bg-blue-200 text-blue-800'
+                                                                : task.status === 2 ? 'bg-yellow-200 text-yellow-800'
+                                                                    : task.status === 3 ? 'bg-green-200 text-green-800'
+                                                                        : task.status === 4 ? 'bg-pink-200 text-pink-800'
+                                                                            : task.status === 5 ? 'bg-purple-200 text-purple-800'
+                                                                                : 'bg-red-200 text-red-800'
+                                                        }`}
                                                 >
                                                     {task.status === 0 ? 'Not Started'
                                                         : task.status === 1 ? 'In Progress'
@@ -215,19 +279,19 @@ const TasksTable = () => {
                                         {task.taskDescription}
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
-                                        <p className='text-gray-200 text-sm font-bold mr-1'>Focus method:</p> 
+                                        <p className='text-gray-200 text-sm font-bold mr-1'>Focus method:</p>
                                         {task.focusMethodName}
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
-                                        <p className='text-gray-200 text-sm font-bold mr-1'>Task note:</p> 
+                                        <p className='text-gray-200 text-sm font-bold mr-1'>Task note:</p>
                                         {task.taskNote === null ? 'none' : task.taskNote}
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
-                                        <p className='text-gray-200 text-sm font-bold mr-1'>Result:</p> 
+                                        <p className='text-gray-200 text-sm font-bold mr-1'>Result:</p>
                                         {task.taskResult === '' ? 'none' : task.taskResult}
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
-                                        <p className='text-gray-200 text-sm font-bold mr-1'>Start Date: </p> 
+                                        <p className='text-gray-200 text-sm font-bold mr-1'>Start Date: </p>
                                         {new Date(task.startDate).toLocaleDateString('en-US', {
                                             month: 'short',
                                             day: 'numeric',
@@ -238,7 +302,7 @@ const TasksTable = () => {
                                         })}
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
-                                    <p className='text-gray-200 text-sm font-bold mr-1'>End Date: </p> 
+                                        <p className='text-gray-200 text-sm font-bold mr-1'>End Date: </p>
                                         {new Date(task.endDate).toLocaleDateString('en-US', {
                                             month: 'short',
                                             day: 'numeric',
@@ -254,6 +318,97 @@ const TasksTable = () => {
                     </tbody>
                 </table>
             </div>
+
+            <Dialog open={openEditTask} onOpenChange={setOpenEditTask}>
+                <DialogContent className='dialog-overlay bg-gray-800 text-white'>
+                    <DialogHeader>
+                        <DialogTitle>Edit Task</DialogTitle>
+                    </DialogHeader>
+
+                    <Tabs className='w-[462px]'>
+                        <TabsContent className='p-4'>
+                            <Card className='bg-gray-800 text-white'>
+                                <CardHeader>
+                                    <CardDescription className='text-gray-400'>
+                                        View and update your task details here.
+                                    </CardDescription>
+                                </CardHeader>
+
+                                <CardContent className='space-y-2 bg-gray-800'>
+                                    {editTask ? (
+                                        <>
+                                            <div className='space-y-2'>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='taskName'>Task Name</Label>
+                                                    <Input
+                                                        id='taskName'
+                                                        value={editTask.taskName}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='taskDescription'>Description</Label>
+                                                    <Input
+                                                        id='taskDescription'
+                                                        value={editTask.taskDescription}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='taskNote'>Task Note</Label>
+                                                    <Input
+                                                        id='taskNote'
+                                                        value={editTask.taskNote}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='totalDuration'>Total Duration (Minutes)</Label>
+                                                    <Input
+                                                        id='totalDuration'
+                                                        type='number'
+                                                        value={editTask.totalDuration}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='startDate'>Start Date</Label>
+                                                    <Input
+                                                        id='startDate'
+                                                        type='datetime-local'
+                                                        value={editTask.startDate}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='endDate'>End Date</Label>
+                                                    <Input
+                                                        id='endDate'
+                                                        type='datetime-local'
+                                                        value={editTask.endDate}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className='text-sm text-gray-500'>Loading task...</p>
+                                    )}
+                                </CardContent>
+                                <CardFooter>
+                                    <Button
+                                        className='bg-[#83aa6c] text-white'
+                                        onClick={handleSaveChanges}
+                                        disabled={isLoading}
+                                    >
+                                        Save Changes
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                </DialogContent>
+            </Dialog>
 
             <Dialog open={openDeleteTask} onOpenChange={setOpenDeleteTask}>
                 <DialogContent className='dialog-overlay bg-gray-800 text-white'>
@@ -292,7 +447,7 @@ const TasksTable = () => {
                             </Card>
                         </TabsContent>
                     </Tabs>
-                        
+
                 </DialogContent>
             </Dialog>
         </motion.div>

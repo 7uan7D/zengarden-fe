@@ -25,6 +25,11 @@ export async function GetTaskByUserTreeId(userTreeId) {
   return response.data;
 }
 
+export async function UpdateTaskById(taskId, taskData) {
+  const response = await axios.put(`/Task/Update-Task/${taskId}`, taskData);
+  return response.data;
+}
+
 export async function DeleteTaskById(taskId) {
   const response = await axios.delete(`/Task/${taskId}`);
   return response.data;
