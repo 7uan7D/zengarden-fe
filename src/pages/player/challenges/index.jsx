@@ -22,9 +22,10 @@ import {
 import { motion } from "framer-motion";
 import parseJwt from "@/services/parseJwt";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
-import { GetAllChallenges, GetChallengeById } from "@/services/apiServices/challengeService";
+import { GetAllChallenges, GetChallengeById, JoinChallengeById } from "@/services/apiServices/challengeService";
 import { GetAllUserChallenges } from "@/services/apiServices/userChallengeService";
 import { Link } from "react-router-dom";
+import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
 
 const categories = ["My Challenges", "Get Challenges"];
 
@@ -158,8 +159,8 @@ export default function Challenges() {
     fetchUserChallenges();
   }, []);
 
-  console.log("userChallengeInfo", userChallengeInfo);
-  console.log("userChallengesData", userChallengesData);
+  // console.log("userChallengeInfo", userChallengeInfo);
+  // console.log("userChallengesData", userChallengesData);
 
   const filteredUserChallenges = userChallengesData.filter((item) => {
     if (typeFilters.length === 0) return true;
@@ -168,6 +169,55 @@ export default function Challenges() {
       .map((type) => type.challengeTypeId);
     return selectedTypeIds.includes(item.challengeTypeId);
   });
+
+  const [UserTrees, setUserTrees] = useState([]);
+  useEffect(() => {
+    const fetchTrees = async () => {
+      if (!token) return;
+      try {
+        const userId = parseJwt(token).sub;
+        const data = await GetUserTreeByUserId(userId);
+        if (data) {
+          setUserTrees(data);
+        }
+      } catch (error) {
+        console.error("Error fetching user trees:", error);
+      }
+    };
+
+    fetchTrees();
+  }, []);
+
+  console.log("UserTrees", UserTrees);
+
+  const handleJoinChallenge = async (challengeId) => {
+    if (!token) return;
+
+    if (!UserTrees || UserTrees.length === 0 || !UserTrees[0]?.userTreeId) {
+      console.error("User tree is not available.");
+      return;
+    }
+
+    const userTreeId = UserTrees[0].userTreeId;
+    console.log("Joining challenge with ID:", challengeId, "userTreeId:", userTreeId);
+
+    try {
+      const data = await JoinChallengeById(challengeId, { userTreeId: userTreeId });
+      console.log("Join challenge status: ", data);
+      
+      // handle join challenge logic here
+    } catch (error) {
+      console.error("Error joining challenge:", error);
+    }
+  }
+
+  if (!token) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
+        <h1 className="text-2xl font-bold">Please log in to view your challenges</h1>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -260,11 +310,20 @@ export default function Challenges() {
                         <Popover>
                           <Link to={`/challenges/${item.challengeId}`}>
                             <Card className="relative">
-                              {item.challengeId === 1 && cat === "Get Challenges" && (
+                              {/* check if item.challengeId appears in userChallengesData */}
+                              {userChallengesData.some(
+                                (userChallenge) => userChallenge.challengeId === item.challengeId
+                              ) && cat === "Get Challenges" && (
                                 <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
                                   Joined
                                 </span>
                               )}
+{/*                               
+                              {item.challengeId === 1 && cat === "Get Challenges" && (
+                                <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
+                                  Joined
+                                </span>
+                              )} */}
                             
                               <CardContent className="flex flex-col items-start p-4 cursor-pointer">
                                 {/* {cat === "Avatar" ? (
@@ -343,16 +402,27 @@ export default function Challenges() {
                                 <p className="text-sm text-gray-500 flex items-center text-left">
                                   {item.description}
                                 </p>
-
+                                
+                                
+                                {/* if cat === "My Challenges" */}
                                 {cat === "My Challenges" ? (
                                   <Button className="mt-2" variant="outline">
                                     <BookX className="mr-2 h-4 w-4" /> Leave
                                     Challenge
                                   </Button>
                                 ) : (
-                                  <Button className="mt-2" variant="outline">
-                                    <BookCheck className="mr-2 h-4 w-4" /> Get
-                                    Challenge
+                                  <></>
+                                )}
+
+                                {userChallengesData.some(
+                                  (userChallenge) => userChallenge.challengeId === item.challengeId
+                                ) ? (
+                                  <Button className="mt-2 text-orange-800 font-bold" variant="outline">
+                                    <BookX className="mr-2 h-4 w-4" /> Leave Challenge
+                                  </Button>
+                                ) : (
+                                  <Button className="mt-2 text-cyan-800 font-bold" variant="outline" onClick={() => handleJoinChallenge(item.challengeId)}>
+                                    <BookCheck className="mr-2 h-4 w-4" /> Join Challenge
                                   </Button>
                                 )}
                               </CardContent>
@@ -448,17 +518,9 @@ export default function Challenges() {
                                   {item.description}
                                 </p>
 
-                                {cat === "My Challenges" ? (
-                                  <Button className="mt-2" variant="outline">
-                                    <BookX className="mr-2 h-4 w-4" /> Leave
-                                    Challenge
-                                  </Button>
-                                ) : (
-                                  <Button className="mt-2" variant="outline">
-                                    <BookCheck className="mr-2 h-4 w-4" /> Get
-                                    Challenge
-                                  </Button>
-                                )}
+                                <Button className="mt-2 text-orange-800 font-bold" variant="outline">
+                                  <BookX className="mr-2 h-4 w-4" /> Leave Challenge
+                                </Button>
                               </CardContent>
                             </Card>
                             <PopoverContent
