@@ -953,14 +953,14 @@ export default function TaskPage() {
           <DialogHeader>
             <DialogTitle>Switch Task</DialogTitle>
             <DialogDescription>
-              Bạn có muốn dừng task hiện tại và chuyển sang task mới không?
+              Do you want to switch to this task? Your current task will be paused.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={handleKeepCurrentTask}>
-              Không
+              No
             </Button>
-            <Button onClick={handleSwitchTask}>Có</Button>
+            <Button onClick={handleSwitchTask}>Yes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -8,7 +8,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Leaf, ChevronDown } from "lucide-react";
+import { Leaf, ChevronDown, Grid, List } from "lucide-react"; // Thêm icon Grid và List
 import { Input } from "@/components/ui/input";
 import {
   Popover,
@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import "../home/index.css";
 
-// Dữ liệu mẫu cho danh sách cây (đã bổ sung quantity cho owned: true)
+// Dữ liệu mẫu cho danh sách cây
 const treeData = {
   legendary: [
     { id: 19, name: "Tree of Life", image: "/tree-19.png", level: 4, xp: 0, maxXp: 0, description: "A mythical tree of eternal vitality.", owned: true, quantity: 2 },
@@ -58,6 +58,13 @@ const Tree = () => {
     legendary: "text-orange-500",
   };
 
+  const borderStyles = {
+    common: "border-gray-600",
+    rare: "border-blue-600",
+    epic: "border-purple-800",
+    legendary: "border-orange-500",
+  };
+
   const [openCategories, setOpenCategories] = useState({
     legendary: true,
     epic: true,
@@ -66,6 +73,7 @@ const Tree = () => {
   });
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("list"); // Thêm state để chuyển đổi chế độ xem
 
   const toggleCategory = (category) => {
     setOpenCategories((prev) => ({
@@ -74,7 +82,7 @@ const Tree = () => {
     }));
   };
 
-  // Hàm lọc cây dựa trên search và filter
+  // Hàm lọc cây
   const filterTrees = (trees, category) => {
     return trees.filter((tree) => {
       const matchesSearch = tree.name.toLowerCase().includes(search.toLowerCase());
@@ -83,17 +91,15 @@ const Tree = () => {
     });
   };
 
-  // Danh sách category theo thứ tự mặc định
   const defaultOrder = ["legendary", "epic", "rare", "common"];
 
-  // Sắp xếp lại thứ tự category dựa trên filter
   const getOrderedCategories = () => {
     if (filter === "all") return defaultOrder;
     return [filter, ...defaultOrder.filter((cat) => cat !== filter)];
   };
 
-  // Render category
-  const renderCategory = (category) => {
+  // Render danh sách cây theo chế độ List
+  const renderListView = (category) => {
     const filteredTrees = filterTrees(treeData[category], category);
     if (filteredTrees.length === 0) return null;
 
@@ -124,6 +130,23 @@ const Tree = () => {
     );
   };
 
+  // Render danh sách cây theo chế độ Grid
+  const renderGridView = () => {
+    const allTrees = defaultOrder
+      .flatMap((category) => filterTrees(treeData[category], category))
+      .sort((a, b) => a.id - b.id); // Sắp xếp theo ID nếu muốn
+
+    if (allTrees.length === 0) return <p className="text-gray-500">No trees found.</p>;
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {allTrees.map((tree) => (
+          <TreeCard key={tree.id} tree={tree} borderStyle={borderStyles[defaultOrder.find(cat => treeData[cat].some(t => t.id === tree.id))]} />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <motion.div
       className="min-h-screen flex flex-col mt-20"
@@ -139,59 +162,34 @@ const Tree = () => {
               border border-gray-300 dark:border-gray-700 my-6"
         >
           <h2 className="text-xl font-semibold mb-4">Filters</h2>
-
           <Input
             placeholder="Search trees..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="mb-4"
           />
-
           <Popover>
             <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-between text-left"
-              >
+              <Button variant="outline" className="w-full justify-between text-left">
                 {filter === "all" ? "All" : filter.charAt(0).toUpperCase() + filter.slice(1)}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-52 p-1">
               <div className="flex flex-col gap-1">
-                <Button
-                  variant="ghost"
-                  className="justify-start hover:bg-gray-100 bg-white"
-                  onClick={() => setFilter("all")}
-                >
+                <Button variant="ghost" className="justify-start hover:bg-gray-100 bg-white" onClick={() => setFilter("all")}>
                   All
                 </Button>
-                <Button
-                  variant="ghost"
-                  className="justify-start hover:bg-gray-100 bg-white"
-                  onClick={() => setFilter("common")}
-                >
+                <Button variant="ghost" className="justify-start hover:bg-gray-100 bg-white" onClick={() => setFilter("common")}>
                   Common
                 </Button>
-                <Button
-                  variant="ghost"
-                  className="justify-start hover:bg-gray-100 bg-white"
-                  onClick={() => setFilter("rare")}
-                >
+                <Button variant="ghost" className="justify-start hover:bg-gray-100 bg-white" onClick={() => setFilter("rare")}>
                   Rare
                 </Button>
-                <Button
-                  variant="ghost"
-                  className="justify-start hover:bg-gray-100 bg-white"
-                  onClick={() => setFilter("epic")}
-                >
+                <Button variant="ghost" className="justify-start hover:bg-gray-100 bg-white" onClick={() => setFilter("epic")}>
                   Epic
                 </Button>
-                <Button
-                  variant="ghost"
-                  className="justify-start hover:bg-gray-100 bg-white"
-                  onClick={() => setFilter("legendary")}
-                >
+                <Button variant="ghost" className="justify-start hover:bg-gray-100 bg-white" onClick={() => setFilter("legendary")}>
                   Legendary
                 </Button>
               </div>
@@ -201,20 +199,39 @@ const Tree = () => {
 
         {/* Main Content */}
         <div className="flex-1 p-6 overflow-auto">
-          <div className="flex items-center gap-2 mb-6">
-            <Leaf className="w-6 h-6 text-green-600" />
-            <h1 className="text-3xl font-bold text-gray-800">Your Trees</h1>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Leaf className="w-6 h-6 text-green-600" />
+              <h1 className="text-3xl font-bold text-gray-800">Your Trees</h1>
+            </div>
+            {/* Nút chuyển đổi chế độ xem */}
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
+                onClick={() => setViewMode("list")}
+              >
+                <List className="w-4 h-4 mr-2" /> List
+              </Button>
+              <Button
+                variant={viewMode === "grid" ? "default" : "outline"}
+                onClick={() => setViewMode("grid")}
+              >
+                <Grid className="w-4 h-4 mr-2" /> Grid
+              </Button>
+            </div>
           </div>
 
-          {getOrderedCategories().map((category) => renderCategory(category))}
+          {/* Render theo chế độ xem */}
+          {viewMode === "list" && getOrderedCategories().map((category) => renderListView(category))}
+          {viewMode === "grid" && renderGridView()}
         </div>
       </div>
     </motion.div>
   );
 };
 
-// Component TreeCard (đã bổ sung hiển thị quantity ở góc phải)
-const TreeCard = ({ tree }) => {
+// Component TreeCard (đã thêm borderStyle prop)
+const TreeCard = ({ tree, borderStyle }) => {
   const [isOpen, setIsOpen] = useState(false);
   const progress = tree.level === 4 ? 100 : (tree.xp / tree.maxXp) * 100;
   const progressText = tree.level === 4 ? "Max XP" : `${tree.xp}/${tree.maxXp} XP`;
@@ -230,10 +247,9 @@ const TreeCard = ({ tree }) => {
           <Card
             className={`p-4 flex flex-col items-center cursor-pointer hover:shadow-lg transition-shadow ${
               tree.owned ? "" : "opacity-50"
-            }`}
+            } ${borderStyle ? `border-2 ${borderStyle}` : ""}`} // Thêm viền nếu có borderStyle
           >
             <CardContent className="text-center pb-0 relative w-full">
-              {/* Hiển thị số lượng ở góc phải nếu owned: true */}
               {tree.owned && (
                 <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-semibold rounded-full w-6 h-6 flex items-center justify-center">
                   {tree.quantity}
@@ -245,7 +261,6 @@ const TreeCard = ({ tree }) => {
               </p>
               <div className="relative w-full mt-2">
                 <Progress value={progress} className="w-full h-6" />
-                {/*Hiển thị màu chữ của xp ngoài và màu thanh tiến độ*/}
                 <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-800 font-medium bg-white bg-opacity-50">
                   {progressText}
                 </span>
@@ -267,7 +282,6 @@ const TreeCard = ({ tree }) => {
               {tree.name}
             </h3>
             <div className="relative w-full">
-                {/* Tăng kích cỡ thanh process */}
               <Progress value={progress} className="w-full h-6" />
               <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-800 font-medium bg-white bg-opacity-50">
                 {progressText}
@@ -277,7 +291,6 @@ const TreeCard = ({ tree }) => {
               {tree.level === 4 ? "Level 4" : `Level ${tree.level}`}
             </p>
             <p className="text-sm text-gray-500 text-center">{tree.description}</p>
-            {/* Hiển thị số lượng trong dialog nếu owned: true */}
             {tree.owned && (
               <p className="text-sm text-green-600 font-semibold">Quantity: {tree.quantity}</p>
             )}
