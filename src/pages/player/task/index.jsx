@@ -564,6 +564,7 @@ export default function TaskPage() {
               const realIndex = tasks[columnKey].findIndex(
                 (t) => t.taskId === task.taskId
               );
+              const realTask = tasks[columnKey][realIndex];
               const totalDurationSeconds = task.totalDuration * 60;
               const isCurrentTask =
                 currentTask &&
@@ -663,28 +664,26 @@ export default function TaskPage() {
                             : `Break: ${formatTime(breakRemaining)}`}
                         </span>
                       )}
-                      {task.status === 3 ? (
+
+                      {task.status === 4 ? (
                         <div className="flex items-center gap-2">
                           <CheckCircle className="w-5 h-5 text-green-600" />
                           <span className="text-sm text-green-600">Done</span>
                         </div>
-                      ) : task.status === 1 ? (
+                      ) : realTask.status === 1 ? (
                         <Button
-                          size="sm"
                           onClick={() => toggleTimer(columnKey, realIndex)}
                         >
                           Pause
                         </Button>
-                      ) : task.status === 2 ? (
+                      ) : realTask.status === 2 ? (
                         <Button
-                          size="sm"
                           onClick={() => toggleTimer(columnKey, realIndex)}
                         >
                           Resume
                         </Button>
-                      ) : task.status === 0 ? (
+                      ) : realTask.status === 0 ? (
                         <Button
-                          size="sm"
                           onClick={() => startTimer(columnKey, realIndex)}
                         >
                           Start
@@ -700,6 +699,84 @@ export default function TaskPage() {
       </motion.div>
     );
   };
+
+  const handleBeforeUnload = (e) => {
+    if (isRunning && currentTask) {
+      const task = tasks[currentTask.column]?.[currentTask.taskIndex];
+
+      if (task) {
+        const now = Date.now();
+        const dataToSave = {
+          taskId: task.taskId,
+          column: currentTask.column,
+          taskIndex: currentTask.taskIndex,
+          time: currentTask.time,
+          lastUpdated: now,
+        };
+        localStorage.setItem("pausedTask", JSON.stringify(dataToSave));
+
+        // ✅ Gửi request dùng fetch có keepalive
+        fetch(
+          `https://zengarden-be.onrender.com/api/Task/pause/${task.taskId}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({}),
+            keepalive: true, // Cho phép gửi khi tab đang đóng hoặc refresh
+          }
+        )
+          .then(() => {
+            console.log("Paused task via fetch keepalive");
+          })
+          .catch((err) => {
+            console.error("PauseTask (fetch) failed", err);
+          });
+      }
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isRunning, currentTask, tasks]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("pausedTask");
+    if (saved) {
+      const { taskId, column, taskIndex } = JSON.parse(saved);
+
+      // 🔥 Gọi API để lấy task mới nhất
+      fetch(`https://zengarden-be.onrender.com/api/Task/by-id/${taskId}`)
+        .then((res) => res.json())
+        .then((taskFromBE) => {
+          console.log("[RESTORE] Fetched task from BE:", taskFromBE);
+
+          setCurrentTask({
+            column,
+            taskIndex,
+            time: taskFromBE.remainingTime * 60,
+          });
+
+          setIsRunning(false); // Đã pause
+
+          // Cập nhật vào tasks
+          setTasks((prev) => {
+            const updatedColumn = [...(prev[column] || [])];
+            const targetTask = updatedColumn[taskIndex];
+            if (targetTask) {
+              targetTask.status = 2; // Paused
+              targetTask.remainingTime = taskFromBE.remainingTime;
+            }
+            return {
+              ...prev,
+              [column]: updatedColumn,
+            };
+          });
+        });
+    }
+  }, []);
 
   const progress = treeExp
     ? (treeExp.totalXp / (treeExp.totalXp + treeExp.xpToNextLevel)) * 100
