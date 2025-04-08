@@ -151,6 +151,9 @@ const UsersTable = () => {
                 <table className='min-w-full divide-y divide-gray-700'>
                     <thead>
                         <tr>
+                            <th className='px-2 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                                User ID
+                            </th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 User Name
                             </th>
@@ -181,6 +184,9 @@ const UsersTable = () => {
                                 animate={{ opacity: 1 }}
                                 transition={{ duration: 0.3 }}
                             >
+                                <td className='px-2 py-4 text-left whitespace-nowrap'>
+                                    <div className='text-sm text-gray-300'>{user.userId}</div>
+                                </td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap'>
                                     <div className='flex items-center'>
                                         <div className='flex-shrink-0 h-10 w-10'>

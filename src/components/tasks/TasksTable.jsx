@@ -281,7 +281,7 @@ const TasksTable = () => {
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Focus method:</p>
-                                        {task.focusMethodName}
+                                        {task.focusMethodName === '' ? 'none' : task.focusMethodName === null ? 'none' : task.focusMethodName}
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Task note:</p>
@@ -364,7 +364,7 @@ const TasksTable = () => {
                                                 />
                                             </div>
                                             <div className='space-y-1'>
-                                                <Label htmlFor='totalDuration'>Total Duration </Label>
+                                                <Label htmlFor='totalDuration'>Total Duration ({('>')} 30 mins) </Label>
                                                 <Input
                                                     id='totalDuration'
                                                     type='number'
@@ -374,7 +374,7 @@ const TasksTable = () => {
                                                 />
                                             </div>
                                             <div className='space-y-1'>
-                                                <Label htmlFor='workDuration'>Work Duration (minutes)</Label>
+                                                <Label htmlFor='workDuration'>Work Duration (mins)</Label>
                                                 <Input
                                                     id='workDuration'
                                                     type='number'
@@ -384,7 +384,7 @@ const TasksTable = () => {
                                                 />
                                             </div>
                                             <div className='space-y-1'>
-                                                <Label htmlFor='breakTime'>Break Time (minutes)</Label>
+                                                <Label htmlFor='breakTime'>Break Time (mins)</Label>
                                                 <Input
                                                     id='breakTime'
                                                     type='number'
