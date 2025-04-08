@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import "../react_player/index.css";
 
-// Danh sách video mẫu ban đầu, được sử dụng nếu không có dữ liệu trong localStorage
+// Danh sách video mẫu ban đầu
 const initialVideoList = [
   { id: 1, title: "Rick Astley - Never Gonna Give You Up", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
   { id: 2, title: "Stephen Sanchez - High", url: "https://www.youtube.com/watch?v=XbAFmBIY6DQ" },
@@ -27,20 +27,20 @@ const VideoPlayer = () => {
   // State để lưu URL mới mà người dùng nhập vào input
   const [newVideoUrl, setNewVideoUrl] = useState("");
 
-  // Hook useEffect để đồng bộ videoList với localStorage mỗi khi danh sách thay đổi
+  // Đồng bộ videoList với localStorage
   useEffect(() => {
     console.log("Current videoList:", videoList);
     localStorage.setItem("videoList", JSON.stringify(videoList));
   }, [videoList]);
 
-  // Hàm xử lý khi người dùng chọn một video từ danh sách
+  // Hàm chọn video
   const handleVideoSelect = (url) => {
     console.log("Selecting video:", url);
     setSelectedVideo(url);
     setPlaying(true);
   };
 
-  // Hàm xử lý khi người dùng thêm video mới từ input
+  // Hàm thêm video mới
   const handleAddVideo = () => {
     if (newVideoUrl.trim() === "") return;
 
@@ -63,7 +63,7 @@ const VideoPlayer = () => {
     setPlaying(true);
   };
 
-  // Hàm xử lý khi người dùng xóa một video khỏi danh sách
+  // Hàm xóa video
   const handleRemoveVideo = (id, url) => {
     // Lọc danh sách để loại bỏ video có id tương ứng
     setVideoList((prevList) => {
@@ -81,7 +81,24 @@ const VideoPlayer = () => {
     });
   };
 
-  // Phần render giao diện
+  // Hàm xử lý khi video kết thúc
+  const handleVideoEnd = () => {
+    const currentIndex = videoList.findIndex((video) => video.url === selectedVideo);
+    const nextIndex = currentIndex + 1;
+
+    // Nếu còn video tiếp theo trong danh sách
+    if (nextIndex < videoList.length) {
+      const nextVideo = videoList[nextIndex];
+      setSelectedVideo(nextVideo.url);
+      setPlaying(true);
+    } else {
+      // Nếu hết danh sách, dừng phát hoặc quay lại video đầu tiên (tùy chọn)
+      setPlaying(false);
+      // Để quay lại video đầu tiên, uncomment dòng dưới
+      // setSelectedVideo(videoList[0].url);
+    }
+  };
+
   return (
     <div className="video-player-container">
       <div className="video-display">
@@ -90,10 +107,12 @@ const VideoPlayer = () => {
             url={selectedVideo}
             playing={playing}
             controls={true}
+            playsinline={true}
             width={"100%"}
             height={"100%"}
             onPlay={() => setPlaying(true)}
             onPause={() => setPlaying(false)}
+            onEnded={handleVideoEnd} // Thêm sự kiện onEnded
             onError={(e) => console.log("Error playing video:", e)}
           />
         ) : (
@@ -121,11 +140,9 @@ const VideoPlayer = () => {
         <ul className="video-list-items">
           {videoList.map((video) => (
             <li
-              key={video.id} // Key duy nhất để React quản lý danh sách
+              key={video.id}
               className={`video-item ${selectedVideo === video.url ? "active" : ""}`}
-              onClick={() => {
-                handleVideoSelect(video.url);
-              }}
+              onClick={() => handleVideoSelect(video.url)}
             >
               <span>{video.title}</span>
               <Button

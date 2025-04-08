@@ -12,6 +12,7 @@ import "../home/index.css";
 import QuillEditor from "@/components/quill_js/index.jsx";
 import VideoPlayer from "@/components/react_player/index.jsx";
 import PDFEditor from "@/components/react_pdf/index.jsx";
+import "../workspace/index.css";
 
 // Danh sách cây mẫu trong vườn
 const gardenTrees = [
