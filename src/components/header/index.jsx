@@ -97,6 +97,7 @@ const Header = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [selectedItem, setSelectedItem] = useState(null); // Thêm state cho item được chọn
   const navItems = [
     { path: "/task", label: "Tasks" },
     { path: "/workspace", label: "Workspace" },
@@ -109,28 +110,137 @@ const Header = () => {
   const [notificationCount, setNotificationCount] = useState(0);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
 
-  // Dữ liệu mẫu cho Inventory (có thêm description)
+  // Dữ liệu mẫu cho Inventory với category
   const inventoryData = {
     trees: [
-      { id: 1, name: "Oak", image: "/tree-1.png", owned: true, quantity: 2, description: "A sturdy tree with strong wood." },
-      { id: 2, name: "Birch", image: "/tree-2.png", owned: false, description: "A slender tree with white bark." },
+      { id: 1, name: "Oak", image: "/tree-1.png", owned: true, quantity: 2, description: "A sturdy tree with strong wood.", category: "trees" },
+      // Bỏ Birch vì owned: false
     ],
     items: [
-      { id: 3, name: "Watering Can", image: "/item-1.png", owned: true, quantity: 1, description: "Used to water your plants." },
-      { id: 4, name: "Fertilizer", image: "/item-2.png", owned: false, description: "Boosts plant growth." },
+      { id: 3, name: "Watering Can", image: "/item-1.png", owned: true, quantity: 1, description: "Used to water your plants.", category: "items" },
+      // Bỏ Fertilizer vì owned: false
     ],
     backgrounds: [
-      { id: 5, name: "Forest", image: "/bg-1.png", owned: true, quantity: 1, description: "A lush green forest backdrop." },
-      { id: 6, name: "Desert", image: "/bg-2.png", owned: false, description: "A sandy desert scene." },
+      { id: 5, name: "Forest", image: "/bg-1.png", owned: true, quantity: 1, description: "A lush green forest backdrop.", category: "backgrounds" },
+      // Bỏ Desert vì owned: false
     ],
     music: [
-      { id: 7, name: "Calm Breeze", image: "/music-1.png", owned: true, quantity: 1, description: "Soothing wind sounds." },
-      { id: 8, name: "Rainfall", image: "/music-2.png", owned: false, description: "Gentle rain ambiance." },
+      { id: 7, name: "Calm Breeze", image: "/music-1.png", owned: true, quantity: 1, description: "Soothing wind sounds.", category: "music" },
+      // Bỏ Rainfall vì owned: false
     ],
     avatars: [
-      { id: 9, name: "Farmer Hat", image: "/avatar-1.png", owned: true, quantity: 1, description: "A classic farmer's hat." },
-      { id: 10, name: "Wizard Robe", image: "/avatar-2.png", owned: false, description: "A mystical robe for wizards." },
+      { id: 9, name: "Farmer Hat", image: "/avatar-1.png", owned: true, quantity: 1, description: "A classic farmer's hat.", category: "avatars" },
+      // Bỏ Wizard Robe vì owned: false
     ],
+  };
+
+  // Component InventoryItemCard
+  const InventoryItemCard = ({ item, onSelect, isSelected }) => {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              onClick={() => onSelect(item)}
+              className={`p-4 flex flex-col items-center gap-2 cursor-pointer rounded-lg transition-all ${isSelected
+                  ? "bg-green-100 border-green-500"
+                  : "hover:bg-gray-100 border-gray-200"
+                } border`}
+            >
+              <img
+                src={item.image}
+                alt={item.name}
+                className="w-16 h-16 object-cover rounded-md"
+              />
+              <div className="text-center">
+                <p className="font-semibold text-gray-800 text-sm">{item.name}</p>
+                <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+              </div>
+            </motion.div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="font-semibold">{item.name}</p>
+            <p className="text-sm text-gray-600">{item.description}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
+  // Component hiển thị chi tiết item
+  const ItemDetail = ({ selectedItem }) => {
+    if (!selectedItem) {
+      return (
+        <div className="flex-1 flex items-center justify-center h-full">
+          <p className="text-gray-500">Select an item to view details</p>
+        </div>
+      );
+    }
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="p-6 bg-white rounded-lg shadow-md flex flex-col items-center gap-4"
+      >
+        <img
+          src={selectedItem.image}
+          alt={selectedItem.name}
+          className="w-32 h-32 object-cover rounded-lg"
+        />
+        <div className="text-center">
+          <h3 className="text-lg font-bold text-gray-800">
+            {selectedItem.name}
+          </h3>
+          <p className="text-sm text-gray-600 mt-1">{selectedItem.description}</p>
+          <p className="text-sm text-gray-500 mt-2">
+            {selectedItem.owned
+              ? `Quantity: ${selectedItem.quantity}`
+              : "Not Owned"}
+          </p>
+        </div>
+        {selectedItem.owned && (
+          <Button className="mt-4 bg-green-600 hover:bg-green-700 text-white">
+            {selectedItem.category === "avatars" ||
+              selectedItem.category === "backgrounds" ||
+              selectedItem.category === "music"
+              ? "Equip"
+              : "Use"}
+          </Button>
+        )}
+        {!selectedItem.owned && (
+          <Button
+            variant="outline"
+            className="mt-4 text-green-600 border-green-600 hover:bg-green-50"
+          >
+            Purchase
+          </Button>
+        )}
+      </motion.div>
+    );
+  };
+
+  // Hàm render danh sách items
+  const renderInventoryList = (category) => {
+    const items = inventoryData[category];
+    if (!items || items.length === 0) return <p className="text-gray-500 p-4">No owned items in this category.</p>;
+
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4">
+        {items.map((item) => (
+          <InventoryItemCard
+            key={item.id}
+            item={item}
+            onSelect={setSelectedItem}
+            isSelected={selectedItem?.id === item.id}
+          />
+        ))}
+      </div>
+    );
   };
 
   const handleForgotPassword = async () => {
@@ -323,64 +433,10 @@ const Header = () => {
     }
   };
 
-  // Component InventoryItemCard với Tooltip khi hover
-  const InventoryItemCard = ({ item }) => {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Card
-                className={`p-4 flex flex-col items-center cursor-pointer hover:shadow-lg transition-shadow ${
-                  item.owned ? "" : "opacity-50"
-                }`}
-              >
-                <CardContent className="text-center pb-0 relative w-full">
-                  {item.owned && (
-                    <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-semibold rounded-full w-6 h-6 flex items-center justify-center">
-                      {item.quantity}
-                    </span>
-                  )}
-                  <img src={item.image} alt={item.name} className="w-24 h-24 mb-2 mx-auto" />
-                  <p className={`font-semibold ${item.owned ? "text-gray-800" : "text-gray-500"}`}>
-                    {item.name}
-                  </p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="font-semibold">{item.name}</p>
-            <p className="text-sm text-gray-600">{item.description}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  };
-
-  // Hàm render Grid cho từng danh mục
-  const renderInventoryGrid = (category) => {
-    const items = inventoryData[category];
-    if (!items || items.length === 0) return <p className="text-gray-500">No items found.</p>;
-
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {items.map((item) => (
-          <InventoryItemCard key={item.id} item={item} />
-        ))}
-      </div>
-    );
-  };
-
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        isScrolled ? "bg-white shadow-md" : "bg-transparent"
-      }`}
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-white shadow-md" : "bg-transparent"
+        }`}
     >
       <nav className="flex items-center justify-between w-full p-6 py-2 custom-nav">
         {/* Logo và Nav Items */}
@@ -398,11 +454,10 @@ const Header = () => {
               <div
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`text-sm font-semibold cursor-pointer transition-colors duration-200 ${
-                  location.pathname === item.path
-                    ? "text-green-600 font-bold"
-                    : "text-gray-900 hover:text-green-600"
-                }`}
+                className={`text-sm font-semibold cursor-pointer transition-colors duration-200 ${location.pathname === item.path
+                  ? "text-green-600 font-bold"
+                  : "text-gray-900 hover:text-green-600"
+                  }`}
               >
                 {item.label}
               </div>
@@ -674,39 +729,36 @@ const Header = () => {
                   </Tabs>
                 </DialogContent>
               </Dialog>
-              {/* Dialog Inventory với Tabs */}
+              {/* Dialog Inventory mới */}
               <Dialog open={isInventoryOpen} onOpenChange={setIsInventoryOpen}>
-                <DialogContent className="max-w-4xl p-6">
-                  <DialogHeader>
-                    <DialogTitle>Inventory</DialogTitle>
+                <DialogContent className="max-w-5xl max-h-[80vh] p-0 overflow-hidden">
+                  <DialogHeader className="p-6 pb-0">
+                    <DialogTitle className="text-2xl font-bold">Inventory</DialogTitle>
                   </DialogHeader>
-                  <div className="mt-4 flex flex-col md:flex-row gap-6">
-                    <div className="flex-1">{/* Khu vực hiển thị Grid */}</div>
-                    <Tabs defaultValue="trees" className="w-full md:w-1/4">
-                      <TabsList className="grid w-full grid-cols-2 md:grid-cols-1 gap-2">
-                        <TabsTrigger value="trees">Trees</TabsTrigger>
-                        <TabsTrigger value="items">Items</TabsTrigger>
-                        <TabsTrigger value="backgrounds">Backgrounds</TabsTrigger>
-                        <TabsTrigger value="music">Music</TabsTrigger>
-                        <TabsTrigger value="avatars">Avatars</TabsTrigger>
+                  <Tabs defaultValue="trees" className="flex flex-col md:flex-row h-[60vh] overflow-hidden">
+                    {/* List filter (10-20%) */}
+                    <div className="w-full md:w-[15%] bg-gray-50 border-r overflow-y-auto">
+                      <TabsList className="grid grid-cols-1 gap-2 p-4 bg-gray-50">
+                        <TabsTrigger value="trees" className="text-sm py-3">Trees</TabsTrigger>
+                        <TabsTrigger value="items" className="text-sm py-3">Items</TabsTrigger>
+                        <TabsTrigger value="backgrounds" className="text-sm py-3">Backgrounds</TabsTrigger>
+                        <TabsTrigger value="music" className="text-sm py-3">Music</TabsTrigger>
+                        <TabsTrigger value="avatars" className="text-sm py-3">Avatars</TabsTrigger>
                       </TabsList>
-                      <TabsContent value="trees">
-                        {renderInventoryGrid("trees")}
-                      </TabsContent>
-                      <TabsContent value="items">
-                        {renderInventoryGrid("items")}
-                      </TabsContent>
-                      <TabsContent value="backgrounds">
-                        {renderInventoryGrid("backgrounds")}
-                      </TabsContent>
-                      <TabsContent value="music">
-                        {renderInventoryGrid("music")}
-                      </TabsContent>
-                      <TabsContent value="avatars">
-                        {renderInventoryGrid("avatars")}
-                      </TabsContent>
-                    </Tabs>
-                  </div>
+                    </div>
+                    {/* Danh sách items dạng grid (60-70%) */}
+                    <div className="w-full md:w-[50%] border-r overflow-y-auto">
+                      <TabsContent value="trees">{renderInventoryList("trees")}</TabsContent>
+                      <TabsContent value="items">{renderInventoryList("items")}</TabsContent>
+                      <TabsContent value="backgrounds">{renderInventoryList("backgrounds")}</TabsContent>
+                      <TabsContent value="music">{renderInventoryList("music")}</TabsContent>
+                      <TabsContent value="avatars">{renderInventoryList("avatars")}</TabsContent>
+                    </div>
+                    {/* Chi tiết item (phần còn lại, khoảng 15-25%) */}
+                    <div className="w-full md:w-[35%] p-6 overflow-y-auto">
+                      <ItemDetail selectedItem={selectedItem} />
+                    </div>
+                  </Tabs>
                 </DialogContent>
               </Dialog>
             </>
@@ -903,11 +955,10 @@ const Header = () => {
                 <a
                   key={item.path}
                   onClick={() => navigate(item.path)}
-                  className={`block py-2 text-sm font-semibold transition-colors duration-200 ${
-                    location.pathname === item.path
-                      ? "text-green-600 font-bold"
-                      : "text-gray-900 hover:text-green-600"
-                  }`}
+                  className={`block py-2 text-sm font-semibold transition-colors duration-200 ${location.pathname === item.path
+                    ? "text-green-600 font-bold"
+                    : "text-gray-900 hover:text-green-600"
+                    }`}
                 >
                   {item.label}
                 </a>
@@ -1113,38 +1164,34 @@ const Header = () => {
                       </Tabs>
                     </DialogContent>
                   </Dialog>
-                  {/* Dialog Inventory với Tabs */}
+                  {/* Dialog Inventory mới */}
                   <Dialog open={isInventoryOpen} onOpenChange={setIsInventoryOpen}>
-                    <DialogContent className="max-w-4xl p-6">
-                      <DialogHeader>
-                        <DialogTitle>Inventory</DialogTitle>
+                    <DialogContent className="max-w-5xl max-h-[80vh] p-0 overflow-hidden">
+                      <DialogHeader className="p-6 pb-0">
+                        <DialogTitle className="text-2xl font-bold">Inventory</DialogTitle>
                       </DialogHeader>
-                      <div className="mt-4 flex flex-col md:flex-row gap-6">
-                        <div className="flex-1">{/* Khu vực hiển thị Grid */}</div>
-                        <Tabs defaultValue="trees" className="w-full md:w-1/4">
-                          <TabsList className="grid w-full grid-cols-2 md:grid-cols-1 gap-2">
-                            <TabsTrigger value="trees">Trees</TabsTrigger>
-                            <TabsTrigger value="items">Items</TabsTrigger>
-                            <TabsTrigger value="backgrounds">Backgrounds</TabsTrigger>
-                            <TabsTrigger value="music">Music</TabsTrigger>
-                            <TabsTrigger value="avatars">Avatars</TabsTrigger>
-                          </TabsList>
-                          <TabsContent value="trees">
-                            {renderInventoryGrid("trees")}
-                          </TabsContent>
-                          <TabsContent value="items">
-                            {renderInventoryGrid("items")}
-                          </TabsContent>
-                          <TabsContent value="backgrounds">
-                            {renderInventoryGrid("backgrounds")}
-                          </TabsContent>
-                          <TabsContent value="music">
-                            {renderInventoryGrid("music")}
-                          </TabsContent>
-                          <TabsContent value="avatars">
-                            {renderInventoryGrid("avatars")}
-                          </TabsContent>
-                        </Tabs>
+                      <div className="flex flex-col md:flex-row h-[60vh] overflow-hidden">
+                        {/* Danh sách danh mục */}
+                        <div className="w-full md:w-1/3 bg-gray-50 border-r overflow-y-auto">
+                          <Tabs defaultValue="trees" className="w-full">
+                            <TabsList className="grid grid-cols-3 md:grid-cols-1 gap-2 p-4 bg-gray-50">
+                              <TabsTrigger value="trees" className="text-sm">Trees</TabsTrigger>
+                              <TabsTrigger value="items" className="text-sm">Items</TabsTrigger>
+                              <TabsTrigger value="backgrounds" className="text-sm">Backgrounds</TabsTrigger>
+                              <TabsTrigger value="music" className="text-sm">Music</TabsTrigger>
+                              <TabsTrigger value="avatars" className="text-sm">Avatars</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="trees">{renderInventoryList("trees")}</TabsContent>
+                            <TabsContent value="items">{renderInventoryList("items")}</TabsContent>
+                            <TabsContent value="backgrounds">{renderInventoryList("backgrounds")}</TabsContent>
+                            <TabsContent value="music">{renderInventoryList("music")}</TabsContent>
+                            <TabsContent value="avatars">{renderInventoryList("avatars")}</TabsContent>
+                          </Tabs>
+                        </div>
+                        {/* Chi tiết item */}
+                        <div className="w-full md:w-2/3 p-6 overflow-y-auto">
+                          <ItemDetail selectedItem={selectedItem} />
+                        </div>
                       </div>
                     </DialogContent>
                   </Dialog>
