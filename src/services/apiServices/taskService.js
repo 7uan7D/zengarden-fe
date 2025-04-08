@@ -51,3 +51,10 @@ export async function PauseTask(taskId) {
   const response = await axios.post(`/Task/pause/${taskId}`);
   return response.data;
 }
+
+export async function CompleteTask(taskId, userTreeId) {
+  const response = await axios.post(`/Task/complete-task/${taskId}`, {
+    userTreeId: userTreeId, // hoặc userTreeId nếu bạn có sẵn giá trị
+  });
+  return response.data;
+}
