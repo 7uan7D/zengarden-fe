@@ -288,11 +288,11 @@ const TasksTable = () => {
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Task note:</p>
-                                        {task.taskNote === null ? 'none' : task.taskNote}
+                                        {task.taskNote === '' ? 'none' : task.taskNote === null ? 'none' : task.taskNote}
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Result:</p>
-                                        {task.taskResult === '' ? 'none' : task.taskResult}
+                                        {task.taskResult === '' ? 'none' : task.taskResult === null ? 'none' : task.taskResult}
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Start Date: </p>
@@ -341,76 +341,79 @@ const TasksTable = () => {
                                 <CardContent className='space-y-2 bg-gray-800'>
                                     {editTask ? (
                                         <>
-                                            <div className='space-y-2'>
-                                                <div className='space-y-1'>
-                                                    <Label htmlFor='taskName'>Task Name</Label>
-                                                    <Input
-                                                        id='taskName'
-                                                        value={editTask.taskName}
-                                                        onChange={handleChange}
-                                                    />
-                                                </div>
-                                                <div className='space-y-1'>
-                                                    <Label htmlFor='taskDescription'>Description</Label>
-                                                    <Input
-                                                        id='taskDescription'
-                                                        value={editTask.taskDescription}
-                                                        onChange={handleChange}
-                                                    />
-                                                </div>
-                                                <div className='space-y-1'>
-                                                    <Label htmlFor='taskNote'>Task Note</Label>
-                                                    <Input
-                                                        id='taskNote'
-                                                        value={editTask.taskNote}
-                                                        onChange={handleChange}
-                                                    />
-                                                </div>
-                                                <div className='space-y-1'>
-                                                    <Label htmlFor='totalDuration'>Total Duration ({'>'} 30 minutes)</Label>
-                                                    <Input
-                                                        id='totalDuration'
-                                                        type='number'
-                                                        value={editTask.totalDuration}
-                                                        onChange={handleChange}
-                                                    />
-                                                </div>
-                                                <div className='space-y-1'>
-                                                    <Label htmlFor='workDuration'>Work Duration (10-120 minutes)</Label>
-                                                    <Input
-                                                        id='workDuration'
-                                                        type='number'
-                                                        value={editTask.workDuration}
-                                                        onChange={handleChange}
-                                                    />
-                                                </div>
-                                                <div className='space-y-1'>
-                                                    <Label htmlFor='breakTime'>Break Time (5-60 minutes)</Label>
-                                                    <Input
-                                                        id='breakTime'
-                                                        type='number'
-                                                        value={editTask.breakTime}
-                                                        onChange={handleChange}
-                                                    />
-                                                </div>
-                                                <div className='space-y-1'>
-                                                    <Label htmlFor='startDate'>Start Date</Label>
-                                                    <Input
-                                                        id='startDate'
-                                                        type='datetime-local'
-                                                        value={editTask.startDate}
-                                                        onChange={handleChange}
-                                                    />
-                                                </div>
-                                                <div className='space-y-1'>
-                                                    <Label htmlFor='endDate'>End Date</Label>
-                                                    <Input
-                                                        id='endDate'
-                                                        type='datetime-local'
-                                                        value={editTask.endDate}
-                                                        onChange={handleChange}
-                                                    />
-                                                </div>
+                                        <div className='grid grid-cols-2 gap-x-4 gap-y-2'>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='taskName'>Task Name</Label>
+                                                <Input
+                                                    id='taskName'
+                                                    value={editTask.taskName}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='taskDescription'>Description</Label>
+                                                <Input
+                                                    id='taskDescription'
+                                                    value={editTask.taskDescription}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='taskNote'>Task Note</Label>
+                                                <Input
+                                                    id='taskNote'
+                                                    value={editTask.taskNote}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='totalDuration'>Total Duration </Label>
+                                                <Input
+                                                    id='totalDuration'
+                                                    type='number'
+                                                    placeholder='≥ Work + Break Time'
+                                                    value={editTask.totalDuration}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='workDuration'>Work Duration (minutes)</Label>
+                                                <Input
+                                                    id='workDuration'
+                                                    type='number'
+                                                    value={editTask.workDuration}
+                                                    onChange={handleChange}
+                                                    disabled
+                                                />
+                                            </div>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='breakTime'>Break Time (minutes)</Label>
+                                                <Input
+                                                    id='breakTime'
+                                                    type='number'
+                                                    value={editTask.breakTime}
+                                                    onChange={handleChange}
+                                                    disabled
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className='space-y-1'>
+                                                <Label htmlFor='startDate'>Start Date</Label>
+                                                <Input
+                                                    id='startDate'
+                                                    type='datetime-local'
+                                                    value={editTask.startDate}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='endDate'>End Date</Label>
+                                                <Input
+                                                    id='endDate'
+                                                    type='datetime-local'
+                                                    value={editTask.endDate}
+                                                    onChange={handleChange}
+                                                />
                                             </div>
                                         </>
                                     ) : (
