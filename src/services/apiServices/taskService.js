@@ -34,3 +34,15 @@ export async function DeleteTaskById(taskId) {
   const response = await axios.delete(`/Task/${taskId}`);
   return response.data;
 }
+
+export async function StartTask(taskId) {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.post(`/Task/start-task/${taskId}`, null, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+}

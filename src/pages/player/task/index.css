@@ -1,7 +1,7 @@
-/* Reset TimePicker styles */
+/* Reset TimePicker styles - Điều chỉnh giao diện TimePicker mặc định */
 .react-time-picker__wrapper {
   border: none !important;
-}
+} /* Loại bỏ viền mặc định của TimePicker để tích hợp mượt mà với thiết kế chung */
 
 .react-time-picker__inputGroup {
   border: 1px solid #d1d5db !important; /* border-gray-300 */
@@ -10,14 +10,14 @@
   padding: 0 0.5rem !important;
   display: flex;
   align-items: center;
-}
+} /* Trang trí khung nhập giờ với viền, bo góc, chiều cao cố định để đồng bộ với input khác */
 
 .react-time-picker__inputGroup input {
   font-size: 0.875rem;
   color: #374151;
-}
+} /* Trang trí chữ trong TimePicker với kích thước và màu chữ tối ưu cho đọc */
 
-/* Tree Header */
+/* Tree Header - Giao diện phần đầu hiển thị cây */
 .tree-header {
   background: linear-gradient(135deg, #e6ffe6, #ffffff);
   border-radius: 1rem;
@@ -27,7 +27,7 @@
   align-items: center;
   gap: 1.5rem;
   margin-top: 3.5rem;
-}
+} /* Trang trí header cây với gradient nhẹ, bo góc, bóng đổ mềm, và bố cục flex để hiển thị hình cây và thông tin */
 
 .tree-image {
   width: 120px;
@@ -35,62 +35,62 @@
   border-radius: 50%;
   border: 3px solid #a3e635;
   transition: transform 0.3s ease;
-}
+} /* Trang trí hình cây tròn với viền xanh lá, hiệu ứng phóng to khi hover */
 
 .tree-image:hover {
   transform: scale(1.05);
-}
+} /* Tạo hiệu ứng phóng to nhẹ khi di chuột qua hình cây */
 
 .xp-circle {
   position: relative;
   width: 80px;
   height: 80px;
-}
+} /* Định dạng khung chứa vòng tròn tiến trình XP */
 
 .xp-circle svg {
   transform: rotate(-90deg);
-}
+} /* Xoay vòng tròn SVG để bắt đầu từ đỉnh (12h) */
 
 .xp-circle circle {
   fill: none;
   stroke-width: 8;
-}
+} /* Trang trí vòng tròn XP với đường viền dày, không tô màu nền */
 
 .xp-circle .bg {
   stroke: #e5e7eb;
-}
+} /* Trang trí vòng tròn nền của XP với màu xám nhạt */
 
 .xp-circle .progress {
   stroke: #10b981;
   stroke-linecap: round;
-}
+} /* Trang trí vòng tròn tiến trình XP với màu xanh lá, đầu bo tròn */
 
-/* Task Columns */
+/* Task Columns - Giao diện các cột task */
 .task-column {
   background: #ffffff;
   border-radius: 0.75rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 1rem;
   height: 100%;
-}
+} /* Trang trí cột task với nền trắng, bo góc, bóng đổ nhẹ, và chiều cao full */
 
 .task-column h2 {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
-}
+} /* Trang trí tiêu đề cột task với kích thước lớn, đậm, và khoảng cách dưới */
 
 .task-column.daily h2 {
   color: #3b82f6;
-}
+} /* Trang trí tiêu đề cột Daily Task với màu xanh dương */
 
 .task-column.simple h2 {
   color: #10b981;
-}
+} /* Trang trí tiêu đề cột Simple Task với màu xanh lá */
 
 .task-column.complex h2 {
   color: #f59e0b;
-}
+} /* Trang trí tiêu đề cột Complex Task với màu cam */
 
 .task-item {
   display: flex;
@@ -100,11 +100,34 @@
   background: #f9fafb;
   border-radius: 0.5rem;
   transition: background 0.2s ease;
-}
+} /* Trang trí mỗi task với bố cục flex, nền xám nhạt, bo góc, và hiệu ứng đổi màu khi hover */
 
 .task-item:hover {
   background: #f1f5f9;
-}
+} /* Tạo hiệu ứng nền sáng hơn khi hover vào task */
+
+.task-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Căn trái task name và remaining */
+  gap: 0.25rem;
+  flex: 1;
+  text-align: left; /* Căn trái text */
+} /* Trang trí phần thông tin task (tên, thời gian còn lại) với bố cục dọc, căn trái */
+
+.progress-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Căn trái remaining */
+  width: 100%;
+} /* Trang trí khung chứa thanh tiến trình với bố cục dọc, căn trái */
+
+.task-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+} /* Trang trí phần hành động (button, trạng thái) với bố cục dọc, căn phải */
 
 .task-item button {
   background: #10b981;
@@ -112,64 +135,47 @@
   padding: 0.25rem 0.75rem;
   border-radius: 0.375rem;
   font-size: 0.875rem;
-}
+} /* Trang trí nút trong task (Start, Pause) với màu xanh lá, chữ trắng, bo góc */
 
 .task-item button:hover {
   background: #059669;
-}
+} /* Tạo hiệu ứng tối màu hơn khi hover vào nút trong task */
 
 .progress-bar-container {
-  width: 75%; /* Giảm độ dài thanh tiến độ */
+  width: 90%; /* Tăng độ dài thanh total time */
   height: 8px;
   background: #e5e7eb;
   border-radius: 4px;
   overflow: hidden;
   transition: height 0.3s ease;
-}
+} /* Trang trí thanh tổng thời gian với chiều dài 90%, nền xám, bo góc, và hiệu ứng chuyển đổi chiều cao */
 
 .progress-bar-container.active {
   height: 12px; /* Tăng kích cỡ khi task chạy */
-}
+} /* Tăng chiều cao thanh tổng thời gian khi task đang chạy */
 
 .progress-bar {
   height: 100%;
   display: flex;
-}
+} /* Trang trí thanh tiến trình bên trong với chiều cao full, bố cục flex */
 
 .work-progress {
   background: #10b981; /* Green for work duration */
   height: 100%;
-}
+} /* Trang trí phần thời gian làm việc trong thanh tiến trình với màu xanh lá */
 
 .break-progress {
   background: #f59e0b; /* Orange for break time */
   height: 100%;
-}
+} /* Trang trí phần thời gian nghỉ trong thanh tiến trình với màu cam */
 
-/* Task Dialog */
+/* Task Dialog - Giao diện dialog tạo task */
 .task-dialog {
   background: #ffffff;
   border-radius: 1rem;
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.progress-bar {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1.5rem;
-}
-
-.progress-step {
-  width: 33.33%;
-  height: 4px;
-  background: #e5e7eb;
-  border-radius: 2px;
-}
-
-.progress-step.active {
-  background: #10b981;
-}
+} /* Trang trí dialog tạo task với nền trắng, bo góc lớn, bóng đổ đậm */
 
 .task-dialog input,
 .task-dialog textarea {
@@ -177,21 +183,21 @@
   border-radius: 0.5rem;
   padding: 0.5rem;
   transition: border-color 0.2s ease;
-}
+} /* Trang trí input và textarea trong dialog với viền xám, bo góc, và hiệu ứng đổi màu viền */
 
 .task-dialog input:focus,
 .task-dialog textarea:focus {
   border-color: #10b981;
   outline: none;
-}
+} /* Trang trí input/textarea khi focus với viền xanh lá, loại bỏ outline mặc định */
 
 .task-dialog button {
   background: linear-gradient(90deg, #10b981, #34d399);
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-}
+} /* Trang trí nút trong dialog (Next, Create) với gradient xanh lá, chữ trắng, bo góc */
 
 .task-dialog button:hover {
   background: linear-gradient(90deg, #059669, #10b981);
-}
+} /* Tạo hiệu ứng gradient tối hơn khi hover vào nút trong dialog */
