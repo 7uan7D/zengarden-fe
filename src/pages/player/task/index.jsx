@@ -385,15 +385,22 @@ export default function TaskPage() {
 
   const startTimer = async (column, taskIndex) => {
     const task = tasks[column][taskIndex];
-    console.log("StartTask => task:", task);
     const totalDurationSeconds = task.totalDuration * 60;
 
     try {
-      await StartTask(task.taskId);
+      await StartTask(task.taskId); // Gọi API trước để chắc ăn
     } catch (error) {
-      console.error("Failed to start task:", error);
+      console.error("❌ Failed to start task:", error);
+      return;
     }
 
+    setCurrentTask({
+      column,
+      taskIndex,
+      time: totalDurationSeconds,
+    });
+
+    // Cập nhật status là đang chạy
     setTasks((prev) => {
       const updated = { ...prev };
       updated[column] = [...updated[column]];
@@ -403,18 +410,7 @@ export default function TaskPage() {
       };
       return updated;
     });
-
-    if (
-      currentTask &&
-      (currentTask.column !== column || currentTask.taskIndex !== taskIndex)
-    ) {
-      setPendingTask({ column, taskIndex });
-      setDialogOpen(true);
-    } else if (!currentTask) {
-      // ✅ Gộp state lại để đảm bảo useEffect chạy đúng
-      setCurrentTask({ column, taskIndex, time: totalDurationSeconds });
-      setIsRunning(true);
-    }
+    setIsRunning(true);
   };
 
   const stopCurrentTimer = () => {
@@ -503,6 +499,15 @@ export default function TaskPage() {
           time: prev.time - 1,
         }));
       } else if (currentTask && currentTask.time === 0) {
+        setTasks((prev) => {
+          const updated = { ...prev };
+          updated[currentTask.column] = [...updated[currentTask.column]];
+          updated[currentTask.column][currentTask.taskIndex] = {
+            ...updated[currentTask.column][currentTask.taskIndex],
+            status: 4, // ✅ Đánh dấu task đã hoàn thành
+          };
+          return updated;
+        });
         stopCurrentTimer();
       }
     }, 1000);
