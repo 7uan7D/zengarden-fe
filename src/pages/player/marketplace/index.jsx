@@ -238,6 +238,43 @@ export default function Marketplace() {
                     })}
                   </div>
                 )}
+                                <p className="font-semibold">
+                                  {cat} Item {i + 1}
+                                </p>
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  <img
+                                    src="/images/coin.png"
+                                    alt="Coin"
+                                    className="w-5 h-5 mr-1"
+                                  />
+                                  100
+                                </p>
+                                <Button className="mt-2" variant="outline">
+                                  <ShoppingCart className="mr-2 h-4 w-4" /> Buy
+                                </Button>
+                              </CardContent>
+                            </Card>
+                          </PopoverTrigger>
+
+                          <PopoverContent
+                            className="w-64 text-sm"
+                            side="top"
+                            align="center"
+                          >
+                            <p className="font-semibold">
+                              {cat} Item {i + 1}
+                            </p>
+                            <p className="text-gray-500">
+                              This is a description of the item. It provides
+                              details about what this item does and why it’s
+                              useful.
+                            </p>
+                          </PopoverContent>
+                        </Popover>
+                      </motion.div>
+                    );
+                  })}
+                </div>
               </TabsContent>
             ))}
           </Tabs>
