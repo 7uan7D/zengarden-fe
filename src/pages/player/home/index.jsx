@@ -7,19 +7,19 @@ import { Calendar, ShoppingCart, Leaf, Trophy, Clock } from "lucide-react";
 import { toast } from "sonner";
 import "../home/index.css";
 import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
-import { StartTask, PauseTask, CompleteTask } from "@/services/apiServices/taskService";
+import { StartTask, PauseTask } from "@/services/apiServices/taskService";
 import parseJwt from "@/services/parseJwt";
 
 const HomePage = () => {
   const [user, setUser] = useState(null);
-  const [currentTree, setCurrentTree] = useState(null); // ID cây đang chọn
+  const [currentTree, setCurrentTree] = useState(null);
   const [tasks, setTasks] = useState({
     daily: [],
     simple: [],
     complex: [],
   });
-  const [currentTask, setCurrentTask] = useState(null); // Task đang chạy
-  const [isRunning, setIsRunning] = useState(false); // Trạng thái chạy/pause
+  const [currentTask, setCurrentTask] = useState(null);
+  const [isRunning, setIsRunning] = useState(false);
 
   // Lấy danh sách task theo cây
   const fetchTasks = async (userTreeId) => {
@@ -50,7 +50,7 @@ const HomePage = () => {
     const token = localStorage.getItem("token");
     if (token) {
       const userId = parseJwt(token).sub;
-      setUser({ username: "Farmer" }); // Giả lập user, thay bằng API nếu cần
+      setUser({ username: "Farmer" });
       const savedTreeId = localStorage.getItem("selectedTreeId");
       if (savedTreeId) {
         setCurrentTree(parseInt(savedTreeId));
@@ -63,6 +63,11 @@ const HomePage = () => {
   const startTimer = async (column, taskIndex) => {
     const task = tasks[column][taskIndex];
     const totalDurationSeconds = task.totalDuration * 60;
+    const initialTime = task.remainingTime
+      ? typeof task.remainingTime === "string"
+        ? timeStringToSeconds(task.remainingTime)
+        : task.remainingTime * 60
+      : totalDurationSeconds;
 
     try {
       await StartTask(task.taskId);
@@ -74,14 +79,10 @@ const HomePage = () => {
     setCurrentTask({
       column,
       taskIndex,
-      time: totalDurationSeconds,
+      time: initialTime,
+      totalTime: totalDurationSeconds, // Lưu totalTime để tính progress
     });
     setIsRunning(true);
-  };
-
-  const stopTimer = () => {
-    setCurrentTask(null);
-    setIsRunning(false);
   };
 
   const toggleTimer = async (column = null, taskIndex = null) => {
@@ -91,6 +92,7 @@ const HomePage = () => {
     if (columnToUse === null || indexToUse === null) return;
 
     const task = tasks[columnToUse][indexToUse];
+    const totalDurationSeconds = task.totalDuration * 60;
 
     if (isRunning) {
       try {
@@ -108,7 +110,12 @@ const HomePage = () => {
       setCurrentTask({
         column: columnToUse,
         taskIndex: indexToUse,
-        time: task.remainingTime ? timeStringToSeconds(task.remainingTime) : task.totalDuration * 60,
+        time: task.remainingTime
+          ? typeof task.remainingTime === "string"
+            ? timeStringToSeconds(task.remainingTime)
+            : task.remainingTime * 60
+          : totalDurationSeconds,
+        totalTime: totalDurationSeconds, // Lưu totalTime để tính progress
       });
       setIsRunning(true);
     }
@@ -123,7 +130,8 @@ const HomePage = () => {
         }));
       } else if (currentTask && currentTask.time === 0) {
         toast.success(`Task '${tasks[currentTask.column][currentTask.taskIndex].taskName}' completed!`);
-        stopTimer();
+        setCurrentTask(null);
+        setIsRunning(false);
       }
     }, 1000);
     return () => clearInterval(interval);
@@ -181,44 +189,56 @@ const HomePage = () => {
                     {type.charAt(0).toUpperCase() + type.slice(1)}
                   </span>
                   <Card className="flex-1 p-4 bg-gray-50 rounded-tr-lg rounded-br-lg border-t-2 border-b-2 border-l-0">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-800 font-medium">
-                        {tasks[type][0].taskName}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        {currentTask?.column === type && currentTask?.taskIndex === 0 ? (
-                          <>
-                            <span className="text-sm text-gray-600 font-mono">
-                              {formatTime(currentTask.time)}
-                            </span>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-800 font-medium">
+                          {tasks[type][0].taskName}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {currentTask?.column === type && currentTask?.taskIndex === 0 ? (
+                            <>
+                              <span className="text-sm text-gray-600 font-mono">
+                                {formatTime(currentTask.time)}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-cyan-600 border-cyan-600 hover:bg-cyan-50"
+                                onClick={() => toggleTimer(type, 0)}
+                              >
+                                {isRunning ? "Pause" : "Resume"}
+                              </Button>
+                            </>
+                          ) : (
                             <Button
                               size="sm"
-                              variant="outline"
-                              className="text-cyan-600 border-cyan-600 hover:bg-cyan-50"
-                              onClick={() => toggleTimer(type, 0)}
+                              className="bg-cyan-600 text-white hover:bg-cyan-700"
+                              onClick={() => startTimer(type, 0)}
+                              disabled={currentTask !== null}
                             >
-                              {isRunning ? "Pause" : "Resume"}
+                              Start
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-600 border-red-600 hover:bg-red-50"
-                              onClick={() => stopTimer()}
-                            >
-                              Stop
-                            </Button>
-                          </>
-                        ) : (
-                          <Button
-                            size="sm"
-                            className="bg-cyan-600 text-white hover:bg-cyan-700"
-                            onClick={() => startTimer(type, 0)}
-                            disabled={currentTask !== null}
-                          >
-                            Start
-                          </Button>
-                        )}
+                          )}
+                        </div>
                       </div>
+                      {/* Thanh tiến độ và remaining time */}
+                      {currentTask?.column === type && currentTask?.taskIndex === 0 && (
+                        <div className="flex flex-col gap-1">
+                          <div className="w-full h-2 bg-gray-200 rounded-full">
+                            <div
+                              className="h-full bg-cyan-600 rounded-full"
+                              style={{
+                                width: `${
+                                  ((currentTask.totalTime - currentTask.time) / currentTask.totalTime) * 100
+                                }%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {formatTime(currentTask.time)} / {formatTime(currentTask.totalTime)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </Card>
                 </div>
