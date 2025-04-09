@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,13 +11,34 @@ import {
 import { ShoppingCart, Play, ChevronDown } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 
-const categories = ["Items", "Avatar", "Background", "Music", "Trade"];
+const categories = ["Items", "Avatar", "Background", "Music", "Trade", "Package"];
+
+// Dữ liệu cứng cho các gói nạp
+const packageData = [
+  { price: "20.000đ", coins: 200, image: "/images/coin.png" },
+  { price: "50.000đ", coins: 500, image: "/images/bunch_coin_1.png" },
+  { price: "100.000đ", coins: 1000, image: "/images/bunch_coin_2.png" },
+  { price: "200.000đ", coins: 2000, image: "/images/bag_coin.png" },
+  { price: "500.000đ", coins: 5000, image: "/images/chest_coin.png" },
+];
 
 export default function Marketplace() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [activeTab, setActiveTab] = useState(categories[0]); // Thêm state để điều khiển tab
+  const location = useLocation();
+
+  // Xử lý query parameter để chọn tab
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab && categories.includes(tab)) {
+      setActiveTab(tab);
+      setFilter(tab.toLowerCase());
+    }
+  }, [location]);
 
   // Hàm xử lý khi chọn filter
   const handleFilterChange = (value) => {
@@ -93,93 +114,130 @@ export default function Marketplace() {
 
             {categories.map((cat) => (
               <TabsContent key={cat} value={cat}>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {[...Array(6)].map((_, i) => {
-                    const [isOpen, setIsOpen] = useState(false);
-
-                    return (
+                {cat === "Package" ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {packageData.map((pkg, index) => (
                       <motion.div
-                        key={i}
+                        key={index}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: i * 0.1 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
                       >
-                        <Popover open={isOpen}>
-                          <PopoverTrigger
-                            asChild
-                            onMouseEnter={() => setIsOpen(true)}
-                            onMouseLeave={() => setIsOpen(false)}
-                          >
-                            <Card className="relative overflow-hidden">
-                              {i === 0 && (
-                                <span
-                                  className="absolute top-1 left-[1px] bg-yellow-500 text-white text-xs font-bold px-5 py-1 
-                                  transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
-                                >
-                                  Best Seller
-                                </span>
-                              )}
-                              {i === 1 && (
-                                <span
-                                  className="absolute top-0.5 left-[2px] bg-green-500 text-white text-xs font-bold px-5 py-1 
-                                  transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
-                                >
-                                  Seasonal
-                                </span>
-                              )}
-
-                              <CardContent className="flex flex-col items-center p-4 cursor-pointer">
-                                {cat === "Avatar" ? (
-                                  <Avatar className="h-20 w-20 mb-2" />
-                                ) : cat === "Background" ? (
-                                  <div className="h-32 w-full bg-gray-300 rounded-lg mb-2" />
-                                ) : cat === "Music" ? (
-                                  <Button
-                                    variant="outline"
-                                    className="mb-2 bg-white"
-                                  >
-                                    <Play className="h-6 w-6" /> Play Preview
-                                  </Button>
-                                ) : (
-                                  <div className="h-20 w-20 bg-gray-300 rounded-lg mb-2" />
-                                )}
-                                <p className="font-semibold">
-                                  {cat} Item {i + 1}
-                                </p>
-                                <p className="text-sm text-gray-500 flex items-center">
-                                  <img
-                                    src="/images/coin.png"
-                                    alt="Coin"
-                                    className="w-5 h-5 mr-1"
-                                  />
-                                  100
-                                </p>
-                                <Button className="mt-2" variant="outline">
-                                  <ShoppingCart className="mr-2 h-4 w-4" /> Buy
-                                </Button>
-                              </CardContent>
-                            </Card>
-                          </PopoverTrigger>
-
-                          <PopoverContent
-                            className="w-64 text-sm"
-                            side="top"
-                            align="center"
-                          >
-                            <p className="font-semibold">
-                              {cat} Item {i + 1}
-                            </p>
-                            <p className="text-gray-500">
-                              This is a description of the item. It provides
-                              details about what this item does and why it’s
-                              useful.
-                            </p>
-                          </PopoverContent>
-                        </Popover>
+                        {/* Card của Package */}
+                        <Card className="relative overflow-hidden">
+                          <CardContent className="flex flex-col items-center p-4">
+                            <div className="flex items-center mb-2">
+                              <span className="text-sm font-semibold">{pkg.coins}</span>
+                              <img
+                                src="/images/coin.png"
+                                alt="Coin"
+                                className="w-5 h-5 ml-1"
+                              />
+                            </div>
+                            <img
+                              src={pkg.image}
+                              alt={`Package ${pkg.price}`}
+                              className="w-20 h-20 object-cover rounded-lg mb-2"
+                              onError={(e) => {
+                                e.target.src = "/images/default-package.png"; // Hình ảnh mặc định nếu không tải được
+                              }}
+                            />
+                            <p className="font-semibold text-lg mb-2">{pkg.price}</p>
+                            <Button className="mt-2" variant="outline">
+                              <ShoppingCart className="mr-2 h-4 w-4" /> Buy
+                            </Button>
+                          </CardContent>
+                        </Card>
                       </motion.div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {[...Array(6)].map((_, i) => {
+                      const [isOpen, setIsOpen] = useState(false);
+
+                      return (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: i * 0.1 }}
+                        >
+                          <Popover open={isOpen}>
+                            <PopoverTrigger
+                              asChild
+                              onMouseEnter={() => setIsOpen(true)}
+                              onMouseLeave={() => setIsOpen(false)}
+                            >
+                              <Card className="relative overflow-hidden">
+                                {i === 0 && (
+                                  <span
+                                    className="absolute top-1 left-[1px] bg-yellow-500 text-white text-xs font-bold px-5 py-1 
+                                    transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
+                                  >
+                                    Best Seller
+                                  </span>
+                                )}
+                                {i === 1 && (
+                                  <span
+                                    className="absolute top-0.5 left-[2px] bg-green-500 text-white text-xs font-bold px-5 py-1 
+                                    transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
+                                  >
+                                    Seasonal
+                                  </span>
+                                )}
+                                <CardContent className="flex flex-col items-center p-4 cursor-pointer">
+                                  {cat === "Avatar" ? (
+                                    <Avatar className="h-20 w-20 mb-2" />
+                                  ) : cat === "Background" ? (
+                                    <div className="h-32 w-full bg-gray-300 rounded-lg mb-2" />
+                                  ) : cat === "Music" ? (
+                                    <Button
+                                      variant="outline"
+                                      className="mb-2 bg-white"
+                                    >
+                                      <Play className="h-6 w-6" /> Play Preview
+                                    </Button>
+                                  ) : (
+                                    <div className="h-20 w-20 bg-gray-300 rounded-lg mb-2" />
+                                  )}
+                                  <p className="font-semibold">
+                                    {cat} Item {i + 1}
+                                  </p>
+                                  <p className="text-sm text-gray-500 flex items-center">
+                                    <img
+                                      src="/src/assets/images/coin.png"
+                                      alt="Coin"
+                                      className="w-5 h-5 mr-1"
+                                    />
+                                    100
+                                  </p>
+                                  <Button className="mt-2" variant="outline">
+                                    <ShoppingCart className="mr-2 h-4 w-4" /> Buy
+                                  </Button>
+                                </CardContent>
+                              </Card>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-64 text-sm"
+                              side="top"
+                              align="center"
+                            >
+                              <p className="font-semibold">
+                                {cat} Item {i + 1}
+                              </p>
+                              <p className="text-gray-500">
+                                This is a description of the item. It provides
+                                details about what this item does and why it’s
+                                useful.
+                              </p>
+                            </PopoverContent>
+                          </Popover>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
               </TabsContent>
             ))}
           </Tabs>
