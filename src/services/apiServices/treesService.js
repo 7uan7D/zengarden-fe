@@ -17,3 +17,24 @@ export async function TradeTree({
   });
   return response.data;
 }
+
+export async function GetTradeByStatus(status) {
+  const response = await axios.get(`/TradeTree/history/by-status/${status}`);
+  return response.data;
+}
+
+export async function AcceptTrade({ tradeId, userId, userTreeId }) {
+  try {
+    const response = await axios.put("/TradeTree/accept", null, {
+      params: {
+        tradeId,
+        userId,
+        userTreeId,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to accept trade:", error);
+    throw error;
+  }
+}

@@ -12,8 +12,18 @@ import { ShoppingCart, Play, ChevronDown } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
+import { GetTradeByStatus } from "@/services/apiServices/treesService";
+import { GetAllTrees } from "@/services/apiServices/treesService";
+import TradeDialog from "./TradeDialog";
 
-const categories = ["Items", "Avatar", "Background", "Music", "Trade", "Package"];
+const categories = [
+  "Items",
+  "Avatar",
+  "Background",
+  "Music",
+  "Trade",
+  "Package",
+];
 
 // Dữ liệu cứng cho các gói nạp
 const packageData = [
@@ -29,6 +39,37 @@ export default function Marketplace() {
   const [filter, setFilter] = useState("all");
   const [activeTab, setActiveTab] = useState(categories[0]); // Thêm state để điều khiển tab
   const location = useLocation();
+  const [tradeItems, setTradeItems] = useState([]);
+  const [allTrees, setAllTrees] = useState([]);
+  const [selectedTrade, setSelectedTrade] = useState(null);
+
+  useEffect(() => {
+    if (activeTab === "Trade") {
+      const fetchTrades = async () => {
+        try {
+          const trades = await GetTradeByStatus(0);
+          setTradeItems(trades);
+        } catch (error) {
+          console.error("Failed to fetch trade items:", error);
+        }
+      };
+
+      fetchTrades();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const fetchTrees = async () => {
+      try {
+        const trees = await GetAllTrees();
+        setAllTrees(trees);
+      } catch (error) {
+        console.error("Failed to fetch all trees:", error);
+      }
+    };
+
+    fetchTrees();
+  }, []);
 
   // Xử lý query parameter để chọn tab
   useEffect(() => {
@@ -50,6 +91,26 @@ export default function Marketplace() {
     if (matchedCategory) {
       setActiveTab(matchedCategory);
     }
+  };
+  const getTradeCoin = (rarity) => {
+    switch (rarity?.toLowerCase()) {
+      case "legendary":
+        return 300;
+      case "epic":
+        return 200;
+      case "rare":
+        return 100;
+      case "common":
+        return 50;
+      default:
+        return 0;
+    }
+  };
+  const rarityColorMap = {
+    common: "text-gray-600",
+    rare: "text-blue-600",
+    epic: "text-purple-800",
+    legendary: "text-orange-500",
   };
 
   return (
@@ -112,134 +173,228 @@ export default function Marketplace() {
               ))}
             </TabsList>
 
-            {categories.map((cat) => (
-              <TabsContent key={cat} value={cat}>
-                {cat === "Package" ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    {packageData.map((pkg, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
-                      >
-                        {/* Card của Package */}
-                        <Card className="relative overflow-hidden">
-                          <CardContent className="flex flex-col items-center p-4">
-                            <div className="flex items-center mb-2">
-                              <span className="text-sm font-semibold">{pkg.coins}</span>
-                              <img
-                                src="/images/coin.png"
-                                alt="Coin"
-                                className="w-5 h-5 ml-1"
-                              />
-                            </div>
-                            <img
-                              src={pkg.image}
-                              alt={`Package ${pkg.price}`}
-                              className="w-20 h-20 object-cover rounded-lg mb-2"
-                              onError={(e) => {
-                                e.target.src = "/images/default-package.png"; // Hình ảnh mặc định nếu không tải được
-                              }}
-                            />
-                            <p className="font-semibold text-lg mb-2">{pkg.price}</p>
-                            <Button className="mt-2" variant="outline">
-                              <ShoppingCart className="mr-2 h-4 w-4" /> Buy
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {[...Array(6)].map((_, i) => {
-                      const [isOpen, setIsOpen] = useState(false);
+            {categories.map((cat) => {
+              if (cat === "Trade") {
+                return (
+                  <TabsContent key="Trade" value="Trade">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {tradeItems.length > 0 ? (
+                        tradeItems.map((item, i) => {
+                          const treeInfo = allTrees.find(
+                            (tree) => tree.treeId === item.treeAid
+                          );
+                          const desiredTree = allTrees.find(
+                            (tree) => tree.treeId === item.desiredTreeAID
+                          );
+                          const rarityClass =
+                            rarityColorMap[treeInfo?.rarity?.toLowerCase()] ||
+                            "text-gray-400";
+                          const coin = getTradeCoin(treeInfo?.rarity);
 
-                      return (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: i * 0.1 }}
-                        >
-                          <Popover open={isOpen}>
-                            <PopoverTrigger
-                              asChild
-                              onMouseEnter={() => setIsOpen(true)}
-                              onMouseLeave={() => setIsOpen(false)}
+                          return (
+                            <motion.div
+                              key={item.id || i}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3, delay: i * 0.1 }}
                             >
                               <Card className="relative overflow-hidden">
-                                {i === 0 && (
-                                  <span
-                                    className="absolute top-1 left-[1px] bg-yellow-500 text-white text-xs font-bold px-5 py-1 
-                                    transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
+                                <CardContent className="flex flex-col items-center p-4">
+                                  <img
+                                    src={
+                                      treeInfo?.imageUrl ||
+                                      "/images/default-tree.png"
+                                    }
+                                    alt={treeInfo?.name || "Tree"}
+                                    className="h-20 w-20 object-cover rounded-lg mb-2"
+                                  />
+                                  <p
+                                    className={`font-semibold mb-1 ${rarityClass}`}
                                   >
-                                    Best Seller
-                                  </span>
-                                )}
-                                {i === 1 && (
-                                  <span
-                                    className="absolute top-0.5 left-[2px] bg-green-500 text-white text-xs font-bold px-5 py-1 
-                                    transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
-                                  >
-                                    Seasonal
-                                  </span>
-                                )}
-                                <CardContent className="flex flex-col items-center p-4 cursor-pointer">
-                                  {cat === "Avatar" ? (
-                                    <Avatar className="h-20 w-20 mb-2" />
-                                  ) : cat === "Background" ? (
-                                    <div className="h-32 w-full bg-gray-300 rounded-lg mb-2" />
-                                  ) : cat === "Music" ? (
-                                    <Button
-                                      variant="outline"
-                                      className="mb-2 bg-white"
-                                    >
-                                      <Play className="h-6 w-6" /> Play Preview
-                                    </Button>
-                                  ) : (
-                                    <div className="h-20 w-20 bg-gray-300 rounded-lg mb-2" />
-                                  )}
+                                    {treeInfo?.rarity || "Unknown Rarity"}
+                                  </p>
                                   <p className="font-semibold">
-                                    {cat} Item {i + 1}
+                                    {treeInfo?.name || `Trade Item ${i + 1}`}
                                   </p>
-                                  <p className="text-sm text-gray-500 flex items-center">
-                                    <img
-                                      src="/src/assets/images/coin.png"
-                                      alt="Coin"
-                                      className="w-5 h-5 mr-1"
-                                    />
-                                    100
+                                  <p className="text-sm text-gray-500 flex items-center space-x-2">
+                                    <span className="flex items-center">
+                                      <img
+                                        src="/images/coin.png"
+                                        alt="Coin"
+                                        className="w-5 h-5 mr-1"
+                                      />
+                                      {coin}
+                                    </span>
+
+                                    {desiredTree && (
+                                      <img
+                                        src={desiredTree.imageUrl}
+                                        alt={desiredTree.name}
+                                        className="w-8 h-8 rounded object-cover border border-gray-300"
+                                      />
+                                    )}
                                   </p>
-                                  <Button className="mt-2" variant="outline">
-                                    <ShoppingCart className="mr-2 h-4 w-4" /> Buy
+                                  <Button
+                                    className="mt-2"
+                                    variant="outline"
+                                    onClick={() => setSelectedTrade(item)}
+                                  >
+                                    <ShoppingCart className="mr-2 h-4 w-4" />{" "}
+                                    Trade
                                   </Button>
                                 </CardContent>
                               </Card>
-                            </PopoverTrigger>
-                            <PopoverContent
-                              className="w-64 text-sm"
-                              side="top"
-                              align="center"
-                            >
-                              <p className="font-semibold">
-                                {cat} Item {i + 1}
+                            </motion.div>
+                          );
+                        })
+                      ) : (
+                        <p>No trade items available.</p>
+                      )}
+                    </div>
+                    <TradeDialog
+                      open={!!selectedTrade}
+                      tradeItem={selectedTrade}
+                      onClose={() => setSelectedTrade(null)}
+                    />
+                  </TabsContent>
+                );
+              }
+
+              return (
+                <TabsContent key={cat} value={cat}>
+                  {cat === "Package" ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                      {packageData.map((pkg, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                        >
+                          {/* Card của Package */}
+                          <Card className="relative overflow-hidden">
+                            <CardContent className="flex flex-col items-center p-4">
+                              <div className="flex items-center mb-2">
+                                <span className="text-sm font-semibold">
+                                  {pkg.coins}
+                                </span>
+                                <img
+                                  src="/images/coin.png"
+                                  alt="Coin"
+                                  className="w-5 h-5 ml-1"
+                                />
+                              </div>
+                              <img
+                                src={pkg.image}
+                                alt={`Package ${pkg.price}`}
+                                className="w-20 h-20 object-cover rounded-lg mb-2"
+                                onError={(e) => {
+                                  e.target.src = "/images/default-package.png"; // Hình ảnh mặc định nếu không tải được
+                                }}
+                              />
+                              <p className="font-semibold text-lg mb-2">
+                                {pkg.price}
                               </p>
-                              <p className="text-gray-500">
-                                This is a description of the item. It provides
-                                details about what this item does and why it’s
-                                useful.
-                              </p>
-                            </PopoverContent>
-                          </Popover>
+                              <Button className="mt-2" variant="outline">
+                                <ShoppingCart className="mr-2 h-4 w-4" /> Buy
+                              </Button>
+                            </CardContent>
+                          </Card>
                         </motion.div>
-                      );
-                    })}
-                  </div>
-                )}
-              </TabsContent>
-            ))}
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {[...Array(6)].map((_, i) => {
+                        const [isOpen, setIsOpen] = useState(false);
+
+                        return (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: i * 0.1 }}
+                          >
+                            <Popover open={isOpen}>
+                              <PopoverTrigger
+                                asChild
+                                onMouseEnter={() => setIsOpen(true)}
+                                onMouseLeave={() => setIsOpen(false)}
+                              >
+                                <Card className="relative overflow-hidden">
+                                  {i === 0 && (
+                                    <span
+                                      className="absolute top-1 left-[1px] bg-yellow-500 text-white text-xs font-bold px-5 py-1 
+                                    transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
+                                    >
+                                      Best Seller
+                                    </span>
+                                  )}
+                                  {i === 1 && (
+                                    <span
+                                      className="absolute top-0.5 left-[2px] bg-green-500 text-white text-xs font-bold px-5 py-1 
+                                    transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
+                                    >
+                                      Seasonal
+                                    </span>
+                                  )}
+                                  <CardContent className="flex flex-col items-center p-4 cursor-pointer">
+                                    {cat === "Avatar" ? (
+                                      <Avatar className="h-20 w-20 mb-2" />
+                                    ) : cat === "Background" ? (
+                                      <div className="h-32 w-full bg-gray-300 rounded-lg mb-2" />
+                                    ) : cat === "Music" ? (
+                                      <Button
+                                        variant="outline"
+                                        className="mb-2 bg-white"
+                                      >
+                                        <Play className="h-6 w-6" /> Play
+                                        Preview
+                                      </Button>
+                                    ) : (
+                                      <div className="h-20 w-20 bg-gray-300 rounded-lg mb-2" />
+                                    )}
+                                    <p className="font-semibold">
+                                      {cat} Item {i + 1}
+                                    </p>
+                                    <p className="text-sm text-gray-500 flex items-center">
+                                      <img
+                                        src="/src/assets/images/coin.png"
+                                        alt="Coin"
+                                        className="w-5 h-5 mr-1"
+                                      />
+                                      100
+                                    </p>
+                                    <Button className="mt-2" variant="outline">
+                                      <ShoppingCart className="mr-2 h-4 w-4" />{" "}
+                                      Buy
+                                    </Button>
+                                  </CardContent>
+                                </Card>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-64 text-sm"
+                                side="top"
+                                align="center"
+                              >
+                                <p className="font-semibold">
+                                  {cat} Item {i + 1}
+                                </p>
+                                <p className="text-gray-500">
+                                  This is a description of the item. It provides
+                                  details about what this item does and why it’s
+                                  useful.
+                                </p>
+                              </PopoverContent>
+                            </Popover>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </TabsContent>
+              );
+            })}
           </Tabs>
         </div>
       </div>
