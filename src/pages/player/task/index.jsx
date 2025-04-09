@@ -955,7 +955,7 @@ export default function TaskPage() {
               </DialogTitle>
               {userTrees
                 .filter(
-                  (tree) => tree.treeStatus === 0 || tree.treeStatus === 1
+                  (tree) => tree.treeStatus === 1 || tree.treeStatus === 2
                 )
                 .map((tree) => {
                   const totalNeeded = tree.totalXp + tree.xpToNextLevel;

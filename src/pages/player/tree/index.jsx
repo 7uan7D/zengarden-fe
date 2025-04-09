@@ -1,8 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   Collapsible,
   CollapsibleContent,
@@ -17,40 +23,113 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import "../home/index.css";
+import { GetAllTrees } from "@/services/apiServices/treesService";
+import { GetUserTreeByOwnerId } from "@/services/apiServices/userTreesService";
+import parseJwt from "@/services/parseJwt";
+import { TradeTree } from "@/services/apiServices/treesService";
+import { GetUserInfo } from "@/services/apiServices/userService";
 
-// Dữ liệu mẫu cho danh sách cây
-const treeData = {
-  legendary: [
-    { id: 19, name: "Tree of Life", image: "/tree-19.png", level: 4, xp: 0, maxXp: 0, description: "A mythical tree of eternal vitality.", owned: true, quantity: 2 },
-    { id: 20, name: "Golden Apple", image: "/tree-20.png", level: 1, xp: 0, maxXp: 100, description: "Bears fruit of pure gold.", owned: false },
-  ],
-  epic: [
-    { id: 15, name: "Baobab", image: "/tree-15.png", level: 1, xp: 0, maxXp: 100, description: "Massive trunk stores water for years.", owned: false },
-    { id: 16, name: "Sequoia", image: "/tree-16.png", level: 1, xp: 0, maxXp: 100, description: "One of the tallest trees in the world.", owned: false },
-    { id: 17, name: "Dragon Tree", image: "/tree-17.png", level: 3, xp: 1700, maxXp: 2000, description: "Exotic with red sap like blood.", owned: true, quantity: 3 },
-    { id: 18, name: "Ginkgo", image: "/tree-18.png", level: 1, xp: 0, maxXp: 100, description: "Ancient tree with fan-shaped leaves.", owned: false },
-  ],
-  rare: [
-    { id: 9, name: "Bamboo", image: "/tree-9.png", level: 2, xp: 800, maxXp: 1000, description: "Fast-growing and versatile plant.", owned: true, quantity: 1 },
-    { id: 10, name: "Cypress", image: "/tree-10.png", level: 1, xp: 0, maxXp: 100, description: "Tall and slender, often near water.", owned: false },
-    { id: 11, name: "Yew", image: "/tree-11.png", level: 1, xp: 0, maxXp: 100, description: "Dark green needles with red berries.", owned: false },
-    { id: 12, name: "Sycamore", image: "/tree-12.png", level: 1, xp: 0, maxXp: 100, description: "Wide canopy with mottled bark.", owned: false },
-    { id: 13, name: "Holly", image: "/tree-13.png", level: 1, xp: 0, maxXp: 100, description: "Shiny leaves and bright red berries.", owned: false },
-    { id: 14, name: "Juniper", image: "/tree-14.png", level: 1, xp: 0, maxXp: 100, description: "Fragrant berries used in spices.", owned: false },
-  ],
-  common: [
-    { id: 1, name: "Oak", image: "/tree-1.png", level: 1, xp: 0, maxXp: 100, description: "A sturdy tree commonly found in forests.", owned: false },
-    { id: 2, name: "Birch", image: "/tree-2.png", level: 1, xp: 80, maxXp: 100, description: "Known for its white bark and elegant shape.", owned: true, quantity: 4 },
-    { id: 3, name: "Maple", image: "/tree-3.png", level: 1, xp: 0, maxXp: 100, description: "Famous for its vibrant autumn leaves.", owned: false },
-    { id: 4, name: "Pine", image: "/tree-4.png", level: 1, xp: 0, maxXp: 100, description: "An evergreen tree with strong wood.", owned: false },
-    { id: 5, name: "Willow", image: "/tree-5.png", level: 1, xp: 0, maxXp: 100, description: "Graceful branches that sway in the wind.", owned: false },
-    { id: 6, name: "Cedar", image: "/tree-6.png", level: 1, xp: 0, maxXp: 100, description: "Aromatic wood used in crafting.", owned: false },
-    { id: 7, name: "Ash", image: "/tree-7.png", level: 1, xp: 0, maxXp: 100, description: "Resilient and flexible wood.", owned: false },
-    { id: 8, name: "Elm", image: "/tree-8.png", level: 1, xp: 0, maxXp: 100, description: "Tall and sturdy with broad leaves.", owned: false },
-  ],
+const getTradeCoin = (rarity) => {
+  switch (rarity) {
+    case "legendary":
+      return 300;
+    case "epic":
+      return 200;
+    case "rare":
+      return 100;
+    case "common":
+      return 50;
+    default:
+      return 0;
+  }
 };
 
 const Tree = () => {
+  const [trees, setTrees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [userTrees, setUserTrees] = useState([]);
+  const [balance, setBalance] = useState(0);
+  const [openTreeDialog, setOpenTreeDialog] = useState(false);
+  const [openTradeDialog, setOpenTradeDialog] = useState(false);
+  const [selectedDesiredTreeId, setSelectedDesiredTreeId] = useState(null);
+  const [requesterTreeId, setRequesterTreeId] = useState("");
+  const [selectedTree, setSelectedTree] = useState(null);
+
+  const handleOpenTreeDialog = (tree) => {
+    setSelectedTree(tree);
+    setOpenTreeDialog(true);
+  };
+
+  const handleOpenTradeDialog = (treeId) => {
+    setSelectedDesiredTreeId(treeId);
+    setOpenTradeDialog(true);
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const payload = parseJwt(token);
+        const ownerId = payload?.sub;
+        const [allTrees, ownedTrees, userInfo] = await Promise.all([
+          GetAllTrees(),
+          GetUserTreeByOwnerId(ownerId),
+          GetUserInfo(ownerId),
+        ]);
+
+        setUserTrees(ownedTrees);
+        setTrees(allTrees);
+        setBalance(userInfo?.wallet?.balance || 0); // Giả sử balance nằm trong wallet
+        console.log("Balance fetched:", userInfo?.wallet?.balance); // ✅ In ra giá trị đúng
+      } catch (error) {
+        console.error("Error fetching data", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchTrees = async () => {
+      try {
+        const res = await GetAllTrees();
+        setTrees(res || []);
+      } catch (error) {
+        console.error("Failed to fetch trees", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTrees();
+  }, []);
+
+  const treeData = {
+    legendary: [],
+    epic: [],
+    rare: [],
+    common: [],
+  };
+
+  trees.forEach((tree) => {
+    const rarity = tree.rarity?.toLowerCase();
+
+    // Tìm cây người dùng sở hữu trùng với treeId
+    const ownedInstances = userTrees.filter(
+      (ut) => ut.finalTreeId === tree.treeId
+    );
+
+    if (treeData[rarity]) {
+      treeData[rarity].push({
+        ...tree,
+        id: tree.treeId,
+        rarity: rarity,
+        owned: ownedInstances.length > 0,
+        image: tree.imageUrl, // map sang prop cần
+        quantity: ownedInstances.length, // số lượng cây sở hữu
+        description: tree.description ?? "No description available.",
+      });
+    }
+  });
   const categoryStyles = {
     common: "text-gray-600",
     rare: "text-blue-600",
@@ -82,10 +161,40 @@ const Tree = () => {
     }));
   };
 
+  const handleTradeClick = async () => {
+    if (!requesterTreeId) {
+      alert("Bạn chưa nhập requesterTreeId!");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    const payload = parseJwt(token);
+    const requesterId = payload?.sub;
+
+    try {
+      const result = await TradeTree({
+        requesterId,
+        requesterTreeId: parseInt(requesterTreeId),
+        requestDesiredTreeId: selectedDesiredTreeId,
+      });
+
+      alert("Yêu cầu trade đã được gửi!");
+      // Reset
+      setOpenTradeDialog(false);
+      setRequesterTreeId("");
+      setSelectedDesiredTreeId(null);
+    } catch (error) {
+      console.error("Trade thất bại:", error);
+      alert("Giao dịch thất bại. Vui lòng thử lại.");
+    }
+  };
+
   // Hàm lọc cây
   const filterTrees = (trees, category) => {
     return trees.filter((tree) => {
-      const matchesSearch = tree.name.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = tree.name
+        .toLowerCase()
+        .includes(search.toLowerCase());
       const matchesFilter = filter === "all" || category === filter;
       return matchesSearch && matchesFilter;
     });
@@ -111,18 +220,30 @@ const Tree = () => {
       >
         <CollapsibleTrigger asChild>
           <div className="flex items-center justify-between mb-4 cursor-pointer">
-            <h2 className={`text-2xl font-semibold ${categoryStyles[category]}`}>
+            <h2
+              className={`text-2xl font-semibold ${categoryStyles[category]}`}
+            >
               {category.charAt(0).toUpperCase() + category.slice(1)}
             </h2>
             <ChevronDown
-              className={`w-5 h-5 transition-transform ${openCategories[category] ? "rotate-180" : ""}`}
+              className={`w-5 h-5 transition-transform ${
+                openCategories[category] ? "rotate-180" : ""
+              }`}
             />
           </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredTrees.map((tree) => (
-              <TreeCard key={tree.id} tree={tree} />
+              <TreeCard
+                key={tree.id}
+                tree={tree}
+                balance={balance}
+                onCardClick={() => handleOpenTreeDialog(tree)}
+                onTradeClick={() => handleOpenTradeDialog(tree.id)}
+                openTreeDialog={openTreeDialog}
+                setOpenTreeDialog={setOpenTreeDialog}
+              />
             ))}
           </div>
         </CollapsibleContent>
@@ -132,20 +253,51 @@ const Tree = () => {
 
   // Render danh sách cây theo chế độ Grid
   const renderGridView = () => {
-    const allTrees = defaultOrder
-      .flatMap((category) => filterTrees(treeData[category], category))
-      /*.sort((a, b) => a.id - b.id); // Sắp xếp theo ID nếu muốn */
+    const allTrees = defaultOrder.flatMap((category) =>
+      filterTrees(treeData[category], category)
+    );
+    /*.sort((a, b) => a.id - b.id); // Sắp xếp theo ID nếu muốn */
 
-    if (allTrees.length === 0) return <p className="text-gray-500">No trees found.</p>;
+    if (allTrees.length === 0)
+      return <p className="text-gray-500">No trees found.</p>;
 
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {allTrees.map((tree) => (
-          <TreeCard key={tree.id} tree={tree} borderStyle={borderStyles[defaultOrder.find(cat => treeData[cat].some(t => t.id === tree.id))]} />
+          <TreeCard
+            key={tree.id}
+            tree={tree}
+            borderStyle={
+              borderStyles[
+                defaultOrder.find((cat) =>
+                  treeData[cat].some((t) => t.id === tree.id)
+                )
+              ]
+            }
+            balance={balance}
+            onCardClick={() => handleOpenTreeDialog(tree)}
+            onTradeClick={() => handleOpenTradeDialog(tree.id)}
+          />
         ))}
       </div>
     );
   };
+
+  const desiredTree = trees.find((t) => t.treeId === selectedDesiredTreeId);
+  const desiredRarity = desiredTree?.rarity?.toLowerCase();
+
+  const ownedTradeableTrees = userTrees
+    .filter((ut) => ut.finalTreeId) // chỉ lấy cây đã mint
+    .map((ut) => {
+      const baseTree = trees.find((t) => t.treeId === ut.finalTreeId);
+      return {
+        finalTreeId: ut.finalTreeId,
+        name: baseTree?.name || "Unknown",
+        imageUrl: baseTree?.imageUrl || "/placeholder.png",
+        rarity: baseTree?.rarity?.toLowerCase() || "unknown",
+      };
+    })
+    .filter((tree) => tree.rarity === desiredRarity); // lọc theo độ hiếm
 
   return (
     <motion.div
@@ -161,6 +313,58 @@ const Tree = () => {
               h-[calc(100vh-80px)] overflow-auto rounded-br-2xl rounded-tr-2xl shadow-lg 
               border border-gray-300 dark:border-gray-700 my-6"
         >
+          <Dialog open={openTradeDialog} onOpenChange={setOpenTradeDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Request for tree trade</DialogTitle>
+                <DialogDescription>
+                  Choose a tree of the same rarity to trade for the tree you
+                  want.
+                </DialogDescription>
+              </DialogHeader>
+
+              {ownedTradeableTrees.length === 0 ? (
+                <p className="text-sm text-red-500 text-center mt-2">
+                  You don't have any tree of the same rarity to trade.
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 max-h-64 overflow-y-auto mt-2">
+                  {ownedTradeableTrees.map((tree) => (
+                    <div
+                      key={tree.finalTreeId}
+                      className={`border rounded-lg p-2 cursor-pointer flex flex-col items-center transition hover:shadow ${
+                        requesterTreeId === tree.finalTreeId
+                          ? "border-blue-500 ring-2 ring-blue-300"
+                          : ""
+                      }`}
+                      onClick={() => setRequesterTreeId(tree.finalTreeId)}
+                    >
+                      <img
+                        src={tree.imageUrl}
+                        alt={tree.name}
+                        className="w-16 h-16 mb-1"
+                      />
+                      <p className="text-sm font-medium text-center">
+                        {tree.name}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setOpenTradeDialog(false)}
+                >
+                  Huỷ
+                </Button>
+                <Button disabled={!requesterTreeId} onClick={handleTradeClick}>
+                  Trade
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <h2 className="text-xl font-semibold mb-4">Filters</h2>
           <Input
             placeholder="Search trees..."
@@ -170,26 +374,51 @@ const Tree = () => {
           />
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full justify-between text-left">
-                {filter === "all" ? "All" : filter.charAt(0).toUpperCase() + filter.slice(1)}
+              <Button
+                variant="outline"
+                className="w-full justify-between text-left"
+              >
+                {filter === "all"
+                  ? "All"
+                  : filter.charAt(0).toUpperCase() + filter.slice(1)}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-52 p-1">
               <div className="flex flex-col gap-1">
-                <Button variant="ghost" className="justify-start hover:bg-gray-100 bg-white" onClick={() => setFilter("all")}>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("all")}
+                >
                   All
                 </Button>
-                <Button variant="ghost" className="justify-start hover:bg-gray-100 bg-white" onClick={() => setFilter("common")}>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("common")}
+                >
                   Common
                 </Button>
-                <Button variant="ghost" className="justify-start hover:bg-gray-100 bg-white" onClick={() => setFilter("rare")}>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("rare")}
+                >
                   Rare
                 </Button>
-                <Button variant="ghost" className="justify-start hover:bg-gray-100 bg-white" onClick={() => setFilter("epic")}>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("epic")}
+                >
                   Epic
                 </Button>
-                <Button variant="ghost" className="justify-start hover:bg-gray-100 bg-white" onClick={() => setFilter("legendary")}>
+                <Button
+                  variant="ghost"
+                  className="justify-start hover:bg-gray-100 bg-white"
+                  onClick={() => setFilter("legendary")}
+                >
                   Legendary
                 </Button>
               </div>
@@ -222,7 +451,8 @@ const Tree = () => {
           </div>
 
           {/* Render theo chế độ xem */}
-          {viewMode === "list" && getOrderedCategories().map((category) => renderListView(category))}
+          {viewMode === "list" &&
+            getOrderedCategories().map((category) => renderListView(category))}
           {viewMode === "grid" && renderGridView()}
         </div>
       </div>
@@ -231,10 +461,11 @@ const Tree = () => {
 };
 
 // Component TreeCard (đã thêm borderStyle prop)
-const TreeCard = ({ tree, borderStyle }) => {
+const TreeCard = ({ tree, borderStyle, balance, onTradeClick }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const progress = tree.level === 4 ? 100 : (tree.xp / tree.maxXp) * 100;
-  const progressText = tree.level === 4 ? "Max XP" : `${tree.xp}/${tree.maxXp} XP`;
+
+  const tradeCoin = getTradeCoin(tree.rarity);
+  const canAfford = balance >= tradeCoin;
 
   return (
     <motion.div
@@ -246,8 +477,8 @@ const TreeCard = ({ tree, borderStyle }) => {
         <DialogTrigger asChild>
           <Card
             className={`p-4 flex flex-col items-center cursor-pointer hover:shadow-lg transition-shadow ${
-              tree.owned ? "" : "opacity-50"
-            } ${borderStyle ? `border-2 ${borderStyle}` : ""}`} // Thêm viền nếu có borderStyle
+              tree.owned ? "" : "grayscale brightness-75"
+            } ${borderStyle ? `border-2 ${borderStyle}` : ""}`}
           >
             <CardContent className="text-center pb-0 relative w-full">
               {tree.owned && (
@@ -255,46 +486,71 @@ const TreeCard = ({ tree, borderStyle }) => {
                   {tree.quantity}
                 </span>
               )}
-              <img src={tree.image} alt={tree.name} className="w-24 h-24 mb-2 mx-auto" />
-              <p className={`font-semibold ${tree.owned ? "text-gray-800" : "text-gray-500"}`}>
+              <img
+                src={tree.image}
+                alt={tree.name}
+                className="w-24 h-24 mb-2 mx-auto"
+              />
+              <p
+                className={`font-semibold ${
+                  tree.owned ? "text-gray-800" : "text-gray-500"
+                }`}
+              >
                 {tree.name}
               </p>
-              <div className="relative w-full mt-2">
-                <Progress value={progress} className="w-full h-6" />
-                <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-800 font-medium bg-white bg-opacity-50">
-                  {progressText}
-                </span>
-              </div>
-              <p className="text-sm text-gray-500 mt-1">
-                {tree.level === 4 ? "Level 4" : `Level ${tree.level}`}
-              </p>
+
+              {!tree.owned && (
+                <Button
+                  variant="outline"
+                  className="mt-2 w-full text-xs bg-yellow-100 border-yellow-400 text-yellow-800 flex items-center justify-center gap-1"
+                  disabled={!canAfford}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Ngăn click lan ra card
+                    onTradeClick(tree.id);
+                  }}
+                >
+                  {canAfford ? "Looking for trade" : "Not enough coin"}
+                  <img
+                    src="/images/coin.png"
+                    alt="coin"
+                    className="w-4 h-4 align-middle"
+                  />
+                  {tradeCoin} coins
+                </Button>
+              )}
+              <div className="relative w-full mt-2"></div>
             </CardContent>
           </Card>
         </DialogTrigger>
+
         <DialogContent className="w-96">
+          <DialogHeader>
+            <DialogTitle className="sr-only">{tree.name}</DialogTitle>
+          </DialogHeader>
+
           <div className="flex flex-col items-center gap-4">
             <img
               src={tree.image}
               alt={tree.name}
               className={`w-32 h-32 ${tree.owned ? "" : "opacity-50"}`}
             />
-            <h3 className={`text-lg font-semibold ${tree.owned ? "text-gray-800" : "text-gray-500"}`}>
+            <h3
+              className={`text-lg font-semibold ${
+                tree.owned ? "text-gray-800" : "text-gray-500"
+              }`}
+            >
               {tree.name}
             </h3>
-            <div className="relative w-full">
-              <Progress value={progress} className="w-full h-6" />
-              <span className="absolute inset-0 flex items-center justify-center text-xs text-gray-800 font-medium bg-white bg-opacity-50">
-                {progressText}
-              </span>
-            </div>
-            <p className="text-sm text-gray-600">
-              {tree.level === 4 ? "Level 4" : `Level ${tree.level}`}
+
+            <p className="text-sm text-gray-500 text-center">
+              {tree.description}
             </p>
-            <p className="text-sm text-gray-500 text-center">{tree.description}</p>
-            {tree.owned && (
-              <p className="text-sm text-green-600 font-semibold">Quantity: {tree.quantity}</p>
-            )}
-            {!tree.owned && (
+
+            {tree.owned ? (
+              <p className="text-sm text-green-600 font-semibold">
+                Quantity: {tree.quantity}
+              </p>
+            ) : (
               <p className="text-sm text-red-500 font-semibold">Not Owned</p>
             )}
           </div>

@@ -55,7 +55,9 @@ export default function Marketplace() {
                 variant="outline"
                 className="w-full justify-between text-left"
               >
-                {filter === "all" ? "All" : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                {filter === "all"
+                  ? "All"
+                  : filter.charAt(0).toUpperCase() + filter.slice(1)}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </PopoverTrigger>
@@ -146,7 +148,7 @@ export default function Marketplace() {
                                 </p>
                                 <p className="text-sm text-gray-500 flex items-center">
                                   <img
-                                    src="/src/assets/images/coin.png"
+                                    src="/images/coin.png"
                                     alt="Coin"
                                     className="w-5 h-5 mr-1"
                                   />
