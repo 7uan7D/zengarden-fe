@@ -76,7 +76,9 @@ export default function Marketplace() {
                 variant="outline"
                 className="w-full justify-between text-left"
               >
-                {filter === "all" ? "All" : filter.charAt(0).toUpperCase() + filter.slice(1)}
+                {filter === "all"
+                  ? "All"
+                  : filter.charAt(0).toUpperCase() + filter.slice(1)}
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </PopoverTrigger>
