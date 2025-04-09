@@ -20,24 +20,28 @@ import {
 } from "@/components/ui/popover";
 
 import { motion } from "framer-motion";
+import parseJwt from "@/services/parseJwt";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
-import { GetAllChallenges } from "@/services/apiServices/challengeService";
+import { GetAllChallenges, GetChallengeById, JoinChallengeById } from "@/services/apiServices/challengeService";
+import { GetAllUserChallenges } from "@/services/apiServices/userChallengeService";
 import { Link } from "react-router-dom";
+import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
+import { toast } from "sonner";
 
 const categories = ["My Challenges", "Get Challenges"];
 
-const userChallengesData = [
-  {
-    id: 1,
-    name: "Taking Surveys",
-    reward: 42,
-    creator: "Red Cross",
-    createdDate: "2021-09-01",
-    types: ["Survey", "Research"],
-    description:
-      "Participate in short surveys 📓 to contribute to important research and earn rewards. Help make a difference while getting paid!",
-  },
-];
+// const userChallengesData = [
+//   {
+//     id: 1,
+//     name: "Taking Surveys",
+//     reward: 42,
+//     creator: "Red Cross",
+//     createdDate: "2021-09-01",
+//     types: ["Survey", "Research"],
+//     description:
+//       "Participate in short surveys 📓 to contribute to important research and earn rewards. Help make a difference while getting paid!",
+//   },
+// ];
 
 export default function Challenges() {
   const [search, setSearch] = useState("");
@@ -119,6 +123,109 @@ export default function Challenges() {
   return selectedTypeIds.includes(item.challengeTypeId);
   });
 
+  const token = localStorage.getItem("token");
+
+  const [userChallengeInfo, setUserChallengeInfo] = useState([]);
+  const [userChallengesData, setUserChallengesData] = useState([]);
+  useEffect(() => {
+    const fetchUserChallenges = async () => {
+      if (!token) return;
+
+      try {
+        const data = await GetAllUserChallenges();
+        
+        const userId = parseJwt(token).sub;
+        const LoggedUserChallenges = data.filter(challenge => challenge.userId === parseInt(userId));
+        setUserChallengeInfo(LoggedUserChallenges); // this is for userChallenge detail page
+
+        // get all challengeId from LoggedUserChallenges
+        const challengeIds = LoggedUserChallenges.map(
+          (challenge) => challenge.challengeId
+        );
+
+        // get all challengeData by challengeId from getChallengeById
+        const challengeData = await Promise.all(
+          challengeIds.map(async (challengeId) => {
+            const data = await GetChallengeById(challengeId);
+            return data;
+          })
+        );
+
+        setUserChallengesData(challengeData);
+      } catch (error) {
+        console.error("Error fetching challenges:", error);
+      }
+    };
+
+    fetchUserChallenges();
+  }, []);
+
+  // console.log("userChallengeInfo", userChallengeInfo);
+  console.log("userChallengesData", userChallengesData);
+
+  const filteredUserChallenges = userChallengesData.filter((item) => {
+    if (typeFilters.length === 0) return true;
+    const selectedTypeIds = challengeTypesData
+      .filter((type) => typeFilters.includes(type.challengeTypeName))
+      .map((type) => type.challengeTypeId);
+    return selectedTypeIds.includes(item.challengeTypeId);
+  });
+
+  const [UserTrees, setUserTrees] = useState([]);
+  useEffect(() => {
+    const fetchTrees = async () => {
+      if (!token) return;
+      try {
+        const userId = parseJwt(token).sub;
+        const data = await GetUserTreeByUserId(userId);
+        if (data) {
+          setUserTrees(data);
+        }
+      } catch (error) {
+        console.error("Error fetching user trees:", error);
+      }
+    };
+
+    fetchTrees();
+  }, []);
+
+  console.log("UserTrees", UserTrees);
+
+  const handleJoinChallenge = async (challengeId) => {
+    if (!token) return;
+
+    if (!UserTrees || UserTrees.length === 0 || !UserTrees[0]?.userTreeId) {
+      console.error("User tree is not available.");
+      return;
+    }
+
+    const userTreeId = parseInt(UserTrees[0].userTreeId);
+    console.log("Joining challenge with ID:", challengeId, "userTreeId:", userTreeId);
+
+    try {
+      await JoinChallengeById(challengeId, { userTreeId });
+
+      toast.success("Joined challenge successfully!");
+      setTimeout(() => {
+        window.location.reload()
+      }, 2000);
+      
+      
+      // handle join challenge logic here
+    } catch (error) {
+      console.error("Error joining challenge:", error);
+      toast.error("Failed to join challenge. Please try again.");
+    }
+  }
+
+  if (!token) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
+        <h1 className="text-2xl font-bold">Please log in to view your challenges</h1>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md"></div>
@@ -199,8 +306,8 @@ export default function Challenges() {
             {categories.map((cat) => (
               <TabsContent key={cat} value={cat}>
                 <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4">
-                  {filteredChallenges.map((item) => {
-                    return (
+                  {cat === "Get Challenges" &&
+                    filteredChallenges.map((item) => (
                       <motion.div
                         key={item.challengeId}
                         initial={{ opacity: 0, y: 10 }}
@@ -209,121 +316,224 @@ export default function Challenges() {
                       >
                         <Popover>
                           <Link to={`/challenges/${item.challengeId}`}>
-                          <Card className="relative">
-                            {item.challengeId === 1 && cat === "Get Challenges" && (
-                              <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
-                                Joined
-                              </span>
-                            )}
-
-                            <CardContent className="flex flex-col items-start p-4 cursor-pointer">
-                              {/* {cat === "Avatar" ? (
-                                                                    <Avatar className="h-20 w-20 mb-2" />
-                                                                ) : cat === "Background" ? (
-                                                                    <div className="h-32 w-full bg-gray-300 rounded-lg mb-2" />
-                                                                ) : cat === "Music" ? (
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        className="mb-2 bg-white"
-                                                                    >
-                                                                        <Play className="h-6 w-6" /> Play Preview
-                                                                    </Button>
-                                                                ) : (
-                                                                    <div className="h-20 w-20 bg-gray-300 rounded-lg mb-2" />
-                                                                )} */}
-
-                              <p className="font-semibold">{item.challengeName}</p>
-                              <p className="text-sm text-gray-500 flex items-center">
-                                Reward <Beaker className="ml-1" color="darkcyan" />:
-                                <span className="font-bold ml-1">
-                                  {item.reward} EXP
+                            <Card className="relative">
+                              {/* check if item.challengeId appears in userChallengesData */}
+                              {userChallengesData.some(
+                                (userChallenge) => userChallenge.challengeId === item.challengeId
+                              ) && cat === "Get Challenges" && (
+                                <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
+                                  Joined
                                 </span>
-                              </p>
-
-                              <p className="text-sm text-gray-500 flex items-center">
-                                Including <Verified className="ml-1" color="navy" />:
-                                <span className="font-bold ml-1">
-                                  {item.tasks ? item.tasks.length : 0} task(s)
+                              )}
+{/*                               
+                              {item.challengeId === 1 && cat === "Get Challenges" && (
+                                <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
+                                  Joined
                                 </span>
-                                
-                              </p>
+                              )} */}
+                            
+                              <CardContent className="flex flex-col items-start p-4 cursor-pointer">
+                                {/* {cat === "Avatar" ? (
+                                      <Avatar className="h-20 w-20 mb-2" />
+                                  ) : cat === "Background" ? (
+                                      <div className="h-32 w-full bg-gray-300 rounded-lg mb-2" />
+                                  ) : cat === "Music" ? (
+                                      <Button
+                                          variant="outline"
+                                          className="mb-2 bg-white"
+                                      >
+                                          <Play className="h-6 w-6" /> Play Preview
+                                      </Button>
+                                  ) : (
+                                      <div className="h-20 w-20 bg-gray-300 rounded-lg mb-2" />
+                                  )} */}
 
-                              <p className="text-sm text-gray-500 flex items-center">
-                                Start Date:
-                                <span className="font-bold ml-1">
-                                  {new Date(item.startDate).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric',
-                                    hour: 'numeric',
-                                    minute: 'numeric',
-                                    second: 'numeric',
-                                  })}
-                                </span>
-                              </p>
-
-                              <p className="text-sm text-gray-500 flex items-center">
-                                End Date:
-                                <span className="font-bold ml-1">
-                                  {new Date(item.endDate).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric',
-                                    hour: 'numeric',
-                                    minute: 'numeric',
-                                    second: 'numeric',
-                                  })}
-                                </span>
-                              </p>
-
-                              <p className="text-sm text-gray-500 flex items-center">
-                                Type: {" "}
-                                  <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs ml-1">
-                                    {/* get challenge type by id */}
-                                    {challengeTypesData
-                                      .filter(
-                                        (type) =>
-                                          type.challengeTypeId ===
-                                          item.challengeTypeId
-                                      )
-                                      .map((type) => type.challengeTypeName)}
+                                <p className="font-semibold">{item.challengeName}</p>
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  Reward <Beaker className="ml-1" color="darkcyan" />:
+                                  <span className="font-bold ml-1">
+                                    {item.reward} EXP
                                   </span>
-                              </p>
+                                </p>
 
-                              <p className="text-sm text-gray-500 flex items-center text-left">
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  Including <Verified className="ml-1" color="navy" />:
+                                  <span className="font-bold ml-1">
+                                    {item.tasks ? item.tasks.length : 0} task(s)
+                                  </span>
+                                  
+                                </p>
+
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  Start Date:
+                                  <span className="font-bold ml-1">
+                                    {new Date(item.startDate).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric',
+                                      hour: 'numeric',
+                                      minute: 'numeric',
+                                      second: 'numeric',
+                                    })}
+                                  </span>
+                                </p>
+
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  End Date:
+                                  <span className="font-bold ml-1">
+                                    {new Date(item.endDate).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric',
+                                      hour: 'numeric',
+                                      minute: 'numeric',
+                                      second: 'numeric',
+                                    })}
+                                  </span>
+                                </p>
+
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  Type: {" "}
+                                    <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs ml-1">
+                                      {/* get challenge type by id */}
+                                      {challengeTypesData
+                                        .filter(
+                                          (type) =>
+                                            type.challengeTypeId ===
+                                            item.challengeTypeId
+                                        )
+                                        .map((type) => type.challengeTypeName)}
+                                    </span>
+                                </p>
+
+                                <p className="text-sm text-gray-500 flex items-center text-left">
+                                  {item.description}
+                                </p>
+
+                                {userChallengesData.some(
+                                  (userChallenge) => userChallenge.challengeId === item.challengeId
+                                ) ? (
+                                  <Button className="mt-2 text-orange-800 font-bold" variant="outline">
+                                    <BookX className="mr-2 h-4 w-4" /> Leave Challenge
+                                  </Button>
+                                ) : (
+                                  <Button className="mt-2 text-cyan-800 font-bold" variant="outline" onClick={() => handleJoinChallenge(item.challengeId)}>
+                                    <BookCheck className="mr-2 h-4 w-4" /> Join Challenge
+                                  </Button>
+                                )}
+                              </CardContent>
+                            </Card>
+
+                            <PopoverContent
+                              className="w-64 text-sm"
+                              side="top"
+                              align="center"
+                            >
+                              <p className="font-semibold">{item.name}</p>
+                              <p className="text-gray-500 text-left text-sm">
                                 {item.description}
                               </p>
-
-                              {cat === "My Challenges" ? (
-                                <Button className="mt-2" variant="outline">
-                                  <BookX className="mr-2 h-4 w-4" /> Leave
-                                  Challenge
-                                </Button>
-                              ) : (
-                                <Button className="mt-2" variant="outline">
-                                  <BookCheck className="mr-2 h-4 w-4" /> Get
-                                  Challenge
-                                </Button>
-                              )}
-                            </CardContent>
-                          </Card>
-
-                          <PopoverContent
-                            className="w-64 text-sm"
-                            side="top"
-                            align="center"
-                          >
-                            <p className="font-semibold">{item.name}</p>
-                            <p className="text-gray-500 text-left text-sm">
-                              {item.description}
-                            </p>
-                          </PopoverContent>
+                            </PopoverContent>
                           </Link>
-                          
                         </Popover>
                       </motion.div>
-                    );
-                  })}
+                    ))
+                  }
+
+                  {cat === "My Challenges" &&
+                    filteredUserChallenges.map((item) => (
+                      <motion.div
+                        key={item.userChallengeId}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: 0.1 }}
+                      >
+                        <Popover>
+                          <Link to={`/challenges/${item.challengeId}`}>
+                            <Card className="relative">
+                              <CardContent className="flex flex-col items-start p-4 cursor-pointer">
+                                <p className="font-semibold">{item.challengeName}</p>
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  Reward <Beaker className="ml-1" color="darkcyan" />:
+                                  <span className="font-bold ml-1">
+                                    {item.reward} EXP
+                                  </span>
+                                </p>
+
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  Including <Verified className="ml-1" color="navy" />:
+                                  <span className="font-bold ml-1">
+                                    {item.tasks ? item.tasks.length : 0} task(s)
+                                  </span>
+                                  
+                                </p>
+
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  Start Date:
+                                  <span className="font-bold ml-1">
+                                    {new Date(item.startDate).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric',
+                                      hour: 'numeric',
+                                      minute: 'numeric',
+                                      second: 'numeric',
+                                    })}
+                                  </span>
+                                </p>
+
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  End Date:
+                                  <span className="font-bold ml-1">
+                                    {new Date(item.endDate).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric',
+                                      hour: 'numeric',
+                                      minute: 'numeric',
+                                      second: 'numeric',
+                                    })}
+                                  </span>
+                                </p>
+
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  Type: {" "}
+                                    <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs ml-1">
+                                      {/* get challenge type by id */}
+                                      {challengeTypesData
+                                        .filter(
+                                          (type) =>
+                                            type.challengeTypeId ===
+                                            item.challengeTypeId
+                                        )
+                                        .map((type) => type.challengeTypeName)}
+                                    </span>
+                                </p>
+
+                                <p className="text-sm text-gray-500 flex items-center text-left">
+                                  {item.description}
+                                </p>
+
+                                <Button className="mt-2 text-orange-800 font-bold" variant="outline">
+                                  <BookX className="mr-2 h-4 w-4" /> Leave Challenge
+                                </Button>
+                              </CardContent>
+                            </Card>
+                            <PopoverContent
+                              className="w-64 text-sm"
+                              side="top"
+                              align="center"
+                            >
+                              <p className="font-semibold">{item.name}</p>
+                              <p className="text-gray-500 text-left text-sm">
+                                {item.description}
+                              </p>
+                            </PopoverContent>
+                          </Link>
+                        </Popover>
+                      </motion.div>
+                    ))
+                  }
                 </div>
               </TabsContent>
             ))}
