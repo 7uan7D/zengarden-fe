@@ -9,7 +9,7 @@ import {
   BookX,
   Plus,
   Verified,
-  Beaker,
+  Trophy,
   Check,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -161,7 +161,7 @@ export default function Challenges() {
   }, []);
 
   // console.log("userChallengeInfo", userChallengeInfo);
-  console.log("userChallengesData", userChallengesData);
+  // console.log("userChallengesData", userChallengesData);
 
   const filteredUserChallenges = userChallengesData.filter((item) => {
     if (typeFilters.length === 0) return true;
@@ -350,14 +350,15 @@ export default function Challenges() {
 
                                 <p className="font-semibold">{item.challengeName}</p>
                                 <p className="text-sm text-gray-500 flex items-center">
-                                  Reward <Beaker className="ml-1" color="darkcyan" />:
+                                  Reward <Trophy className="ml-1" color="orange" />:
                                   <span className="font-bold ml-1">
-                                    {item.reward} EXP
+                                    {item.reward} coins
                                   </span>
                                 </p>
-
+                               
                                 <p className="text-sm text-gray-500 flex items-center">
-                                  Including <Verified className="ml-1" color="navy" />:
+                                  Including: 
+                                  {/* <Verified className="ml-1" color="navy" />: */}
                                   <span className="font-bold ml-1">
                                     {item.tasks ? item.tasks.length : 0} task(s)
                                   </span>
@@ -454,14 +455,15 @@ export default function Challenges() {
                               <CardContent className="flex flex-col items-start p-4 cursor-pointer">
                                 <p className="font-semibold">{item.challengeName}</p>
                                 <p className="text-sm text-gray-500 flex items-center">
-                                  Reward <Beaker className="ml-1" color="darkcyan" />:
+                                  Reward <Trophy className="ml-1" color="orange" />:
                                   <span className="font-bold ml-1">
-                                    {item.reward} EXP
+                                    {item.reward} coins
                                   </span>
                                 </p>
 
                                 <p className="text-sm text-gray-500 flex items-center">
-                                  Including <Verified className="ml-1" color="navy" />:
+                                  Including: 
+                                  {/* <Verified className="ml-1" color="navy" />: */}
                                   <span className="font-bold ml-1">
                                     {item.tasks ? item.tasks.length : 0} task(s)
                                   </span>

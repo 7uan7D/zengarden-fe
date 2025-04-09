@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Verified, Beaker, BookCheck, BookX, Clock, Coffee, Calendar, Flag, CheckCircle, ClipboardCheck, StickyNote, ArrowBigLeft } from "lucide-react";
-import { GetAllChallenges, GetChallengeById, JoinChallengeById } from "@/services/apiServices/challengeService";
+import { Verified, Trophy, BookCheck, BookX, Clock, Coffee, Calendar, Flag, CheckCircle, ClipboardCheck, StickyNote, ArrowBigLeft } from "lucide-react";
+import { GetAllChallenges, GetChallengeById, GetProgressByChallengeId, GetRankingByChallengeId, JoinChallengeById } from "@/services/apiServices/challengeService";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
 import { GetAllUserChallenges } from "@/services/apiServices/userChallengeService";
 import parseJwt from "@/services/parseJwt";
@@ -134,6 +134,44 @@ export default function ChallengeDetails() {
         console.log(`Leaving challenge with ID: ${id}`);
         // Optionally, show a success message
     };
+
+    const [rankingData, setRankingData] = useState([]);    
+    useEffect(() => {
+        const fetchRanking = async () => {
+            if (!token) return;
+
+            try {
+                const data = await GetRankingByChallengeId(id);
+                console.log("Ranking data:", data);
+                const rankingDataWithoutUserId = data.map(({ userId, ...rest }) => rest);
+                setRankingData(rankingDataWithoutUserId);
+
+                // Process the ranking data as needed
+            } catch (error) {
+                console.error("Error fetching ranking:", error);
+            }
+        };
+
+        fetchRanking();
+    }, [id]);
+
+    const [userChallengeProgress, setUserChallengeProgress] = useState(null);
+    useEffect(() => {
+        const fetchProgress = async () => {
+            if (!token) return;
+
+            try {
+                const data = await GetProgressByChallengeId(id);
+                console.log("Progress data:", data);
+                setUserChallengeProgress(data.progress);
+                // Process the progress data as needed
+            } catch (error) {
+                console.error("Error fetching progress:", error);
+            }
+        };
+
+        fetchProgress();
+    }, [id]);
 
     if (isLoading) {
         return <div></div>;
@@ -270,19 +308,13 @@ export default function ChallengeDetails() {
                                     <p className="text-sm text-gray-500 flex items-center text-left font-bold">
                                         {challenge.description}
                                     </p>
+                                    
                                     <p className="text-sm text-gray-500 flex items-center">
-                                        Reward <Beaker className="ml-1" color="darkcyan" />:
+                                        Reward <Trophy className="ml-1" color="orange" />:
                                         <span className="font-bold ml-1">
-                                            {challenge.reward} EXP
+                                            {challenge.reward} coins
                                         </span>
                                     </p>
-
-                                    {/* <p className="text-sm text-gray-500 flex items-center">
-                                        Including <Verified className="ml-1" color="navy" />:
-                                        <span className="font-bold ml-1">
-                                            {challenge.tasks ? challenge.tasks.length : 0} task(s)
-                                        </span>
-                                    </p> */}
 
                                     <p className="text-sm text-gray-500 flex items-center">
                                         Start Date:
@@ -311,6 +343,67 @@ export default function ChallengeDetails() {
                                             })}
                                         </span>
                                     </p>
+                                    
+                                    <p className="text-sm text-cyan-500 flex items-center text-left font-bold">
+                                        Your progress:
+                                    </p>
+                                    
+                                    <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                        <div
+                                            className="bg-cyan-600 h-2.5 rounded-full"
+                                            style={{ width: `${userChallengeProgress}%` }}
+                                        ></div>
+                                    </div>
+
+                                    <div className="flex justify-end mt-2">
+                                        <p className="text-sm text-gray-500 flex items-center">
+                                            {userChallengeProgress}% completed
+                                        </p>
+                                    </div>
+
+                                    <p className="text-sm text-orange-500 flex items-center text-left font-bold">
+                                        Leaderboard:
+                                    </p>
+
+                                    <Card className="mt-2">
+                                        <CardContent className="space-y-2">
+                                            {/* using table with header: highlight 1st and 2nd, userName, progress */}
+                                            <table className="min-w-full divide-y divide-gray-200">
+                                                <thead className="bg-gray-50">
+                                                    <tr>
+                                                        <th className="py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                                        <th className="py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                                        <th className="py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="bg-white divide-y divide-gray-200">
+                                                    {rankingData && rankingData.length > 0 ? (
+                                                        rankingData.map((user, index) => (
+                                                            <tr key={index}>
+                                                                {/* <td className="py-4 whitespace-nowrap text-sm text-gray-500 text-center">{index + 1}</td> */}
+
+                                                                <td className={`py-4 whitespace-nowrap text-sm font-medium text-center ${index === 0 ? 'text-red-500' : index === 1 ? 'text-orange-500' : index === 2 ? 'text-yellow-500' : 'text-gray-500'}`}>
+                                                                    {index === 0 ? '1st' : index === 1 ? '2nd' : index === 2 ? '3rd' : `${index + 1}th`}
+                                                                </td>
+
+                                                                <td className={`py-4 whitespace-nowrap text-sm font-bold text-center ${index === 0 ? 'text-red-500' : index === 1 ? 'text-orange-500' : index === 2 ? 'text-yellow-500' : 'text-gray-500'}`}>
+                                                                    {user.userName}
+                                                                </td>
+
+                                                                <td className={`py-4 whitespace-nowrap text-sm font-bold text-center ${index === 0 ? 'text-red-500' : index === 1 ? 'text-orange-500' : index === 2 ? 'text-yellow-500' : 'text-gray-500'}`}>
+                                                                    {user.progress}%
+                                                                </td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td className="py-4 whitespace-nowrap text-sm text-gray-500 text-center" colSpan="3">No ranking data available.</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </CardContent>
+                                    </Card>
                                 </CardContent>
                             </Card>
                         </div>

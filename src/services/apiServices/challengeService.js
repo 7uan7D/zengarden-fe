@@ -23,3 +23,29 @@ export async function JoinChallengeById(challengeId, userTreeId) {
     );
     return response.data;
 }
+
+export async function GetRankingByChallengeId(challengeId) {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+        `/Challenges/${challengeId}/ranking`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
+}
+
+export async function GetProgressByChallengeId(challengeId) {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(
+        `/Challenges/progress/${challengeId}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
+}   
