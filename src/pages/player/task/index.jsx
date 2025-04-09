@@ -994,7 +994,7 @@ export default function TaskPage() {
                   );
                 })}
               {userTrees.filter(
-                (tree) => tree.treeStatus === 0 || tree.treeStatus === 1
+                (tree) => tree.treeStatus === 1 || tree.treeStatus === 2
               ).length < 2 && (
                   <div
                     className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
