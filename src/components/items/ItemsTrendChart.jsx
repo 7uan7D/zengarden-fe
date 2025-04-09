@@ -31,7 +31,7 @@ const ItemsTrendChart = () => {
                             itemStyle={{ color: '#E5E7EB' }}
                         />
                         <Legend />
-                        <Line type='linear' dataKey='items' stroke='#6366F1' strokeWidth={2} />
+                        <Line type='monotone' dataKey='items' stroke='#6366F1' strokeWidth={2} />
                     </LineChart>
                 </ResponsiveContainer>
             </div>

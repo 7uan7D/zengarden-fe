@@ -28,6 +28,8 @@ import { UserExperienceProvider } from "@/context/UserExperienceContext";
 import { TreeExperienceProvider } from "./context/TreeExperienceContext";
 import MusicPlayerController from "./components/musicPlayerController";
 import ChallengeDetails from "./pages/player/challenges/ChallengeDetails";
+import { TimerProvider } from "./pages/player/workspace/timerContext";
+import Policy from "./components/policy";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -44,38 +46,43 @@ function AnimatedRoutes() {
     <UserExperienceProvider>
       <TreeExperienceProvider>
         <>
-          <Header />
-          {/* Đặt MusicPlayerController ở đây để chỉ hiển thị trên các trang không phải admin */}
-          <div className="fixed top-4 left-4 z-50">
-            <MusicPlayerController
-              positionClass="fixed top-4 left-4 z-50"
-              setPlaying={setIsPlaying}
-              setCurrentIndex={setCurrentIndex}
-            />
-          </div>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-            >
-              <Routes location={location}>
-                <Route path="/" element={<HeroPage />} />
-                <Route path="/faq" element={<FAQ />} />
-                <Route path="/tree" element={<Tree />} />
-                <Route path="/workspace" element={<Workspace />} />
-                <Route path="/calendar" element={<Calendar />} />
-                <Route path="/home" element={<PlayerHome />} />
-                <Route path="/marketplace" element={<Marketplace />} />
-                <Route path="/task" element={<TaskPage />} />
-                <Route path="/challenges" element={<Challenges />} />
-                <Route path="/challenges/:id" element={<ChallengeDetails />} />
-              </Routes>
-            </motion.div>
-          </AnimatePresence>
-          <Footer />
+          <TimerProvider>
+            <Header />
+            {/* Chỉ hiển thị MusicPlayerController nếu không phải trang HeroPage */}
+            {location.pathname !== "/" && (
+              <div className="fixed top-4 left-4 z-50">
+                <MusicPlayerController
+                  positionClass="fixed top-4 left-4 z-50"
+                  setPlaying={setIsPlaying}
+                  setCurrentIndex={setCurrentIndex}
+                />
+              </div>
+            )}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={location.pathname}
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                <Routes location={location}>
+                  <Route path="/" element={<HeroPage />} />
+                  <Route path="/faq" element={<FAQ />} />
+                  <Route path="/tree" element={<Tree />} />
+                  <Route path="/workspace" element={<Workspace />} />
+                  <Route path="/calendar" element={<Calendar />} />
+                  <Route path="/home" element={<PlayerHome />} />
+                  <Route path="/marketplace" element={<Marketplace />} />
+                  <Route path="/task" element={<TaskPage />} />
+                  <Route path="/challenges" element={<Challenges />} />
+                  <Route path="/challenges/:id" element={<ChallengeDetails />} />
+                  <Route path="/policy" element={<Policy />} />
+                </Routes>
+              </motion.div>
+            </AnimatePresence>
+            <Footer />
+          </TimerProvider>
         </>
       </TreeExperienceProvider>
     </UserExperienceProvider>
@@ -111,7 +118,7 @@ function ConditionalRoutes() {
     location.pathname.startsWith("/overview") ||
     location.pathname.startsWith("/users") ||
     location.pathname.startsWith("/items") ||
-    location.pathname.startsWith("/tasks") || 
+    location.pathname.startsWith("/tasks") ||
     location.pathname.startsWith("/userXPLog") ||
     location.pathname.startsWith("/treeXPLog") ||
     location.pathname.startsWith("/sales") ||

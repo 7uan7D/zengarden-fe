@@ -146,8 +146,8 @@ const Header = () => {
               transition={{ duration: 0.3 }}
               onClick={() => onSelect(item)}
               className={`p-4 flex flex-col items-center gap-2 cursor-pointer rounded-lg transition-all ${isSelected
-                  ? "bg-green-100 border-green-500"
-                  : "hover:bg-gray-100 border-gray-200"
+                ? "bg-green-100 border-green-500"
+                : "hover:bg-gray-100 border-gray-200"
                 } border`}
             >
               <img
@@ -511,13 +511,18 @@ const Header = () => {
                       {totalXp} / {xpToNextLevel} XP
                     </span>
                   </div>
-                  <div className="mt-0 text-[11px] text-gray-600 flex items-center gap-0.5">
+                  <div className="mt-0 text-[14px] text-gray-600 flex items-center gap-0.5">
                     <img
                       src="/images/coin.png"
                       alt="Coin"
-                      className="w-4 h-4"
+                      className="w-5 h-5"
                     />
                     <span className="font-semibold">{walletBalance ?? 0}</span>
+                    <button
+                      className="ml-1 text-white font-bold text-lg hover:bg-[#609994] transition-colors bg-[#83aa6c] rounded-full w-5 h-5 flex items-center justify-center outline-none focus:ring-0 focus:outline-none!important" onClick={() => navigate("/marketplace?tab=Package")}
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
 
