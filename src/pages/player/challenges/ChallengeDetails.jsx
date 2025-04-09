@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Verified, Trophy, BookCheck, BookX, Clock, Coffee, Calendar, Flag, CheckCircle, ClipboardCheck, StickyNote, ArrowBigLeft } from "lucide-react";
-import { GetAllChallenges, GetChallengeById, GetProgressByChallengeId, GetRankingByChallengeId, JoinChallengeById } from "@/services/apiServices/challengeService";
+import { GetAllChallenges, GetChallengeById, GetProgressByChallengeId, GetRankingByChallengeId, JoinChallengeById, LeaveChallengeById } from "@/services/apiServices/challengeService";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
 import { GetAllUserChallenges } from "@/services/apiServices/userChallengeService";
 import parseJwt from "@/services/parseJwt";
@@ -129,24 +129,32 @@ export default function ChallengeDetails() {
         }
     }
 
-    const handleLeaveChallenge = () => {
-        // Implement logic to leave the challenge (e.g., API call)
-        console.log(`Leaving challenge with ID: ${id}`);
-        // Optionally, show a success message
+    const handleLeaveChallenge = async (challengeId) => {
+        if (!token) return;
+
+        try {
+            await LeaveChallengeById(challengeId);
+
+            toast.success("Left challenge successfully!");
+            setTimeout(() => {
+                window.location.reload()
+            }, 2000);
+
+        } catch (error) {
+            console.error("Error leaving challenge:", error);
+            toast.error("Failed to leave challenge. Please try again.");
+        }
     };
 
-    const [rankingData, setRankingData] = useState([]);    
+    const [rankingData, setRankingData] = useState([]);
     useEffect(() => {
         const fetchRanking = async () => {
             if (!token) return;
 
             try {
                 const data = await GetRankingByChallengeId(id);
-                console.log("Ranking data:", data);
                 const rankingDataWithoutUserId = data.map(({ userId, ...rest }) => rest);
                 setRankingData(rankingDataWithoutUserId);
-
-                // Process the ranking data as needed
             } catch (error) {
                 console.error("Error fetching ranking:", error);
             }
@@ -162,9 +170,7 @@ export default function ChallengeDetails() {
 
             try {
                 const data = await GetProgressByChallengeId(id);
-                console.log("Progress data:", data);
                 setUserChallengeProgress(data.progress);
-                // Process the progress data as needed
             } catch (error) {
                 console.error("Error fetching progress:", error);
             }
@@ -222,8 +228,8 @@ export default function ChallengeDetails() {
                                                 <CardContent className="space-y-2 text-gray-500">
                                                     <div className="flex items-center text-sm">
                                                         <Clock className="mr-2 h-4 w-4" />
-                                                            <p className="text-sm font-bold mr-1">Duration:</p>
-                                                            {task.workDuration}/{task.totalDuration} min
+                                                        <p className="text-sm font-bold mr-1">Duration:</p>
+                                                        {task.workDuration}/{task.totalDuration} min
                                                         (Work/Total)
                                                     </div>
                                                     {task.breakTime > 0 && (
@@ -293,7 +299,7 @@ export default function ChallengeDetails() {
                                         {userChallengesData.some(
                                             (userChallenge) => userChallenge.challengeId === parseInt(id)
                                         ) ? (
-                                            <Button variant="destructive" onClick={handleLeaveChallenge}>
+                                            <Button variant="destructive" onClick={() => handleLeaveChallenge(id)}>
                                                 <BookX className="mr-2 h-4 w-4" /> Leave Challenge
                                             </Button>
                                         ) : (
@@ -301,14 +307,14 @@ export default function ChallengeDetails() {
                                                 <BookCheck className="mr-2 h-4 w-4" /> Join Challenge
                                             </Button>
                                         )}
-                                        
+
                                     </div>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
                                     <p className="text-sm text-gray-500 flex items-center text-left font-bold">
                                         {challenge.description}
                                     </p>
-                                    
+
                                     <p className="text-sm text-gray-500 flex items-center">
                                         Reward <Trophy className="ml-1" color="orange" />:
                                         <span className="font-bold ml-1">
@@ -343,11 +349,11 @@ export default function ChallengeDetails() {
                                             })}
                                         </span>
                                     </p>
-                                    
+
                                     <p className="text-sm text-cyan-500 flex items-center text-left font-bold">
                                         Your progress:
                                     </p>
-                                    
+
                                     <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
                                         <div
                                             className="bg-cyan-600 h-2.5 rounded-full"
@@ -361,47 +367,48 @@ export default function ChallengeDetails() {
                                         </p>
                                     </div>
 
-                                    <p className="text-sm text-orange-500 flex items-center text-left font-bold">
+                                    <p className="text-sm text-emerald-500 flex items-center text-left font-bold">
                                         Leaderboard:
                                     </p>
 
                                     <Card className="mt-2">
                                         <CardContent className="space-y-2">
-                                            {/* using table with header: highlight 1st and 2nd, userName, progress */}
-                                            <table className="min-w-full divide-y divide-gray-200">
-                                                <thead className="bg-gray-50">
-                                                    <tr>
-                                                        <th className="py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                                                        <th className="py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                                                        <th className="py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="bg-white divide-y divide-gray-200">
-                                                    {rankingData && rankingData.length > 0 ? (
-                                                        rankingData.map((user, index) => (
-                                                            <tr key={index}>
-                                                                {/* <td className="py-4 whitespace-nowrap text-sm text-gray-500 text-center">{index + 1}</td> */}
-
-                                                                <td className={`py-4 whitespace-nowrap text-sm font-medium text-center ${index === 0 ? 'text-red-500' : index === 1 ? 'text-orange-500' : index === 2 ? 'text-yellow-500' : 'text-gray-500'}`}>
-                                                                    {index === 0 ? '1st' : index === 1 ? '2nd' : index === 2 ? '3rd' : `${index + 1}th`}
-                                                                </td>
-
-                                                                <td className={`py-4 whitespace-nowrap text-sm font-bold text-center ${index === 0 ? 'text-red-500' : index === 1 ? 'text-orange-500' : index === 2 ? 'text-yellow-500' : 'text-gray-500'}`}>
-                                                                    {user.userName}
-                                                                </td>
-
-                                                                <td className={`py-4 whitespace-nowrap text-sm font-bold text-center ${index === 0 ? 'text-red-500' : index === 1 ? 'text-orange-500' : index === 2 ? 'text-yellow-500' : 'text-gray-500'}`}>
-                                                                    {user.progress}%
-                                                                </td>
-                                                            </tr>
-                                                        ))
-                                                    ) : (
+                                            <div className="overflow-x-auto">
+                                                <table className="min-w-full divide-y divide-gray-200">
+                                                    <thead className="bg-gray-50">
                                                         <tr>
-                                                            <td className="py-4 whitespace-nowrap text-sm text-gray-500 text-center" colSpan="3">No ranking data available.</td>
+                                                            <th className="py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                                                            <th className="py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                                            <th className="py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
                                                         </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
+                                                    </thead>
+                                                    <tbody className="bg-white divide-y divide-gray-200">
+                                                        {rankingData && rankingData.length > 0 ? (
+                                                            rankingData.map((user, index) => (
+                                                                <tr key={index}>
+                                                                    {/* <td className="py-4 whitespace-nowrap text-sm text-gray-500 text-center">{index + 1}</td> */}
+
+                                                                    <td className={`py-4 whitespace-nowrap text-sm font-medium text-center ${index === 0 ? 'text-rose-500' : index === 1 ? 'text-pink-500' : index === 2 ? 'text-fuchsia-500' : 'text-gray-500'}`}>
+                                                                        {index === 0 ? '1st' : index === 1 ? '2nd' : index === 2 ? '3rd' : `${index + 1}th`}
+                                                                    </td>
+
+                                                                    <td className={`py-4 whitespace-nowrap text-sm font-bold text-center ${index === 0 ? 'text-rose-500' : index === 1 ? 'text-pink-500' : index === 2 ? 'text-fuchsia-500' : 'text-gray-500'}`}>
+                                                                        {user.userName}
+                                                                    </td>
+
+                                                                    <td className={`py-4 whitespace-nowrap text-sm font-bold text-center ${index === 0 ? 'text-rose-500' : index === 1 ? 'text-pink-500' : index === 2 ? 'text-fuchsia-500' : 'text-gray-500'}`}>
+                                                                        {user.progress}%
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        ) : (
+                                                            <tr>
+                                                                <td className="py-4 whitespace-nowrap text-sm text-gray-500 text-center" colSpan="3">No ranking data available.</td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </CardContent>
                                     </Card>
                                 </CardContent>

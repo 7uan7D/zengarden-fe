@@ -24,6 +24,19 @@ export async function JoinChallengeById(challengeId, userTreeId) {
     return response.data;
 }
 
+export async function LeaveChallengeById(challengeId) {
+    const token = localStorage.getItem("token");
+    const response = await axios.put(
+        `/Challenges/leave/${challengeId}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
+}
+
 export async function GetRankingByChallengeId(challengeId) {
     const token = localStorage.getItem("token");
     const response = await axios.get(

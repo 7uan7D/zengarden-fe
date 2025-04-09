@@ -22,7 +22,7 @@ import {
 import { motion } from "framer-motion";
 import parseJwt from "@/services/parseJwt";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
-import { GetAllChallenges, GetChallengeById, JoinChallengeById } from "@/services/apiServices/challengeService";
+import { GetAllChallenges, GetChallengeById, JoinChallengeById, LeaveChallengeById } from "@/services/apiServices/challengeService";
 import { GetAllUserChallenges } from "@/services/apiServices/userChallengeService";
 import { Link } from "react-router-dom";
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
@@ -210,13 +210,28 @@ export default function Challenges() {
         window.location.reload()
       }, 2000);
       
-      
-      // handle join challenge logic here
     } catch (error) {
       console.error("Error joining challenge:", error);
       toast.error("Failed to join challenge. Please try again.");
     }
   }
+
+  const handleLeaveChallenge = async (challengeId) => {
+    if (!token) return;
+
+    try {
+      await LeaveChallengeById(challengeId);
+
+      toast.success("Left challenge successfully!");
+      setTimeout(() => {
+        window.location.reload()
+      }, 2000);
+
+    } catch (error) {
+      console.error("Error leaving challenge:", error);
+      toast.error("Failed to leave challenge. Please try again.");
+    }
+  };
 
   if (!token) {
     return (
@@ -414,7 +429,7 @@ export default function Challenges() {
                                 {userChallengesData.some(
                                   (userChallenge) => userChallenge.challengeId === item.challengeId
                                 ) ? (
-                                  <Button className="mt-2 text-orange-800 font-bold" variant="outline">
+                                  <Button className="mt-2 text-orange-800 font-bold" variant="outline" onClick={() => handleLeaveChallenge(item.challengeId)}>
                                     <BookX className="mr-2 h-4 w-4" /> Leave Challenge
                                   </Button>
                                 ) : (
