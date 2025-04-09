@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button"; // Thêm Button để làm tab
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import MusicPlayerController, {
@@ -15,6 +14,10 @@ import PDFEditor from "@/components/react_pdf/index.jsx";
 import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import "../workspace/index.css";
 
+// Thêm import cho Pintura
+import "@pqina/pintura/pintura.css"; // CSS của Pintura
+import { openDefaultEditor } from "@pqina/pintura"; // Hàm mở editor mặc định
+
 // Danh sách cây mẫu trong vườn
 const gardenTrees = [
   { id: 1, name: "Oak", image: "/tree-1.png" },
@@ -25,46 +28,28 @@ const gardenTrees = [
   { id: 6, name: "Cedar", image: "/tree-6.png" },
 ];
 
-// Danh sách công việc mẫu
-const initialTasks = [
-  { id: 1, title: "Complete project proposal", completed: false },
-  { id: 2, title: "Review team feedback", completed: true },
-  { id: 3, title: "Prepare presentation", completed: false },
-];
-
 export default function Workspace() {
   const [tasks, setTasks] = useState([]);
   const [currentTask, setCurrentTask] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
-  const location = useLocation(); // Lấy thông tin đường dẫn hiện tại
-  const [isPlaying, setIsPlaying] = useState(globalAudioState.isPlaying); // Trạng thái phát nhạc trên UI
-  const [currentIndex, setCurrentIndex] = useState(globalAudioState.currentIndex); // Chỉ số bài hát trên UI
-  const [activeTab, setActiveTab] = useState("Your Space"); // State để quản lý tab hiện tại
+  const location = useLocation();
+  const [isPlaying, setIsPlaying] = useState(globalAudioState.isPlaying);
+  const [currentIndex, setCurrentIndex] = useState(globalAudioState.currentIndex);
+  const [activeTab, setActiveTab] = useState("Your Space");
 
-  // Gán callback để MusicPlayerController có thể cập nhật UI
+  // State cho Image Editor
+  const [editedImage, setEditedImage] = useState(null); // Lưu ảnh đã chỉnh sửa
+  const fileInputRef = useRef(null); // Ref để kích hoạt input file
+
+  // Gán callback cho MusicPlayerController
   globalAudioState.setPlaying = setIsPlaying;
   globalAudioState.setCurrentIndex = setCurrentIndex;
-
-  // Hàm chuyển đổi trạng thái hoàn thành của công việc
-  const handleTaskToggle = (taskId) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
-
-  // Kiểm tra xem có đang ở trang Workspace không
-  const isWorkspacePage = location.pathname === "/workspace";
-
-  // Danh sách các tab
-  const tabs = ["Your Space", "Rich Text", "Watch Videos", "PDF Editor", "Image Editor"];
 
   // Hàm lấy danh sách task
   const fetchTasks = async (userTreeId) => {
     try {
       const taskData = await GetTaskByUserTreeId(userTreeId);
-      setTasks(taskData.filter((task) => task.taskTypeName === "Simple")); // Chỉ lấy Simple Tasks
+      setTasks(taskData.filter((task) => task.taskTypeName === "Simple"));
       const urlParams = new URLSearchParams(location.search);
       const taskId = urlParams.get("taskId");
       const runningTask = taskData.find((task) => task.taskId === parseInt(taskId));
@@ -72,7 +57,7 @@ export default function Workspace() {
         setCurrentTask({
           column: "simple",
           taskIndex: taskData.indexOf(runningTask),
-          time: runningTask.totalDuration * 60, // Giả sử bắt đầu từ đầu
+          time: runningTask.totalDuration * 60,
         });
         setIsRunning(true);
       }
@@ -88,7 +73,8 @@ export default function Workspace() {
       fetchTasks(userTreeId);
     }
   }, [location]);
-  //chạy Timer
+
+  // Logic chạy Timer
   useEffect(() => {
     const interval = setInterval(() => {
       if (currentTask && isRunning && currentTask.time > 0) {
@@ -108,7 +94,8 @@ export default function Workspace() {
     }, 1000);
     return () => clearInterval(interval);
   }, [currentTask, isRunning]);
-//code bên Tasks
+
+  // Hàm định dạng thời gian
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -116,31 +103,55 @@ export default function Workspace() {
       .toString()
       .padStart(2, "0")}`;
   };
-  
+
+  // Hàm toggle timer
   const toggleTimer = (taskIndex) => {
     const task = tasks[taskIndex];
     if (isRunning) {
       setTasks((prev) =>
-        prev.map((t, idx) =>
-          idx === taskIndex ? { ...t, status: 2 } : t
-        )
+        prev.map((t, idx) => (idx === taskIndex ? { ...t, status: 2 } : t))
       );
       setIsRunning(false);
     } else {
       setTasks((prev) =>
-        prev.map((t, idx) =>
-          idx === taskIndex ? { ...t, status: 1 } : t
-        )
+        prev.map((t, idx) => (idx === taskIndex ? { ...t, status: 1 } : t))
       );
       setCurrentTask({
         column: "simple",
         taskIndex,
-        time: task.remainingTime
-          ? task.remainingTime * 60
-          : task.totalDuration * 60,
+        time: task.remainingTime ? task.remainingTime * 60 : task.totalDuration * 60,
       });
       setIsRunning(true);
     }
+  };
+
+  // Hàm mở Pintura Image Editor
+  const openImageEditor = (file) => {
+    const editor = openDefaultEditor({
+      src: file, // Ảnh được chọn từ input
+      imageCropAspectRatio: 1, // Tỷ lệ cắt mặc định (có thể thay đổi)
+      onProcess: ({ dest }) => {
+        // Khi hoàn tất chỉnh sửa, lưu ảnh đã chỉnh sửa
+        const editedUrl = URL.createObjectURL(dest);
+        setEditedImage(editedUrl);
+      },
+    });
+    editor.on("close", () => {
+      // Xử lý khi editor đóng (nếu cần)
+    });
+  };
+
+  // Hàm xử lý khi chọn file
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      openImageEditor(file);
+    }
+  };
+
+  // Hàm kích hoạt input file khi nhấn nút
+  const handleUploadClick = () => {
+    fileInputRef.current.click();
   };
 
   return (
@@ -166,19 +177,21 @@ export default function Workspace() {
 
         {/* Tabs */}
         <div className="flex gap-2 mt-4 justify-center">
-          {tabs.map((tab) => (
-            <Button
-              key={tab}
-              variant={activeTab === tab ? "default" : "outline"}
-              className={`${activeTab === tab
-                ? "bg-green-600 text-white"
-                : "bg-white/80 text-gray-700 hover:bg-gray-200"
-                } transition-all`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab}
-            </Button>
-          ))}
+          {["Your Space", "Rich Text", "Watch Videos", "PDF Editor", "Image Editor"].map(
+            (tab) => (
+              <Button
+                key={tab}
+                variant={activeTab === tab ? "default" : "outline"}
+                className={`${activeTab === tab
+                  ? "bg-green-600 text-white"
+                  : "bg-white/80 text-gray-700 hover:bg-gray-200"
+                  } transition-all`}
+                onClick={() => setActiveTab(tab)}
+              >
+                {tab}
+              </Button>
+            )
+          )}
         </div>
       </motion.div>
 
@@ -208,9 +221,6 @@ export default function Workspace() {
                       const remainingTime = isCurrentTask
                         ? currentTask.time
                         : totalDurationSeconds;
-                      const isTaskRunning = isCurrentTask && isRunning;
-                      const isAlmostDone = remainingTime <= 10 && remainingTime > 0;
-
                       return (
                         <li
                           key={task.taskId}
@@ -242,7 +252,10 @@ export default function Workspace() {
                                 Resume
                               </Button>
                             ) : task.status === 0 ? (
-                              <Button disabled={currentTask !== null}>
+                              <Button
+                                onClick={() => toggleTimer(index)}
+                                disabled={currentTask !== null}
+                              >
                                 Start
                               </Button>
                             ) : (
@@ -293,40 +306,39 @@ export default function Workspace() {
             </motion.div>
 
             {/* Máy phát nhạc */}
-            {isWorkspacePage && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-                className="w-1/4"
-              >
-                <Card className="bg-white/80 backdrop-blur-md">
-                  <CardHeader>
-                    <CardTitle>Music Player</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <FullMusicPlayer
-                      setPlaying={setIsPlaying}
-                      setCurrentIndex={setCurrentIndex}
-                    />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="w-1/4"
+            >
+              <Card className="bg-white/80 backdrop-blur-md">
+                <CardHeader>
+                  <CardTitle>Music Player</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FullMusicPlayer
+                    setPlaying={setIsPlaying}
+                    setCurrentIndex={setCurrentIndex}
+                  />
+                </CardContent>
+              </Card>
+            </motion.div>
           </>
         )}
 
-        {/* Các tab khác để trống */}
+        {/* Tab Rich Text */}
         {activeTab === "Rich Text" && (
           <div className="flex-1">
             <Card className="bg-white/80 backdrop-blur-md">
-
               <CardContent className="mt-4">
                 <QuillEditor />
               </CardContent>
             </Card>
           </div>
         )}
+
+        {/* Tab Watch Videos */}
         {activeTab === "Watch Videos" && (
           <div className="flex-1">
             <Card className="bg-white/80 backdrop-blur-md">
@@ -339,27 +351,57 @@ export default function Workspace() {
             </Card>
           </div>
         )}
+
+        {/* Tab PDF Editor */}
         {activeTab === "PDF Editor" && (
           <div className="flex-1">
             <Card className="bg-white/80 backdrop-blur-md">
               <CardHeader>
                 <CardTitle>PDF</CardTitle>
-                <PDFEditor />
               </CardHeader>
               <CardContent>
-                <p className="text-gray-500">Content coming soon...</p>
+                <PDFEditor />
               </CardContent>
             </Card>
           </div>
         )}
+
+        {/* Tab Image Editor với Pintura */}
         {activeTab === "Image Editor" && (
           <div className="flex-1">
             <Card className="bg-white/80 backdrop-blur-md">
               <CardHeader>
-                <CardTitle>Pintura</CardTitle>
+                <CardTitle>Pintura Image Editor</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-500">Content coming soon...</p>
+                <div className="space-y-4">
+                  {/* Nút để tải ảnh lên */}
+                  <Button
+                    onClick={handleUploadClick}
+                    className="bg-green-600 text-white hover:bg-green-700"
+                  >
+                    Upload Image
+                  </Button>
+                  {/* Input file ẩn */}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  {/* Hiển thị ảnh đã chỉnh sửa */}
+                  {editedImage && (
+                    <div className="mt-4">
+                      <p className="text-gray-700 font-medium">Edited Image:</p>
+                      <img
+                        src={editedImage}
+                        alt="Edited"
+                        className="max-w-full h-auto rounded-lg shadow-md"
+                      />
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
