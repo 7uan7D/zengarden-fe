@@ -523,8 +523,8 @@ export default function TaskPage() {
       activeTabs[columnKey] === "all"
         ? taskList
         : activeTabs[columnKey] === "current"
-        ? taskList.filter((task) => task.status !== 4)
-        : taskList.filter((task) => task.status === 4);
+        ? taskList.filter((task) => task.status !== 4 || task.status !== 3)
+        : taskList.filter((task) => task.status === 4 || task.status == 3);
 
     return (
       <motion.div
@@ -573,10 +573,18 @@ export default function TaskPage() {
         <ScrollArea className="h-[400px] overflow-y-auto">
           <div className="grid gap-3">
             {filteredTasks.map((task, index) => {
-              const realIndex = tasks[columnKey].findIndex(
+              const columnTasks = tasks[columnKey];
+              if (!columnTasks) return null;
+
+              const realIndex = columnTasks.findIndex(
                 (t) => t.taskId === task.taskId
               );
-              const realTask = tasks[columnKey][realIndex];
+              if (realIndex === -1 || !columnTasks[realIndex]) {
+                console.warn("Task not found or invalid realIndex:", task);
+                return null;
+              }
+
+              const realTask = columnTasks[realIndex];
               const totalDurationSeconds = task.totalDuration * 60;
               const isCurrentTask =
                 currentTask &&
@@ -696,7 +704,7 @@ export default function TaskPage() {
                         >
                           Complete
                         </Button>
-                      ) : task.status === 4 ? (
+                      ) : task.status === 4 || task.status == 3 ? (
                         <div className="flex items-center gap-2">
                           <CheckCircle className="w-5 h-5 text-green-600" />
                           <span className="text-sm text-green-600">Done</span>
@@ -780,6 +788,8 @@ export default function TaskPage() {
 
                       setIsConfirmDialogOpen(false);
                       setTaskToComplete(null);
+                      await refreshTreeExp(currentTree);
+                      await fetchTasks(selectedTree?.userTreeId);
                     }}
                   >
                     Confirm
@@ -842,38 +852,61 @@ export default function TaskPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("pausedTask");
-    if (saved) {
-      const { taskId, column, taskIndex } = JSON.parse(saved);
+    if (!saved) return;
 
-      // 🔥 Gọi API để lấy task mới nhất
-      fetch(`https://zengarden-be.onrender.com/api/Task/by-id/${taskId}`)
-        .then((res) => res.json())
-        .then((taskFromBE) => {
-          console.log("[RESTORE] Fetched task from BE:", taskFromBE);
+    const { taskId, column, taskIndex } = JSON.parse(saved);
 
-          setCurrentTask({
-            column,
-            taskIndex,
-            time: timeStringToSeconds(taskFromBE.remainingTime),
-          });
-
-          setIsRunning(false); // Đã pause
-
-          // Cập nhật vào tasks
-          setTasks((prev) => {
-            const updatedColumn = [...(prev[column] || [])];
-            const targetTask = updatedColumn[taskIndex];
-            if (targetTask) {
-              targetTask.status = 2; // Paused
-              targetTask.remainingTime = taskFromBE.remainingTime;
-            }
-            return {
-              ...prev,
-              [column]: updatedColumn,
-            };
-          });
-        });
+    // Kiểm tra cơ bản trước khi fetch
+    if (!taskId || !column || taskIndex === undefined) {
+      console.warn("Invalid pausedTask format, clearing...");
+      localStorage.removeItem("pausedTask");
+      return;
     }
+
+    // Gọi API để lấy task mới nhất
+    fetch(`https://zengarden-be.onrender.com/api/Task/by-id/${taskId}`)
+      .then((res) => res.json())
+      .then((taskFromBE) => {
+        console.log("[RESTORE] Fetched task from BE:", taskFromBE);
+
+        if (!taskFromBE || !taskFromBE.taskId) {
+          console.warn("Invalid task from BE, clearing pausedTask...");
+          localStorage.removeItem("pausedTask");
+          return;
+        }
+
+        setCurrentTask({
+          column,
+          taskIndex,
+          time: timeStringToSeconds(taskFromBE.remainingTime),
+        });
+
+        setIsRunning(false); // Đã pause
+
+        // Cập nhật vào tasks
+        setTasks((prev) => {
+          const updatedColumn = [...(prev[column] || [])];
+          const targetTask = updatedColumn[taskIndex];
+
+          if (targetTask?.taskId === taskId) {
+            targetTask.status = 2; // Paused
+            targetTask.remainingTime = taskFromBE.remainingTime;
+          } else {
+            console.warn("Task mismatch or missing, clearing pausedTask...");
+            localStorage.removeItem("pausedTask");
+            return prev; // Không update gì cả
+          }
+
+          return {
+            ...prev,
+            [column]: updatedColumn,
+          };
+        });
+      })
+      .catch((err) => {
+        console.error("Error restoring paused task:", err);
+        localStorage.removeItem("pausedTask");
+      });
   }, []);
 
   const progress = treeExp
