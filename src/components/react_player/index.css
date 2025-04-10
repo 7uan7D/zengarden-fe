@@ -1,0 +1,104 @@
+.video-player-container {
+  display: flex;
+  gap: 20px;
+  height: 100%;
+  max-width: 1200px; /* Giới hạn chiều rộng tối đa của toàn bộ container */
+  margin: 0 auto; /* Căn giữa container */
+}
+
+.video-display {
+  flex: 2;
+  background-color: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16 / 9; /* Tỷ lệ khung hình 16:9 */
+  height: 100%;
+}
+
+.no-video {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.video-list {
+  flex: 1;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  padding: 10px;
+  max-height: 480px; /* Điều chỉnh chiều cao tối đa để phù hợp với video */
+  overflow-y: auto;
+  max-width: 400px; /* Giới hạn chiều rộng tối đa của danh sách */
+  min-width: 250px; /* Đảm bảo danh sách không quá nhỏ */
+}
+
+.video-list-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.video-input-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.video-input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.add-video-button {
+  background-color: #4caf50;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+
+.add-video-button:hover {
+  background-color: #45a049;
+}
+
+.video-list-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.video-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.video-item:hover {
+  background-color: #e0e0e0;
+}
+
+.video-item.active {
+  background-color: #4caf50;
+  color: white;
+}
+
+.remove-video-button {
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  color: #ff4444;
+  font-weight: bold;
+}
+
+.remove-video-button:hover {
+  color: #cc0000;
+}

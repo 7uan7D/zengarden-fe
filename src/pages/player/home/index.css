@@ -1,0 +1,40 @@
+.task-container {
+  display: flex;
+  align-items: stretch;
+  height: 60px;
+  margin-bottom: 1rem;
+}
+
+/* === 3. Sửa màu task-type thành đen === */
+.task-type {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+  width: 30%;
+  color: white;
+  font-weight: 600;
+}
+
+.daily {
+  background-color: #000000; /* Đen cho Daily */
+}
+
+.simple {
+  background-color: #000000; /* Đen cho Simple */
+}
+
+.complex {
+  background-color: #000000; /* Đen cho Complex */
+}
+
+.task-detail {
+  flex-grow: 1;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ffffff;
+}

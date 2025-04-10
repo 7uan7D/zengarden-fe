@@ -1,0 +1,167 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"); /* Poppins */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap"); /* Roboto */
+@import url("https://fonts.googleapis.com/css2?family=Lora:wght@400;700&display=swap"); /* Lora */
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&display=swap"); /* Montserrat */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+
+body {
+  background: linear-gradient(to bottom, #f9fafb, #e3f2e1);
+  color: #333;
+  min-height: 100vh;
+}
+
+.main-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #609994;
+  white-space: nowrap;
+}
+
+p {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.btn {
+  background: #83aa6c;
+  color: white;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.01s ease-in-out;
+  border: none;
+}
+
+.btn:focus {
+  outline: none;
+  box-shadow: 0 0 8px rgba(96, 153, 148, 0.6);
+}
+
+.btn:hover {
+  background: #609994;
+  transform: scale(1.05);
+}
+.hero {
+  margin-bottom: 1%;
+}
+
+/* Section chung */
+.section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 95vh; /* Mỗi section chiếm 1 màn hình */
+  padding: 40px 10px;
+}
+
+/* Gamify Section */
+.gamify-section {
+  background: #ffffff; /* Màu trắng cho Gamify */
+}
+
+/* Benefits Section */
+.benefits-section {
+  background:linear-gradient(to bottom, #f9fafb, #e3f2e1);
+}
+
+.gamify-content {
+  text-align: center;
+  max-width: 600px;
+}
+
+.gamify-content h1 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: #83aa6c;
+  margin-top: 20px;
+}
+
+.gamify-content p {
+  font-size: 1.1rem;
+  color: #666;
+  line-height: 1.6;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1%;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.card {
+  padding: 15px;
+  transition: transform 0.01s ease-in-out;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  min-height: 300px; /* Tăng chiều cao tối thiểu để chứa ảnh tốt hơn */
+  width: 100%;
+  overflow: hidden; /* Đảm bảo ảnh không tràn ra ngoài */
+}
+
+.card-img {
+  width: 100%; /* Chiếm toàn bộ chiều rộng của card */
+  height: 250px; /* Chiều cao cố định để đồng nhất giữa các card */
+  object-fit: contain; /* Giữ tỉ lệ ảnh, cắt phần thừa nếu cần */
+  border-radius: 8px; /* Bo góc cho ảnh */
+  margin-bottom: 10px; /* Khoảng cách giữa ảnh và nội dung */
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card h2 {
+  font-size: 1.2rem;
+  font-family: "Lora", serif;
+  font-weight: 700;
+}
+
+.card p {
+  font-size: 1rem;
+  color: #555;
+  font-family: "Montserrat", sans-serif;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .gamify-content {
+    padding: 0 15px;
+  }
+
+  .gamify-content h1 {
+    font-size: 2rem;
+  }
+
+  .gamify-content p {
+    font-size: 1rem;
+  }
+
+  .section {
+    padding: 20px;
+  }
+}
+
+@media (min-width: 768px) {
+  .cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
