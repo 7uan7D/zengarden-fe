@@ -6,69 +6,146 @@ import { Link } from "react-router-dom";
 import { Calendar, ShoppingCart, Leaf, Trophy, Clock } from "lucide-react";
 import { toast } from "sonner";
 import "../home/index.css";
+import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
+import { StartTask, PauseTask } from "@/services/apiServices/taskService";
+import parseJwt from "@/services/parseJwt";
 
 const HomePage = () => {
   const [user, setUser] = useState(null);
-  const [timers, setTimers] = useState({
-    daily: null,
-    simple: null,
-    complex: null,
+  const [currentTree, setCurrentTree] = useState(null);
+  const [tasks, setTasks] = useState({
+    daily: [],
+    simple: [],
+    complex: [],
   });
-  const [isRunning, setIsRunning] = useState({
-    daily: false,
-    simple: false,
-    complex: false,
-  });
+  const [currentTask, setCurrentTask] = useState(null);
+  const [isRunning, setIsRunning] = useState(false);
 
-  const startTimer = (taskType) => {
-    if (!timers[taskType]) {
-      setTimers((prev) => ({ ...prev, [taskType]: 600 }));
-      setIsRunning((prev) => ({ ...prev, [taskType]: true }));
+  // Lấy danh sách task theo cây
+  const fetchTasks = async (userTreeId) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      let taskData = [];
+      if (userTreeId) {
+        taskData = await GetTaskByUserTreeId(userTreeId);
+        taskData.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+      }
+
+      const categorizedTasks = {
+        daily: taskData.filter((task) => task.taskTypeName === "Daily"),
+        simple: taskData.filter((task) => task.taskTypeName === "Simple"),
+        complex: taskData.filter((task) => task.taskTypeName === "Complex"),
+      };
+
+      setTasks(categorizedTasks);
+    } catch (error) {
+      console.error("Failed to fetch tasks", error);
     }
   };
 
-  const toggleTimer = (taskType) => {
-    setIsRunning((prev) => ({ ...prev, [taskType]: !prev[taskType] }));
+  // Lấy cây mặc định từ localStorage hoặc API
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const userId = parseJwt(token).sub;
+      setUser({ username: "Farmer" });
+      const savedTreeId = localStorage.getItem("selectedTreeId");
+      if (savedTreeId) {
+        setCurrentTree(parseInt(savedTreeId));
+        fetchTasks(parseInt(savedTreeId));
+      }
+    }
+  }, []);
+
+  // Logic Timer
+  const startTimer = async (column, taskIndex) => {
+    const task = tasks[column][taskIndex];
+    const totalDurationSeconds = task.totalDuration * 60;
+    const initialTime = task.remainingTime
+      ? typeof task.remainingTime === "string"
+        ? timeStringToSeconds(task.remainingTime)
+        : task.remainingTime * 60
+      : totalDurationSeconds;
+
+    try {
+      await StartTask(task.taskId);
+    } catch (error) {
+      console.error("Failed to start task:", error);
+      return;
+    }
+
+    setCurrentTask({
+      column,
+      taskIndex,
+      time: initialTime,
+      totalTime: totalDurationSeconds, // Lưu totalTime để tính progress
+    });
+    setIsRunning(true);
   };
 
-  const stopTimer = (taskType) => {
-    setTimers((prev) => ({ ...prev, [taskType]: null }));
-    setIsRunning((prev) => ({ ...prev, [taskType]: false }));
+  const toggleTimer = async (column = null, taskIndex = null) => {
+    const columnToUse = column ?? currentTask?.column;
+    const indexToUse = taskIndex ?? currentTask?.taskIndex;
+
+    if (columnToUse === null || indexToUse === null) return;
+
+    const task = tasks[columnToUse][indexToUse];
+    const totalDurationSeconds = task.totalDuration * 60;
+
+    if (isRunning) {
+      try {
+        await PauseTask(task.taskId);
+      } catch (error) {
+        console.error("Failed to pause task:", error);
+      }
+      setIsRunning(false);
+    } else {
+      try {
+        await StartTask(task.taskId);
+      } catch (error) {
+        console.error("Failed to resume task:", error);
+      }
+      setCurrentTask({
+        column: columnToUse,
+        taskIndex: indexToUse,
+        time: task.remainingTime
+          ? typeof task.remainingTime === "string"
+            ? timeStringToSeconds(task.remainingTime)
+            : task.remainingTime * 60
+          : totalDurationSeconds,
+        totalTime: totalDurationSeconds, // Lưu totalTime để tính progress
+      });
+      setIsRunning(true);
+    }
   };
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setTimers((prev) => {
-        const newTimers = { ...prev };
-        Object.keys(newTimers).forEach((taskType) => {
-          if (isRunning[taskType] && newTimers[taskType] > 0) {
-            newTimers[taskType] -= 1;
-          } else if (newTimers[taskType] === 0) {
-            newTimers[taskType] = null;
-            setIsRunning((prev) => ({ ...prev, [taskType]: false }));
-            toast.success(
-              `Task '${
-                taskType === "daily"
-                  ? "Do exercise"
-                  : taskType === "simple"
-                  ? "Make Lemonade"
-                  : "Workout 3 times a week"
-              }' completed!`
-            );
-          }
-        });
-        return newTimers;
-      });
+      if (currentTask && isRunning && currentTask.time > 0) {
+        setCurrentTask((prev) => ({
+          ...prev,
+          time: prev.time - 1,
+        }));
+      } else if (currentTask && currentTask.time === 0) {
+        toast.success(`Task '${tasks[currentTask.column][currentTask.taskIndex].taskName}' completed!`);
+        setCurrentTask(null);
+        setIsRunning(false);
+      }
     }, 1000);
     return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [currentTask, isRunning]);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
-      .toString()
-      .padStart(2, "0")}`;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
+
+  const timeStringToSeconds = (timeStr) => {
+    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+    return hours * 3600 + minutes * 60 + seconds;
   };
 
   return (
@@ -97,140 +174,76 @@ const HomePage = () => {
             <h2 className="text-2xl font-semibold text-gray-800">Your Tasks</h2>
           </div>
           <div className="space-y-2">
-            {/* Daily Task */}
-            <div className="flex items-center">
-              <span className="inline-block w-24 text-center py-2 bg-cyan-100 text-cyan-700 font-medium text-sm rounded-tl-lg rounded-bl-lg">
-                Daily
-              </span>
-              <Card className="flex-1 p-4 bg-gray-50 rounded-tr-lg rounded-br-lg border-t-2 border-b-2 border-l-0 border-cyan-200">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-800 font-medium">Do exercise</span>
-                  <div className="flex items-center gap-2">
-                    {timers.daily !== null ? (
-                      <>
-                        <span className="text-sm text-gray-600 font-mono">
-                          {formatTime(timers.daily)}
+            {["daily", "simple", "complex"].map((type) => (
+              tasks[type].length > 0 && (
+                <div key={type} className="flex items-center">
+                  <span
+                    className={`inline-block w-24 text-center py-2 font-medium text-sm rounded-tl-lg rounded-bl-lg ${
+                      type === "daily"
+                        ? "bg-cyan-100 text-cyan-700"
+                        : type === "simple"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-purple-100 text-purple-700"
+                    }`}
+                  >
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </span>
+                  <Card className="flex-1 p-4 bg-gray-50 rounded-tr-lg rounded-br-lg border-t-2 border-b-2 border-l-0">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-800 font-medium">
+                          {tasks[type][0].taskName}
                         </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-cyan-600 border-cyan-600 hover:bg-cyan-50"
-                          onClick={() => toggleTimer("daily")}
-                        >
-                          {isRunning.daily ? "Pause" : "Resume"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 border-red-600 hover:bg-red-50"
-                          onClick={() => stopTimer("daily")}
-                        >
-                          Stop
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className="bg-cyan-600 text-white hover:bg-cyan-700"
-                        onClick={() => startTimer("daily")}
-                      >
-                        Start
-                      </Button>
-                    )}
-                  </div>
+                        <div className="flex items-center gap-2">
+                          {currentTask?.column === type && currentTask?.taskIndex === 0 ? (
+                            <>
+                              <span className="text-sm text-gray-600 font-mono">
+                                {formatTime(currentTask.time)}
+                              </span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-cyan-600 border-cyan-600 hover:bg-cyan-50"
+                                onClick={() => toggleTimer(type, 0)}
+                              >
+                                {isRunning ? "Pause" : "Resume"}
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              size="sm"
+                              className="bg-cyan-600 text-white hover:bg-cyan-700"
+                              onClick={() => startTimer(type, 0)}
+                              disabled={currentTask !== null}
+                            >
+                              Start
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      {/* Thanh tiến độ và remaining time */}
+                      {currentTask?.column === type && currentTask?.taskIndex === 0 && (
+                        <div className="flex flex-col gap-1">
+                          <div className="w-full h-2 bg-gray-200 rounded-full">
+                            <div
+                              className="h-full bg-cyan-600 rounded-full"
+                              style={{
+                                width: `${
+                                  ((currentTask.totalTime - currentTask.time) / currentTask.totalTime) * 100
+                                }%`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {formatTime(currentTask.time)} / {formatTime(currentTask.totalTime)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
                 </div>
-              </Card>
-            </div>
-
-            {/* Simple Task */}
-            <div className="flex items-center">
-              <span className="inline-block w-24 text-center py-2 bg-green-100 text-green-700 font-medium text-sm rounded-tl-lg rounded-bl-lg">
-                Simple
-              </span>
-              <Card className="flex-1 p-4 bg-gray-50 rounded-tr-lg rounded-br-lg border-t-2 border-b-2 border-l-0 border-green-200">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-800 font-medium">Make Lemonade</span>
-                  <div className="flex items-center gap-2">
-                    {timers.simple !== null ? (
-                      <>
-                        <span className="text-sm text-gray-600 font-mono">
-                          {formatTime(timers.simple)}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-cyan-600 border-cyan-600 hover:bg-cyan-50"
-                          onClick={() => toggleTimer("simple")}
-                        >
-                          {isRunning.simple ? "Pause" : "Resume"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 border-red-600 hover:bg-red-50"
-                          onClick={() => stopTimer("simple")}
-                        >
-                          Stop
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className="bg-cyan-600 text-white hover:bg-cyan-700"
-                        onClick={() => startTimer("simple")}
-                      >
-                        Start
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            </div>
-
-            {/* Complex Task */}
-            <div className="flex items-center">
-              <span className="inline-block w-24 text-center py-2 bg-purple-100 text-purple-700 font-medium text-sm rounded-tl-lg rounded-bl-lg">
-                Complex
-              </span>
-              <Card className="flex-1 p-4 bg-gray-50 rounded-tr-lg rounded-br-lg border-t-2 border-b-2 border-l-0 border-purple-200">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-800 font-medium">Workout 3 times a week</span>
-                  <div className="flex items-center gap-2">
-                    {timers.complex !== null ? (
-                      <>
-                        <span className="text-sm text-gray-600 font-mono">
-                          {formatTime(timers.complex)}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-cyan-600 border-cyan-600 hover:bg-cyan-50"
-                          onClick={() => toggleTimer("complex")}
-                        >
-                          {isRunning.complex ? "Pause" : "Resume"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 border-red-600 hover:bg-red-50"
-                          onClick={() => stopTimer("complex")}
-                        >
-                          Stop
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className="bg-cyan-600 text-white hover:bg-cyan-700"
-                        onClick={() => startTimer("complex")}
-                      >
-                        Start
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            </div>
+              )
+            ))}
           </div>
           <Button
             className="mt-6 w-full bg-cyan-600 text-white hover:bg-cyan-700"
@@ -240,7 +253,6 @@ const HomePage = () => {
           </Button>
         </Card>
 
-        {/* Các widget khác giữ nguyên */}
         {/* Trees Widget */}
         <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow">
           <div className="flex items-center gap-3 mb-4">
@@ -248,13 +260,9 @@ const HomePage = () => {
             <h2 className="text-2xl font-semibold text-gray-800">Your Tree</h2>
           </div>
           <div className="text-center">
-            <img
-              src="/tree-1.png"
-              alt="Tree"
-              className="w-32 h-32 mx-auto mb-4"
-            />
+            <img src="/tree-1.png" alt="Tree" className="w-32 h-32 mx-auto mb-4" />
             <p className="font-semibold text-gray-800">Oak - Level 3</p>
-            <p className="text-sm text-gray-500">120 / 200 XP</p>
+            <p className="text-sm text-gray-500">120 / 200 administrator</p>
           </div>
           <Button
             className="mt-4 w-full bg-green-600 text-white hover:bg-green-700"
@@ -268,9 +276,7 @@ const HomePage = () => {
         <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow">
           <div className="flex items-center gap-3 mb-4">
             <Trophy className="w-6 h-6 text-yellow-600" />
-            <h2 className="text-2xl font-semibold text-gray-800">
-              Challenges
-            </h2>
+            <h2 className="text-2xl font-semibold text-gray-800">Challenges</h2>
           </div>
           <div className="text-center">
             <p className="font-semibold text-gray-800">Stay Hydrated</p>
@@ -315,19 +321,13 @@ const HomePage = () => {
         <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow">
           <div className="flex items-center gap-3 mb-4">
             <ShoppingCart className="w-6 h-6 text-purple-600" />
-            <h2 className="text-2xl font-semibold text-gray-800">
-              Marketplace
-            </h2>
+            <h2 className="text-2xl font-semibold text-gray-800">Marketplace</h2>
           </div>
           <div className="text-center">
             <div className="h-16 w-16 bg-purple-100 rounded-lg mx-auto mb-4"></div>
             <p className="font-semibold text-gray-800">Items Item 1</p>
             <p className="text-sm text-gray-500 flex items-center justify-center">
-              <img
-                src="/src/assets/images/coin.png"
-                alt="Coin"
-                className="w-5 h-5 mr-1"
-              />
+              <img src="/src/assets/images/coin.png" alt="Coin" className="w-5 h-5 mr-1" />
               100
             </p>
           </div>
