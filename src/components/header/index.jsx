@@ -57,7 +57,14 @@ import {
 } from "@/components/ui/input-otp";
 import { useUserExperience } from "@/context/UserExperienceContext";
 import NotificationBell from "@/components/notification/NotificationBell";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { GetBagItems } from "@/services/apiServices/itemService";
+import { GetItemDetailByItemId } from "@/services/apiServices/itemService";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -69,9 +76,18 @@ const Header = () => {
   });
   const stepConfig = {
     login: { title: "Login", description: "Sign in to manage your ZenGarden." },
-    forgot: { title: "Forgot Password", description: "Enter your email to reset password." },
-    otp: { title: "Enter OTP", description: "Enter the OTP sent to your email." },
-    "new-password": { title: "New Password", description: "Enter your new password." },
+    forgot: {
+      title: "Forgot Password",
+      description: "Enter your email to reset password.",
+    },
+    otp: {
+      title: "Enter OTP",
+      description: "Enter the OTP sent to your email.",
+    },
+    "new-password": {
+      title: "New Password",
+      description: "Enter your new password.",
+    },
   };
 
   const stepVariants = {
@@ -89,8 +105,13 @@ const Header = () => {
   const [openProfile, setProfileOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [xpToNextLevel, setXpToNextLevel] = useState(50);
+  const [bagId, setBagId] = useState(null);
   const [walletBalance, setWalletBalance] = useState(0);
-  const [editUser, setEditUser] = useState({ userName: "", email: "", phone: "" });
+  const [editUser, setEditUser] = useState({
+    userName: "",
+    email: "",
+    phone: "",
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState("login");
@@ -109,27 +130,68 @@ const Header = () => {
   const { totalXp, levelId, refreshXp } = useUserExperience();
   const [notificationCount, setNotificationCount] = useState(0);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [inventoryItems, setInventoryItems] = useState([]);
 
   // Dữ liệu mẫu cho Inventory với category
   const inventoryData = {
     trees: [
-      { id: 1, name: "Oak", image: "/tree-1.png", owned: true, quantity: 2, description: "A sturdy tree with strong wood.", category: "trees" },
+      {
+        id: 1,
+        name: "Oak",
+        image: "/tree-1.png",
+        owned: true,
+        quantity: 2,
+        description: "A sturdy tree with strong wood.",
+        category: "trees",
+      },
       // Bỏ Birch vì owned: false
     ],
     items: [
-      { id: 3, name: "Watering Can", image: "/item-1.png", owned: true, quantity: 1, description: "Used to water your plants.", category: "items" },
+      {
+        id: 3,
+        name: "Watering Can",
+        image: "/item-1.png",
+        owned: true,
+        quantity: 1,
+        description: "Used to water your plants.",
+        category: "items",
+      },
       // Bỏ Fertilizer vì owned: false
     ],
     backgrounds: [
-      { id: 5, name: "Forest", image: "/bg-1.png", owned: true, quantity: 1, description: "A lush green forest backdrop.", category: "backgrounds" },
+      {
+        id: 5,
+        name: "Forest",
+        image: "/bg-1.png",
+        owned: true,
+        quantity: 1,
+        description: "A lush green forest backdrop.",
+        category: "backgrounds",
+      },
       // Bỏ Desert vì owned: false
     ],
     music: [
-      { id: 7, name: "Calm Breeze", image: "/music-1.png", owned: true, quantity: 1, description: "Soothing wind sounds.", category: "music" },
+      {
+        id: 7,
+        name: "Calm Breeze",
+        image: "/music-1.png",
+        owned: true,
+        quantity: 1,
+        description: "Soothing wind sounds.",
+        category: "music",
+      },
       // Bỏ Rainfall vì owned: false
     ],
     avatars: [
-      { id: 9, name: "Farmer Hat", image: "/avatar-1.png", owned: true, quantity: 1, description: "A classic farmer's hat.", category: "avatars" },
+      {
+        id: 9,
+        name: "Farmer Hat",
+        image: "/avatar-1.png",
+        owned: true,
+        quantity: 1,
+        description: "A classic farmer's hat.",
+        category: "avatars",
+      },
       // Bỏ Wizard Robe vì owned: false
     ],
   };
@@ -145,10 +207,11 @@ const Header = () => {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.3 }}
               onClick={() => onSelect(item)}
-              className={`p-4 flex flex-col items-center gap-2 cursor-pointer rounded-lg transition-all ${isSelected
-                ? "bg-green-100 border-green-500"
-                : "hover:bg-gray-100 border-gray-200"
-                } border`}
+              className={`p-4 flex flex-col items-center gap-2 cursor-pointer rounded-lg transition-all ${
+                isSelected
+                  ? "bg-green-100 border-green-500"
+                  : "hover:bg-gray-100 border-gray-200"
+              } border`}
             >
               <img
                 src={item.image}
@@ -156,7 +219,9 @@ const Header = () => {
                 className="w-16 h-16 object-cover rounded-md"
               />
               <div className="text-center">
-                <p className="font-semibold text-gray-800 text-sm">{item.name}</p>
+                <p className="font-semibold text-gray-800 text-sm">
+                  {item.name}
+                </p>
                 <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
               </div>
             </motion.div>
@@ -180,6 +245,12 @@ const Header = () => {
       );
     }
 
+    const isOwned = selectedItem.quantity > 0;
+    const isEquippable =
+      selectedItem.type === "avatars" ||
+      selectedItem.type === "backgrounds" ||
+      selectedItem.type === "music";
+
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -196,23 +267,24 @@ const Header = () => {
           <h3 className="text-lg font-bold text-gray-800">
             {selectedItem.name}
           </h3>
-          <p className="text-sm text-gray-600 mt-1">{selectedItem.description}</p>
-          <p className="text-sm text-gray-500 mt-2">
-            {selectedItem.owned
-              ? `Quantity: ${selectedItem.quantity}`
-              : "Not Owned"}
+          <p className="text-sm text-gray-600 mt-1">
+            {selectedItem.description}
           </p>
+          <p className="text-sm text-gray-500 mt-2">
+            {isOwned ? `Quantity: ${selectedItem.quantity}` : "Not Owned"}
+          </p>
+          {selectedItem.isEquipped && isOwned && (
+            <p className="text-sm text-green-600 font-medium mt-1">
+              Currently Equipped
+            </p>
+          )}
         </div>
-        {selectedItem.owned && (
+
+        {isOwned ? (
           <Button className="mt-4 bg-green-600 hover:bg-green-700 text-white">
-            {selectedItem.category === "avatars" ||
-              selectedItem.category === "backgrounds" ||
-              selectedItem.category === "music"
-              ? "Equip"
-              : "Use"}
+            {isEquippable ? "Equip" : "Use"}
           </Button>
-        )}
-        {!selectedItem.owned && (
+        ) : (
           <Button
             variant="outline"
             className="mt-4 text-green-600 border-green-600 hover:bg-green-50"
@@ -224,20 +296,36 @@ const Header = () => {
     );
   };
 
-  // Hàm render danh sách items
-  const renderInventoryList = (category) => {
-    const items = inventoryData[category];
-    if (!items || items.length === 0) return <p className="text-gray-500 p-4">No owned items in this category.</p>;
+  const renderInventoryList = (type) => {
+    const filteredItems = inventoryItems.filter(
+      (item) => item.itemType === type
+    );
+
+    if (filteredItems.length === 0) {
+      return <div className="p-4">No items found for {type}</div>;
+    }
 
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4">
-        {items.map((item) => (
-          <InventoryItemCard
-            key={item.id}
-            item={item}
-            onSelect={setSelectedItem}
-            isSelected={selectedItem?.id === item.id}
-          />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
+        {filteredItems.map((item) => (
+          <div
+            key={item.itemId}
+            className="border rounded-xl p-3 cursor-pointer hover:bg-gray-100"
+            onClick={() => setSelectedItem(item)}
+          >
+            <img
+              src={item.image}
+              alt={item.name}
+              className="w-full h-24 object-cover rounded"
+            />
+            <div className="mt-2 font-semibold text-sm truncate">
+              {item.name}
+            </div>
+            <div className="text-xs text-gray-500">x{item.quantity}</div>
+            {item.isEquipped && (
+              <div className="text-xs text-green-600 font-medium">Equipped</div>
+            )}
+          </div>
         ))}
       </div>
     );
@@ -250,7 +338,9 @@ const Header = () => {
       toast.success("OTP has been sent to your email.");
       setStep("otp");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to send OTP. Try again!");
+      toast.error(
+        error.response?.data?.message || "Failed to send OTP. Try again!"
+      );
     }
   };
 
@@ -273,6 +363,71 @@ const Header = () => {
       setStep("login");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to reset password!");
+    }
+  };
+
+  useEffect(() => {
+    const fetchInventoryData = async () => {
+      try {
+        const bagId = user?.bag?.bagId;
+        console.log("Bag ID:", bagId);
+
+        const bagItemsResponse = await GetBagItems(bagId);
+        const bagItems = bagItemsResponse?.data || bagItemsResponse || [];
+
+        const inventoryPromises = bagItems.map(async (bagItem) => {
+          const item = bagItem.item || {};
+          let itemDetail = {};
+          try {
+            const detailResponse = await GetItemDetailByItemId(
+              item.itemId || bagItem.itemId
+            );
+            itemDetail = detailResponse?.itemDetail || {};
+          } catch (err) {
+            console.warn("Không lấy được chi tiết item", item.itemId, err);
+          }
+
+          return {
+            bagItemId: bagItem.bagItemId,
+            itemId: item.itemId || bagItem.itemId,
+            name: item.name || "Unknown",
+            image: itemDetail.mediaUrl || "/images/fallback.png",
+            itemType: getTypeTextFromTypeId(item.type),
+            quantity: bagItem.quantity || 0,
+            isEquipped: bagItem.isEquipped,
+            rarity: item.rarity,
+            cost: item.cost,
+            effect: itemDetail.effect,
+            duration: itemDetail.duration,
+            isUnique: itemDetail.isUnique,
+          };
+        });
+
+        const inventory = await Promise.all(inventoryPromises);
+        setInventoryItems(inventory);
+      } catch (error) {
+        console.error("❌ Lỗi khi lấy inventory:", error);
+      }
+    };
+
+    if (isInventoryOpen) {
+      fetchInventoryData();
+    }
+  }, [isInventoryOpen]);
+
+  const getTypeTextFromTypeId = (type) => {
+    switch (type) {
+      case 0:
+      case 1:
+        return "items";
+      case 2:
+        return "avatars";
+      case 3:
+        return "backgrounds";
+      case 4:
+        return "music";
+      default:
+        return "others"; // hoặc "trees" nếu bạn muốn gán vào tab đó
     }
   };
 
@@ -435,8 +590,9 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${isScrolled ? "bg-white shadow-md" : "bg-transparent"
-        }`}
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+        isScrolled ? "bg-white shadow-md" : "bg-transparent"
+      }`}
     >
       <nav className="flex items-center justify-between w-full p-6 py-2 custom-nav">
         {/* Logo và Nav Items */}
@@ -454,10 +610,11 @@ const Header = () => {
               <div
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`text-sm font-semibold cursor-pointer transition-colors duration-200 ${location.pathname === item.path
-                  ? "text-green-600 font-bold"
-                  : "text-gray-900 hover:text-green-600"
-                  }`}
+                className={`text-sm font-semibold cursor-pointer transition-colors duration-200 ${
+                  location.pathname === item.path
+                    ? "text-green-600 font-bold"
+                    : "text-gray-900 hover:text-green-600"
+                }`}
               >
                 {item.label}
               </div>
@@ -519,7 +676,8 @@ const Header = () => {
                     />
                     <span className="font-semibold">{walletBalance ?? 0}</span>
                     <button
-                      className="ml-1 text-white font-bold text-lg hover:bg-[#609994] transition-colors bg-[#83aa6c] rounded-full w-5 h-5 flex items-center justify-center outline-none focus:ring-0 focus:outline-none!important" onClick={() => navigate("/marketplace?tab=Package")}
+                      className="ml-1 text-white font-bold text-lg hover:bg-[#609994] transition-colors bg-[#83aa6c] rounded-full w-5 h-5 flex items-center justify-center outline-none focus:ring-0 focus:outline-none!important"
+                      onClick={() => navigate("/marketplace?tab=Package")}
                     >
                       +
                     </button>
@@ -667,7 +825,8 @@ const Header = () => {
                         <CardHeader>
                           <CardTitle>Password</CardTitle>
                           <CardDescription>
-                            Change your password here. After saving, you'll be logged out.
+                            Change your password here. After saving, you'll be
+                            logged out.
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2">
@@ -704,7 +863,9 @@ const Header = () => {
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label htmlFor="confirm">Confirm New Password</Label>
+                            <Label htmlFor="confirm">
+                              Confirm New Password
+                            </Label>
                             <Input
                               id="confirm"
                               type="password"
@@ -738,26 +899,48 @@ const Header = () => {
               <Dialog open={isInventoryOpen} onOpenChange={setIsInventoryOpen}>
                 <DialogContent className="max-w-5xl max-h-[80vh] p-0 overflow-hidden">
                   <DialogHeader className="p-6 pb-0">
-                    <DialogTitle className="text-2xl font-bold">Inventory</DialogTitle>
+                    <DialogTitle className="text-2xl font-bold">
+                      Inventory
+                    </DialogTitle>
                   </DialogHeader>
-                  <Tabs defaultValue="trees" className="flex flex-col md:flex-row h-[60vh] overflow-hidden">
+                  <Tabs
+                    defaultValue="trees"
+                    className="flex flex-col md:flex-row h-[60vh] overflow-hidden"
+                  >
                     {/* List filter (10-20%) */}
                     <div className="w-full md:w-[15%] bg-gray-50 border-r overflow-y-auto">
                       <TabsList className="grid grid-cols-1 gap-2 p-4 bg-gray-50">
-                        <TabsTrigger value="trees" className="text-sm py-3">Trees</TabsTrigger>
-                        <TabsTrigger value="items" className="text-sm py-3">Items</TabsTrigger>
-                        <TabsTrigger value="backgrounds" className="text-sm py-3">Backgrounds</TabsTrigger>
-                        <TabsTrigger value="music" className="text-sm py-3">Music</TabsTrigger>
-                        <TabsTrigger value="avatars" className="text-sm py-3">Avatars</TabsTrigger>
+                        <TabsTrigger value="items" className="text-sm py-3">
+                          Items
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="backgrounds"
+                          className="text-sm py-3"
+                        >
+                          Backgrounds
+                        </TabsTrigger>
+                        <TabsTrigger value="music" className="text-sm py-3">
+                          Music
+                        </TabsTrigger>
+                        <TabsTrigger value="avatars" className="text-sm py-3">
+                          Avatars
+                        </TabsTrigger>
                       </TabsList>
                     </div>
                     {/* Danh sách items dạng grid (60-70%) */}
                     <div className="w-full md:w-[50%] border-r overflow-y-auto">
-                      <TabsContent value="trees">{renderInventoryList("trees")}</TabsContent>
-                      <TabsContent value="items">{renderInventoryList("items")}</TabsContent>
-                      <TabsContent value="backgrounds">{renderInventoryList("backgrounds")}</TabsContent>
-                      <TabsContent value="music">{renderInventoryList("music")}</TabsContent>
-                      <TabsContent value="avatars">{renderInventoryList("avatars")}</TabsContent>
+                      <TabsContent value="items">
+                        {renderInventoryList("items")}
+                      </TabsContent>
+                      <TabsContent value="backgrounds">
+                        {renderInventoryList("backgrounds")}
+                      </TabsContent>
+                      <TabsContent value="music">
+                        {renderInventoryList("music")}
+                      </TabsContent>
+                      <TabsContent value="avatars">
+                        {renderInventoryList("avatars")}
+                      </TabsContent>
                     </div>
                     {/* Chi tiết item (phần còn lại, khoảng 15-25%) */}
                     <div className="w-full md:w-[35%] p-6 overflow-y-auto">
@@ -782,7 +965,9 @@ const Header = () => {
               <SheetContent>
                 <SheetHeader>
                   <SheetTitle>{stepConfig[step]?.title}</SheetTitle>
-                  <SheetDescription>{stepConfig[step]?.description}</SheetDescription>
+                  <SheetDescription>
+                    {stepConfig[step]?.description}
+                  </SheetDescription>
                 </SheetHeader>
                 <AnimatePresence mode="wait">
                   {step === "login" && (
@@ -796,23 +981,34 @@ const Header = () => {
                       <form onSubmit={handleLogin}>
                         <div className="flex items-center justify-between py-2">
                           <span>Use Phone Number</span>
-                          <Switch checked={usePhone} onCheckedChange={setUsePhone} />
+                          <Switch
+                            checked={usePhone}
+                            onCheckedChange={setUsePhone}
+                          />
                         </div>
                         <div className="grid gap-4 py-4">
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor={usePhone ? "phone" : "email"} className="text-right">
+                            <Label
+                              htmlFor={usePhone ? "phone" : "email"}
+                              className="text-right"
+                            >
                               {usePhone ? "Phone Number" : "Email"}
                             </Label>
                             <Input
                               id={usePhone ? "phone" : "email"}
                               type={usePhone ? "tel" : "email"}
-                              placeholder={usePhone ? "0123456789" : "example@email.com"}
+                              placeholder={
+                                usePhone ? "0123456789" : "example@email.com"
+                              }
                               className="col-span-3"
-                              value={usePhone ? credentials.phone : credentials.email}
+                              value={
+                                usePhone ? credentials.phone : credentials.email
+                              }
                               onChange={(e) =>
                                 setCredentials({
                                   ...credentials,
-                                  [usePhone ? "phone" : "email"]: e.target.value,
+                                  [usePhone ? "phone" : "email"]:
+                                    e.target.value,
                                 })
                               }
                             />
@@ -836,7 +1032,9 @@ const Header = () => {
                             />
                           </div>
                         </div>
-                        {error && <p className="text-red-500 text-sm">{error}</p>}
+                        {error && (
+                          <p className="text-red-500 text-sm">{error}</p>
+                        )}
                         <SheetFooter>
                           <Button type="submit" disabled={isLoading}>
                             {isLoading ? (
@@ -858,7 +1056,10 @@ const Header = () => {
                           </span>
                         </div>
                         <div className="mt-4 text-left text-sm text-gray-500">
-                          <RegisterButton isOpen={isOpen} setIsOpen={setIsOpen} />
+                          <RegisterButton
+                            isOpen={isOpen}
+                            setIsOpen={setIsOpen}
+                          />
                         </div>
                       </form>
                     </motion.div>
@@ -873,12 +1074,22 @@ const Header = () => {
                     >
                       <div className="grid gap-4">
                         <Label>Email</Label>
-                        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                        <Input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
                         <SheetFooter>
-                          <Button onClick={handleForgotPassword} disabled={isLoading}>
+                          <Button
+                            onClick={handleForgotPassword}
+                            disabled={isLoading}
+                          >
                             Send OTP
                           </Button>
-                          <Button variant="outline" onClick={() => setStep("login")}>
+                          <Button
+                            variant="outline"
+                            onClick={() => setStep("login")}
+                          >
                             Back to Login
                           </Button>
                         </SheetFooter>
@@ -909,7 +1120,10 @@ const Header = () => {
                           </InputOTPGroup>
                         </InputOTP>
                         <SheetFooter>
-                          <Button onClick={handleVerifyOTP} disabled={isLoading}>
+                          <Button
+                            onClick={handleVerifyOTP}
+                            disabled={isLoading}
+                          >
                             Verify OTP
                           </Button>
                         </SheetFooter>
@@ -932,7 +1146,10 @@ const Header = () => {
                           onChange={(e) => setNewPassword(e.target.value)}
                         />
                         <SheetFooter>
-                          <Button onClick={handleResetPassword} disabled={isLoading}>
+                          <Button
+                            onClick={handleResetPassword}
+                            disabled={isLoading}
+                          >
                             Reset Password
                           </Button>
                         </SheetFooter>
@@ -960,10 +1177,11 @@ const Header = () => {
                 <a
                   key={item.path}
                   onClick={() => navigate(item.path)}
-                  className={`block py-2 text-sm font-semibold transition-colors duration-200 ${location.pathname === item.path
-                    ? "text-green-600 font-bold"
-                    : "text-gray-900 hover:text-green-600"
-                    }`}
+                  className={`block py-2 text-sm font-semibold transition-colors duration-200 ${
+                    location.pathname === item.path
+                      ? "text-green-600 font-bold"
+                      : "text-gray-900 hover:text-green-600"
+                  }`}
                 >
                   {item.label}
                 </a>
@@ -976,7 +1194,9 @@ const Header = () => {
                     <PopoverTrigger asChild>
                       <Avatar className="cursor-pointer">
                         <AvatarImage
-                          src={user?.imageUrl || "https://github.com/shadcn.png"}
+                          src={
+                            user?.imageUrl || "https://github.com/shadcn.png"
+                          }
                           alt="User Avatar"
                         />
                         <AvatarFallback>
@@ -1102,12 +1322,15 @@ const Header = () => {
                             <CardHeader>
                               <CardTitle>Password</CardTitle>
                               <CardDescription>
-                                Change your password here. After saving, you'll be logged out.
+                                Change your password here. After saving, you'll
+                                be logged out.
                               </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-2">
                               <div className="space-y-1">
-                                <Label htmlFor="current">Current Password</Label>
+                                <Label htmlFor="current">
+                                  Current Password
+                                </Label>
                                 <Input
                                   id="current"
                                   type="password"
@@ -1139,7 +1362,9 @@ const Header = () => {
                                 />
                               </div>
                               <div className="space-y-1">
-                                <Label htmlFor="confirm">Confirm New Password</Label>
+                                <Label htmlFor="confirm">
+                                  Confirm New Password
+                                </Label>
                                 <Input
                                   id="confirm"
                                   type="password"
@@ -1170,27 +1395,55 @@ const Header = () => {
                     </DialogContent>
                   </Dialog>
                   {/* Dialog Inventory mới */}
-                  <Dialog open={isInventoryOpen} onOpenChange={setIsInventoryOpen}>
+                  <Dialog
+                    open={isInventoryOpen}
+                    onOpenChange={setIsInventoryOpen}
+                  >
                     <DialogContent className="max-w-5xl max-h-[80vh] p-0 overflow-hidden">
                       <DialogHeader className="p-6 pb-0">
-                        <DialogTitle className="text-2xl font-bold">Inventory</DialogTitle>
+                        <DialogTitle className="text-2xl font-bold">
+                          Inventory
+                        </DialogTitle>
                       </DialogHeader>
                       <div className="flex flex-col md:flex-row h-[60vh] overflow-hidden">
                         {/* Danh sách danh mục */}
                         <div className="w-full md:w-1/3 bg-gray-50 border-r overflow-y-auto">
                           <Tabs defaultValue="trees" className="w-full">
                             <TabsList className="grid grid-cols-3 md:grid-cols-1 gap-2 p-4 bg-gray-50">
-                              <TabsTrigger value="trees" className="text-sm">Trees</TabsTrigger>
-                              <TabsTrigger value="items" className="text-sm">Items</TabsTrigger>
-                              <TabsTrigger value="backgrounds" className="text-sm">Backgrounds</TabsTrigger>
-                              <TabsTrigger value="music" className="text-sm">Music</TabsTrigger>
-                              <TabsTrigger value="avatars" className="text-sm">Avatars</TabsTrigger>
+                              <TabsTrigger value="trees" className="text-sm">
+                                Trees
+                              </TabsTrigger>
+                              <TabsTrigger value="items" className="text-sm">
+                                Items
+                              </TabsTrigger>
+                              <TabsTrigger
+                                value="backgrounds"
+                                className="text-sm"
+                              >
+                                Backgrounds
+                              </TabsTrigger>
+                              <TabsTrigger value="music" className="text-sm">
+                                Music
+                              </TabsTrigger>
+                              <TabsTrigger value="avatars" className="text-sm">
+                                Avatars
+                              </TabsTrigger>
                             </TabsList>
-                            <TabsContent value="trees">{renderInventoryList("trees")}</TabsContent>
-                            <TabsContent value="items">{renderInventoryList("items")}</TabsContent>
-                            <TabsContent value="backgrounds">{renderInventoryList("backgrounds")}</TabsContent>
-                            <TabsContent value="music">{renderInventoryList("music")}</TabsContent>
-                            <TabsContent value="avatars">{renderInventoryList("avatars")}</TabsContent>
+                            <TabsContent value="trees">
+                              {renderInventoryList("trees")}
+                            </TabsContent>
+                            <TabsContent value="items">
+                              {renderInventoryList("items")}
+                            </TabsContent>
+                            <TabsContent value="backgrounds">
+                              {renderInventoryList("backgrounds")}
+                            </TabsContent>
+                            <TabsContent value="music">
+                              {renderInventoryList("music")}
+                            </TabsContent>
+                            <TabsContent value="avatars">
+                              {renderInventoryList("avatars")}
+                            </TabsContent>
                           </Tabs>
                         </div>
                         {/* Chi tiết item */}
@@ -1216,24 +1469,36 @@ const Header = () => {
                   <SheetContent>
                     <SheetHeader>
                       <SheetTitle>Login</SheetTitle>
-                      <SheetDescription>Sign in to manage your ZenGarden.</SheetDescription>
+                      <SheetDescription>
+                        Sign in to manage your ZenGarden.
+                      </SheetDescription>
                     </SheetHeader>
                     <form onSubmit={handleLogin}>
                       <div className="flex items-center justify-between py-2">
                         <span>Use Phone Number</span>
-                        <Switch checked={usePhone} onCheckedChange={setUsePhone} />
+                        <Switch
+                          checked={usePhone}
+                          onCheckedChange={setUsePhone}
+                        />
                       </div>
                       <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor={usePhone ? "phone" : "email"} className="text-right">
+                          <Label
+                            htmlFor={usePhone ? "phone" : "email"}
+                            className="text-right"
+                          >
                             {usePhone ? "Phone Number" : "Email"}
                           </Label>
                           <Input
                             id={usePhone ? "phone" : "email"}
                             type={usePhone ? "tel" : "email"}
-                            placeholder={usePhone ? "0123456789" : "example@email.com"}
+                            placeholder={
+                              usePhone ? "0123456789" : "example@email.com"
+                            }
                             className="col-span-3"
-                            value={usePhone ? credentials.phone : credentials.email}
+                            value={
+                              usePhone ? credentials.phone : credentials.email
+                            }
                             onChange={(e) =>
                               setCredentials({
                                 ...credentials,
