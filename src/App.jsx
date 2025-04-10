@@ -14,6 +14,7 @@ import Items from "./pages/Items";
 import Users from "./pages/Users";
 import Sales from "./pages/Sales";
 import Tasks from "./pages/Tasks";
+import Challenge from "./pages/Challenges";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import Marketplace from "./pages/player/marketplace/index.jsx";
@@ -102,6 +103,7 @@ function AdminLayout() {
         <Route path="/users" element={<Users />} />
         <Route path="/items" element={<Items />} />
         <Route path="/tasks" element={<Tasks />} />
+        <Route path="/challenges-admin" element={<Challenge />} />
         <Route path="/userXPLog" element={<UserXPLog />} />
         <Route path="/treeXPLog" element={<TreeXPLog />} />
         <Route path="/sales" element={<Sales />} />
@@ -119,6 +121,7 @@ function ConditionalRoutes() {
     location.pathname.startsWith("/users") ||
     location.pathname.startsWith("/items") ||
     location.pathname.startsWith("/tasks") ||
+    location.pathname.startsWith("/challenges-admin") ||
     location.pathname.startsWith("/userXPLog") ||
     location.pathname.startsWith("/treeXPLog") ||
     location.pathname.startsWith("/sales") ||
