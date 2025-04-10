@@ -65,6 +65,8 @@ import {
 } from "@/components/ui/tooltip";
 import { GetBagItems } from "@/services/apiServices/itemService";
 import { GetItemDetailByItemId } from "@/services/apiServices/itemService";
+import { UseItem } from "@/services/apiServices/itemService";
+import { GetUserConfigByUserId } from "@/services/apiServices/userConfigService";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -131,70 +133,28 @@ const Header = () => {
   const [notificationCount, setNotificationCount] = useState(0);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [inventoryItems, setInventoryItems] = useState([]);
+  const [avatarUrl, setAvatarUrl] = useState("https://github.com/shadcn.png");
 
-  // Dữ liệu mẫu cho Inventory với category
-  const inventoryData = {
-    trees: [
-      {
-        id: 1,
-        name: "Oak",
-        image: "/tree-1.png",
-        owned: true,
-        quantity: 2,
-        description: "A sturdy tree with strong wood.",
-        category: "trees",
-      },
-      // Bỏ Birch vì owned: false
-    ],
-    items: [
-      {
-        id: 3,
-        name: "Watering Can",
-        image: "/item-1.png",
-        owned: true,
-        quantity: 1,
-        description: "Used to water your plants.",
-        category: "items",
-      },
-      // Bỏ Fertilizer vì owned: false
-    ],
-    backgrounds: [
-      {
-        id: 5,
-        name: "Forest",
-        image: "/bg-1.png",
-        owned: true,
-        quantity: 1,
-        description: "A lush green forest backdrop.",
-        category: "backgrounds",
-      },
-      // Bỏ Desert vì owned: false
-    ],
-    music: [
-      {
-        id: 7,
-        name: "Calm Breeze",
-        image: "/music-1.png",
-        owned: true,
-        quantity: 1,
-        description: "Soothing wind sounds.",
-        category: "music",
-      },
-      // Bỏ Rainfall vì owned: false
-    ],
-    avatars: [
-      {
-        id: 9,
-        name: "Farmer Hat",
-        image: "/avatar-1.png",
-        owned: true,
-        quantity: 1,
-        description: "A classic farmer's hat.",
-        category: "avatars",
-      },
-      // Bỏ Wizard Robe vì owned: false
-    ],
-  };
+  useEffect(() => {
+    const fetchUserConfig = async () => {
+      const token = localStorage.getItem("token");
+      const parsed = parseJwt(token);
+      const userId = parsed?.sub;
+
+      if (!userId) return;
+
+      try {
+        const config = await GetUserConfigByUserId(userId);
+        if (config?.imageUrl) {
+          setAvatarUrl(config.imageUrl);
+        }
+      } catch (error) {
+        console.error("❌ Failed to fetch user config:", error);
+      }
+    };
+
+    fetchUserConfig();
+  }, []);
 
   // Component InventoryItemCard
   const InventoryItemCard = ({ item, onSelect, isSelected }) => {
@@ -247,10 +207,33 @@ const Header = () => {
 
     const isOwned = selectedItem.quantity > 0;
     const isEquippable =
-      selectedItem.type === "avatars" ||
-      selectedItem.type === "backgrounds" ||
-      selectedItem.type === "music";
+      selectedItem?.itemType === "avatars" ||
+      selectedItem?.itemType === "backgrounds" ||
+      selectedItem?.itemType === "music" ||
+      selectedItem?.itemType === "items"; // thêm items để xử lý logic dưới
+    const isItemType = selectedItem?.itemType === "items";
 
+    const isAnotherItemEquipped = isItemType
+      ? inventoryItems.some(
+          (item) =>
+            item.itemType === "items" &&
+            item.isEquipped &&
+            item.bagItemId !== selectedItem.bagItemId
+        )
+      : false;
+
+    const disableEquip = isItemType && isAnotherItemEquipped;
+    const handleUseItem = async () => {
+      try {
+        const result = await UseItem(selectedItem.bagItemId);
+        console.log("Use item result:", result);
+        fetchInventoryData();
+        // Có thể thêm toast hoặc cập nhật UI sau khi dùng
+      } catch (error) {
+        console.error("Error using item:", error);
+        // Hiện thông báo lỗi nếu cần
+      }
+    };
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -281,7 +264,11 @@ const Header = () => {
         </div>
 
         {isOwned ? (
-          <Button className="mt-4 bg-green-600 hover:bg-green-700 text-white">
+          <Button
+            className="mt-4 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+            onClick={handleUseItem}
+            disabled={disableEquip}
+          >
             {isEquippable ? "Equip" : "Use"}
           </Button>
         ) : (
@@ -366,50 +353,51 @@ const Header = () => {
     }
   };
 
+  const fetchInventoryData = async () => {
+    try {
+      const bagId = user?.bag?.bagId;
+      console.log("Bag ID:", bagId);
+
+      const bagItemsResponse = await GetBagItems(bagId);
+      const bagItems = bagItemsResponse?.data || bagItemsResponse || [];
+
+      const inventoryPromises = bagItems.map(async (bagItem) => {
+        const item = bagItem.item || {};
+        let itemDetail = {};
+        try {
+          const detailResponse = await GetItemDetailByItemId(
+            item.itemId || bagItem.itemId
+          );
+          itemDetail = detailResponse?.itemDetail || {};
+        } catch (err) {
+          console.warn("Không lấy được chi tiết item", item.itemId, err);
+        }
+
+        return {
+          bagItemId: bagItem.bagItemId,
+          itemId: item.itemId || bagItem.itemId,
+          name: item.name || "Unknown",
+          image: itemDetail.mediaUrl || "/images/fallback.png",
+          itemType: getTypeTextFromTypeId(item.type),
+          quantity: bagItem.quantity || 0,
+          isEquipped: bagItem.isEquipped,
+          rarity: item.rarity,
+          cost: item.cost,
+          effect: itemDetail.effect,
+          duration: itemDetail.duration,
+          isUnique: itemDetail.isUnique,
+        };
+      });
+
+      const inventory = await Promise.all(inventoryPromises);
+      setInventoryItems(inventory);
+    } catch (error) {
+      console.error("❌ Lỗi khi lấy inventory:", error);
+    }
+  };
+
+  // 2. Gọi fetch trong useEffect như cũ
   useEffect(() => {
-    const fetchInventoryData = async () => {
-      try {
-        const bagId = user?.bag?.bagId;
-        console.log("Bag ID:", bagId);
-
-        const bagItemsResponse = await GetBagItems(bagId);
-        const bagItems = bagItemsResponse?.data || bagItemsResponse || [];
-
-        const inventoryPromises = bagItems.map(async (bagItem) => {
-          const item = bagItem.item || {};
-          let itemDetail = {};
-          try {
-            const detailResponse = await GetItemDetailByItemId(
-              item.itemId || bagItem.itemId
-            );
-            itemDetail = detailResponse?.itemDetail || {};
-          } catch (err) {
-            console.warn("Không lấy được chi tiết item", item.itemId, err);
-          }
-
-          return {
-            bagItemId: bagItem.bagItemId,
-            itemId: item.itemId || bagItem.itemId,
-            name: item.name || "Unknown",
-            image: itemDetail.mediaUrl || "/images/fallback.png",
-            itemType: getTypeTextFromTypeId(item.type),
-            quantity: bagItem.quantity || 0,
-            isEquipped: bagItem.isEquipped,
-            rarity: item.rarity,
-            cost: item.cost,
-            effect: itemDetail.effect,
-            duration: itemDetail.duration,
-            isUnique: itemDetail.isUnique,
-          };
-        });
-
-        const inventory = await Promise.all(inventoryPromises);
-        setInventoryItems(inventory);
-      } catch (error) {
-        console.error("❌ Lỗi khi lấy inventory:", error);
-      }
-    };
-
     if (isInventoryOpen) {
       fetchInventoryData();
     }
@@ -690,10 +678,7 @@ const Header = () => {
                 <Popover>
                   <PopoverTrigger asChild>
                     <Avatar className="cursor-pointer">
-                      <AvatarImage
-                        src={user?.imageUrl || "https://github.com/shadcn.png"}
-                        alt="User Avatar"
-                      />
+                      <AvatarImage src={avatarUrl} alt="User Avatar" />
                       <AvatarFallback>
                         {user?.userName
                           ? user.userName.charAt(0).toUpperCase()
@@ -1410,9 +1395,6 @@ const Header = () => {
                         <div className="w-full md:w-1/3 bg-gray-50 border-r overflow-y-auto">
                           <Tabs defaultValue="trees" className="w-full">
                             <TabsList className="grid grid-cols-3 md:grid-cols-1 gap-2 p-4 bg-gray-50">
-                              <TabsTrigger value="trees" className="text-sm">
-                                Trees
-                              </TabsTrigger>
                               <TabsTrigger value="items" className="text-sm">
                                 Items
                               </TabsTrigger>

@@ -30,3 +30,22 @@ export async function GetItemDetailByItemId(itemId) {
   const response = await axios.get(`/Item/${itemId}`);
   return response.data;
 }
+
+export async function UseItem(itemBagId) {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.post(
+    `/UseItem/use`, // Không gắn itemBagId vào đây
+    {}, // body rỗng
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: {
+        itemBagId: itemBagId, // Gửi dưới dạng query param
+      },
+    }
+  );
+
+  return response.data;
+}

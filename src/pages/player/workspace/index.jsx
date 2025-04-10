@@ -12,6 +12,8 @@ import QuillEditor from "@/components/quill_js/index.jsx";
 import VideoPlayer from "@/components/react_player/index.jsx";
 import PDFEditor from "@/components/react_pdf/index.jsx";
 import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
+import { GetUserConfigByUserId } from "@/services/apiServices/userConfigService";
+import parseJwt from "@/services/parseJwt.js";
 import "../workspace/index.css";
 
 // Thêm import cho Pintura
@@ -34,8 +36,11 @@ export default function Workspace() {
   const [isRunning, setIsRunning] = useState(false);
   const location = useLocation();
   const [isPlaying, setIsPlaying] = useState(globalAudioState.isPlaying);
-  const [currentIndex, setCurrentIndex] = useState(globalAudioState.currentIndex);
+  const [currentIndex, setCurrentIndex] = useState(
+    globalAudioState.currentIndex
+  );
   const [activeTab, setActiveTab] = useState("Your Space");
+  const [backgroundUrl, setBackgroundUrl] = useState("");
 
   // State cho Image Editor
   const [editedImage, setEditedImage] = useState(null); // Lưu ảnh đã chỉnh sửa
@@ -52,7 +57,9 @@ export default function Workspace() {
       setTasks(taskData.filter((task) => task.taskTypeName === "Simple"));
       const urlParams = new URLSearchParams(location.search);
       const taskId = urlParams.get("taskId");
-      const runningTask = taskData.find((task) => task.taskId === parseInt(taskId));
+      const runningTask = taskData.find(
+        (task) => task.taskId === parseInt(taskId)
+      );
       if (runningTask && runningTask.status === 1) {
         setCurrentTask({
           column: "simple",
@@ -65,6 +72,24 @@ export default function Workspace() {
       console.error("Failed to fetch tasks", error);
     }
   };
+
+  useEffect(() => {
+    const fetchUserConfig = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const userId = parseJwt(token)?.sub;
+        const config = await GetUserConfigByUserId(userId);
+
+        if (config?.backgroundConfig) {
+          setBackgroundUrl(config.backgroundConfig);
+        }
+      } catch (error) {
+        console.error("❌ Failed to fetch user config:", error);
+      }
+    };
+
+    fetchUserConfig();
+  }, []);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -119,7 +144,9 @@ export default function Workspace() {
       setCurrentTask({
         column: "simple",
         taskIndex,
-        time: task.remainingTime ? task.remainingTime * 60 : task.totalDuration * 60,
+        time: task.remainingTime
+          ? task.remainingTime * 60
+          : task.totalDuration * 60,
       });
       setIsRunning(true);
     }
@@ -158,8 +185,7 @@ export default function Workspace() {
     <div
       className="min-h-screen flex flex-col p-6 bg-gray-100 mt-20"
       style={{
-        backgroundImage:
-          "url('https://is1-ssl.mzstatic.com/image/thumb/Video211/v4/15/d1/80/15d1804a-1594-b708-3e90-a651a3216e4d/1968720970920101.jpg/3840x2160mv.jpg')",
+        backgroundImage: `url('${backgroundUrl}')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
@@ -177,21 +203,26 @@ export default function Workspace() {
 
         {/* Tabs */}
         <div className="flex gap-2 mt-4 justify-center">
-          {["Your Space", "Rich Text", "Watch Videos", "PDF Editor", "Image Editor"].map(
-            (tab) => (
-              <Button
-                key={tab}
-                variant={activeTab === tab ? "default" : "outline"}
-                className={`${activeTab === tab
+          {[
+            "Your Space",
+            "Rich Text",
+            "Watch Videos",
+            "PDF Editor",
+            "Image Editor",
+          ].map((tab) => (
+            <Button
+              key={tab}
+              variant={activeTab === tab ? "default" : "outline"}
+              className={`${
+                activeTab === tab
                   ? "bg-green-600 text-white"
                   : "bg-white/80 text-gray-700 hover:bg-gray-200"
-                  } transition-all`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-              </Button>
-            )
-          )}
+              } transition-all`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </Button>
+          ))}
         </div>
       </motion.div>
 
@@ -228,8 +259,11 @@ export default function Workspace() {
                         >
                           <div className="flex-1">
                             <span
-                              className={`font-medium ${task.status === 4 ? "line-through text-gray-500" : ""
-                                }`}
+                              className={`font-medium ${
+                                task.status === 4
+                                  ? "line-through text-gray-500"
+                                  : ""
+                              }`}
                             >
                               {task.taskName}
                             </span>
@@ -259,7 +293,9 @@ export default function Workspace() {
                                 Start
                               </Button>
                             ) : (
-                              <span className="text-sm text-green-600">Done</span>
+                              <span className="text-sm text-green-600">
+                                Done
+                              </span>
                             )}
                           </div>
                         </li>
