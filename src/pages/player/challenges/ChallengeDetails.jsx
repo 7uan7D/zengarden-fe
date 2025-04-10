@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { XCircle, Trophy, BookCheck, BookX, Clock, Coffee, Calendar, Flag, CheckCircle, ClipboardCheck, StickyNote, ArrowBigLeft } from "lucide-react";
-import { GetAllChallenges, GetChallengeById, GetProgressByChallengeId, GetRankingByChallengeId, JoinChallengeById, LeaveChallengeById } from "@/services/apiServices/challengeService";
+import { XCircle, Trophy, BookCheck, BookX, Clock, Coffee, Calendar, Flag, CheckCircle, ClipboardCheck, StickyNote, ArrowBigLeft, Plus } from "lucide-react";
+import { CreateTaskByChallengeId, GetAllChallenges, GetChallengeById, GetProgressByChallengeId, GetRankingByChallengeId, JoinChallengeById, LeaveChallengeById } from "@/services/apiServices/challengeService";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
 import { GetAllUserChallenges } from "@/services/apiServices/userChallengeService";
 import parseJwt from "@/services/parseJwt";
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
 import { toast } from "sonner";
+import { GetAllTaskTypes } from "@/services/apiServices/taskTypeService";
 
 export default function ChallengeDetails() {
     const { id } = useParams();
@@ -93,12 +98,6 @@ export default function ChallengeDetails() {
         };
 
         fetchChallengeDetails();
-
-        // Placeholder logic to check if the user has joined the challenge
-        // In a real application, you would likely have user-specific data
-        // and an API endpoint to check join status.
-        // For now, we'll just set a default state.
-        // You might fetch user's joined challenges and check if the current ID exists.
     }, [id]);
 
     const [UserTrees, setUserTrees] = useState([]);
@@ -194,6 +193,61 @@ export default function ChallengeDetails() {
 
         fetchProgress();
     }, [id]);
+
+    const [openCreateTask, setOpenCreateTask] = useState(false);
+    const handleCreateTaskClick = () => {
+        setOpenCreateTask(true);
+    };
+
+    const [newTaskData, setNewTaskData] = useState({
+        taskTypeId: 0,
+        taskName: "",
+        taskDescription: "",
+        totalDuration: 0,
+        startDate: "",
+        endDate: "",
+    });
+
+    const handleChange = (e) => {
+        const { id, value } = e.target
+        setNewTaskData((prev) => ({
+            ...prev,
+            [id]: value,
+        }))
+    }
+
+    const handleSaveChanges = async () => {
+        console.log("Saving changes with data: ", newTaskData);
+        setIsLoading(true);
+        try {
+            await CreateTaskByChallengeId(id, newTaskData);
+
+            toast.success("Task created successfully!");
+
+            setTimeout(() => {
+                window.location.reload()
+            }, 3000);
+        } catch (error) {
+            console.error("Error creating task:", error);
+            toast.error("Failed to create task. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const [taskTypes, setTaskTypes] = useState([]);
+    useEffect(() => {
+        const fetchTaskTypes = async () => {
+            try {
+                const data = await GetAllTaskTypes();
+                setTaskTypes(data);
+            } catch (error) {
+                console.error("Error fetching task types:", error);
+            }
+        };
+
+        fetchTaskTypes();
+    }, []);
 
     if (isLoading) {
         return <div></div>;
@@ -301,7 +355,12 @@ export default function ChallengeDetails() {
                                             </Card>
                                         ))
                                     ) : (
-                                        <p>No tasks available for this challenge.</p>
+                                        <>
+                                            <p>No tasks available for this challenge.</p>
+                                            <Button variant="outline" onClick={() => handleCreateTaskClick()} className="mt-4">
+                                                <Plus className="mr-2 h-4 w-4" /> Create Task
+                                            </Button>
+                                        </>
                                     )}
                                 </CardContent>
 
@@ -437,6 +496,92 @@ export default function ChallengeDetails() {
                             </Card>
                         </div>
                     </div>
+
+                    <Dialog open={openCreateTask} onOpenChange={setOpenCreateTask}>
+                        <DialogContent className='dialog-overlay'>
+                            <DialogHeader className="relative bg-gradient-to-r from-green-500 to-teal-500 p-4 rounded-t-xl shadow-md">
+                                <DialogTitle className="text-2xl font-bold text-white tracking-tight">
+                                    Create Task
+                                </DialogTitle>
+                                <DialogDescription className="text-sm text-gray-100 mt-1">
+                                    Enter your task details here.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <Tabs className='w-[462px]'>
+                                <TabsContent className=''>
+                                    <div className='space-y-1 mb-3'>
+                                        <Label htmlFor='taskName'>Task Name:</Label>
+                                        <Input
+                                            id='taskName'
+                                            value={newTaskData.taskName}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                    <div className='space-y-1 mb-3'>
+                                        <Label htmlFor='taskDescription'>Task Description:</Label>
+                                        <Input
+                                            id='taskDescription'
+                                            value={newTaskData.taskDescription}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                    <div className='space-y-1 mb-3'>
+                                        <Label htmlFor='taskTypeId'>Task Type:</Label>
+                                        <select
+                                            id="taskTypeId"
+                                            value={newTaskData.taskTypeId}
+                                            onChange={handleChange}
+                                            className="w-full p-2 border border-gray-300 rounded-md bg-white text-sm"
+                                        >
+                                            <option value='' disabled>Select Task Type</option>
+                                            {taskTypes.map((type) => (
+                                                <option key={type.taskTypeId} value={type.taskTypeId}>
+                                                    {type.taskTypeName}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className='space-y-1 mb-3'>
+                                        <Label htmlFor='totalDuration'>Total Duration ({'>'}30  min):</Label>
+                                        <Input
+                                            id='totalDuration'
+                                            type="number"
+                                            value={newTaskData.totalDuration}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                    <div className='space-y-1 mb-3'>
+                                        <Label htmlFor='startDate'>Start Date:</Label>
+                                        <Input
+                                            id='startDate'
+                                            type="datetime-local"
+                                            value={newTaskData.startDate}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                    <div className='space-y-1 mb-3'>
+                                        <Label htmlFor='endDate'>End Date:</Label>
+                                        <Input
+                                            id='endDate'
+                                            type="datetime-local"
+                                            value={newTaskData.endDate}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+
+                                    <Button
+                                        className='bg-[#83aa6c] text-white'
+                                        onClick={handleSaveChanges}
+                                        disabled={isLoading}
+                                    >
+                                        Save Changes
+                                    </Button>
+                                </TabsContent>
+                            </Tabs>
+                        </DialogContent>
+                    </Dialog>
+
                 </div>
             </div>
         </div>

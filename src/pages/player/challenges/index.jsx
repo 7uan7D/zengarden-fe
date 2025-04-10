@@ -34,9 +34,8 @@ const categories = ["My Challenges", "Get Challenges"];
 
 export default function Challenges() {
   const [search, setSearch] = useState("");
-  const [challengeTypesData, setChallengeTypesData] = useState([
-    
-  ]);
+  const [challengeTypesData, setChallengeTypesData] = useState([]);
+
   useEffect(() => {
     const fetchChallengeTypes = async () => {
       // const token = localStorage.getItem("token");
@@ -646,12 +645,21 @@ export default function Challenges() {
                 </div>
 
                 <div className='space-y-1 mb-3'>
+                  <Label htmlFor='description'>Description:</Label>
+                  <Input
+                    id='description'
+                    value={newChallengeData.description}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className='space-y-1 mb-3'>
                   <Label htmlFor='challengeTypeId'>Type:</Label>
                   <select
                     id='challengeTypeId'
                     value={newChallengeData.challengeTypeId}
                     onChange={handleChange}
-                    className='border border-white-300 rounded-md p-2 ml-3 bg-white text-sm'
+                    className="w-full p-2 border border-gray-300 rounded-md bg-white text-sm"
                   >
                     <option value='' disabled>Select Challenge Type</option>
                     {challengeTypesData.map((type) => (
@@ -660,15 +668,6 @@ export default function Challenges() {
                       </option>
                     ))}
                   </select>
-                </div>
-
-                <div className='space-y-1 mb-3'>
-                  <Label htmlFor='description'>Description:</Label>
-                  <Input
-                    id='description'
-                    value={newChallengeData.description}
-                    onChange={handleChange}
-                  />
                 </div>
 
                 <div className='space-y-1 mb-3'>
@@ -709,7 +708,6 @@ export default function Challenges() {
                 </Button>
               </TabsContent>
             </Tabs>
-
           </DialogContent>
         </Dialog>
       </div>

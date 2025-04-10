@@ -23,6 +23,20 @@ export async function CreateChallenge(challenge) {
     return response.data;
 }
 
+export async function CreateTaskByChallengeId(challengeId, task) {
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+        `/Challenges/tasks/${challengeId}/`, 
+        task, 
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
+}
+
 export async function JoinChallengeById(challengeId, userTreeId) {
     const token = localStorage.getItem("token");
     const response = await axios.post(
