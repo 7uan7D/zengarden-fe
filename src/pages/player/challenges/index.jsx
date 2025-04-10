@@ -1,6 +1,8 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,26 +24,13 @@ import {
 import { motion } from "framer-motion";
 import parseJwt from "@/services/parseJwt";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
-import { GetAllChallenges, GetChallengeById, JoinChallengeById, LeaveChallengeById } from "@/services/apiServices/challengeService";
+import { CreateChallenge, GetAllChallenges, GetChallengeById, JoinChallengeById, LeaveChallengeById } from "@/services/apiServices/challengeService";
 import { GetAllUserChallenges } from "@/services/apiServices/userChallengeService";
 import { Link } from "react-router-dom";
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
 import { toast } from "sonner";
 
 const categories = ["My Challenges", "Get Challenges"];
-
-// const userChallengesData = [
-//   {
-//     id: 1,
-//     name: "Taking Surveys",
-//     reward: 42,
-//     creator: "Red Cross",
-//     createdDate: "2021-09-01",
-//     types: ["Survey", "Research"],
-//     description:
-//       "Participate in short surveys 📓 to contribute to important research and earn rewards. Help make a difference while getting paid!",
-//   },
-// ];
 
 export default function Challenges() {
   const [search, setSearch] = useState("");
@@ -247,6 +236,49 @@ export default function Challenges() {
     }
   };
 
+  const [openCreateChallenge, setOpenCreateChallenge] = useState(false);
+  const handleCreateChallengeClick = () => {
+    setOpenCreateChallenge(true);
+  };
+
+  const [newChallengeData, setNewChallengeData] = useState({
+    challengeTypeId: 0,
+    challengeName: "",
+    description: "",
+    reward: 0,
+    startDate: "",
+    endDate: "",
+  });
+
+  const handleChange = (e) => {
+    const { id, value } = e.target
+    setNewChallengeData((prev) => ({
+      ...prev,
+      [id]: value,
+    }))
+  }
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const handleSaveChanges = async () => {
+    console.log("Saving changes with data: ", newChallengeData);
+    setIsLoading(true);
+    try {
+      await CreateChallenge(newChallengeData);
+
+      toast.success("Challenge created successfully!");
+
+      setTimeout(() => {
+        window.location.reload()
+      }, 3000)
+    } catch (error) {
+      console.error("Error creating challenge:", error);
+      toast.error("Failed to create challenge. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
   if (!token) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
@@ -315,13 +347,13 @@ export default function Challenges() {
         <div className="flex-1 p-6 overflow-auto">
           <h1 className="text-2xl font-bold mb-4">Challenges</h1>
 
-          {/* <div className="flex justify-between items-center mb-4">
-                        <p/>
-                        <Button className="bg-green-600 text-white hover:bg-green-700">
-                            <Plus className="h-4 w-4" />
-                            Create Challenges
-                        </Button>
-                    </div> */}
+          <div className="flex justify-between items-center mb-4">
+              <p/>
+              <Button className="bg-teal-500 text-white hover:bg-teal-700" onClick={handleCreateChallengeClick}>
+                  <Plus className="h-4 w-4" />
+                  Create Challenge
+              </Button>
+          </div>
 
           <Tabs defaultValue={categories[0]}>
             <TabsList className="mb-4">
@@ -553,7 +585,7 @@ export default function Challenges() {
                                 {
                                   userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status !== 4
                                   ) ? (
-                                    <Button className variant="destructive" onClick={() => handleLeaveChallenge(item.challengeId)}>
+                                    <Button variant="destructive" onClick={() => handleLeaveChallenge(item.challengeId)}>
                                       <BookX className="mr-2 h-4 w-4" /> Leave Challenge
                                     </Button>
                                   ) : userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status === 4
@@ -590,6 +622,96 @@ export default function Challenges() {
             ))}
           </Tabs>
         </div>
+
+        <Dialog open={openCreateChallenge} onOpenChange={setOpenCreateChallenge}>
+          <DialogContent className='dialog-overlay'>
+            <DialogHeader className="relative bg-gradient-to-r from-green-500 to-teal-500 p-4 rounded-t-xl shadow-md">
+              <DialogTitle className="text-2xl font-bold text-white tracking-tight">
+                Create New Challenge
+              </DialogTitle>
+              <DialogDescription className="text-sm text-gray-100 mt-1">
+                Enter your challenge details here.
+              </DialogDescription>
+            </DialogHeader>
+
+            <Tabs className='w-[462px]'>
+              <TabsContent className=''>
+                <div className='space-y-1 mb-3'>
+                  <Label htmlFor='challengeName'>Challenge Name:</Label>
+                  <Input
+                    id='challengeName'
+                    value={newChallengeData.challengeName}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className='space-y-1 mb-3'>
+                  <Label htmlFor='challengeTypeId'>Type:</Label>
+                  <select
+                    id='challengeTypeId'
+                    value={newChallengeData.challengeTypeId}
+                    onChange={handleChange}
+                    className='border border-white-300 rounded-md p-2 ml-3 bg-white text-sm'
+                  >
+                    <option value='' disabled>Select Challenge Type</option>
+                    {challengeTypesData.map((type) => (
+                      <option key={type.challengeTypeId} value={type.challengeTypeId}>
+                        {type.challengeTypeName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className='space-y-1 mb-3'>
+                  <Label htmlFor='description'>Description:</Label>
+                  <Input
+                    id='description'
+                    value={newChallengeData.description}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className='space-y-1 mb-3'>
+                  <Label htmlFor='reward'>Reward (coins): </Label>
+                  <Input
+                    id='reward'
+                    value={newChallengeData.reward}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className='space-y-1 mb-3'>
+                  <Label htmlFor='startDate'>Start Date:</Label>
+                  <Input
+                    type='datetime-local'
+                    id='startDate'
+                    value={newChallengeData.startDate}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className='space-y-1 mb-5'>
+                  <Label htmlFor='endDate'>End Date:</Label>
+                  <Input
+                    type='datetime-local'
+                    id='endDate'
+                    value={newChallengeData.endDate}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <Button
+                  className='bg-[#83aa6c] text-white'
+                  onClick={handleSaveChanges}
+                  disabled={isLoading}
+                >
+                  Save Changes
+                </Button>
+              </TabsContent>
+            </Tabs>
+
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
