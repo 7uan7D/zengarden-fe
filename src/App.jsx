@@ -31,6 +31,7 @@ import MusicPlayerController from "./components/musicPlayerController";
 import ChallengeDetails from "./pages/player/challenges/ChallengeDetails";
 import { TimerProvider } from "./pages/player/workspace/timerContext";
 import Policy from "./components/policy";
+import Trees from "./pages/Trees";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -104,6 +105,7 @@ function AdminLayout() {
         <Route path="/items" element={<Items />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/challenges-admin" element={<Challenge />} />
+        <Route path="/trees" element={<Trees />} />
         <Route path="/userXPLog" element={<UserXPLog />} />
         <Route path="/treeXPLog" element={<TreeXPLog />} />
         <Route path="/sales" element={<Sales />} />
@@ -122,6 +124,7 @@ function ConditionalRoutes() {
     location.pathname.startsWith("/items") ||
     location.pathname.startsWith("/tasks") ||
     location.pathname.startsWith("/challenges-admin") ||
+    location.pathname.startsWith("/trees") ||
     location.pathname.startsWith("/userXPLog") ||
     location.pathname.startsWith("/treeXPLog") ||
     location.pathname.startsWith("/sales") ||
