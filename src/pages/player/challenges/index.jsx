@@ -8,9 +8,9 @@ import {
   BookCheck,
   BookX,
   Plus,
-  Verified,
   Trophy,
   Check,
+  XCircle,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import {
@@ -137,6 +137,20 @@ export default function Challenges() {
         const userId = parseJwt(token).sub;
         const LoggedUserChallenges = data.filter(challenge => challenge.userId === parseInt(userId));
         setUserChallengeInfo(LoggedUserChallenges); // this is for userChallenge detail page
+
+        userChallengeInfo.map((challenge) => {
+          console.log("challenge id", challenge.challengeId, "challenge status", challenge.status);
+        });
+
+        filteredChallenges.map((item) => {
+          // find if userChallengeInfo has challengeId and status === 4
+          if (userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status !== 4)) {
+            console.log("challenge id", item.challengeId);
+          }
+        });
+
+        // console.log("check", userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status === 4))
+        
 
         // get all challengeId from LoggedUserChallenges
         const challengeIds = LoggedUserChallenges.map(
@@ -340,12 +354,6 @@ export default function Challenges() {
                                   Joined
                                 </span>
                               )}
-{/*                               
-                              {item.challengeId === 1 && cat === "Get Challenges" && (
-                                <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-lg shadow">
-                                  Joined
-                                </span>
-                              )} */}
                             
                               <CardContent className="flex flex-col items-start p-4 cursor-pointer">
                                 {/* {cat === "Avatar" ? (
@@ -425,18 +433,24 @@ export default function Challenges() {
                                 <p className="text-sm text-gray-500 flex items-center text-left">
                                   {item.description}
                                 </p>
-
-                                {userChallengesData.some(
-                                  (userChallenge) => userChallenge.challengeId === item.challengeId
-                                ) ? (
-                                  <Button className="mt-2 text-orange-800 font-bold" variant="outline" onClick={() => handleLeaveChallenge(item.challengeId)}>
-                                    <BookX className="mr-2 h-4 w-4" /> Leave Challenge
-                                  </Button>
-                                ) : (
-                                  <Button className="mt-2 text-cyan-800 font-bold" variant="outline" onClick={() => handleJoinChallenge(item.challengeId)}>
-                                    <BookCheck className="mr-2 h-4 w-4" /> Join Challenge
-                                  </Button>
-                                )}
+                              
+                                {
+                                  userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status !== 4
+                                  ) ? (
+                                    <Button variant="destructive" onClick={() => handleLeaveChallenge(id)}>
+                                      <BookX className="mr-2 h-4 w-4" /> Leave Challenge
+                                    </Button>
+                                  ) : userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status === 4
+                                  ) ? (
+                                    <Button variant="outline" className="text-red-500" disabled>
+                                      <XCircle className="mr-2 h-4 w-4" /> Already Left
+                                    </Button>
+                                  ) : (
+                                    <Button onClick={() => handleJoinChallenge(id)}>
+                                      <BookCheck className="mr-2 h-4 w-4" /> Join Challenge
+                                    </Button>
+                                  )
+                                }
                               </CardContent>
                             </Card>
 
@@ -530,10 +544,25 @@ export default function Challenges() {
                                 <p className="text-sm text-gray-500 flex items-center text-left">
                                   {item.description}
                                 </p>
+                                
 
-                                <Button className="mt-2 text-orange-800 font-bold" variant="outline">
-                                  <BookX className="mr-2 h-4 w-4" /> Leave Challenge
-                                </Button>
+                                {
+                                  userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status !== 4
+                                  ) ? (
+                                    <Button variant="destructive" onClick={() => handleLeaveChallenge(id)}>
+                                      <BookX className="mr-2 h-4 w-4" /> Leave Challenge
+                                    </Button>
+                                  ) : userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status === 4
+                                  ) ? (
+                                    <Button variant="outline" className="text-red-500" disabled>
+                                      <XCircle className="mr-2 h-4 w-4" /> Already Left
+                                    </Button>
+                                  ) : (
+                                    <Button onClick={() => handleJoinChallenge(id)}>
+                                      <BookCheck className="mr-2 h-4 w-4" /> Join Challenge
+                                    </Button>
+                                  )
+                                }
                               </CardContent>
                             </Card>
                             <PopoverContent

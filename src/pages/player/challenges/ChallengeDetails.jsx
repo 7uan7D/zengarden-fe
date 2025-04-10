@@ -1,8 +1,8 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Verified, Trophy, BookCheck, BookX, Clock, Coffee, Calendar, Flag, CheckCircle, ClipboardCheck, StickyNote, ArrowBigLeft } from "lucide-react";
+import { XCircle, Trophy, BookCheck, BookX, Clock, Coffee, Calendar, Flag, CheckCircle, ClipboardCheck, StickyNote, ArrowBigLeft } from "lucide-react";
 import { GetAllChallenges, GetChallengeById, GetProgressByChallengeId, GetRankingByChallengeId, JoinChallengeById, LeaveChallengeById } from "@/services/apiServices/challengeService";
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService";
 import { GetAllUserChallenges } from "@/services/apiServices/userChallengeService";
@@ -19,7 +19,8 @@ export default function ChallengeDetails() {
     const [error, setError] = useState(null);
 
     const token = localStorage.getItem("token");
-    const [userChallengesData, setUserChallengesData] = useState([]);
+    // const [userChallengesData, setUserChallengesData] = useState([]);
+    const [userChallenge, setUserChallenge] = useState(null);
     useEffect(() => {
         const fetchUserChallenges = async () => {
             if (!token) return;
@@ -30,18 +31,33 @@ export default function ChallengeDetails() {
                 const userId = parseJwt(token).sub;
                 const LoggedUserChallenges = data.filter(challenge => challenge.userId === parseInt(userId));
 
-                const challengeIds = LoggedUserChallenges.map(
-                    (challenge) => challenge.challengeId
-                );
+                setUserChallenge(LoggedUserChallenges);
+                userChallenge.map((challenge) => {
+                    console.log("challenge id", challenge.challengeId, "challenge status", challenge.status);
+                });
 
-                const challengeData = await Promise.all(
-                    challengeIds.map(async (challengeId) => {
-                        const data = await GetChallengeById(challengeId);
-                        return data;
-                    })
-                );
+                // if (userChallenge.find((challenge) => challenge.challengeId === parseInt(id) && challenge.status !== 4)) {
+                //     console.log("User has joined the challenge.");
+                // }
+                // console.log( userChallenge.find(
+                //     (challenge) => challenge.challengeId === parseInt(id) && challenge.status !== 4
+                // ))
 
-                setUserChallengesData(challengeData);
+
+                // const challengeIds = LoggedUserChallenges.map(
+                //     (challenge) => challenge.challengeId
+                // );
+
+                // const challengeData = await Promise.all(
+                //     challengeIds.map(async (challengeId) => {
+                //         const data = await GetChallengeById(challengeId);
+                //         return data;
+                //     })
+                // );
+
+                // setUserChallengesData(challengeData);
+
+                // console.log("challengeData", challengeData);
             } catch (error) {
                 console.error("Error fetching challenges:", error);
             }
@@ -293,21 +309,27 @@ export default function ChallengeDetails() {
                             <Card className="w-[30%]">
                                 <CardHeader>
                                     <div className="mt-6">
-                                        <Button className="mr-2" variant="outline" onClick={() => navigate(-1)}>
+                                        <Button className="mr-2 mb-3" variant="outline" onClick={() => navigate(-1)}>
                                             <ArrowBigLeft className="mr-2 h-4 w-4" /> Back
                                         </Button>
-                                        {userChallengesData.some(
-                                            (userChallenge) => userChallenge.challengeId === parseInt(id)
-                                        ) ? (
-                                            <Button variant="destructive" onClick={() => handleLeaveChallenge(id)}>
-                                                <BookX className="mr-2 h-4 w-4" /> Leave Challenge
-                                            </Button>
-                                        ) : (
-                                            <Button onClick={() => handleJoinChallenge(id)}>
-                                                <BookCheck className="mr-2 h-4 w-4" /> Join Challenge
-                                            </Button>
-                                        )}
 
+                                        {
+                                            userChallenge.find((challenge) => challenge.challengeId === parseInt(id) && challenge.status !== 4
+                                            ) ? (
+                                                <Button variant="destructive" onClick={() => handleLeaveChallenge(id)}>
+                                                    <BookX className="mr-2 h-4 w-4" /> Leave Challenge
+                                                </Button>
+                                            ) : userChallenge.find((challenge) => challenge.challengeId === parseInt(id) && challenge.status === 4
+                                            ) ? (
+                                                <Button variant="outline" className="text-red-500" disabled>
+                                                    <XCircle className="mr-2 h-4 w-4" /> Already Left
+                                                </Button>
+                                            ) : (
+                                                <Button onClick={() => handleJoinChallenge(id)}>
+                                                    <BookCheck className="mr-2 h-4 w-4" /> Join Challenge
+                                                </Button>
+                                            )
+                                        }
                                     </div>
                                 </CardHeader>
                                 <CardContent className="space-y-2">
