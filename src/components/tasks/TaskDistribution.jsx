@@ -2,8 +2,7 @@ import { motion } from "framer-motion"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 import useTaskData from "@/hooks/useTaskData"
 
-// const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FED766', '#2AB7CA']
-const COLORS = ['#E5E7EB', '#2AB7CA' , '#FED766', '#10B981', '#FF6B6B']
+const COLORS = ['#E5E7EB', '#2AB7CA' , '#FED766', '#10B981', '#FF6B6B', '#8884D8']
 
 const TaskDistribution = () => {
     const { taskData, isLoading, error } = useTaskData()
@@ -13,6 +12,7 @@ const TaskDistribution = () => {
         { name: 'Paused', value: taskData?.filter((task) => task.status === 2).length },
         { name: 'Completed', value: taskData?.filter((task) => task.status === 3).length },
         { name: 'Failed', value: taskData?.filter((task) => task.status === 4).length },
+        { name: 'Overdue', value: taskData?.filter((task) => task.status === 5).length },
     ]
 
     if (isLoading) {

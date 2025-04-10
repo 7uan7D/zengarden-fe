@@ -4,13 +4,13 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Link } from "react-router-dom"
 
 const SIDEBAR_ITEMS = [
-    { name: 'Overview', icon: BarChart2, color: '#6366F1', href: '/overview' },
+    // { name: 'Overview', icon: BarChart2, color: '#6366F1', href: '/overview' },
     { name: 'Users', icon: Users, color: '#EC4899', href: '/users' },
     { name: 'Items', icon: ShoppingBag, color: '#8B5CF6', href: '/items' },
     { name: 'Tasks', icon: CalendarCheck, color: '#F59E0B', href: '/tasks' },
     { name: 'User Experience Log', icon: ScrollText, color: '#0ECB70', href: '/userXPLog' },
     { name: 'Tree Experience Log', icon: ScrollText, color: '#9621B6', href: '/treeXPLog' },
-    { name: 'Sales', icon: DollarSign, color: '#10B981', href: '/sales' },
+    // { name: 'Sales', icon: DollarSign, color: '#10B981', href: '/sales' },
     { name: 'Analytics', icon: TrendingUp, color: '#3B82F6', href: '/analytics' },
     { name: 'Settings', icon: Settings, color: '#6EE7B7', href: '/settings' },
 ]
