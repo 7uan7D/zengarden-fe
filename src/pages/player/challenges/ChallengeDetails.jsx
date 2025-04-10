@@ -261,6 +261,7 @@ export default function ChallengeDetails() {
         return <div>Challenge details not available.</div>;
     }
 
+    console.log("user challenge", userChallenge);
     return (
         <div className="min-h-screen flex flex-col">
             <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md"></div>
@@ -373,7 +374,7 @@ export default function ChallengeDetails() {
                                         </Button>
 
                                         {
-                                            userChallenge.find((challenge) => challenge.challengeId === parseInt(id) && challenge.status !== 4
+                                            userChallenge.find((challenge) => challenge.challengeId === parseInt(id) && challenge.status !== 4 && challenge.challengeRole >= 1
                                             ) ? (
                                                 <Button variant="destructive" onClick={() => handleLeaveChallenge(id)}>
                                                     <BookX className="mr-2 h-4 w-4" /> Leave Challenge
@@ -382,6 +383,11 @@ export default function ChallengeDetails() {
                                             ) ? (
                                                 <Button variant="outline" className="text-red-500" disabled>
                                                     <XCircle className="mr-2 h-4 w-4" /> Already Left
+                                                </Button>
+                                            ) : userChallenge.find((challenge) => challenge.challengeId === parseInt(id) && challenge.status !== 4 && challenge.challengeRole === 0
+                                            ) ? (
+                                                <Button variant="outline" className="text-red-500" disabled>
+                                                    <XCircle className="mr-2 h-4 w-4" /> You Created This Challenge
                                                 </Button>
                                             ) : (
                                                 <Button onClick={() => handleJoinChallenge(id)}>

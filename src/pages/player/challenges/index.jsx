@@ -468,7 +468,7 @@ export default function Challenges() {
                               
                                 <div className="flex items-center mt-3">
                                 {
-                                  userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status !== 4
+                                  userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status !== 4 && challenge.challengeRole >= 1
                                   ) ? (
                                     <Button variant="destructive" onClick={() => handleLeaveChallenge(item.challengeId)}>
                                       <BookX className="mr-2 h-4 w-4" /> Leave Challenge
@@ -477,6 +477,11 @@ export default function Challenges() {
                                   ) ? (
                                     <Button variant="outline" className="text-red-500" disabled>
                                       <XCircle className="mr-2 h-4 w-4" /> Already Left
+                                    </Button>
+                                  ) : userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status !== 4 && challenge.challengeRole === 0
+                                  ) ? (
+                                    <Button variant="outline" className="text-red-500" disabled>
+                                        <XCircle className="mr-2 h-4 w-4" /> You Created This Challenge
                                     </Button>
                                   ) : (
                                     <Button onClick={() => handleJoinChallenge(id)}>
@@ -582,7 +587,7 @@ export default function Challenges() {
 
                                 <div className="flex items-center mt-3">      
                                 {
-                                  userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status !== 4
+                                  userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status !== 4 && challenge.challengeRole >= 1
                                   ) ? (
                                     <Button variant="destructive" onClick={() => handleLeaveChallenge(item.challengeId)}>
                                       <BookX className="mr-2 h-4 w-4" /> Leave Challenge
@@ -591,6 +596,11 @@ export default function Challenges() {
                                   ) ? (
                                     <Button variant="outline" className="text-red-500" disabled>
                                       <XCircle className="mr-2 h-4 w-4" /> Already Left
+                                    </Button>
+                                  ) : userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status !== 4 && challenge.challengeRole === 0
+                                  ) ? (
+                                    <Button variant="outline" className="text-red-500" disabled>
+                                        <XCircle className="mr-2 h-4 w-4" /> You Created This Challenge
                                     </Button>
                                   ) : (
                                     <Button onClick={() => handleJoinChallenge(id)}>
