@@ -489,8 +489,14 @@ export default function TaskPage() {
 
   // Logic đếm thời gian và tự động hoàn thành khi hết thời gian
   useEffect(() => {
+    console.log("currentTask", currentTask);
     const interval = setInterval(() => {
-      if (currentTask && isRunning && currentTask.time > 0) {
+      if (
+        currentTask &&
+        isRunning &&
+        currentTask.time > 0 &&
+        ![2, 3, 4].includes(currentTask.status) // <- kiểm tra status
+      ) {
         const now = Date.now();
         const elapsed = Math.floor((now - currentTask.lastUpdated) / 1000);
         setCurrentTask((prev) => ({
@@ -534,23 +540,30 @@ export default function TaskPage() {
         };
         localStorage.setItem("currentTask", JSON.stringify(dataToSave));
         if (isRunning) {
-          fetch(`https://zengarden-be.onrender.com/api/Task/pause/${task.taskId}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({}),
-            keepalive: true,
-          }).catch((err) => console.error("PauseTask failed", err));
+          fetch(
+            `https://zengarden-be.onrender.com/api/Task/pause/${task.taskId}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({}),
+              keepalive: true,
+            }
+          ).catch((err) => console.error("PauseTask failed", err));
         }
       }
     }
   };
 
+  useEffect(() => {
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isRunning, currentTask, tasks]);
+
   // Khôi phục trạng thái từ localStorage khi quay lại trang
   useEffect(() => {
     const saved = localStorage.getItem("currentTask");
-    if (saved) {
+    if (saved && Object.keys(tasks).length > 0) {
       const {
-        taskId,
         column,
         taskIndex,
         time,
@@ -561,19 +574,22 @@ export default function TaskPage() {
         isRunning: savedIsRunning,
       } = JSON.parse(saved);
 
-      const elapsed = Math.floor((Date.now() - lastUpdated) / 1000);
-      const updatedTime = savedIsRunning ? Math.max(time - elapsed, 0) : time;
+      const task = tasks[column]?.[taskIndex];
 
-      setCurrentTask({
-        column,
-        taskIndex,
-        time: updatedTime,
-        totalTime,
-        workDuration,
-        breakTime,
-        lastUpdated: Date.now(),
-      });
-      setIsRunning(savedIsRunning && updatedTime > 0);
+      if (task) {
+        const elapsed = Math.floor((Date.now() - lastUpdated) / 1000);
+        const updatedTime = savedIsRunning ? Math.max(time - elapsed, 0) : time;
+
+        setCurrentTask({
+          ...task, // gồm cả status, title, v.v.
+          column,
+          taskIndex,
+          time: updatedTime,
+          lastUpdated: Date.now(),
+        });
+
+        setIsRunning(savedIsRunning && updatedTime > 0);
+      }
     }
 
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -670,9 +686,15 @@ export default function TaskPage() {
               // Tính toán tiến độ work/break
               let workProgress, breakProgress;
               if (task.status === 4 || task.status === 3) {
-                const totalCycles = Math.ceil(totalDurationSeconds / cycleDuration);
-                workProgress = (workDurationSeconds / totalDurationSeconds) * 100 * totalCycles;
-                breakProgress = (breakTimeSeconds / totalDurationSeconds) * 100 * totalCycles;
+                const totalCycles = Math.ceil(
+                  totalDurationSeconds / cycleDuration
+                );
+                workProgress =
+                  (workDurationSeconds / totalDurationSeconds) *
+                  100 *
+                  totalCycles;
+                breakProgress =
+                  (breakTimeSeconds / totalDurationSeconds) * 100 * totalCycles;
               } else {
                 workProgress =
                   (task.workDuration / task.totalDuration) *
@@ -686,7 +708,8 @@ export default function TaskPage() {
                   100 *
                   (completedCycles +
                     (remainingInCycle >= workDurationSeconds
-                      ? (remainingInCycle - workDurationSeconds) / breakTimeSeconds
+                      ? (remainingInCycle - workDurationSeconds) /
+                        breakTimeSeconds
                       : 0));
               }
 
@@ -722,11 +745,15 @@ export default function TaskPage() {
                           <div className="progress-bar">
                             <div
                               className="work-progress bg-blue-500"
-                              style={{ width: `${Math.min(workProgress, 100)}%` }}
+                              style={{
+                                width: `${Math.min(workProgress, 100)}%`,
+                              }}
                             />
                             <div
                               className="break-progress bg-yellow-500"
-                              style={{ width: `${Math.min(breakProgress, 100)}%` }}
+                              style={{
+                                width: `${Math.min(breakProgress, 100)}%`,
+                              }}
                             />
                           </div>
                         </div>
@@ -747,7 +774,9 @@ export default function TaskPage() {
                               )}`}
                         </span>
                       )}
-                      {(isAlmostDone || isOutOfTime) && realTask.status !== 4 ? (
+                      {(isAlmostDone || isOutOfTime) &&
+                      realTask.status !== 4 &&
+                      realTask.status !== 3 ? (
                         <Button
                           variant="outline"
                           className="text-green-600 border-green-600 hover:bg-green-50"
@@ -784,7 +813,10 @@ export default function TaskPage() {
                         <Button
                           onClick={() => {
                             if (columnKey === "simple") {
-                              setTaskToStart({ column: columnKey, taskIndex: realIndex });
+                              setTaskToStart({
+                                column: columnKey,
+                                taskIndex: realIndex,
+                              });
                               setIsWorkspaceDialogOpen(true);
                             } else {
                               startTimer(columnKey, realIndex);
@@ -832,8 +864,12 @@ export default function TaskPage() {
                     updated[taskToComplete.columnKey] = [
                       ...updated[taskToComplete.columnKey],
                     ];
-                    updated[taskToComplete.columnKey][taskToComplete.realIndex] = {
-                      ...updated[taskToComplete.columnKey][taskToComplete.realIndex],
+                    updated[taskToComplete.columnKey][
+                      taskToComplete.realIndex
+                    ] = {
+                      ...updated[taskToComplete.columnKey][
+                        taskToComplete.realIndex
+                      ],
                       status: 4,
                     };
                     setTasks(updated);
@@ -897,9 +933,10 @@ export default function TaskPage() {
             <div className="w-32 h-32 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
               <img
                 src={userTrees.length > 0 ? treeImageSrc : addIcon}
-                className={`object-contain ${userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
-                  ? "w-10 h-10"
-                  : "w-30 h-30"
+                className={`object-contain ${
+                  userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
+                    ? "w-10 h-10"
+                    : "w-30 h-30"
                 }`}
               />
             </div>
@@ -1095,7 +1132,9 @@ export default function TaskPage() {
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
                       {selectedTree.levelId === 4
                         ? "Level Max"
-                        : `${treeExp.totalXp} / ${treeExp.totalXp + treeExp.xpToNextLevel} XP`}
+                        : `${treeExp.totalXp} / ${
+                            treeExp.totalXp + treeExp.xpToNextLevel
+                          } XP`}
                     </span>
                   </div>
                 )}
