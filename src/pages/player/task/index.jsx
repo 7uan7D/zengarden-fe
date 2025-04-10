@@ -46,7 +46,6 @@ import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import { StartTask } from "@/services/apiServices/taskService";
 import { PauseTask } from "@/services/apiServices/taskService";
 import { CompleteTask } from "@/services/apiServices/taskService";
-import { useNavigate } from "react-router-dom";
 import "../task/index.css";
 
 // Component con để chọn ngày và giờ cho task
@@ -109,26 +108,28 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
 
 // Component chính quản lý giao diện Task
 export default function TaskPage() {
-  const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
-  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
-  const [taskType, setTaskType] = useState("");
-  const [currentTree, setCurrentTree] = useState(0);
-  const [userTrees, setUserTrees] = useState([]);
-  const [trees, setTrees] = useState([]);
-  const [isWorkspaceDialogOpen, setIsWorkspaceDialogOpen] = useState(false); //trạng thái mở/đóng của dialog Workspace
-  const [taskToStart, setTaskToStart] = useState(null); //Lưu trữ thông tin về task mà người dùng vừa nhấn "Start"
+  // State quản lý các dialog và thông tin cây, task
+  const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false); // Dialog chọn cây
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false); // Dialog tạo task
+  const [taskType, setTaskType] = useState(""); // Loại task (Simple/Complex)
+  const [currentTree, setCurrentTree] = useState(0); // ID cây hiện tại
+  const [userTrees, setUserTrees] = useState([]); // Danh sách cây của user
+  const [trees, setTrees] = useState([]); // Danh sách tất cả cây từ BE
+  const [isWorkspaceDialogOpen, setIsWorkspaceDialogOpen] = useState(false); // Dialog chuyển sang Workspace
+  const [taskToStart, setTaskToStart] = useState(null); // Task chuẩn bị chạy
 
-  // State cho bộ đếm thời gian
+  // State quản lý task đang chạy và thông tin task
   const [currentTask, setCurrentTask] = useState(null); // Task đang chạy
-  const [isRunning, setIsRunning] = useState(false); // Trạng thái chạy/pause
+  const [isRunning, setIsRunning] = useState(false); // Trạng thái chạy/pause của task
   const [selectedTask, setSelectedTask] = useState(null); // Task được chọn để xem chi tiết
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false); // Dialog thông tin task
   const [activeTabs, setActiveTabs] = useState({
     daily: "all",
     simple: "all",
     complex: "all",
-  });
+  }); // Tab hiện tại (all/current/complete)
 
+  // Lấy thông tin cây hiện tại và hình ảnh
   const selectedTree = userTrees.find(
     (tree) => tree.userTreeId === currentTree
   );
@@ -139,11 +140,17 @@ export default function TaskPage() {
     treeLevel && treeLevel < 4
       ? `/images/lv${treeLevel}.png`
       : selectedFinalTree?.imageUrl || "/images/default.png";
+
+  // State cho việc tạo cây mới
   const [newTreeName, setNewTreeName] = useState("");
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+
+  // Context để quản lý XP của user và cây
   const { refreshXp } = useUserExperience();
   const { treeExp, refreshTreeExp } = useTreeExperience();
+
+  // State dữ liệu task khi tạo mới
   const [taskData, setTaskData] = useState({
     focusMethodId: null,
     taskTypeId: null,
@@ -156,10 +163,10 @@ export default function TaskPage() {
     workDuration: "",
     breakTime: "",
   });
-  const [step, setStep] = useState(1); // Bước trong quy trình tạo task
-  const [focusSuggestion, setFocusSuggestion] = useState(null);
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [taskToComplete, setTaskToComplete] = useState(null);
+  const [step, setStep] = useState(1); // Bước trong quá trình tạo task
+  const [focusSuggestion, setFocusSuggestion] = useState(null); // Gợi ý focus method
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false); // Dialog xác nhận hoàn thành
+  const [taskToComplete, setTaskToComplete] = useState(null); // Task cần hoàn thành
 
   // Chuyển bước trong dialog tạo task
   const handleNext = async () => {
@@ -199,8 +206,8 @@ export default function TaskPage() {
       ...prev,
       [field]: date
         ? date.toISOString().split("T")[0] +
-        "T" +
-        (prev[field]?.split("T")[1] || "00:00:00.000Z")
+          "T" +
+          (prev[field]?.split("T")[1] || "00:00:00.000Z")
         : null,
     }));
   }, []);
@@ -215,7 +222,7 @@ export default function TaskPage() {
     }));
   }, []);
 
-  // Cập nhật task khi thay đổi cây
+  // Tải tasks khi cây thay đổi
   useEffect(() => {
     if (currentTree) {
       const tree = userTrees.find((t) => t.userTreeId === currentTree);
@@ -225,7 +232,7 @@ export default function TaskPage() {
     }
   }, [currentTree]);
 
-  // Lấy danh sách cây mẫu
+  // Tải danh sách cây từ BE
   useEffect(() => {
     const fetchTrees = async () => {
       try {
@@ -238,7 +245,7 @@ export default function TaskPage() {
     fetchTrees();
   }, []);
 
-  // Cập nhật kinh nghiệm cây
+  // Cập nhật XP của cây
   useEffect(() => {
     if (currentTree) {
       (async () => {
@@ -247,7 +254,7 @@ export default function TaskPage() {
     }
   }, [currentTree]);
 
-  // Lấy danh sách cây của người dùng
+  // Tải danh sách cây của user
   useEffect(() => {
     const fetchTrees = async () => {
       const token = localStorage.getItem("token");
@@ -262,7 +269,7 @@ export default function TaskPage() {
     fetchTrees();
   }, []);
 
-  // Cập nhật userTreeId khi chọn cây
+  // Cập nhật userTreeId khi cây thay đổi
   useEffect(() => {
     setTaskData((prev) => ({
       ...prev,
@@ -270,7 +277,7 @@ export default function TaskPage() {
     }));
   }, [selectedTree]);
 
-  // Chọn cây mặc định khi khởi tạo
+  // Chọn cây mặc định khi có danh sách cây
   useEffect(() => {
     if (userTrees.length > 0) {
       const savedTreeId = localStorage.getItem("selectedTreeId");
@@ -286,13 +293,14 @@ export default function TaskPage() {
     }
   }, [userTrees]);
 
+  // State quản lý danh sách tasks theo loại
   const [tasks, setTasks] = useState({
     daily: [],
     simple: [],
     complex: [],
   });
 
-  // Lấy danh sách task theo cây
+  // Hàm tải tasks từ BE
   const fetchTasks = async (userTreeId) => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -303,8 +311,6 @@ export default function TaskPage() {
         taskData = await GetTaskByUserTreeId(userTreeId);
         // Sắp xếp task theo startDate giảm dần (mới nhất lên đầu)
         taskData.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
-      } else {
-        return;
       }
 
       const categorizedTasks = {
@@ -319,9 +325,9 @@ export default function TaskPage() {
     }
   };
 
-  useEffect(() => {
-    fetchTasks(selectedTree?.userTreeId);
-  }, [selectedTree]);
+  // useEffect(() => {
+  //   fetchTasks(selectedTree?.userTreeId);
+  // }, [selectedTree]);
 
   // Mở dialog tạo task
   const handleOpen = (type, taskTypeId) => {
@@ -332,10 +338,6 @@ export default function TaskPage() {
       userTreeId: selectedTree?.userTreeId || null,
     }));
     setIsTaskDialogOpen(true);
-  };
-
-  const handleOpenDialog = () => {
-    setIsTreeDialogOpen(true);
   };
 
   // Tạo cây mới
@@ -380,7 +382,7 @@ export default function TaskPage() {
     }
   };
 
-  // Định dạng thời gian cho bộ đếm
+  // Định dạng thời gian từ giây sang MM:SS
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -389,12 +391,18 @@ export default function TaskPage() {
       .padStart(2, "0")}`;
   };
 
+  // Bắt đầu chạy task
   const startTimer = async (column, taskIndex) => {
     const task = tasks[column][taskIndex];
     const totalDurationSeconds = task.totalDuration * 60;
+    const initialTime = task.remainingTime
+      ? typeof task.remainingTime === "string"
+        ? timeStringToSeconds(task.remainingTime)
+        : task.remainingTime * 60
+      : totalDurationSeconds;
 
     try {
-      await StartTask(task.taskId); // Gọi API trước để chắc ăn
+      await StartTask(task.taskId);
     } catch (error) {
       console.error("Failed to start task:", error);
       return;
@@ -403,27 +411,16 @@ export default function TaskPage() {
     setCurrentTask({
       column,
       taskIndex,
-      time: totalDurationSeconds,
+      time: initialTime,
+      totalTime: totalDurationSeconds,
+      workDuration: task.workDuration * 60,
+      breakTime: task.breakTime * 60,
+      lastUpdated: Date.now(),
     });
-    {/*
-    // Cập nhật status là đang chạy
-    setTasks((prev) => {
-      const updated = { ...prev };
-      updated[column] = [...updated[column]];
-      updated[column][taskIndex] = {
-        ...updated[column][taskIndex],
-        status: 1,
-      };
-      return updated;
-    });*/}
     setIsRunning(true);
   };
 
-  const stopCurrentTimer = () => {
-    setCurrentTask(null);
-    setIsRunning(false);
-  };
-
+  // Chuyển đổi trạng thái chạy/pause của task
   const toggleTimer = async (column = null, taskIndex = null) => {
     const columnToUse = column ?? currentTask?.column;
     const indexToUse = taskIndex ?? currentTask?.taskIndex;
@@ -431,6 +428,7 @@ export default function TaskPage() {
     if (columnToUse === null || indexToUse === null) return;
 
     const task = tasks[columnToUse][indexToUse];
+    const totalDurationSeconds = task.totalDuration * 60;
 
     if (isRunning) {
       // Pause
@@ -439,17 +437,19 @@ export default function TaskPage() {
       } catch (error) {
         console.error("Failed to pause task:", error);
       }
-
       setTasks((prev) => {
         const updated = { ...prev };
         updated[columnToUse] = [...updated[columnToUse]];
         updated[columnToUse][indexToUse] = {
           ...updated[columnToUse][indexToUse],
-          status: 2,
+          status: 2, // Pause
         };
         return updated;
       });
-
+      setCurrentTask((prev) => ({
+        ...prev,
+        lastUpdated: Date.now(),
+      }));
       setIsRunning(false);
     } else {
       // Resume
@@ -458,37 +458,51 @@ export default function TaskPage() {
       } catch (error) {
         console.error("Failed to resume task:", error);
       }
-
       setTasks((prev) => {
         const updated = { ...prev };
         updated[columnToUse] = [...updated[columnToUse]];
         updated[columnToUse][indexToUse] = {
           ...updated[columnToUse][indexToUse],
-          status: 1,
+          status: 1, // Running
         };
         return updated;
       });
 
+      const initialTime = task.remainingTime
+        ? typeof task.remainingTime === "string"
+          ? timeStringToSeconds(task.remainingTime)
+          : task.remainingTime * 60
+        : totalDurationSeconds;
+
       setCurrentTask({
         column: columnToUse,
         taskIndex: indexToUse,
-        time: task.remainingTime
-          ? typeof task.remainingTime === "string"
-            ? timeStringToSeconds(task.remainingTime)
-            : task.remainingTime * 60
-          : task.totalDuration * 60,
+        time: initialTime,
+        totalTime: totalDurationSeconds,
+        workDuration: task.workDuration * 60,
+        breakTime: task.breakTime * 60,
+        lastUpdated: Date.now(),
       });
       setIsRunning(true);
     }
   };
 
-  // Chạy bộ đếm thời gian
+  // Logic đếm thời gian và tự động hoàn thành khi hết thời gian
   useEffect(() => {
+    console.log("currentTask", currentTask);
     const interval = setInterval(() => {
-      if (currentTask && isRunning && currentTask.time > 0) {
+      if (
+        currentTask &&
+        isRunning &&
+        currentTask.time > 0 &&
+        ![2, 3, 4].includes(currentTask.status) // <- kiểm tra status
+      ) {
+        const now = Date.now();
+        const elapsed = Math.floor((now - currentTask.lastUpdated) / 1000);
         setCurrentTask((prev) => ({
           ...prev,
-          time: prev.time - 1,
+          time: Math.max(prev.time - elapsed, 0),
+          lastUpdated: now,
         }));
       } else if (currentTask && currentTask.time === 0) {
         setTasks((prev) => {
@@ -496,24 +510,100 @@ export default function TaskPage() {
           updated[currentTask.column] = [...updated[currentTask.column]];
           updated[currentTask.column][currentTask.taskIndex] = {
             ...updated[currentTask.column][currentTask.taskIndex],
-            status: 4, // ✅ Đánh dấu task đã hoàn thành
+            status: 4, // Completed
           };
           return updated;
         });
-        stopCurrentTimer();// Xóa currentTask, bật lại các nút Start
+        setCurrentTask(null);
+        setIsRunning(false);
       }
     }, 1000);
+
     return () => clearInterval(interval);
   }, [currentTask, isRunning]);
 
-  // Hiển thị cột task
+  // Lưu trạng thái task vào localStorage khi rời trang
+  const handleBeforeUnload = (e) => {
+    if (currentTask) {
+      const task = tasks[currentTask.column]?.[currentTask.taskIndex];
+      if (task) {
+        const dataToSave = {
+          taskId: task.taskId,
+          column: currentTask.column,
+          taskIndex: currentTask.taskIndex,
+          time: currentTask.time,
+          totalTime: currentTask.totalTime,
+          workDuration: currentTask.workDuration,
+          breakTime: currentTask.breakTime,
+          lastUpdated: Date.now(),
+          isRunning: isRunning,
+        };
+        localStorage.setItem("currentTask", JSON.stringify(dataToSave));
+        if (isRunning) {
+          fetch(
+            `https://zengarden-be.onrender.com/api/Task/pause/${task.taskId}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({}),
+              keepalive: true,
+            }
+          ).catch((err) => console.error("PauseTask failed", err));
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isRunning, currentTask, tasks]);
+
+  // Khôi phục trạng thái từ localStorage khi quay lại trang
+  useEffect(() => {
+    const saved = localStorage.getItem("currentTask");
+    if (saved && Object.keys(tasks).length > 0) {
+      const {
+        column,
+        taskIndex,
+        time,
+        totalTime,
+        workDuration,
+        breakTime,
+        lastUpdated,
+        isRunning: savedIsRunning,
+      } = JSON.parse(saved);
+
+      const task = tasks[column]?.[taskIndex];
+
+      if (task) {
+        const elapsed = Math.floor((Date.now() - lastUpdated) / 1000);
+        const updatedTime = savedIsRunning ? Math.max(time - elapsed, 0) : time;
+
+        setCurrentTask({
+          ...task, // gồm cả status, title, v.v.
+          column,
+          taskIndex,
+          time: updatedTime,
+          lastUpdated: Date.now(),
+        });
+
+        setIsRunning(savedIsRunning && updatedTime > 0);
+      }
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  // Hàm hiển thị cột task (Daily, Simple, Complex)
   const renderTaskColumn = (title, taskList, columnKey) => {
     const filteredTasks =
       activeTabs[columnKey] === "all"
         ? taskList
         : activeTabs[columnKey] === "current"
-          ? taskList.filter((task) => task.status !== 4 || task.status !== 3)
-          : taskList.filter((task) => task.status === 4 || task.status == 3);
+        ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
+        : taskList.filter((task) => task.status === 4 || task.status === 3);
 
     return (
       <motion.div
@@ -581,6 +671,8 @@ export default function TaskPage() {
                 currentTask.taskIndex === realIndex;
               const remainingTime = isCurrentTask
                 ? currentTask.time
+                : task.status === 4 || task.status === 3
+                ? 0
                 : totalDurationSeconds;
               const workDurationSeconds = task.workDuration * 60;
               const breakTimeSeconds = task.breakTime * 60;
@@ -590,14 +682,37 @@ export default function TaskPage() {
               );
               const remainingInCycle =
                 (totalDurationSeconds - remainingTime) % cycleDuration;
-              const workRemaining =
-                remainingInCycle < workDurationSeconds
-                  ? workDurationSeconds - remainingInCycle
-                  : 0;
-              const breakRemaining =
-                remainingInCycle >= workDurationSeconds
-                  ? cycleDuration - remainingInCycle
-                  : breakTimeSeconds;
+
+              // Tính toán tiến độ work/break
+              let workProgress, breakProgress;
+              if (task.status === 4 || task.status === 3) {
+                const totalCycles = Math.ceil(
+                  totalDurationSeconds / cycleDuration
+                );
+                workProgress =
+                  (workDurationSeconds / totalDurationSeconds) *
+                  100 *
+                  totalCycles;
+                breakProgress =
+                  (breakTimeSeconds / totalDurationSeconds) * 100 * totalCycles;
+              } else {
+                workProgress =
+                  (task.workDuration / task.totalDuration) *
+                  100 *
+                  (completedCycles +
+                    (remainingInCycle < workDurationSeconds
+                      ? remainingInCycle / workDurationSeconds
+                      : 1));
+                breakProgress =
+                  (task.breakTime / task.totalDuration) *
+                  100 *
+                  (completedCycles +
+                    (remainingInCycle >= workDurationSeconds
+                      ? (remainingInCycle - workDurationSeconds) /
+                        breakTimeSeconds
+                      : 0));
+              }
+
               const isTaskRunning = isCurrentTask && isRunning;
               const isAlmostDone = remainingTime <= 10 && remainingTime > 0;
               const isOutOfTime = remainingTime <= 0;
@@ -626,35 +741,18 @@ export default function TaskPage() {
                         <span className="text-sm text-gray-600">
                           Remaining: {formatTime(remainingTime)}
                         </span>
-                        <div
-                          className={`progress-bar-container ${isTaskRunning ? "active" : ""
-                            }`}
-                        >
+                        <div className="progress-bar-container">
                           <div className="progress-bar">
                             <div
-                              className="work-progress"
+                              className="work-progress bg-blue-500"
                               style={{
-                                width: `${(task.workDuration / task.totalDuration) *
-                                  100 *
-                                  (completedCycles +
-                                    (remainingInCycle < workDurationSeconds
-                                      ? remainingInCycle / workDurationSeconds
-                                      : 1))
-                                  }%`,
+                                width: `${Math.min(workProgress, 100)}%`,
                               }}
                             />
                             <div
-                              className="break-progress"
+                              className="break-progress bg-yellow-500"
                               style={{
-                                width: `${(task.breakTime / task.totalDuration) *
-                                  100 *
-                                  (completedCycles +
-                                    (remainingInCycle >= workDurationSeconds
-                                      ? (remainingInCycle -
-                                        workDurationSeconds) /
-                                      breakTimeSeconds
-                                      : 0))
-                                  }%`,
+                                width: `${Math.min(breakProgress, 100)}%`,
                               }}
                             />
                           </div>
@@ -665,16 +763,20 @@ export default function TaskPage() {
                       className="flex flex-col items-end gap-2"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {isTaskRunning && (
+                      {isCurrentTask && (
                         <span className="text-sm text-gray-600">
-                          {workRemaining > 0
-                            ? `Work: ${formatTime(workRemaining)}`
-                            : `Break: ${formatTime(breakRemaining)}`}
+                          {remainingInCycle < workDurationSeconds
+                            ? `Work: ${formatTime(
+                                workDurationSeconds - remainingInCycle
+                              )}`
+                            : `Break: ${formatTime(
+                                cycleDuration - remainingInCycle
+                              )}`}
                         </span>
                       )}
-
                       {(isAlmostDone || isOutOfTime) &&
-                        realTask.status !== 4 ? (
+                      realTask.status !== 4 &&
+                      realTask.status !== 3 ? (
                         <Button
                           variant="outline"
                           className="text-green-600 border-green-600 hover:bg-green-50"
@@ -690,7 +792,7 @@ export default function TaskPage() {
                         >
                           Complete
                         </Button>
-                      ) : task.status === 4 || task.status == 3 ? (
+                      ) : task.status === 4 || task.status === 3 ? (
                         <div className="flex items-center gap-2">
                           <CheckCircle className="w-5 h-5 text-green-600" />
                           <span className="text-sm text-green-600">Done</span>
@@ -710,14 +812,17 @@ export default function TaskPage() {
                       ) : realTask.status === 0 ? (
                         <Button
                           onClick={() => {
-                            if (columnKey === "simple") { //Kiểm tra xem có phải Simple Task ko
-                              setTaskToStart({ column: columnKey, taskIndex: realIndex });
+                            if (columnKey === "simple") {
+                              setTaskToStart({
+                                column: columnKey,
+                                taskIndex: realIndex,
+                              });
                               setIsWorkspaceDialogOpen(true);
                             } else {
                               startTimer(columnKey, realIndex);
                             }
                           }}
-                          disabled={currentTask !== null} // Disable nếu có task đang được chọn
+                          disabled={currentTask !== null}
                         >
                           Start
                         </Button>
@@ -730,184 +835,80 @@ export default function TaskPage() {
           </div>
         </ScrollArea>
         {isConfirmDialogOpen && taskToComplete && selectedTree && (
-          <>
-            {console.log("selectedTree", selectedTree)}
-            <Dialog
-              open={isConfirmDialogOpen}
-              onOpenChange={setIsConfirmDialogOpen}
-            >
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Confirm Completion</DialogTitle>
-                  <DialogDescription>
-                    Do you want to complete <b>{taskToComplete.taskName}</b> to
-                    grow the tree <b>{selectedTree.name}</b>?
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsConfirmDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={async () => {
-                      await CompleteTask(
-                        taskToComplete.taskId,
-                        selectedTree.userTreeId
-                      );
-
-                      const updated = { ...tasks };
-                      updated[taskToComplete.columnKey] = [
-                        ...updated[taskToComplete.columnKey],
-                      ];
-                      updated[taskToComplete.columnKey][
+          <Dialog
+            open={isConfirmDialogOpen}
+            onOpenChange={setIsConfirmDialogOpen}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm Completion</DialogTitle>
+                <DialogDescription>
+                  Do you want to complete <b>{taskToComplete.taskName}</b> to
+                  grow the tree <b>{selectedTree.name}</b>?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsConfirmDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    await CompleteTask(
+                      taskToComplete.taskId,
+                      selectedTree.userTreeId
+                    );
+                    const updated = { ...tasks };
+                    updated[taskToComplete.columnKey] = [
+                      ...updated[taskToComplete.columnKey],
+                    ];
+                    updated[taskToComplete.columnKey][
+                      taskToComplete.realIndex
+                    ] = {
+                      ...updated[taskToComplete.columnKey][
                         taskToComplete.realIndex
-                      ] = {
-                        ...updated[taskToComplete.columnKey][
-                        taskToComplete.realIndex
-                        ],
-                        status: 4,
-                      };
-                      setTasks(updated);
-
-                      if (
-                        currentTask &&
-                        currentTask.column === taskToComplete.columnKey &&
-                        currentTask.taskIndex === taskToComplete.realIndex
-                      ) {
-                        stopCurrentTimer(); // Xóa currentTask, bật lại các nút Start
-                      }
-
-                      setIsConfirmDialogOpen(false);
-                      setTaskToComplete(null);
-                      await refreshTreeExp(currentTree);
-                      await fetchTasks(selectedTree?.userTreeId);
-                    }}
-                  >
-                    Confirm
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </>
+                      ],
+                      status: 4,
+                    };
+                    setTasks(updated);
+                    if (
+                      currentTask &&
+                      currentTask.column === taskToComplete.columnKey &&
+                      currentTask.taskIndex === taskToComplete.realIndex
+                    ) {
+                      setCurrentTask(null);
+                      setIsRunning(false);
+                    }
+                    setIsConfirmDialogOpen(false);
+                    setTaskToComplete(null);
+                    await refreshTreeExp(currentTree);
+                    await fetchTasks(selectedTree?.userTreeId);
+                  }}
+                >
+                  Confirm
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </motion.div>
     );
   };
 
+  // Chuyển chuỗi thời gian thành giây
   function timeStringToSeconds(timeStr) {
     const [hours, minutes, seconds] = timeStr.split(":").map(Number);
     return hours * 3600 + minutes * 60 + seconds;
   }
 
-  const handleBeforeUnload = (e) => {
-    if (isRunning && currentTask) {
-      const task = tasks[currentTask.column]?.[currentTask.taskIndex];
-
-      if (task) {
-        const now = Date.now();
-        const dataToSave = {
-          taskId: task.taskId,
-          column: currentTask.column,
-          taskIndex: currentTask.taskIndex,
-          time: currentTask.time,
-          lastUpdated: now,
-        };
-        localStorage.setItem("pausedTask", JSON.stringify(dataToSave));
-
-        // ✅ Gửi request dùng fetch có keepalive
-        fetch(
-          `https://zengarden-be.onrender.com/api/Task/pause/${task.taskId}`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({}),
-            keepalive: true, // Cho phép gửi khi tab đang đóng hoặc refresh
-          }
-        )
-          .then(() => {
-            console.log("Paused task via fetch keepalive");
-          })
-          .catch((err) => {
-            console.error("PauseTask (fetch) failed", err);
-          });
-      }
-    }
-  };
-
-  useEffect(() => {
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [isRunning, currentTask, tasks]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("pausedTask");
-    if (!saved) return;
-
-    const { taskId, column, taskIndex } = JSON.parse(saved);
-
-    // Kiểm tra cơ bản trước khi fetch
-    if (!taskId || !column || taskIndex === undefined) {
-      console.warn("Invalid pausedTask format, clearing...");
-      localStorage.removeItem("pausedTask");
-      return;
-    }
-
-    // Gọi API để lấy task mới nhất
-    fetch(`https://zengarden-be.onrender.com/api/Task/by-id/${taskId}`)
-      .then((res) => res.json())
-      .then((taskFromBE) => {
-        console.log("[RESTORE] Fetched task from BE:", taskFromBE);
-
-        if (!taskFromBE || !taskFromBE.taskId) {
-          console.warn("Invalid task from BE, clearing pausedTask...");
-          localStorage.removeItem("pausedTask");
-          return;
-        }
-
-        setCurrentTask({
-          column,
-          taskIndex,
-          time: timeStringToSeconds(taskFromBE.remainingTime),
-        });
-
-        setIsRunning(false); // Đã pause
-
-        // Cập nhật vào tasks
-        setTasks((prev) => {
-          const updatedColumn = [...(prev[column] || [])];
-          const targetTask = updatedColumn[taskIndex];
-
-          if (targetTask?.taskId === taskId) {
-            targetTask.status = 2; // Paused
-            targetTask.remainingTime = taskFromBE.remainingTime;
-          } else {
-            console.warn("Task mismatch or missing, clearing pausedTask...");
-            localStorage.removeItem("pausedTask");
-            return prev; // Không update gì cả
-          }
-
-          return {
-            ...prev,
-            [column]: updatedColumn,
-          };
-        });
-      })
-      .catch((err) => {
-        console.error("Error restoring paused task:", err);
-        localStorage.removeItem("pausedTask");
-      });
-  }, []);
-
+  // Tính toán tiến độ XP của cây
   const progress = treeExp
     ? (treeExp.totalXp / (treeExp.totalXp + treeExp.xpToNextLevel)) * 100
     : 0;
 
-  // Giao diện chính
+  // Giao diện chính của TaskPage
   return (
     <motion.div
       className="p-6 max-w-full mx-auto w-full"
@@ -932,15 +933,15 @@ export default function TaskPage() {
             <div className="w-32 h-32 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
               <img
                 src={userTrees.length > 0 ? treeImageSrc : addIcon}
-                className={`object-contain ${userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
-                  ? "w-10 h-10"
-                  : "w-30 h-30"
-                  }`}
+                className={`object-contain ${
+                  userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
+                    ? "w-10 h-10"
+                    : "w-30 h-30"
+                }`}
               />
             </div>
           </div>
 
-          {/* Dialog chọn cây */}
           <Dialog open={isTreeDialogOpen} onOpenChange={setIsTreeDialogOpen}>
             <DialogContent className="max-w-xl w-full flex gap-4 justify-center p-6 flex-wrap">
               <DialogTitle className="text-center w-full">
@@ -996,23 +997,23 @@ export default function TaskPage() {
               {userTrees.filter(
                 (tree) => tree.treeStatus === 1 || tree.treeStatus === 2
               ).length < 2 && (
-                  <div
-                    className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
-                    onClick={() => {
-                      setIsTreeDialogOpen(false);
-                      setIsCreateTreeDialogOpen(true);
-                    }}
-                  >
-                    <img
-                      src={addIcon}
-                      alt="Add New Tree"
-                      className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
-                    />
-                    <h3 className="font-bold mt-2 text-green-600">
-                      Create New Tree
-                    </h3>
-                  </div>
-                )}
+                <div
+                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
+                  onClick={() => {
+                    setIsTreeDialogOpen(false);
+                    setIsCreateTreeDialogOpen(true);
+                  }}
+                >
+                  <img
+                    src={addIcon}
+                    alt="Add New Tree"
+                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+                  />
+                  <h3 className="font-bold mt-2 text-green-600">
+                    Create New Tree
+                  </h3>
+                </div>
+              )}
             </DialogContent>
           </Dialog>
 
@@ -1131,8 +1132,9 @@ export default function TaskPage() {
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
                       {selectedTree.levelId === 4
                         ? "Level Max"
-                        : `${treeExp.totalXp} / ${treeExp.totalXp + treeExp.xpToNextLevel
-                        } XP`}
+                        : `${treeExp.totalXp} / ${
+                            treeExp.totalXp + treeExp.xpToNextLevel
+                          } XP`}
                     </span>
                   </div>
                 )}
@@ -1371,13 +1373,13 @@ export default function TaskPage() {
         </div>
       </div>
 
-      {/* Hiển thị các cột task */}
       <div className="grid grid-cols-3 gap-4 w-full">
         {renderTaskColumn("Daily Task", tasks.daily, "daily")}
         {renderTaskColumn("Simple Task", tasks.simple, "simple")}
         {renderTaskColumn("Complex Task", tasks.complex, "complex")}
       </div>
-      {/*Dialog chuyển qua Workspace*/}
+
+      {/* Dialog chuyển sang Workspace - Đã sửa sang tiếng Anh */}
       <Dialog
         open={isWorkspaceDialogOpen}
         onOpenChange={(open) => {
@@ -1389,9 +1391,9 @@ export default function TaskPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Chuyển đến Workspace?</DialogTitle>
+            <DialogTitle>Switch to Workspace?</DialogTitle>
             <DialogDescription>
-              Bạn có muốn chuyển qua Workspace để tiếp tục không?
+              Do you want to switch to the Workspace to continue?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -1410,7 +1412,7 @@ export default function TaskPage() {
                 startTimer(taskToStart.column, taskToStart.taskIndex);
                 setIsWorkspaceDialogOpen(false);
                 setTaskToStart(null);
-                window.location.href = "/workspace"; // Chuyển hướng đến trang Workspace
+                window.location.href = "/workspace";
               }}
             >
               Yes
