@@ -159,7 +159,7 @@ export default function Workspace() {
       className="min-h-screen flex flex-col p-6 bg-gray-100 mt-20"
       style={{
         backgroundImage:
-          "url('https://is1-ssl.mzstatic.com/image/thumb/Video211/v4/15/d1/80/15d1804a-1594-b708-3e90-a651a3216e4d/1968720970920101.jpg/3840x2160mv.jpg')",
+          "url('https://assetstorev1-prd-cdn.unity3d.com/package-screenshot/ed80120b-06b0-4924-868d-5d98f2ad4bfa_scaled.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
