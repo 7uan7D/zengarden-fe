@@ -3,10 +3,10 @@ import { motion } from "framer-motion"
 
 import AdminHeader from "@/components/common/AdminHeader"
 import StatCard from "@/components/common/StatCard"
-import DailyTasks from "@/components/tasks/DailyTasks"
-import TaskDistribution from "@/components/tasks/TaskDistribution"
 import useChallengeData from "@/hooks/useChallengeData"
 import ChallengesTable from "@/components/challenges/ChallengesTable"
+import ChallengeDistribution from "@/components/challenges/ChallengeDistribution"
+import DailyChallenges from "@/components/challenges/DailyChallenges"
 
 const ChallengesPage = () => {
     const { challengeData, isLoading, error } = useChallengeData()
@@ -46,8 +46,8 @@ const ChallengesPage = () => {
                 <ChallengesTable />
 
                 <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8'>
-                    {/* <DailyTasks /> */}
-                    {/* <TaskDistribution /> */}
+                    <DailyChallenges />
+                    <ChallengeDistribution />
                 </div> 
             </main>
         </div>

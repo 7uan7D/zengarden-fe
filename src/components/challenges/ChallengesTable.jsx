@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import useTaskData from "@/hooks/useTaskData"
 import useChallengeData from "@/hooks/useChallengeData"
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService"
 
@@ -18,8 +17,6 @@ const ChallengesTable = () => {
     const { challengeData, isLoadingState, error } = useChallengeData()
     const [searchTerm, setSearchTerm] = useState('')
     const [filteredChallenges, setFilteredChallenges] = useState(challengeData)
-    // const { taskData, isLoadingState, error } = useTaskData()
-    // const [filteredTasks, setFilteredTasks] = useState(taskData)
     const [openEditTask, setOpenEditTask] = useState(false)
     const [selectedTaskId, setSelectedTaskId] = useState(null)
     const [openDeleteTask, setOpenDeleteTask] = useState(false)
