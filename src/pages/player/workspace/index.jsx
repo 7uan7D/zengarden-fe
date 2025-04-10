@@ -159,7 +159,7 @@ export default function Workspace() {
       className="min-h-screen flex flex-col p-6 bg-gray-100 mt-20"
       style={{
         backgroundImage:
-          "url('https://img.freepik.com/free-photo/river-landscape-illustration-pixel-art-style_23-2151793104.jpg?t=st=1744292682~exp=1744296282~hmac=d0072febe9b31d1e8b51bd62801dccec18fff2327ba2ed0e91c5e27b5f080f03&w=996')",
+          "url('https://assetstorev1-prd-cdn.unity3d.com/package-screenshot/ed80120b-06b0-4924-868d-5d98f2ad4bfa_scaled.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
