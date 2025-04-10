@@ -28,6 +28,7 @@ export async function LeaveChallengeById(challengeId) {
     const token = localStorage.getItem("token");
     const response = await axios.put(
         `/Challenges/leave/${challengeId}`,
+        {},
         {
             headers: {
                 Authorization: `Bearer ${token}`,

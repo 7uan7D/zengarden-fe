@@ -32,9 +32,9 @@ export default function ChallengeDetails() {
                 const LoggedUserChallenges = data.filter(challenge => challenge.userId === parseInt(userId));
 
                 setUserChallenge(LoggedUserChallenges);
-                userChallenge.map((challenge) => {
-                    console.log("challenge id", challenge.challengeId, "challenge status", challenge.status);
-                });
+                // userChallenge.map((challenge) => {
+                //     console.log("challenge id", challenge.challengeId, "challenge status", challenge.status);
+                // });
 
                 // if (userChallenge.find((challenge) => challenge.challengeId === parseInt(id) && challenge.status !== 4)) {
                 //     console.log("User has joined the challenge.");
@@ -154,7 +154,7 @@ export default function ChallengeDetails() {
             toast.success("Left challenge successfully!");
             setTimeout(() => {
                 window.location.reload()
-            }, 2000);
+            }, 3000);
 
         } catch (error) {
             console.error("Error leaving challenge:", error);

@@ -372,6 +372,11 @@ export default function Challenges() {
                                   )} */}
 
                                 <p className="font-semibold">{item.challengeName}</p>
+
+                                <p className="text-sm text-gray-500 flex items-center text-left mb-3">
+                                  {item.description}
+                                </p>
+
                                 <p className="text-sm text-gray-500 flex items-center">
                                   Reward <Trophy className="ml-1" color="orange" />:
                                   <span className="font-bold ml-1">
@@ -429,15 +434,12 @@ export default function Challenges() {
                                         .map((type) => type.challengeTypeName)}
                                     </span>
                                 </p>
-
-                                <p className="text-sm text-gray-500 flex items-center text-left">
-                                  {item.description}
-                                </p>
                               
+                                <div className="flex items-center mt-3">
                                 {
                                   userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status !== 4
                                   ) ? (
-                                    <Button variant="destructive" onClick={() => handleLeaveChallenge(id)}>
+                                    <Button variant="destructive" onClick={() => handleLeaveChallenge(item.challengeId)}>
                                       <BookX className="mr-2 h-4 w-4" /> Leave Challenge
                                     </Button>
                                   ) : userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status === 4
@@ -451,6 +453,7 @@ export default function Challenges() {
                                     </Button>
                                   )
                                 }
+                                </div>
                               </CardContent>
                             </Card>
 
@@ -483,6 +486,11 @@ export default function Challenges() {
                             <Card className="relative">
                               <CardContent className="flex flex-col items-start p-4 cursor-pointer">
                                 <p className="font-semibold">{item.challengeName}</p>
+
+                                <p className="text-sm text-gray-500 flex items-center text-left mb-3">
+                                  {item.description}
+                                </p>
+
                                 <p className="text-sm text-gray-500 flex items-center">
                                   Reward <Trophy className="ml-1" color="orange" />:
                                   <span className="font-bold ml-1">
@@ -541,15 +549,11 @@ export default function Challenges() {
                                     </span>
                                 </p>
 
-                                <p className="text-sm text-gray-500 flex items-center text-left">
-                                  {item.description}
-                                </p>
-                                
-
+                                <div className="flex items-center mt-3">      
                                 {
                                   userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status !== 4
                                   ) ? (
-                                    <Button variant="destructive" onClick={() => handleLeaveChallenge(id)}>
+                                    <Button className variant="destructive" onClick={() => handleLeaveChallenge(item.challengeId)}>
                                       <BookX className="mr-2 h-4 w-4" /> Leave Challenge
                                     </Button>
                                   ) : userChallengeInfo.find((challenge) => challenge.challengeId === parseInt(item.challengeId) && challenge.status === 4
@@ -563,6 +567,7 @@ export default function Challenges() {
                                     </Button>
                                   )
                                 }
+                                </div>
                               </CardContent>
                             </Card>
                             <PopoverContent
