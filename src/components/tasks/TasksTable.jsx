@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Button } from "../ui/button"
+import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import useTaskData from "@/hooks/useTaskData"
 
@@ -338,63 +338,63 @@ const TasksTable = () => {
                                 <CardContent className='space-y-2 bg-gray-800'>
                                     {editTask ? (
                                         <>
-                                        <div className='grid grid-cols-2 gap-x-4 gap-y-2'>
-                                            <div className='space-y-1'>
-                                                <Label htmlFor='taskName'>Task Name</Label>
-                                                <Input
-                                                    id='taskName'
-                                                    value={editTask.taskName}
-                                                    onChange={handleChange}
-                                                />
-                                            </div>
-                                            <div className='space-y-1'>
-                                                <Label htmlFor='taskDescription'>Description</Label>
+                                            <div className='grid grid-cols-2 gap-x-4 gap-y-2'>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='taskName'>Task Name</Label>
+                                                    <Input
+                                                        id='taskName'
+                                                        value={editTask.taskName}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='taskDescription'>Description</Label>
                                                 <Input
                                                     id='taskDescription'
                                                     value={editTask.taskDescription}
                                                     onChange={handleChange}
                                                 />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='taskNote'>Task Note</Label>
+                                                    <Input
+                                                        id='taskNote'
+                                                        value={editTask.taskNote}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='totalDuration'>Total Duration ({('>')} 30 mins) </Label>
+                                                    <Input
+                                                        id='totalDuration'
+                                                        type='number'
+                                                        placeholder='≥ Work + Break Time'
+                                                        value={editTask.totalDuration}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='workDuration'>Work Duration (mins)</Label>
+                                                    <Input
+                                                        id='workDuration'
+                                                        type='number'
+                                                        value={editTask.workDuration}
+                                                        onChange={handleChange}
+                                                        disabled
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='breakTime'>Break Time (mins)</Label>
+                                                    <Input
+                                                        id='breakTime'
+                                                        type='number'
+                                                        value={editTask.breakTime}
+                                                        onChange={handleChange}
+                                                        disabled
+                                                    />
+                                                </div>
                                             </div>
                                             <div className='space-y-1'>
-                                                <Label htmlFor='taskNote'>Task Note</Label>
-                                                <Input
-                                                    id='taskNote'
-                                                    value={editTask.taskNote}
-                                                    onChange={handleChange}
-                                                />
-                                            </div>
-                                            <div className='space-y-1'>
-                                                <Label htmlFor='totalDuration'>Total Duration ({('>')} 30 mins) </Label>
-                                                <Input
-                                                    id='totalDuration'
-                                                    type='number'
-                                                    placeholder='≥ Work + Break Time'
-                                                    value={editTask.totalDuration}
-                                                    onChange={handleChange}
-                                                />
-                                            </div>
-                                            <div className='space-y-1'>
-                                                <Label htmlFor='workDuration'>Work Duration (mins)</Label>
-                                                <Input
-                                                    id='workDuration'
-                                                    type='number'
-                                                    value={editTask.workDuration}
-                                                    onChange={handleChange}
-                                                    disabled
-                                                />
-                                            </div>
-                                            <div className='space-y-1'>
-                                                <Label htmlFor='breakTime'>Break Time (mins)</Label>
-                                                <Input
-                                                    id='breakTime'
-                                                    type='number'
-                                                    value={editTask.breakTime}
-                                                    onChange={handleChange}
-                                                    disabled
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className='space-y-1'>
                                                 <Label htmlFor='startDate'>Start Date</Label>
                                                 <Input
                                                     id='startDate'
