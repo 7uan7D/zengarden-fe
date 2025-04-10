@@ -159,7 +159,7 @@ export default function Workspace() {
       className="min-h-screen flex flex-col p-6 bg-gray-100 mt-20"
       style={{
         backgroundImage:
-          "url('https://is1-ssl.mzstatic.com/image/thumb/Video211/v4/15/d1/80/15d1804a-1594-b708-3e90-a651a3216e4d/1968720970920101.jpg/3840x2160mv.jpg')",
+          "url('https://img.freepik.com/free-photo/river-landscape-illustration-pixel-art-style_23-2151793104.jpg?t=st=1744292682~exp=1744296282~hmac=d0072febe9b31d1e8b51bd62801dccec18fff2327ba2ed0e91c5e27b5f080f03&w=996')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
