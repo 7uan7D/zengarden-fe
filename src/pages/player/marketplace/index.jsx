@@ -14,6 +14,12 @@ import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { GetTradeByStatus } from "@/services/apiServices/treesService";
 import { GetAllTrees } from "@/services/apiServices/treesService";
+import { GetAllItems } from "@/services/apiServices/itemService";
+import { BuyItem } from "@/services/apiServices/itemService";
+import { GetBagItems } from "@/services/apiServices/itemService";
+import { GetUserInfo } from "@/services/apiServices/userService";
+import parseJwt from "@/services/parseJwt";
+import { toast } from "sonner";
 import TradeDialog from "./TradeDialog";
 
 const categories = [
@@ -24,6 +30,19 @@ const categories = [
   "Trade",
   "Package",
 ];
+const rarityColorMap = {
+  common: "text-gray-600",
+  rare: "text-blue-600",
+  epic: "text-purple-800",
+  legendary: "text-orange-500",
+};
+
+const rarityOrder = {
+  Legendary: 4,
+  Epic: 3,
+  Rare: 2,
+  Common: 1,
+};
 
 // Dữ liệu cứng cho các gói nạp
 const packageData = [
@@ -42,6 +61,38 @@ export default function Marketplace() {
   const [tradeItems, setTradeItems] = useState([]);
   const [allTrees, setAllTrees] = useState([]);
   const [selectedTrade, setSelectedTrade] = useState(null);
+  const [allItems, setAllItems] = useState([]);
+  const [bagItems, setBagItems] = useState([]);
+  const [bagId, setBagId] = useState(null);
+
+  const fetchUserBagItems = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Không tìm thấy token.");
+
+      const decodedToken = parseJwt(token);
+      const userId = decodedToken?.sub;
+      if (!userId) throw new Error("Token không hợp lệ.");
+
+      const userInfo = await GetUserInfo(userId);
+      const bagId = userInfo?.bag?.bagId;
+
+      if (!bagId) throw new Error("Không tìm thấy bagId của user.");
+
+      setBagId(bagId); // <- THÊM DÒNG NÀY
+
+      const bagItems = await GetBagItems(bagId);
+      setBagItems(bagItems); // <- THÊM DÒNG NÀY
+
+      console.log("Các item trong túi của user:", bagItems);
+    } catch (error) {
+      console.error("Lỗi khi lấy bagItems:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserBagItems();
+  }, []);
 
   useEffect(() => {
     if (activeTab === "Trade") {
@@ -70,6 +121,52 @@ export default function Marketplace() {
 
     fetchTrees();
   }, []);
+
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const items = await GetAllItems();
+
+        // Sort theo rarity
+        const sortedItems = items.sort((a, b) => {
+          const r1 = rarityOrder[a.rarity] || 0;
+          const r2 = rarityOrder[b.rarity] || 0;
+          return r2 - r1; // Descending: Legendary -> Common
+        });
+
+        setAllItems(sortedItems);
+      } catch (error) {
+        console.error("Failed to fetch items:", error);
+      }
+    };
+
+    if (
+      activeTab === "Items" ||
+      activeTab === "Avatar" ||
+      activeTab === "Background" ||
+      activeTab === "Music"
+    ) {
+      fetchItems();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const fetchBagItems = async () => {
+      try {
+        if (!bagId) return;
+        const data = await GetBagItems(bagId);
+        setBagItems(data);
+      } catch (error) {
+        console.error("Lỗi khi lấy bag items:", error);
+      }
+    };
+
+    fetchBagItems();
+  }, [bagId]); // chạy lại khi bagId thay đổi
+
+  const findOwnedItem = (itemId) => {
+    return bagItems.find((b) => b.itemId === itemId);
+  };
 
   // Xử lý query parameter để chọn tab
   useEffect(() => {
@@ -106,11 +203,36 @@ export default function Marketplace() {
         return 0;
     }
   };
-  const rarityColorMap = {
-    common: "text-gray-600",
-    rare: "text-blue-600",
-    epic: "text-purple-800",
-    legendary: "text-orange-500",
+
+  const fetchBagItems = async () => {
+    try {
+      if (!bagId) return;
+      const res = await GetBagItems(bagId); // PHẢI truyền bagId
+      setBagItems(res);
+    } catch (error) {
+      console.error("Lỗi khi fetchBagItems:", error);
+    }
+  };
+  const fetchAllItems = async () => {
+    const res = await GetAllItems();
+    setAllItems(res);
+  };
+
+  const handleBuyItem = async (itemId) => {
+    try {
+      const result = await BuyItem(itemId);
+      console.log("Mua thành công:", result);
+
+      // Gọi lại các API cần thiết
+      await fetchBagItems(); // Load lại item sở hữu
+      await fetchAllItems(); // Nếu muốn load lại toàn bộ item (nếu có thay đổi)
+
+      // Optionally hiện thông báo
+      toast.success("Mua item thành công!");
+    } catch (error) {
+      console.error("Lỗi khi mua item:", error);
+      toast.error("Có lỗi xảy ra khi mua item.");
+    }
   };
 
   return (
@@ -260,6 +382,16 @@ export default function Marketplace() {
                 );
               }
 
+              const filteredItems = allItems.filter((item) => {
+                const typeMap = {
+                  Items: [0, 1],
+                  Avatar: [2],
+                  Background: [3],
+                  Music: [4],
+                };
+                return typeMap[cat]?.includes(item.type);
+              });
+
               return (
                 <TabsContent key={cat} value={cat}>
                   {cat === "Package" ? (
@@ -305,88 +437,122 @@ export default function Marketplace() {
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {[...Array(6)].map((_, i) => {
-                        const [isOpen, setIsOpen] = useState(false);
+                      {filteredItems.map((item, i) => {
+                        const detail = item.itemDetail;
+                        const rarityClass =
+                          rarityColorMap[item.rarity?.toLowerCase()] ||
+                          "text-gray-400";
 
                         return (
                           <motion.div
-                            key={i}
+                            key={item.itemId}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: i * 0.1 }}
                           >
-                            <Popover open={isOpen}>
-                              <PopoverTrigger
-                                asChild
-                                onMouseEnter={() => setIsOpen(true)}
-                                onMouseLeave={() => setIsOpen(false)}
-                              >
-                                <Card className="relative overflow-hidden">
-                                  {i === 0 && (
-                                    <span
-                                      className="absolute top-1 left-[1px] bg-yellow-500 text-white text-xs font-bold px-5 py-1 
-                                    transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
+                            <Card className="relative overflow-hidden">
+                              {/* Badge Quantity ở góc phải nếu là tab "Items" */}
+                              {(() => {
+                                const owned = findOwnedItem(item.itemId);
+                                const isQuantityVisible = activeTab === "Items";
+
+                                if (owned && isQuantityVisible) {
+                                  return (
+                                    <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full shadow">
+                                      x{owned.quantity}
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
+
+                              <CardContent className="flex flex-col items-center p-4 cursor-pointer">
+                                {cat === "Music" ? (
+                                  <div className="relative w-20 h-20 bg-gray-10 rounded-lg overflow-hidden">
+                                    <button
+                                      className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-sm"
+                                      onClick={() => {
+                                        const audio = new Audio(
+                                          detail.mediaUrl
+                                        );
+                                        audio.currentTime = 0;
+                                        audio.play();
+                                        audio.ontimeupdate = () => {
+                                          if (audio.currentTime > 15) {
+                                            audio.pause();
+                                            audio.currentTime = 0;
+                                          }
+                                        };
+                                      }}
                                     >
-                                      Best Seller
-                                    </span>
-                                  )}
-                                  {i === 1 && (
-                                    <span
-                                      className="absolute top-0.5 left-[2px] bg-green-500 text-white text-xs font-bold px-5 py-1 
-                                    transform -rotate-45 -translate-x-6 translate-y-3 z-10 shadow"
-                                    >
-                                      Seasonal
-                                    </span>
-                                  )}
-                                  <CardContent className="flex flex-col items-center p-4 cursor-pointer">
-                                    {cat === "Avatar" ? (
-                                      <Avatar className="h-20 w-20 mb-2" />
-                                    ) : cat === "Background" ? (
-                                      <div className="h-32 w-full bg-gray-300 rounded-lg mb-2" />
-                                    ) : cat === "Music" ? (
+                                      ▶️ Preview
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <img
+                                    src={detail.mediaUrl}
+                                    alt={item.name}
+                                    className={`object-cover rounded-lg mb-2 ${
+                                      cat === "Background"
+                                        ? "w-full h-32"
+                                        : "h-20 w-20"
+                                    }`}
+                                  />
+                                )}
+                                <p
+                                  className={`font-semibold mb-1 ${rarityClass}`}
+                                >
+                                  {item.rarity}
+                                </p>
+                                <p className="font-semibold">{item.name}</p>
+                                <p className="text-sm text-gray-500 text-center mb-1">
+                                  {detail.description}
+                                </p>
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  <img
+                                    src="/images/coin.png"
+                                    alt="Coin"
+                                    className="w-5 h-5 mr-1"
+                                  />
+                                  {item.cost}
+                                </p>
+
+                                {/* Buy / Owned / Quantity Button */}
+                                {(() => {
+                                  const owned = findOwnedItem(item.itemId);
+                                  const isQuantityVisible =
+                                    activeTab === "Items";
+                                  const isOwnedVisible = [
+                                    "Avatar",
+                                    "Background",
+                                    "Music",
+                                  ].includes(activeTab);
+
+                                  if (owned && isOwnedVisible) {
+                                    return (
                                       <Button
-                                        variant="outline"
-                                        className="mb-2 bg-white"
+                                        className="mt-2"
+                                        variant="secondary"
+                                        disabled
                                       >
-                                        <Play className="h-6 w-6" /> Play
-                                        Preview
+                                        Owned
                                       </Button>
-                                    ) : (
-                                      <div className="h-20 w-20 bg-gray-300 rounded-lg mb-2" />
-                                    )}
-                                    <p className="font-semibold">
-                                      {cat} Item {i + 1}
-                                    </p>
-                                    <p className="text-sm text-gray-500 flex items-center">
-                                      <img
-                                        src="/src/assets/images/coin.png"
-                                        alt="Coin"
-                                        className="w-5 h-5 mr-1"
-                                      />
-                                      100
-                                    </p>
-                                    <Button className="mt-2" variant="outline">
+                                    );
+                                  }
+
+                                  return (
+                                    <Button
+                                      className="mt-2"
+                                      variant="outline"
+                                      onClick={() => handleBuyItem(item.itemId)}
+                                    >
                                       <ShoppingCart className="mr-2 h-4 w-4" />{" "}
                                       Buy
                                     </Button>
-                                  </CardContent>
-                                </Card>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                className="w-64 text-sm"
-                                side="top"
-                                align="center"
-                              >
-                                <p className="font-semibold">
-                                  {cat} Item {i + 1}
-                                </p>
-                                <p className="text-gray-500">
-                                  This is a description of the item. It provides
-                                  details about what this item does and why it’s
-                                  useful.
-                                </p>
-                              </PopoverContent>
-                            </Popover>
+                                  );
+                                })()}
+                              </CardContent>
+                            </Card>
                           </motion.div>
                         );
                       })}
