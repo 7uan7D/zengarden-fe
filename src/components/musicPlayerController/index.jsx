@@ -20,7 +20,7 @@ const playlist = [
   },
   {
     title: "Vistas - The Beautiful Nothing",
-    url: "https://rr5---sn-npoldn7y.googlevideo.com/videoplayback?expire=1743360409&ei=OT3pZ_jaJfK4kucPyaC64Qg&ip=2a09%3Abac5%3Aa2ff%3A2769%3A%3A3ed%3A74&id=o-ACwrYJl_BkR4sBCT9Whx3j3xcJdq87C_jA8sr68JjqUS&itag=140&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&bui=AccgBcMZG6mcLxRmrs4cnM09S7paMUfILqKug6GzzN-DdSw6N8cp124zJrsrJ31NbhkHIwhqWW3Edmo9&vprv=1&svpuc=1&mime=audio%2Fmp4&ns=7PYfJgwKjUjU_Kt-k_XVe0IQ&rqh=1&gir=yes&clen=3997962&dur=246.990&lmt=1705890217583658&keepalive=yes&lmw=1&c=TVHTML5&sefc=1&txp=5308224&n=RLmbQ8Ry2jldpA&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cbui%2Cvprv%2Csvpuc%2Cmime%2Cns%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRQIgRpRGSQf9e4IGkEWo_ndgOP_lr13MfjxgXC3lYpn9VKYCIQDRcUsop9XMvvpkgQ2-oNkOlRqhVQB4QuBAUNpbnIJ0RQ%3D%3D&title=Vistas+-+The+Beautiful+Nothing+%28Official+Video%29&redirect_counter=1&cm2rm=sn-ab5ees7s&rrc=80&fexp=24350590,24350737,24350827,24350961,24351064,24351146,24351173,24351283,24351353,24351398,24351415,24351423,24351469,24351527&req_id=4348b20c49e1a3ee&cms_redirect=yes&cmsv=e&met=1743338820,&mh=wV&mip=171.250.64.112&mm=34&mn=sn-npoldn7y&ms=ltu&mt=1743338689&mv=m&mvi=5&pl=21&rms=ltu,au&lsparams=met,mh,mip,mm,mn,ms,mv,mvi,pl,rms&lsig=AFVRHeAwRQIgVfIjrn77hnaaIeSr-K6-or3JEwf4k4ADalcpIXBg2lECIQDr5pretHSg-uNcb-6QBbuGXa8XhpYSpmUZEPpVsxv39g%3D%3D",
+    url: "https://rr5---sn-npoldn7y.googlevideo.com/videoplayback?expire=1743360409&ei=OT3pZ_jaJfK4kucPyaC64Qg&ip=2directory%3Abac5%3Aa2ff%3A2769%3A%3A3ed%3A74&id=o-ACwrYJl_BkR4sBCT9Whx3j3xcJdq87C_jA8sr68JjqUS&itag=140&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&bui=AccgBcMZG6mcLxRmrs4cnM09S7paMUfILqKug6GzzN-DdSw6N8cp124zJrsrJ31NbhkHIwhqWW3Edmo9&vprv=1&svpuc=1&mime=audio%2Fmp4&ns=7PYfJgwKjUjU_Kt-k_XVe0IQ&rqh=1&gir=yes&clen=3997962&dur=246.990&lmt=1705890217583658&keepalive=yes&lmw=1&c=TVHTML5&sefc=1&txp=5308224&n=RLmbQ8Ry2jldpA&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cbui%2Cvprv%2Csvpuc%2Cmime%2Cns%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRQIgRpRGSQf9e4IGkEWo_ndgOP_lr13MfjxgXC3lYpn9VKYCIQDRcUsop9XMvvpkgQ2-oNkOlRqhVQB4QuBAUNpbnIJ0RQ%3D%3D&title=Vistas+-+The+Beautiful+Nothing+%28Official+Video%29&redirect_counter=1&cm2rm=sn-ab5ees7s&rrc=80&fexp=24350590,24350737,24350827,24350961,24351064,24351146,24351173,24351283,24351353,24351398,24351415,24351423,24351469,24351527&req_id=4348b20c49e1a3ee&cms_redirect=yes&cmsv=e&met=1743338820,&mh=wV&mip=171.250.64.112&mm=34&mn=sn-npoldn7y&ms=ltu&mt=1743338689&mv=m&mvi=5&pl=21&rms=ltu,au&lsparams=met,mh,mip,mm,mn,ms,mv,mvi,pl,rms&lsig=AFVRHeAwRQIgVfIjrn77hnaaIeSr-K6-or3JEwf4k4ADalcpIXBg2lECIQDr5pretHSg-uNcb-6QBbuGXa8XhpYSpmUZEPpVsxv39g%3D%3D",
   },
 ];
 
@@ -168,8 +168,7 @@ export default function MusicPlayerController({
               className="text-xs text-gray-600 mt-1 whitespace-nowrap animate-marquee"
               style={{ display: "inline-block" }}
             >
-              {playlist[globalAudioState.currentIndex]?.title ||
-                "No song playing"}
+              {playlist[globalAudioState.currentIndex]?.title || "No song playing"}
             </p>
           </div>
         </div>
@@ -177,30 +176,36 @@ export default function MusicPlayerController({
       {/* CSS nội tuyến cho hiệu ứng chạy ngang */}
       <style>
         {`
-    @keyframes marquee {
-      0% {
-        transform: translateX(100%);
-      }
-      100% {
-        transform: translateX(-100%);
-      }
-    }
-    .animate-marquee {
-      animation: marquee 10s linear infinite;
-    }
-    .animate-marquee:hover {
-      animation-play-state: paused;
-    }
-  `}
+          @keyframes marquee {
+            0% {
+              transform: translateX(100%);
+            }
+            100% {
+              transform: translateX(-100%);
+            }
+          }
+          .animate-marquee {
+            animation: marquee 10s linear infinite;
+          }
+          .animate-marquee:hover {
+            animation-play-state: paused;
+          }
+        `}
       </style>
     </div>
   );
 }
 
-// Component đầy đủ với danh sách phát (giữ nguyên)
-export function FullMusicPlayer({ setPlaying, setCurrentIndex }) {
+// Component đầy đủ với danh sách phát (có thể thu gọn/mở rộng)
+export function FullMusicPlayer({ setPlaying, setCurrentIndex, playlistHeight = "max-h-64", playlistOverflow = "overflow-y-auto" }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Số lượng bài hát hiển thị: 1 khi thu gọn, tối đa 4 khi mở rộng
+  const visibleTracks = isExpanded ? playlist.slice(0, 4) : [playlist[globalAudioState.currentIndex]];
+
   return (
     <div className="space-y-4">
+      {/* Nút điều khiển */}
       <div className="flex gap-2 justify-center">
         <Button
           variant="outline"
@@ -222,10 +227,21 @@ export function FullMusicPlayer({ setPlaying, setCurrentIndex }) {
           <SkipForward className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Danh sách phát */}
       <div className="mt-4">
-        <h3 className="text-sm font-semibold mb-2">Playlist</h3>
-        <ul className="space-y-2">
-          {playlist.map((track, index) => (
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="text-sm font-semibold">Playlist</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            {isExpanded ? "Collapse" : "Expand"}
+          </Button>
+        </div>
+        <ul className={`space-y-2 ${playlistHeight} ${playlistOverflow}`}>
+          {visibleTracks.map((track, index) => (
             <li
               key={index}
               className={`text-sm p-2 rounded cursor-pointer ${
@@ -240,6 +256,11 @@ export function FullMusicPlayer({ setPlaying, setCurrentIndex }) {
               {track.title}
             </li>
           ))}
+          {isExpanded && playlist.length > 4 && (
+            <li className="text-sm text-gray-500 italic">
+              Scroll to see more...
+            </li>
+          )}
         </ul>
       </div>
     </div>

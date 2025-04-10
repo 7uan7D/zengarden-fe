@@ -22,6 +22,7 @@ import parseJwt from "@/services/parseJwt";
 import { toast } from "sonner";
 import TradeDialog from "./TradeDialog";
 
+// Danh sách các danh mục, thêm "Wallet"
 const categories = [
   "Items",
   "Avatar",
@@ -29,7 +30,9 @@ const categories = [
   "Music",
   "Trade",
   "Package",
+  "Wallet", // Thêm tab Wallet
 ];
+
 const rarityColorMap = {
   common: "text-gray-600",
   rare: "text-blue-600",
@@ -53,10 +56,18 @@ const packageData = [
   { price: "500.000đ", coins: 5000, image: "/images/chest_coin.png" },
 ];
 
+// Dữ liệu giả lập cho Transaction History
+const transactionHistory = [
+  { id: 1, date: "2025-04-01", description: "Purchased Oak Seed", amount: -10, status: "Completed" },
+  { id: 2, date: "2025-04-03", description: "Reward for Task Completion", amount: 5, status: "Completed" },
+  { id: 3, date: "2025-04-05", description: "Purchased Watering Can", amount: -15, status: "Completed" },
+  { id: 4, date: "2025-04-07", description: "Daily Login Bonus", amount: 2, status: "Completed" },
+];
+
 export default function Marketplace() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
-  const [activeTab, setActiveTab] = useState(categories[0]); // Thêm state để điều khiển tab
+  const [activeTab, setActiveTab] = useState(categories[0]);
   const location = useLocation();
   const [tradeItems, setTradeItems] = useState([]);
   const [allTrees, setAllTrees] = useState([]);
@@ -79,10 +90,9 @@ export default function Marketplace() {
 
       if (!bagId) throw new Error("Không tìm thấy bagId của user.");
 
-      setBagId(bagId); // <- THÊM DÒNG NÀY
-
+      setBagId(bagId);
       const bagItems = await GetBagItems(bagId);
-      setBagItems(bagItems); // <- THÊM DÒNG NÀY
+      setBagItems(bagItems);
 
       console.log("Các item trong túi của user:", bagItems);
     } catch (error) {
@@ -189,6 +199,7 @@ export default function Marketplace() {
       setActiveTab(matchedCategory);
     }
   };
+
   const getTradeCoin = (rarity) => {
     switch (rarity?.toLowerCase()) {
       case "legendary":
@@ -207,12 +218,13 @@ export default function Marketplace() {
   const fetchBagItems = async () => {
     try {
       if (!bagId) return;
-      const res = await GetBagItems(bagId); // PHẢI truyền bagId
+      const res = await GetBagItems(bagId);
       setBagItems(res);
     } catch (error) {
       console.error("Lỗi khi fetchBagItems:", error);
     }
   };
+
   const fetchAllItems = async () => {
     const res = await GetAllItems();
     setAllItems(res);
@@ -222,12 +234,8 @@ export default function Marketplace() {
     try {
       const result = await BuyItem(itemId);
       console.log("Mua thành công:", result);
-
-      // Gọi lại các API cần thiết
-      await fetchBagItems(); // Load lại item sở hữu
-      await fetchAllItems(); // Nếu muốn load lại toàn bộ item (nếu có thay đổi)
-
-      // Optionally hiện thông báo
+      await fetchBagItems();
+      await fetchAllItems();
       toast.success("Mua item thành công!");
     } catch (error) {
       console.error("Lỗi khi mua item:", error);
@@ -382,6 +390,41 @@ export default function Marketplace() {
                 );
               }
 
+              if (cat === "Wallet") {
+                return (
+                  <TabsContent key="Wallet" value="Wallet">
+                    <Card>
+                      <CardContent className="p-6">
+                        <h2 className="text-xl font-semibold mb-4">Transaction History</h2>
+                        <ul className="space-y-4 max-h-[70vh] overflow-y-auto">
+                          {transactionHistory.map((transaction) => (
+                            <li
+                              key={transaction.id}
+                              className="flex justify-between items-center p-3 bg-gray-100 rounded-lg"
+                            >
+                              <div className="flex-1">
+                                <p className="font-medium text-gray-800">{transaction.description}</p>
+                                <p className="text-sm text-gray-600">{transaction.date}</p>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <span
+                                  className={`font-medium ${
+                                    transaction.amount > 0 ? "text-green-600" : "text-red-600"
+                                  }`}
+                                >
+                                  {transaction.amount > 0 ? "+" : ""}{transaction.amount} Coins
+                                </span>
+                                <span className="text-sm text-gray-600">{transaction.status}</span>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                );
+              }
+
               const filteredItems = allItems.filter((item) => {
                 const typeMap = {
                   Items: [0, 1],
@@ -421,7 +464,7 @@ export default function Marketplace() {
                                 alt={`Package ${pkg.price}`}
                                 className="w-20 h-20 object-cover rounded-lg mb-2"
                                 onError={(e) => {
-                                  e.target.src = "/images/default-package.png"; // Hình ảnh mặc định nếu không tải được
+                                  e.target.src = "/images/default-package.png";
                                 }}
                               />
                               <p className="font-semibold text-lg mb-2">

@@ -185,7 +185,8 @@ export default function Workspace() {
     <div
       className="min-h-screen flex flex-col p-6 bg-gray-100 mt-20"
       style={{
-        backgroundImage: `url('${backgroundUrl}')`,
+        backgroundImage:
+          "url('https://assetstorev1-prd-cdn.unity3d.com/package-screenshot/ed80120b-06b0-4924-868d-5d98f2ad4bfa_scaled.jpg')",
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
