@@ -1125,7 +1125,7 @@ export default function TaskPage() {
                 {selectedTask?.remainingTime !== null && (
                   <p>
                     <strong>Remaining Time:</strong>{" "}
-                    {selectedTask?.remainingTime} minutes
+                    {selectedTask?.remainingTime}
                   </p>
                 )}
               </div>
