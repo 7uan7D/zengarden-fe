@@ -1,18 +1,16 @@
 import { motion } from "framer-motion"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
-import useTaskData from "@/hooks/useTaskData"
+import useChallengeData from "@/hooks/useChallengeData"
 
-const COLORS = ['#E5E7EB', '#2AB7CA' , '#FED766', '#10B981', '#FF6B6B', '#8884D8']
+const COLORS = ['#E5E7EB', '#2AB7CA' , '#10B981', '#FF6B6B', '#FED766', '#8884D8']
 
-const TaskDistribution = () => {
-    const { taskData, isLoading, error } = useTaskData()
-    const taskStatusData = [
-        { name: 'Not Started', value: taskData?.filter((task) => task.status === 0).length },
-        { name: 'In Progress', value: taskData?.filter((task) => task.status === 1).length },
-        { name: 'Paused', value: taskData?.filter((task) => task.status === 2).length },
-        { name: 'Completed', value: taskData?.filter((task) => task.status === 3).length },
-        { name: 'Failed', value: taskData?.filter((task) => task.status === 4).length },
-        { name: 'Overdue', value: taskData?.filter((task) => task.status === 5).length },
+const ChallengeDistribution = () => {
+    const { challengeData, isLoading, error } = useChallengeData()
+    const challengeStatusData = [
+        { name: 'Not Started', value: challengeData?.filter((challenge) => challenge.status === 0).length },
+        { name: 'Active', value: challengeData?.filter((challenge) => challenge.status === 1).length },
+        { name: 'Completed', value: challengeData?.filter((challenge) => challenge.status === 2).length },
+        { name: 'Canceled', value: challengeData?.filter((challenge) => challenge.status === 3).length },
     ]
 
     if (isLoading) {
@@ -30,12 +28,12 @@ const TaskDistribution = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
         >
-            <h2 className='text-xl font-semibold text-gray-100 mb-4'>Task Status Distribution</h2>
+            <h2 className='text-xl font-semibold text-gray-100 mb-4'>Challenge Status Distribution</h2>
             <div style={{ width: '100%', height: 300 }}>
                 <ResponsiveContainer>
                     <PieChart>
                         <Pie
-                            data={taskStatusData}
+                            data={challengeStatusData}
                             cx='50%'
                             cy='50%'
                             outerRadius={80}
@@ -43,7 +41,7 @@ const TaskDistribution = () => {
                             dataKey='value'
                             label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                         >
-                            {taskStatusData.map((entry, index) => (
+                            {challengeStatusData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
@@ -62,4 +60,4 @@ const TaskDistribution = () => {
     )
 }
 
-export default TaskDistribution
+export default ChallengeDistribution

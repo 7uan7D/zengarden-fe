@@ -153,7 +153,7 @@ const TreeXPLogTable = () => {
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>XP Amount</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Created At</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Updated At</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Tasks</th>
+                            {/* <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Tasks</th> */}
                             {/* <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Actions</th> */}
                         </tr>
                     </thead>
@@ -175,9 +175,11 @@ const TreeXPLogTable = () => {
                                     {item.logId}
                                 </td>
 
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.taskId}</td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                    {item.taskId === null ? 'none' : item.taskId}
+                                </td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.activityType}</td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.xpAmount} XP</td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.xpAmount.toFixed(2)} XP</td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                     {new Date(item.createdAt).toLocaleDateString('en-US', {
                                         month: 'short',
@@ -198,10 +200,10 @@ const TreeXPLogTable = () => {
                                         second: 'numeric',
                                     })}
                                 </td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                {/* <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                     task
-                                    {/* {taskNames[item.taskId] || 'Loading...'} */}
-                                </td>
+                                    {taskNames[item.taskId] || 'Loading...'}
+                                </td> */}
                                 {/* <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                     <button onClick={() => handleEditClick(item.logId)} className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>
                                         <Edit size={18} />

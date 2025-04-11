@@ -7,6 +7,7 @@ const UserExperienceContext = createContext();
 export const UserExperienceProvider = ({ children }) => {
   const [totalXp, setTotalXp] = useState(0);
   const [levelId, setLevelId] = useState(null);
+  const [xpToNextLevel, setXpToNextLevel] = useState(0);
 
   const loadExperience = async () => {
     const token = localStorage.getItem("token");
@@ -15,9 +16,11 @@ export const UserExperienceProvider = ({ children }) => {
       const userId = decoded?.sub;
       if (userId) {
         try {
-          const { totalXp, levelId } = await GetUserExperiencesInfo(userId);
+          const { totalXp, levelId, xpToNextLevel } =
+            await GetUserExperiencesInfo(userId);
           setTotalXp(totalXp);
           setLevelId(levelId);
+          setXpToNextLevel(xpToNextLevel);
         } catch (error) {
           console.error("Error loading XP:", error);
         }
@@ -31,7 +34,7 @@ export const UserExperienceProvider = ({ children }) => {
 
   return (
     <UserExperienceContext.Provider
-      value={{ totalXp, levelId, refreshXp: loadExperience }}
+      value={{ totalXp, levelId, xpToNextLevel, refreshXp: loadExperience }}
     >
       {children}
     </UserExperienceContext.Provider>

@@ -3,11 +3,11 @@ import { Search, Edit, Trash2 } from "lucide-react"
 import { useState } from "react"
 
 const userXPLogData = [
-    { id: 1, userId: 'User 1', activityType: 2, XPAmount: 59, createdAt: 'create time', updatedAt: 'update time'  },
-    { id: 2, userId: 'User 2', activityType: 1, XPAmount: 39, createdAt: 'create time', updatedAt: 'update time' },
-    { id: 3, userId: 'User 3', activityType: 3, XPAmount: 19, createdAt: 'create time', updatedAt: 'update time' },
-    { id: 4, userId: 'User 4', activityType: 3, XPAmount: 29, createdAt: 'create time', updatedAt: 'update time' },
-    { id: 5, userId: 'User 5', activityType: 1, XPAmount: 79, createdAt: 'create time', updatedAt: 'update time' },
+    { id: 1, userId: 1, activityType: 2, XPAmount: 59, createdAt: 'Apr 9, 2025, 8:32:50 AM', updatedAt: 'Apr 9, 2025, 8:32:50 AM'  },
+    { id: 2, userId: 2, activityType: 1, XPAmount: 39, createdAt: 'Apr 9, 2025, 8:32:50 AM', updatedAt: 'Apr 9, 2025, 8:32:50 AM' },
+    { id: 3, userId: 3, activityType: 3, XPAmount: 19, createdAt: 'Apr 9, 2025, 8:32:50 AM', updatedAt: 'Apr 9, 2025, 8:32:50 AM' },
+    { id: 4, userId: 4, activityType: 3, XPAmount: 29, createdAt: 'Apr 9, 2025, 8:32:50 AM', updatedAt: 'Apr 9, 2025, 8:32:50 AM' },
+    { id: 5, userId: 5, activityType: 1, XPAmount: 79, createdAt: 'Apr 9, 2025, 8:32:50 AM', updatedAt: 'Apr 9, 2025, 8:32:50 AM' },
 ]
 
 const UserXPLogTable = () => {
@@ -51,7 +51,7 @@ const UserXPLogTable = () => {
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>XP Amount</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Created At</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Updated At</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Actions</th>
+                            {/* <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Actions</th> */}
                         </tr>
                     </thead>
 
@@ -64,11 +64,11 @@ const UserXPLogTable = () => {
                                 transition={{ duration: 0.3 }}
                             >
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100 flex gap-2 items-center'>
-                                    <img
+                                    {/* <img
                                         src={`https://banner2.cleanpng.com/20231230/xkg/transparent-cartoon-task-management-to-do-list-productivity-or-yellow-paper-with-task-list-and-1710949246698.webp`}
                                         alt={item.userId}
                                         className='size-10 rounded-full' 
-                                    />
+                                    /> */}
                                     {item.userId}
                                 </td>
 
@@ -76,14 +76,14 @@ const UserXPLogTable = () => {
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.XPAmount} XP</td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.createdAt}</td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.updatedAt}</td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                {/* <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                     <button className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>
                                         <Edit size={18} />
                                     </button>
                                     <button className='text-red-400 hover:text-red-300 bg-transparent'>
                                         <Trash2 size={18} />
                                     </button>
-                                </td>
+                                </td> */}
                             </motion.tr>
                         ))}
                     </tbody>

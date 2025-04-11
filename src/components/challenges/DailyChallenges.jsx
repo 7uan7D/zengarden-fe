@@ -1,35 +1,35 @@
 import { motion } from "framer-motion"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
-import useTaskData from "@/hooks/useTaskData"
+import useChallengeData from "@/hooks/useChallengeData"
 
-const DailyTasks = () => {
-    const { taskData, isLoading, error } = useTaskData()
+const DailyChallenges = () => {
+    const { challengeData, isLoading, error } = useChallengeData()
 
-    function transformTaskDataForDailyChart(taskData) {
-        if (!taskData) {
+    function transformChallengeDataForDailyChart(challengeData) {
+        if (!challengeData) {
             return []
         }
 
-        const dailyTasksMap = {}
+        const dailyChallengesMap = {}
 
-        taskData.forEach(task => {
-            const createdAtDate = new Date(task.createdAt).toLocaleDateString('en-US', {
+        challengeData.forEach(challenge => {
+            const createdAtDate = new Date(challenge.createdAt).toLocaleDateString('en-US', {
                 day: '2-digit',
                 month: 'numeric',
             }).replace(/^(\d)\//, '0$1/')
 
-            if (dailyTasksMap[createdAtDate]) {
-                dailyTasksMap[createdAtDate]++
+            if (dailyChallengesMap[createdAtDate]) {
+                dailyChallengesMap[createdAtDate]++
             } else {
-                dailyTasksMap[createdAtDate] = 1
+                dailyChallengesMap[createdAtDate] = 1
             }
         })
 
-        const resultData = Object.entries(dailyTasksMap).map(([date, count]) => {
+        const resultData = Object.entries(dailyChallengesMap).map(([date, count]) => {
             const [month, day] = date.split('/')
             return {
                 date: `${day}/${month}`,
-                tasks: count
+                challenges: count
             }
         })
 
@@ -45,7 +45,7 @@ const DailyTasks = () => {
         return resultData
     }
 
-    const dailyTasksData = transformTaskDataForDailyChart(taskData)
+    const dailyChallengesData = transformChallengeDataForDailyChart(challengeData)
 
     if (isLoading) {
         return <div></div>
@@ -62,11 +62,11 @@ const DailyTasks = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
         >
-            <h2 className='text-xl font-semibold text-gray-100 mb-4'>Daily Tasks Analytics</h2>
+            <h2 className='text-xl font-semibold text-gray-100 mb-4'>Daily Challenges Analytics</h2>
 
             <div style={{ width: '100%', height: 300 }}>
                 <ResponsiveContainer>
-                    <LineChart data={dailyTasksData}>
+                    <LineChart data={dailyChallengesData}>
                         <CartesianGrid strokeDasharray='3 3' stroke='#374151' />
                         <XAxis dataKey='date' stroke='#9CA3AF' />
                         <YAxis stroke='#9CA3AF' />
@@ -78,7 +78,7 @@ const DailyTasks = () => {
                             itemStyle={{ color: '#E5E7EB' }}
                         />
                         <Legend />
-                        <Line type='monotone' dataKey='tasks' stroke='#8B5CF6' strokeWidth={2} />
+                        <Line type='linear' dataKey='challenges' stroke='#8B5CF6' strokeWidth={2} />
                     </LineChart>
                 </ResponsiveContainer>
             </div>
@@ -86,4 +86,4 @@ const DailyTasks = () => {
     )
 }
 
-export default DailyTasks
+export default DailyChallenges

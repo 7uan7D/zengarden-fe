@@ -106,7 +106,6 @@ const Header = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [openProfile, setProfileOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [xpToNextLevel, setXpToNextLevel] = useState(50);
   const [bagId, setBagId] = useState(null);
   const [walletBalance, setWalletBalance] = useState(0);
   const [editUser, setEditUser] = useState({
@@ -129,11 +128,17 @@ const Header = () => {
     { path: "/marketplace", label: "Marketplace" },
     { path: "/challenges", label: "Challenges" },
   ];
-  const { totalXp, levelId, refreshXp } = useUserExperience();
+  const { totalXp, levelId, xpToNextLevel, refreshXp } = useUserExperience();
+
   const [notificationCount, setNotificationCount] = useState(0);
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [inventoryItems, setInventoryItems] = useState([]);
   const [avatarUrl, setAvatarUrl] = useState("https://github.com/shadcn.png");
+
+  useEffect(() => {
+    // Gọi để đảm bảo XP luôn mới nhất mỗi khi component mount
+    refreshXp();
+  }, []);
 
   useEffect(() => {
     const fetchUserConfig = async () => {
@@ -649,11 +654,11 @@ const Header = () => {
                       Level {levelId}
                     </span>
                     <Progress
-                      value={(totalXp / xpToNextLevel) * 100}
+                      value={(totalXp / (totalXp + xpToNextLevel)) * 100}
                       className="w-20 h-1"
                     />
                     <span className="text-[11px] text-gray-500">
-                      {totalXp} / {xpToNextLevel} XP
+                      {totalXp} / {totalXp + xpToNextLevel} XP
                     </span>
                   </div>
                   <div className="mt-0 text-[14px] text-gray-600 flex items-center gap-0.5">

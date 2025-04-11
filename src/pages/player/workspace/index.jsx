@@ -50,6 +50,10 @@ export default function Workspace() {
   globalAudioState.setPlaying = setIsPlaying;
   globalAudioState.setCurrentIndex = setCurrentIndex;
 
+  useEffect(() => {
+    setCurrentIndex(globalAudioState.currentIndex);
+  }, [globalAudioState.currentIndex]);
+
   // Hàm lấy danh sách task
   const fetchTasks = async (userTreeId) => {
     try {
