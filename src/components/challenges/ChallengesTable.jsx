@@ -10,87 +10,93 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import useTaskData from "@/hooks/useTaskData"
+import useChallengeData from "@/hooks/useChallengeData"
+import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService"
 
-const TasksTable = () => {
-    const { taskData, isLoadingState, error } = useTaskData()
+const ChallengesTable = () => {
+    const { challengeData, isLoadingState, error } = useChallengeData()
     const [searchTerm, setSearchTerm] = useState('')
-    const [filteredTasks, setFilteredTasks] = useState(taskData)
-    const [openEditTask, setOpenEditTask] = useState(false)
-    const [selectedTaskId, setSelectedTaskId] = useState(null)
-    const [openDeleteTask, setOpenDeleteTask] = useState(false)
+    const [filteredChallenges, setFilteredChallenges] = useState(challengeData)
+    // const [openEditTask, setOpenEditTask] = useState(false)
+    // const [selectedTaskId, setSelectedTaskId] = useState(null)
+    // const [openDeleteTask, setOpenDeleteTask] = useState(false)
     const [openStates, setOpenStates] = useState({})
     const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
-        if (taskData) {
-            setFilteredTasks(taskData)
+        if (challengeData) {
+            setFilteredChallenges(challengeData)
         }
-    }, [taskData])
+    }, [challengeData])
 
-    const [editTask, setEditTask] = useState({
-        taskId: null,
-        taskName: '',
-        taskDescription: '',
-        taskNote: '',
-        totalDuration: 0,
-        workDuration: 0,
-        breakTime: 0,
-        startDate: '',
-        endDate: '',
-    })
+    // const [editTask, setEditTask] = useState({
+    //     taskId: null,
+    //     taskName: '',
+    //     taskDescription: '',
+    //     taskNote: '',
+    //     totalDuration: 0,
+    //     workDuration: 0,
+    //     breakTime: 0,
+    //     startDate: '',
+    //     endDate: '',
+    // })
 
-    useEffect(() => {
-        if (selectedTaskId) {
-            setIsLoading(true)
-            GetTaskById(selectedTaskId)
-                .then((data) => setEditTask({
-                    taskId: data.taskId || null,
-                    taskName: data.taskName || '',
-                    taskDescription: data.taskDescription || '',
-                    taskNote: data.taskNote || 'none',
-                    totalDuration: data.totalDuration || 0,
-                    workDuration: data.workDuration || 0,
-                    breakTime: data.breakTime || 0,
-                    startDate: data.startDate || '',
-                    endDate: data.endDate || '',
-                }))
-                .catch((error) => console.error('Failed to load task info:', error))
-                .finally(() => setIsLoading(false))
-        }
-    }, [selectedTaskId])
+    // useEffect(() => {
+    //     if (selectedTaskId) {
+    //         setIsLoading(true)
+    //         GetTaskById(selectedTaskId)
+    //             .then((data) => setEditTask({
+    //                 taskId: data.taskId || null,
+    //                 taskName: data.taskName || '',
+    //                 taskDescription: data.taskDescription || '',
+    //                 taskNote: data.taskNote || 'none',
+    //                 totalDuration: data.totalDuration || 0,
+    //                 workDuration: data.workDuration || 0,
+    //                 breakTime: data.breakTime || 0,
+    //                 startDate: data.startDate || '',
+    //                 endDate: data.endDate || '',
+    //             }))
+    //             .catch((error) => console.error('Failed to load task info:', error))
+    //             .finally(() => setIsLoading(false))
+    //     }
+    // }, [selectedTaskId])
 
-    const handleChange = (e) => {
-        const { id, value } = e.target
-        setEditTask((prev) => ({
-            ...prev,
-            [id]: value,
-        }))
-    }
+    // const handleChange = (e) => {
+    //     const { id, value } = e.target
+    //     setEditTask((prev) => ({
+    //         ...prev,
+    //         [id]: value,
+    //     }))
+    // }
 
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase()
         setSearchTerm(term)
-        if (taskData) {
-            const filtered = taskData.filter(
-                (task) =>
-                    task.taskId.toString().includes(term) ||
-                    task.taskName.toLowerCase().includes(term) ||
-                    task.taskTypeName.toLowerCase().includes(term)
+        if (challengeData) {
+            const filtered = challengeData.filter(
+                (challenge) =>
+                    challenge.challengeId.toString().includes(term) ||
+                    challenge.challengeName.toLowerCase().includes(term)
             )
-            setFilteredTasks(filtered)
+            setFilteredChallenges(filtered)
         }
     }
 
-    // const handleClick = (taskId) => {
-    //     setOpenStates((prev) => ({ ...prev, [taskId]: true }))
-    // }
+    const [challengeTypes, setChallengeTypes] = useState([])
+    useEffect(() => {
+        const fetchChallengeTypes = async () => {
+            try {
+                const response = await GetAllChallengeTypes()
+                setChallengeTypes(response)
+            } catch (error) {
+                console.error('Failed to fetch challenge types:', error)
+            }
+        }
 
-    // const handleMouseLeave = (taskId) => {
-    //     setOpenStates((prev) => ({ ...prev, [taskId]: false }))
-    // }
+        fetchChallengeTypes()
+    }, [])
 
-    if (!filteredTasks) {
+    if (!filteredChallenges) {
         return <div>Loading...</div>
     }
 
@@ -98,52 +104,52 @@ const TasksTable = () => {
         return <div>{error.message}</div>
     }
 
-    const handleEditClick = (taskId) => {
-        setSelectedTaskId(taskId)
-        setOpenEditTask(true)
-    }
+    // const handleEditClick = (taskId) => {
+    //     setSelectedTaskId(taskId)
+    //     setOpenEditTask(true)
+    // }
 
-    const handleSaveChanges = async () => {
-        if (selectedTaskId) {
-            setIsLoading(true)
-            try {
-                await UpdateTaskById(selectedTaskId, editTask)
-                toast.success('The information has been updated successfully!')
+    // const handleSaveChanges = async () => {
+    //     if (selectedTaskId) {
+    //         setIsLoading(true)
+    //         try {
+    //             await UpdateTaskById(selectedTaskId, editTask)
+    //             toast.success('The information has been updated successfully!')
 
-                setTimeout(() => {
-                    window.location.reload()
-                }, 3000)
-            } catch (error) {
-                console.log('Failed to update task:', error)
-                toast.error('Update information failed!')
-            } finally {
-                setIsLoading(false)
-            }
-        }
-    }
+    //             setTimeout(() => {
+    //                 window.location.reload()
+    //             }, 3000)
+    //         } catch (error) {
+    //             console.log('Failed to update task:', error)
+    //             toast.error('Update information failed!')
+    //         } finally {
+    //             setIsLoading(false)
+    //         }
+    //     }
+    // }
 
-    const handleDeleteClick = (taskId) => {
-        setSelectedTaskId(taskId)
-        setOpenDeleteTask(true)
-    }
+    // const handleDeleteClick = (taskId) => {
+    //     setSelectedTaskId(taskId)
+    //     setOpenDeleteTask(true)
+    // }
 
-    const handleDeleteTask = async () => {
-        if (selectedTaskId) {
-            setIsLoading(true)
-            try {
-                await DeleteTaskById(selectedTaskId)
-                toast.success('Task has been deleted successfully!')
-                setTimeout(() => {
-                    window.location.reload()
-                }, 3000)
-            } catch (error) {
-                console.log('Failed to delete task:', error)
-                toast.error('Delete task failed!')
-            } finally {
-                setIsLoading(false)
-            }
-        }
-    }
+    // const handleDeleteTask = async () => {
+    //     if (selectedTaskId) {
+    //         setIsLoading(true)
+    //         try {
+    //             await DeleteTaskById(selectedTaskId)
+    //             toast.success('Task has been deleted successfully!')
+    //             setTimeout(() => {
+    //                 window.location.reload()
+    //             }, 3000)
+    //         } catch (error) {
+    //             console.log('Failed to delete task:', error)
+    //             toast.error('Delete task failed!')
+    //         } finally {
+    //             setIsLoading(false)
+    //         }
+    //     }
+    // }
 
     return (
         <motion.div
@@ -153,11 +159,11 @@ const TasksTable = () => {
             transition={{ delay: 0.4 }}
         >
             <div className='flex justify-between items-center mb-6'>
-                <h2 className='text-xl font-semibold text-gray-100'>Task List <p className='text-sm font-light text-gray-500'>(Click for detail)</p></h2>
+                <h2 className='text-xl font-semibold text-gray-100'>Challenge List <p className='text-sm font-light text-gray-500'>(Click for detail)</p></h2>
                 <div className='relative'>
                     <input
                         type='text'
-                        placeholder='Search tasks...'
+                        placeholder='Search challenges...'
                         className='bg-gray-700 text-white placeholder-gray-400 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
                         value={searchTerm}
                         onChange={handleSearch}
@@ -170,101 +176,96 @@ const TasksTable = () => {
                 <table className='min-w-full divide-y divide-gray-700'>
                     <thead>
                         <tr>
-                            <th className='px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Task ID
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                                Challenge ID
                             </th>
-                            <th className='px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Name
                             </th>
-                            <th className='px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Type
                             </th>
-                            <th className='px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                User Tree
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                                Reward
                             </th>
-                            <th className='px-2 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Total Duration (mins)
-                            </th>
-                            <th className='px-2 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Work Duration (mins)
-                            </th>
-                            <th className='px-2 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Break Time (mins)
-                            </th>
-                            <th className='px-2 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Status
                             </th>
                             <th className='px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Actions
+                                Created At
                             </th>
+                            <th className='px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                                Updated At
+                            </th>
+                            {/* <th className='px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
+                                Actions
+                            </th> */}
                         </tr>
                     </thead>
 
                     <tbody className='divide-y divide-gray-700'>
-                        {filteredTasks.map((task) => (
-                            <Popover key={task.taskId} open={openStates[task.taskId]}>
+                        {filteredChallenges.map((challenge) => (
+                            <Popover key={challenge.challengeId} open={openStates[challenge.challengeId]}>
                                 <PopoverTrigger asChild >
                                     <div style={{ display: 'contents' }}>
                                         <motion.tr
                                             className='hover:bg-gray-700 rounded-lg transition duration-200 cursor-pointer'
-                                            key={task.taskId}
+                                            key={challenge.challengeId}
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             transition={{ duration: 0.3 }}
                                         >
-                                            <td className='px-5 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {task.taskId}
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                                {challenge.challengeId}
                                             </td>
-                                            <td className='px-5 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {task.taskName}
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                                {challenge.challengeName}
                                             </td>
-                                            <td className='px-5 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {task.taskTypeName}
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                                {challengeTypes.find((type) => type.challengeTypeId === challenge.challengeTypeId)?.challengeTypeName || 'Unknown'}
                                             </td>
-                                            <td className='px-5 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {task.userTreeName}
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                                {challenge.reward} coins
                                             </td>
-                                            <td className='px-2 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {task.totalDuration}
-                                            </td>
-                                            <td className='px-2 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {task.workDuration}
-                                            </td>
-                                            <td className='px-2 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {task.breakTime}
-                                            </td>
-                                            <td className='px-2 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span
                                                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    ${task.status === 0 ? 'bg-gray-200 text-gray-800'
-                                                        : task.status === 1 ? 'bg-blue-200 text-blue-800'
-                                                            : task.status === 2 ? 'bg-yellow-200 text-yellow-800'
-                                                                : task.status === 3 ? 'bg-green-200 text-green-800'
-                                                                    : task.status === 4 ? 'bg-pink-200 text-pink-800'
-                                                                        : task.status === 5 ? 'bg-purple-200 text-purple-800'
-                                                                            : 'bg-red-200 text-red-800'
+                                                    ${challenge.status === 0 ? 'bg-gray-200 text-gray-800'
+                                                        : challenge.status === 1 ? 'bg-blue-200 text-blue-800'
+                                                            : challenge.status === 2 ? 'bg-green-200 text-green-800'
+                                                                : 'bg-red-200 text-red-800'
                                                     }`}
                                                 >
-                                                    {task.status === 0 ? 'Not Started'
-                                                        : task.status === 1 ? 'In Progress'
-                                                            : task.status === 2 ? 'Paused'
-                                                                : task.status === 3 ? 'Completed'
-                                                                    : task.status === 4 ? 'Failed'
-                                                                        : task.status === 5 ? 'Overdue'
-                                                                            : 'Cancelled'}
+                                                    {challenge.status === 0 ? 'Not Started'
+                                                        : challenge.status === 1 ? 'Active'
+                                                            : challenge.status === 2 ? 'Completed'
+                                                                : 'Cancelled'}
                                                 </span>
                                             </td>
                                             <td className='px-5 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                                {/* <button 
-                                                    className='text-indigo-400 hover:text-indigo-300 mr-2'
-                                                    onClick={() => handleClick(task.taskId)}
-                                                    onMouseLeave={() => handleMouseLeave(task.taskId)}
-                                                >
-                                                    <Eye size={18}/>
-                                                </button> */}
-                                                <button onClick={() => handleEditClick(task.taskId)} className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>Edit</button>
-                                                <button onClick={() => handleDeleteClick(task.taskId)} className='text-red-400 hover:text-red-300 bg-transparent'>Delete</button>
+                                                {new Date(challenge.createdAt).toLocaleDateString('en-US', {
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    year: 'numeric',
+                                                    hour: 'numeric',
+                                                    minute: 'numeric',
+                                                    second: 'numeric',
+                                                })}
                                             </td>
+                                            <td className='px-5 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                                {new Date(challenge.updatedAt).toLocaleDateString('en-US', {
+                                                    month: 'short',
+                                                    day: 'numeric',
+                                                    year: 'numeric',
+                                                    hour: 'numeric',
+                                                    minute: 'numeric',
+                                                    second: 'numeric',
+                                                })}
+                                            </td>
+                                            {/* <td className='px-5 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                                <button onClick={() => handleEditClick(challenge.challengeId)} className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>Edit</button>
+                                                <button onClick={() => handleDeleteClick(challenge.challengeId)} className='text-red-400 hover:text-red-300 bg-transparent'>Delete</button>
+                                            </td> */}
                                         </motion.tr>
                                     </div>
                                 </PopoverTrigger>
@@ -275,25 +276,30 @@ const TasksTable = () => {
                                     align='start'
                                     style={{ position: 'fixed', right: '-1460px', top: '20px' }}
                                 >
-                                    <p className='text-gray-200 font-semibold'>{task.taskName}</p>
+                                    <p className='text-gray-200 font-semibold'>{challenge.challengeName}</p>
                                     <p className='text-gray-400 text-left text-sm'>
-                                        {task.taskDescription}
+                                        {challenge.description}
                                     </p>
+
                                     <p className='text-gray-400 text-left text-sm'>
-                                        <p className='text-gray-200 text-sm font-bold mr-1'>Focus method:</p>
-                                        {task.focusMethodName === '' ? 'none' : task.focusMethodName === null ? 'none' : task.focusMethodName}
+                                        {challenge.tasks.length === 0 ? (
+                                            <p className='text-gray-200 text-sm font-bold mr-1'>No tasks available</p>
+                                        ) : (
+                                            <>
+                                                <p className='text-gray-200 text-sm font-bold mr-1'>Tasks: </p>
+                                                {challenge.tasks.map((task) => (
+                                                    <ul key={task.taskId} className='list-disc list-inside'>
+                                                        <li className='text-gray-400 text-sm'>{task.taskName}</li>
+                                                    </ul>
+                                                ))}
+                                            </>
+                                        )}
+
                                     </p>
-                                    <p className='text-gray-400 text-left text-sm'>
-                                        <p className='text-gray-200 text-sm font-bold mr-1'>Task note:</p>
-                                        {task.taskNote === '' ? 'none' : task.taskNote === null ? 'none' : task.taskNote}
-                                    </p>
-                                    <p className='text-gray-400 text-left text-sm'>
-                                        <p className='text-gray-200 text-sm font-bold mr-1'>Result:</p>
-                                        {task.taskResult === '' ? 'none' : task.taskResult === null ? 'none' : task.taskResult}
-                                    </p>
+
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Start Date: </p>
-                                        {new Date(task.startDate).toLocaleDateString('en-US', {
+                                        {new Date(challenge.startDate).toLocaleDateString('en-US', {
                                             month: 'short',
                                             day: 'numeric',
                                             year: 'numeric',
@@ -304,7 +310,7 @@ const TasksTable = () => {
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>End Date: </p>
-                                        {new Date(task.endDate).toLocaleDateString('en-US', {
+                                        {new Date(challenge.endDate).toLocaleDateString('en-US', {
                                             month: 'short',
                                             day: 'numeric',
                                             year: 'numeric',
@@ -320,7 +326,7 @@ const TasksTable = () => {
                 </table>
             </div>
 
-            <Dialog open={openEditTask} onOpenChange={setOpenEditTask}>
+            {/* <Dialog open={openEditTask} onOpenChange={setOpenEditTask}>
                 <DialogContent className='dialog-overlay bg-gray-800 text-white'>
                     <DialogHeader>
                         <DialogTitle>Edit Task</DialogTitle>
@@ -471,9 +477,9 @@ const TasksTable = () => {
                     </Tabs>
 
                 </DialogContent>
-            </Dialog>
+            </Dialog> */}
         </motion.div>
     )
 }
 
-export default TasksTable
+export default ChallengesTable
