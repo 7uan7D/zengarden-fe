@@ -1,28 +1,17 @@
 // MusicPlayerController.js
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Play,
+  Pause,
+  SkipBack,
+  SkipForward,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import "../musicPlayerController/index.css";
-
-// Danh sách nhạc cố định
-const playlist = [
-  {
-    title: "Particle House - Moon and Tide",
-    url: "https://rr3---sn-npoe7nsl.googlevideo.com/videoplayback?expire=1743360688&ei=UD7pZ-GtCsqMvdIPnKXGwAg&ip=2a09%3Abac5%3A3262%3Abe%3A%3A13%3A29c&id=o-AHjzkAIWolHBszly2WnmI_McOqJ-YjYVvpAsmwAHH9C4&itag=140&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&bui=AccgBcPwkd2-0JrzbiiLZFhWd79QorXf0a5Arzn0wOsAZMGUa8bGA2A5sLlqliMI8amABmz0fkT1BD0a&vprv=1&svpuc=1&mime=audio%2Fmp4&ns=X8CkiwRhennTL0yHGKZUYzgQ&rqh=1&gir=yes&clen=3064197&dur=189.265&lmt=1741390531267258&keepalive=yes&lmw=1&c=TVHTML5&sefc=1&txp=5308224&n=OophRqiclx7t4Q&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cbui%2Cvprv%2Csvpuc%2Cmime%2Cns%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRgIhAMvOya8uDyPwyXy4qYc7QbFC6PIpeXYkXvNq0e2BCu7_AiEA2LChhq8FkZ-MRox-elRluGUlbcOYzKjRId6HH9iiYbM%3D&title=Particle+House+-+Moon+and+Tide&rm=sn-4g5edl7l&rrc=104,80,80&fexp=24350590,24350737,24350827,24350961,24351064,24351147,24351173,24351229,24351283,24351353,24351398,24351415,24351421,24351422,24351423,24351470,24351526,24351527,24351532,24351534&req_id=8329a503d180a3ee&ipbypass=yes&cm2rm=sn-8pxuuxa-nbozr7z,sn-8pxuuxa-nbo6k7s&redirect_counter=3&cms_redirect=yes&cmsv=e&met=1743339097,&mh=JS&mip=171.250.64.112&mm=30&mn=sn-npoe7nsl&ms=nxu&mt=1743338679&mv=m&mvi=3&pl=21&rms=nxu,au&lsparams=ipbypass,met,mh,mip,mm,mn,ms,mv,mvi,pl,rms&lsig=AFVRHeAwRgIhAOd2p58XR7-I2x7LLzN0mWTIRtK4VodiBIHo9FtwcYIWAiEAmr_cjGunGG58WQvHrXuBInJwuMMd7bW-QX1p1Elx2o4%3D",
-  },
-  {
-    title: "Relaxing Nature Sounds",
-    url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-  },
-  {
-    title: "Darkest Dungeon 2 OST - Hunger of the Beast Clan Theme",
-    url: "https://rr5---sn-npoe7nz7.googlevideo.com/videoplayback?expire=1743361028&ei=pD_pZ-qWL9vUsfIP6u2x2Ag&ip=104.28.203.58&id=o-AMAwW-jTRcLJgp0rFbh0_Qzn7Rb1xnKzgogcWgT5Y1uK&itag=140&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&rms=au%2Cau&bui=AccgBcNwSuI-jul_b0XE4XH88F3nvB4v19panNQWs4oMW-04_saddQ4qzS7mbsUM1kUi7ESDBqY-3DOZ&vprv=1&svpuc=1&mime=audio%2Fmp4&ns=UM6wVi3lo7hf2YyFMDu5BIcQ&rqh=1&gir=yes&clen=8407644&dur=519.453&lmt=1739003644294270&keepalive=yes&lmw=1&c=TVHTML5&sefc=1&txp=4432534&n=nowASg2ZS4dH9A&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cbui%2Cvprv%2Csvpuc%2Cmime%2Cns%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRgIhAP77xFxPYugP_5FYn32qBG33dYt_LQytXJE54Qw3qRkCAiEA1vlAYdQiToOZyolDKBeGjhTJ_1y0IwSjehzqRRoY4yI%3D&title=Darkest+Dungeon+II%3A+KINGDOMS+OST+Hunger+of+the+Beast+Clan+%28Beastmen+Combat%29+2025+HQ+Official&redirect_counter=1&rm=sn-vgqess7z&rrc=104&fexp=24350590,24350737,24350827,24350961,24351063,24351146,24351173,24351283,24351353,24351398,24351415,24351423,24351469,24351526,24351528,24351531,24351543&req_id=4c33ea414dc8a3ee&cms_redirect=yes&cmsv=e&ipbypass=yes&met=1743339433,&mh=Pl&mip=171.250.64.112&mm=31&mn=sn-npoe7nz7&ms=au&mt=1743338955&mv=m&mvi=5&pl=21&lsparams=ipbypass,met,mh,mip,mm,mn,ms,mv,mvi,pl,rms&lsig=AFVRHeAwRQIgUl8zdAqsNNyZyqn2a6nalm1zTikChUiAmYBn-Ylf_lkCIQDFN_dKsN-EySsG7T5ihUZPJpJ3glOeSkJWhGRbeOLOYA%3D%3D",
-  },
-  {
-    title: "Vistas - The Beautiful Nothing",
-    url: "https://rr5---sn-npoldn7y.googlevideo.com/videoplayback?expire=1743360409&ei=OT3pZ_jaJfK4kucPyaC64Qg&ip=2directory%3Abac5%3Aa2ff%3A2769%3A%3A3ed%3A74&id=o-ACwrYJl_BkR4sBCT9Whx3j3xcJdq87C_jA8sr68JjqUS&itag=140&source=youtube&requiressl=yes&xpc=EgVo2aDSNQ%3D%3D&bui=AccgBcMZG6mcLxRmrs4cnM09S7paMUfILqKug6GzzN-DdSw6N8cp124zJrsrJ31NbhkHIwhqWW3Edmo9&vprv=1&svpuc=1&mime=audio%2Fmp4&ns=7PYfJgwKjUjU_Kt-k_XVe0IQ&rqh=1&gir=yes&clen=3997962&dur=246.990&lmt=1705890217583658&keepalive=yes&lmw=1&c=TVHTML5&sefc=1&txp=5308224&n=RLmbQ8Ry2jldpA&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cxpc%2Cbui%2Cvprv%2Csvpuc%2Cmime%2Cns%2Crqh%2Cgir%2Cclen%2Cdur%2Clmt&sig=AJfQdSswRQIgRpRGSQf9e4IGkEWo_ndgOP_lr13MfjxgXC3lYpn9VKYCIQDRcUsop9XMvvpkgQ2-oNkOlRqhVQB4QuBAUNpbnIJ0RQ%3D%3D&title=Vistas+-+The+Beautiful+Nothing+%28Official+Video%29&redirect_counter=1&cm2rm=sn-ab5ees7s&rrc=80&fexp=24350590,24350737,24350827,24350961,24351064,24351146,24351173,24351283,24351353,24351398,24351415,24351423,24351469,24351527&req_id=4348b20c49e1a3ee&cms_redirect=yes&cmsv=e&met=1743338820,&mh=wV&mip=171.250.64.112&mm=34&mn=sn-npoldn7y&ms=ltu&mt=1743338689&mv=m&mvi=5&pl=21&rms=ltu,au&lsparams=met,mh,mip,mm,mn,ms,mv,mvi,pl,rms&lsig=AFVRHeAwRQIgVfIjrn77hnaaIeSr-K6-or3JEwf4k4ADalcpIXBg2lECIQDr5pretHSg-uNcb-6QBbuGXa8XhpYSpmUZEPpVsxv39g%3D%3D",
-  },
-];
+import { GetBagItems } from "@/services/apiServices/itemService";
+import parseJwt from "@/services/parseJwt";
 
 // Đối tượng toàn cục quản lý trạng thái âm thanh
 export const globalAudioState = {
@@ -31,10 +20,11 @@ export const globalAudioState = {
   currentIndex: 0,
   setPlaying: null,
   setCurrentIndex: null,
+  musicList: [],
 };
 
 // Hàm tải và phát một bài hát mới
-const loadAudioPlayer = (index, setPlaying, setCurrentIndex) => {
+const loadAudioPlayer = (index, setPlaying, setCurrentIndex, playlist) => {
   if (globalAudioState.audio) {
     globalAudioState.audio.pause();
     globalAudioState.audio = null;
@@ -78,34 +68,69 @@ const handleTogglePlay = (setPlaying) => {
       setPlaying(true);
     }
   } else {
+    // ✅ THÊM playlist vào
     loadAudioPlayer(
       globalAudioState.currentIndex,
       setPlaying,
-      globalAudioState.setCurrentIndex
+      globalAudioState.setCurrentIndex,
+      globalAudioState.musicList // thêm dòng này
     );
   }
 };
 
 // Hàm chuyển về bài trước
 const handlePrevious = (setPlaying, setCurrentIndex) => {
+  const list = globalAudioState.musicList;
   const newIndex =
-    (globalAudioState.currentIndex - 1 + playlist.length) % playlist.length;
-  loadAudioPlayer(newIndex, setPlaying, setCurrentIndex);
+    (globalAudioState.currentIndex - 1 + list.length) % list.length;
+  loadAudioPlayer(newIndex, setPlaying, setCurrentIndex, list);
 };
 
 // Hàm chuyển sang bài tiếp theo
 const handleNext = (setPlaying, setCurrentIndex) => {
-  const newIndex = (globalAudioState.currentIndex + 1) % playlist.length;
-  loadAudioPlayer(newIndex, setPlaying, setCurrentIndex);
+  const list = globalAudioState.musicList;
+  const newIndex = (globalAudioState.currentIndex + 1) % list.length;
+  loadAudioPlayer(newIndex, setPlaying, setCurrentIndex, list);
 };
 
-// Component điều khiển cơ bản với nút thu gọn và hiệu ứng chữ chạy ngang
 export default function MusicPlayerController({
   positionClass = "relative",
   setPlaying,
   setCurrentIndex,
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [musicList, setMusicList] = useState([]); // ✅ đúng vị trí
+  useEffect(() => {
+    const fetchMusic = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const decoded = parseJwt(token);
+        const bagId = decoded.sub;
+
+        const items = await GetBagItems(bagId);
+        const ownedMusicItems = items.filter(
+          (item) => item.item?.type === 4 && item.quantity > 0
+        );
+
+        const ownedPlaylist = ownedMusicItems.map((item) => ({
+          title: item.item.name,
+          url: item.item.itemDetail.mediaUrl,
+        }));
+
+        setMusicList(ownedPlaylist);
+        globalAudioState.musicList = ownedPlaylist;
+      } catch (err) {
+        console.error("Lỗi tải nhạc:", err);
+      }
+    };
+
+    fetchMusic();
+  }, []); // ✅ useEffect hợp lệ ở đây
+
+  useEffect(() => {
+    globalAudioState.setPlaying = setPlaying;
+    globalAudioState.setCurrentIndex = setCurrentIndex;
+  }, [setPlaying, setCurrentIndex]);
 
   return (
     <div
@@ -168,7 +193,8 @@ export default function MusicPlayerController({
               className="text-xs text-gray-600 mt-1 whitespace-nowrap animate-marquee"
               style={{ display: "inline-block" }}
             >
-              {playlist[globalAudioState.currentIndex]?.title || "No song playing"}
+              {musicList[globalAudioState.currentIndex]?.title ||
+                "No song playing"}
             </p>
           </div>
         </div>
@@ -197,11 +223,52 @@ export default function MusicPlayerController({
 }
 
 // Component đầy đủ với danh sách phát (có thể thu gọn/mở rộng)
-export function FullMusicPlayer({ setPlaying, setCurrentIndex, playlistHeight = "max-h-64", playlistOverflow = "overflow-y-auto" }) {
+export function FullMusicPlayer({
+  setPlaying,
+  setCurrentIndex,
+  musicList: externalMusicList,
+  playlistHeight = "max-h-64",
+  playlistOverflow = "overflow-y-auto",
+  maxVisibleTracks = 4,
+}) {
+  const [musicList, setMusicList] = useState(externalMusicList || []);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Số lượng bài hát hiển thị: 1 khi thu gọn, tối đa 4 khi mở rộng
-  const visibleTracks = isExpanded ? playlist.slice(0, 4) : [playlist[globalAudioState.currentIndex]];
+  useEffect(() => {
+    console.log("FullMusicPlayer mounted");
+
+    const fetchMusic = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const decoded = parseJwt(token);
+        const bagId = decoded.sub;
+
+        const items = await GetBagItems(bagId);
+        const ownedMusicItems = items.filter(
+          (item) => item.item?.type === 4 && item.quantity > 0
+        );
+
+        const ownedPlaylist = ownedMusicItems.map((item) => ({
+          title: item.item.name,
+          url: item.item.itemDetail.mediaUrl,
+        }));
+
+        setMusicList(ownedPlaylist);
+        globalAudioState.musicList = ownedPlaylist;
+      } catch (err) {
+        console.error("Lỗi tải nhạc:", err);
+      }
+    };
+
+    // Nếu chưa có danh sách nhạc thì fetch
+    if (!externalMusicList || externalMusicList.length === 0) {
+      fetchMusic();
+    }
+  }, []);
+
+  const visibleTracks = isExpanded
+    ? musicList.slice(0, maxVisibleTracks)
+    : [musicList[globalAudioState.currentIndex]];
 
   return (
     <div className="space-y-4">
@@ -250,13 +317,13 @@ export function FullMusicPlayer({ setPlaying, setCurrentIndex, playlistHeight = 
                   : "hover:bg-gray-100"
               }`}
               onClick={() =>
-                loadAudioPlayer(index, setPlaying, setCurrentIndex)
+                loadAudioPlayer(index, setPlaying, setCurrentIndex, musicList)
               }
             >
-              {track.title}
+              {/* {track.title} */}
             </li>
           ))}
-          {isExpanded && playlist.length > 4 && (
+          {isExpanded && musicList.length > maxVisibleTracks && (
             <li className="text-sm text-gray-500 italic">
               Scroll to see more...
             </li>

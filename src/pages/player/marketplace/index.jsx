@@ -21,6 +21,9 @@ import { GetUserInfo } from "@/services/apiServices/userService";
 import parseJwt from "@/services/parseJwt";
 import { toast } from "sonner";
 import TradeDialog from "./TradeDialog";
+import { GetAllPackages } from "@/services/apiServices/packageService";
+import { PayPackage } from "@/services/apiServices/packageService";
+import { GetAllTransaction } from "@/services/apiServices/transactionService";
 
 // Danh sách các danh mục, thêm "Wallet"
 const categories = [
@@ -58,10 +61,34 @@ const packageData = [
 
 // Dữ liệu giả lập cho Transaction History
 const transactionHistory = [
-  { id: 1, date: "2025-04-01", description: "Purchased Oak Seed", amount: -10, status: "Completed" },
-  { id: 2, date: "2025-04-03", description: "Reward for Task Completion", amount: 5, status: "Completed" },
-  { id: 3, date: "2025-04-05", description: "Purchased Watering Can", amount: -15, status: "Completed" },
-  { id: 4, date: "2025-04-07", description: "Daily Login Bonus", amount: 2, status: "Completed" },
+  {
+    id: 1,
+    date: "2025-04-01",
+    description: "Purchased Oak Seed",
+    amount: -10,
+    status: "Completed",
+  },
+  {
+    id: 2,
+    date: "2025-04-03",
+    description: "Reward for Task Completion",
+    amount: 5,
+    status: "Completed",
+  },
+  {
+    id: 3,
+    date: "2025-04-05",
+    description: "Purchased Watering Can",
+    amount: -15,
+    status: "Completed",
+  },
+  {
+    id: 4,
+    date: "2025-04-07",
+    description: "Daily Login Bonus",
+    amount: 2,
+    status: "Completed",
+  },
 ];
 
 export default function Marketplace() {
@@ -243,6 +270,77 @@ export default function Marketplace() {
     }
   };
 
+  const [packageData, setPackageData] = useState([]);
+
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        const data = await GetAllPackages();
+        setPackageData(
+          data.map((pkg) => ({
+            ...pkg,
+            coins: pkg.amount,
+            image: "/images/package-icon.png", // hoặc dynamic nếu có
+          }))
+        );
+      } catch (error) {
+        console.error("Failed to fetch packages:", error);
+      }
+    };
+
+    fetchPackages();
+  }, []);
+
+  const handleBuy = async (packageId) => {
+    const token = localStorage.getItem("token");
+    const decoded = parseJwt(token);
+
+    if (!decoded) {
+      toast.error("Vui lòng đăng nhập lại.");
+      return;
+    }
+
+    const userId = parseInt(decoded.sub);
+    const walletId = userId;
+
+    try {
+      const result = await PayPackage(userId, walletId, packageId);
+
+      const checkoutUrl = result?.clientSecret?.checkoutUrl;
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl; // 🔁 Redirect tới Stripe
+      } else {
+        toast.error("Không lấy được đường dẫn thanh toán.");
+      }
+    } catch (error) {
+      toast.error("Lỗi khi thanh toán.");
+    }
+  };
+
+  const [transactionHistory, setTransactionHistory] = useState([]);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const parsedToken = parseJwt(token);
+
+        const userId = parsedToken?.sub;
+
+        const allTransactions = await GetAllTransaction();
+        const userTransactions = allTransactions.filter(
+          (tx) => String(tx.userId) === String(userId)
+        );
+
+        setTransactionHistory(userTransactions);
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <div className="flex flex-1 pt-[80px]">
@@ -395,26 +493,42 @@ export default function Marketplace() {
                   <TabsContent key="Wallet" value="Wallet">
                     <Card>
                       <CardContent className="p-6">
-                        <h2 className="text-xl font-semibold mb-4">Transaction History</h2>
+                        <h2 className="text-xl font-semibold mb-4">
+                          Transaction History
+                        </h2>
                         <ul className="space-y-4 max-h-[70vh] overflow-y-auto">
                           {transactionHistory.map((transaction) => (
                             <li
-                              key={transaction.id}
+                              key={transaction.transactionId}
                               className="flex justify-between items-center p-3 bg-gray-100 rounded-lg"
                             >
                               <div className="flex-1">
-                                <p className="font-medium text-gray-800">{transaction.description}</p>
-                                <p className="text-sm text-gray-600">{transaction.date}</p>
+                                <p className="font-medium text-gray-800">
+                                  {transaction.paymentMethod} -{" "}
+                                  {transaction.transactionRef}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  {new Date(
+                                    transaction.transactionTime
+                                  ).toLocaleString()}
+                                </p>
                               </div>
                               <div className="flex items-center gap-4">
                                 <span
-                                  className={`font-medium ${
-                                    transaction.amount > 0 ? "text-green-600" : "text-red-600"
+                                  className={`text-sm font-medium px-2 py-1 rounded-full ${
+                                    transaction.status === 1
+                                      ? "bg-green-100 text-green-700"
+                                      : transaction.status === 2
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-yellow-100 text-yellow-700"
                                   }`}
                                 >
-                                  {transaction.amount > 0 ? "+" : ""}{transaction.amount} Coins
+                                  {transaction.status === 1
+                                    ? "Success"
+                                    : transaction.status === 2
+                                    ? "Cancelled"
+                                    : "Pending"}
                                 </span>
-                                <span className="text-sm text-gray-600">{transaction.status}</span>
                               </div>
                             </li>
                           ))}
@@ -446,7 +560,6 @@ export default function Marketplace() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3, delay: index * 0.1 }}
                         >
-                          {/* Card của Package */}
                           <Card className="relative overflow-hidden">
                             <CardContent className="flex flex-col items-center p-4">
                               <div className="flex items-center mb-2">
@@ -460,17 +573,18 @@ export default function Marketplace() {
                                 />
                               </div>
                               <img
-                                src={pkg.image}
+                                src={"/images/default-package.png"}
                                 alt={`Package ${pkg.price}`}
                                 className="w-20 h-20 object-cover rounded-lg mb-2"
-                                onError={(e) => {
-                                  e.target.src = "/images/default-package.png";
-                                }}
                               />
                               <p className="font-semibold text-lg mb-2">
-                                {pkg.price}
+                                ${pkg.price}
                               </p>
-                              <Button className="mt-2" variant="outline">
+                              <Button
+                                className="mt-2"
+                                variant="outline"
+                                onClick={() => handleBuy(pkg.packageId)}
+                              >
                                 <ShoppingCart className="mr-2 h-4 w-4" /> Buy
                               </Button>
                             </CardContent>
