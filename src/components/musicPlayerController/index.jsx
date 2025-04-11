@@ -134,9 +134,8 @@ export default function MusicPlayerController({
 
   return (
     <div
-      className={`flex items-center gap-2 bg-white rounded-lg shadow-md border border-gray-200 mt-20 ${
-        isCollapsed ? "w-10 p-2" : "w-64 p-3"
-      } ${positionClass}`}
+      className={`flex items-center gap-2 bg-white rounded-lg shadow-md border border-gray-200 mt-20 ${isCollapsed ? "w-10 p-2" : "w-64 p-3"
+        } ${positionClass}`}
     >
       {/* Nút thu gọn/mở rộng */}
       <Button
@@ -265,10 +264,14 @@ export function FullMusicPlayer({
       fetchMusic();
     }
   }, []);
-
+  //Sửa logic của visibleTracks để kiểm tra musicList và globalAudioState.currentIndex
+  //Khi !isExpanded, chỉ lấy musicList[globalAudioState.currentIndex] nếu musicList không rỗng và currentIndex hợp lệ.
+  //Nếu không, trả về mảng rỗng để tránh lỗi.
   const visibleTracks = isExpanded
     ? musicList.slice(0, maxVisibleTracks)
-    : [musicList[globalAudioState.currentIndex]];
+    : musicList.length > 0 && globalAudioState.currentIndex >= 0 && globalAudioState.currentIndex < musicList.length
+      ? [musicList[globalAudioState.currentIndex]]
+      : [];
 
   return (
     <div className="space-y-4">
@@ -307,22 +310,28 @@ export function FullMusicPlayer({
             {isExpanded ? "Collapse" : "Expand"}
           </Button>
         </div>
+        {/* Thêm kiểm tra Track để đảm bảo rằng track không phải là undefined khi render */}
         <ul className={`space-y-2 ${playlistHeight} ${playlistOverflow}`}>
-          {visibleTracks.map((track, index) => (
-            <li
-              key={index}
-              className={`text-sm p-2 rounded cursor-pointer ${
-                globalAudioState.currentIndex === index
-                  ? "bg-gray-300 border-2 border-gray-500"
-                  : "hover:bg-gray-100"
-              }`}
-              onClick={() =>
-                loadAudioPlayer(index, setPlaying, setCurrentIndex, musicList)
-              }
-            >
-              {/* {track.title} */}
-            </li>
-          ))}
+          {visibleTracks.length > 0 ? (
+            visibleTracks.map((track, index) => (
+              track ? (
+                <li
+                  key={index}
+                  className={`text-sm p-2 rounded cursor-pointer ${globalAudioState.currentIndex === index
+                      ? "bg-gray-300 border-2 border-gray-500"
+                      : "hover:bg-gray-100"
+                    }`}
+                  onClick={() =>
+                    loadAudioPlayer(index, setPlaying, setCurrentIndex, musicList)
+                  }
+                >
+                  {track.title || "Unknown Track"}
+                </li>
+              ) : null
+            ))
+          ) : (
+            <li className="text-sm text-gray-500 italic">No tracks available</li>
+          )}
           {isExpanded && musicList.length > maxVisibleTracks && (
             <li className="text-sm text-gray-500 italic">
               Scroll to see more...

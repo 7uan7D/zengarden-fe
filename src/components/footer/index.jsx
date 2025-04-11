@@ -11,10 +11,16 @@ export default function Footer() {
             Contact
           </h3>
           <div className="text-sm space-y-2">
-            <a className="flex items-center gap-2 hover:text-[#ffffff] transition-colors">
-            <SiGmail className="text-[#f9af44]" /> trungtuanduong007@gmail.com
+            <a
+              href="mailto:trungtuanduong007@gmail.com"
+              className="flex items-center gap-2 hover:text-[#f9af44] transition-colors duration-200"
+            >
+              <SiGmail className="text-[#f9af44]" /> trungtuanduong007@gmail.com
             </a>
-            <a className="flex items-center gap-2 hover:text-[#f9af44] transition-colors duration-200">
+            <a
+              href="tel:0123456789"
+              className="flex items-center gap-2 hover:text-[#f9af44] transition-colors duration-200"
+            >
               <span className="text-[#f9af44]">📞</span> 0123456789
             </a>
             <a
@@ -58,7 +64,7 @@ export default function Footer() {
           </nav>
         </div>
 
-        {/* Cột 4 - Support (đã cập nhật) */}
+        {/* Cột 4 - Support */}
         <div>
           <h3 className="text-xl font-bold mb-3 border-b-2 border-[#f9af44] pb-1">
             Support
@@ -79,7 +85,7 @@ export default function Footer() {
               Report a Bug
             </a>
             <a
-              href="https://docs.google.com/forms/d/e/1FAIpQLSc1CSGBD7g4reaf99yeT85JNw2W8ylNqtCYfBJQ3xoeSN_NvA/viewform?usp=dialog" // GG Form - chưa hoàn thiện
+              href="https://docs.google.com/forms/d/e/1FAIpQLSc1CSGBD7g4reaf99yeT85JNw2W8ylNqtCYfBJQ3xoeSN_NvA/viewform?usp=dialog"
               target="_blank"
               rel="noopener noreferrer"
               className="block hover:text-[#f9af44] transition-colors duration-200"
@@ -90,8 +96,16 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 mt-8 text-center text-xs opacity-70 border-t border-[#ffffff33] pt-4">
-        © {new Date().getFullYear()} ZenGarden. All rights reserved.
+      <div className="max-w-6xl mx-auto px-6 mt-8 flex justify-between items-center text-xs border-t border-[#ffffff33] pt-4">
+        <div className="text-center flex-1 opacity-70">
+          © {new Date().getFullYear()} ZenGarden. All rights reserved.
+        </div>
+        <a
+          href="/policy"
+          className="text-right hover:text-[#f9af44] transition-colors duration-200"
+        >
+          Policy
+        </a>
       </div>
     </footer>
   );
