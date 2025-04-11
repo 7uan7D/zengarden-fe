@@ -46,6 +46,7 @@ import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import { StartTask } from "@/services/apiServices/taskService";
 import { PauseTask } from "@/services/apiServices/taskService";
 import { CompleteTask } from "@/services/apiServices/taskService";
+import { GetBagItems } from "@/services/apiServices/itemService";
 import "../task/index.css";
 
 // Component con để chọn ngày và giờ cho task
@@ -908,6 +909,28 @@ export default function TaskPage() {
     ? (treeExp.totalXp / (treeExp.totalXp + treeExp.xpToNextLevel)) * 100
     : 0;
 
+  const [equippedItems, setEquippedItems] = useState([]);
+
+  useEffect(() => {
+    const fetchEquippedItems = async () => {
+      const token = localStorage.getItem("token");
+      const payload = parseJwt(token);
+      const bagId = payload?.sub;
+
+      if (!bagId) return;
+
+      try {
+        const items = await GetBagItems(bagId);
+        const filtered = items.filter((item) => item.isEquipped);
+        setEquippedItems(filtered);
+      } catch (err) {
+        console.error("Failed to fetch bag items:", err);
+      }
+    };
+
+    fetchEquippedItems();
+  }, []);
+
   // Giao diện chính của TaskPage
   return (
     <motion.div
@@ -1142,14 +1165,27 @@ export default function TaskPage() {
                   <span className="text-sm font-medium text-gray-700">
                     Equipped Items:
                   </span>
-                  {[1, 2, 3].map((item) => (
-                    <span
-                      key={item}
-                      className="text-xs bg-[#83aa6c] text-white px-3 py-1 rounded-full shadow hover:opacity-90 transition"
-                    >
-                      Item {item}
-                    </span>
-                  ))}
+                  {equippedItems.map((item) => {
+                    const { bagItemId, item: itemData } = item;
+                    const { name, type, itemDetail } = itemData || {};
+                    const mediaUrl = itemDetail?.mediaUrl;
+
+                    return (
+                      <span
+                        key={bagItemId}
+                        className="text-xs bg-[#83aa6c] text-white px-3 py-1 rounded-full shadow hover:opacity-90 transition flex items-center"
+                      >
+                        {type !== 4 && mediaUrl && (
+                          <img
+                            src={mediaUrl}
+                            alt={name}
+                            className="w-5 h-5 mr-2 object-contain"
+                          />
+                        )}
+                        {name}
+                      </span>
+                    );
+                  })}
                 </div>
               </>
             ) : (
