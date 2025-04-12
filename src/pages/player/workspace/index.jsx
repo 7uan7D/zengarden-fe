@@ -211,7 +211,7 @@ export default function Workspace() {
             "Your Space",
             "Rich Text",
             "Watch Videos",
-            "PDF Editor",
+            "PDF Reader",
             "Image Editor",
           ].map((tab) => (
             <Button
@@ -393,12 +393,9 @@ export default function Workspace() {
         )}
 
         {/* Tab PDF Editor */}
-        {activeTab === "PDF Editor" && (
+        {activeTab === "PDF Reader" && (
           <div className="flex-1">
             <Card className="bg-white/80 backdrop-blur-md">
-              <CardHeader>
-                <CardTitle>PDF</CardTitle>
-              </CardHeader>
               <CardContent>
                 <PDFEditor />
               </CardContent>

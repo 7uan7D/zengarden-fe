@@ -62,7 +62,7 @@ export default function PDFEditor() {
   return (
     <Card className="bg-white/80 backdrop-blur-md">
       <CardHeader>
-        <CardTitle>PDF Editor</CardTitle>
+        <CardTitle>PDF Reader</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col items-center">
