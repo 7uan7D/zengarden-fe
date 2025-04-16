@@ -15,12 +15,11 @@ import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import { GetUserConfigByUserId } from "@/services/apiServices/userConfigService";
 import parseJwt from "@/services/parseJwt.js";
 import "../workspace/index.css";
+import Pintura from "@/components/pintura/index.jsx";
+import "@pqina/pintura/pintura.css";
+import { openDefaultEditor } from "@pqina/pintura";
 
-// Thêm import cho Pintura
-import "@pqina/pintura/pintura.css"; // CSS của Pintura
-import { openDefaultEditor } from "@pqina/pintura"; // Hàm mở editor mặc định
-
-// Danh sách cây mẫu trong vườn
+// Danh sách cây
 const gardenTrees = [
   { id: 1, name: "Oak", image: "/tree-1.png" },
   { id: 2, name: "Birch", image: "/tree-2.png" },
@@ -83,7 +82,6 @@ export default function Workspace() {
         const token = localStorage.getItem("token");
         const userId = parseJwt(token)?.sub;
         const config = await GetUserConfigByUserId(userId);
-
         if (config?.backgroundConfig) {
           setBackgroundUrl(config.backgroundConfig);
         }
@@ -91,7 +89,6 @@ export default function Workspace() {
         console.error("❌ Failed to fetch user config:", error);
       }
     };
-
     fetchUserConfig();
   }, []);
 
@@ -187,26 +184,29 @@ export default function Workspace() {
 
   return (
     <div
-      className="min-h-screen flex flex-col p-6 bg-gray-100 mt-20"
+      className="min-h-screen flex flex-col p-6 bg-gradient-to-b from-green-100 to-green-200 mt-20 relative overflow-hidden"
       style={{
         backgroundImage: `url(${backgroundUrl})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
+      {/* Trang trí lá cây */}
+      <div className="absolute top-0 left-0 w-full h-24 bg-[url('/leaf-pattern.png')] bg-repeat-x opacity-30 pointer-events-none" />
+
       {/* Tiêu đề Workspace */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="mb-6"
+        className="mb-6 z-10"
       >
-        <h1 className="text-3xl font-bold text-white drop-shadow-lg">
+        <h1 className="text-4xl font-bold text-green-800 drop-shadow-lg text-center">
           Workspace
         </h1>
 
-        {/* Tabs */}
-        <div className="flex gap-2 mt-4 justify-center">
+        {/* Tabs dạng lá cây */}
+        <div className="flex gap-3 mt-6 justify-center flex-wrap">
           {[
             "Your Space",
             "Rich Text",
@@ -214,153 +214,175 @@ export default function Workspace() {
             "PDF Reader",
             "Image Editor",
           ].map((tab) => (
-            <Button
+            <motion.button
               key={tab}
-              variant={activeTab === tab ? "default" : "outline"}
-              className={`${
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className={`px-4 py-2 rounded-full font-semibold transition-all ${
                 activeTab === tab
-                  ? "bg-green-600 text-white"
-                  : "bg-white/80 text-gray-700 hover:bg-gray-200"
-              } transition-all`}
+                  ? "bg-green-600 text-white shadow-lg"
+                  : "bg-amber-100 text-green-800 border-2 border-green-300 hover:bg-green-200"
+              }`}
               onClick={() => setActiveTab(tab)}
+              style={{
+                clipPath:
+                  "polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%)",
+              }}
             >
               {tab}
-            </Button>
+            </motion.button>
           ))}
         </div>
       </motion.div>
 
       {/* Nội dung của các tab */}
-      <div className="flex flex-1 gap-6">
+      <div className="flex flex-1 flex-col gap-6 z-10">
         {activeTab === "Your Space" && (
           <>
+            {/* Khu vực Task và Music Player */}
+            <div className="flex gap-6">
             {/* Danh sách công việc */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="w-1/3"
-            >
-              <Card className="bg-white/80 backdrop-blur-md">
-                <CardHeader>
-                  <CardTitle>Simple Tasks</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-4">
-                    {tasks.map((task, index) => {
-                      const totalDurationSeconds = task.totalDuration * 60;
-                      const isCurrentTask =
-                        currentTask &&
-                        currentTask.column === "simple" &&
-                        currentTask.taskIndex === index;
-                      const remainingTime = isCurrentTask
-                        ? currentTask.time
-                        : totalDurationSeconds;
-                      return (
-                        <li
-                          key={task.taskId}
-                          className="flex justify-between items-center p-2 bg-gray-100 rounded-lg"
-                        >
-                          <div className="flex-1">
-                            <span
-                              className={`font-medium ${
-                                task.status === 4
-                                  ? "line-through text-gray-500"
-                                  : ""
-                              }`}
-                            >
-                              {task.taskName}
-                            </span>
-                            <div className="text-sm text-gray-600">
-                              Remaining: {formatTime(remainingTime)}
-                              {task.status === 4 && (
-                                <span className="text-sm text-green-600 ml-2">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="w-1/3"
+              >
+                <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-green-700">
+                      Simple Tasks
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-4">
+                      {tasks.map((task, index) => {
+                        const totalDurationSeconds = task.totalDuration * 60;
+                        const isCurrentTask =
+                          currentTask &&
+                          currentTask.column === "simple" &&
+                          currentTask.taskIndex === index;
+                        const remainingTime = isCurrentTask
+                          ? currentTask.time
+                          : totalDurationSeconds;
+                        return (
+                          <li
+                            key={task.taskId}
+                            className="flex justify-between items-center p-2 bg-gray-100 rounded-lg"
+                          >
+                            <div className="flex-1">
+                              <span
+                                className={`font-medium ${
+                                  task.status === 4
+                                    ? "line-through text-gray-500"
+                                    : ""
+                                }`}
+                              >
+                                {task.taskName}
+                              </span>
+                              <div className="text-sm text-gray-600">
+                                Remaining: {formatTime(remainingTime)}
+                                {task.status === 4 && (
+                                  <span className="text-sm text-green-600 ml-2">
+                                    Done
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {task.status === 1 ? (
+                                <Button onClick={() => toggleTimer(index)}>
+                                  Pause
+                                </Button>
+                              ) : task.status === 2 ? (
+                                <Button onClick={() => toggleTimer(index)}>
+                                  Resume
+                                </Button>
+                              ) : task.status === 0 ? (
+                                <Button
+                                  onClick={() => toggleTimer(index)}
+                                  disabled={currentTask !== null}
+                                >
+                                  Start
+                                </Button>
+                              ) : (
+                                <span className="text-sm text-green-600">
                                   Done
                                 </span>
                               )}
                             </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {task.status === 1 ? (
-                              <Button onClick={() => toggleTimer(index)}>
-                                Pause
-                              </Button>
-                            ) : task.status === 2 ? (
-                              <Button onClick={() => toggleTimer(index)}>
-                                Resume
-                              </Button>
-                            ) : task.status === 0 ? (
-                              <Button
-                                onClick={() => toggleTimer(index)}
-                                disabled={currentTask !== null}
-                              >
-                                Start
-                              </Button>
-                            ) : (
-                              <span className="text-sm text-green-600">
-                                Done
-                              </span>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </CardContent>
-              </Card>
-            </motion.div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
 
-            {/* Khu vực vườn cây */}
+              {/* Khu vực trống ở giữa - có thể thêm widget sau này */}
+              <div className="flex-1" />
+
+              {/* Music Player - giữ nguyên kích cỡ gốc */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="w-1/4"
+              >
+                <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-green-700">
+                      Music Player
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FullMusicPlayer
+                      setPlaying={setIsPlaying}
+                      setCurrentIndex={setCurrentIndex}
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+
+            {/* Khu vực vườn cây - xếp ngang, cuộn được */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="flex-1"
+              className="mt-6"
             >
-              <Card className="bg-white/80 backdrop-blur-md">
+              <Card className="bg-amber-50 backdrop-blur-md border-2 border-green-400 shadow-xl">
                 <CardHeader>
-                  <CardTitle>Garden</CardTitle>
+                  <CardTitle className="text-green-800">Your Garden</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                  <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-thin scrollbar-thumb-green-300 scrollbar-track-amber-100">
                     {gardenTrees.map((tree) => (
-                      <div
+                      <motion.div
                         key={tree.id}
-                        className="flex flex-col items-center p-4 bg-gray-100 rounded-lg"
+                        className="flex flex-col items-center min-w-[140px] p-4 bg-green-50 rounded-lg border border-green-200 shadow-sm"
+                        whileHover={{ scale: 1.05, rotate: 2 }}
+                        transition={{ type: "spring", stiffness: 300 }}
                       >
-                        <img
-                          src={tree.image}
-                          alt={tree.name}
-                          className="w-20 h-20 mb-2"
-                          onError={(e) => {
-                            e.target.src =
-                              "https://media.istockphoto.com/id/537418258/vector/tree.jpg?s=612x612&w=0&k=20&c=YMdnc5cGziKA9Aaxq4MVgwcHBs2gajeBZ33bf9FfdZ8=";
-                          }}
-                        />
-                        <p className="text-sm font-semibold">{tree.name}</p>
-                      </div>
+                        <div className="relative">
+                          <img
+                            src={tree.image}
+                            alt={tree.name}
+                            className="w-20 h-20 object-cover rounded-full"
+                            onError={(e) => {
+                              e.target.src =
+                                "https://media.istockphoto.com/id/537418258/vector/tree.jpg?s=612x612&w=0&k=20&c=YMdnc5cGziKA9Aaxq4MVgwcHBs2gajeBZ33bf9FfdZ8=";
+                            }}
+                          />
+                          <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-amber-700 rounded-full border-2 border-green-300" />
+                        </div>
+                        <p className="mt-2 text-sm font-semibold text-green-900">
+                          {tree.name}
+                        </p>
+                      </motion.div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            {/* Máy phát nhạc */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-              className="w-1/4"
-            >
-              <Card className="bg-white/80 backdrop-blur-md">
-                <CardHeader>
-                  <CardTitle>Music Player</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <FullMusicPlayer
-                    setPlaying={setIsPlaying}
-                    setCurrentIndex={setCurrentIndex}
-                  />
                 </CardContent>
               </Card>
             </motion.div>
@@ -370,7 +392,7 @@ export default function Workspace() {
         {/* Tab Rich Text */}
         {activeTab === "Rich Text" && (
           <div className="flex-1">
-            <Card className="bg-white/80 backdrop-blur-md">
+            <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
               <CardContent className="mt-4">
                 <QuillEditor />
               </CardContent>
@@ -381,9 +403,9 @@ export default function Workspace() {
         {/* Tab Watch Videos */}
         {activeTab === "Watch Videos" && (
           <div className="flex-1">
-            <Card className="bg-white/80 backdrop-blur-md">
+            <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
               <CardHeader>
-                <CardTitle>Watch Videos</CardTitle>
+                <CardTitle className="text-green-700">Watch Videos</CardTitle>
               </CardHeader>
               <CardContent>
                 <VideoPlayer />
@@ -395,7 +417,7 @@ export default function Workspace() {
         {/* Tab PDF Editor */}
         {activeTab === "PDF Reader" && (
           <div className="flex-1">
-            <Card className="bg-white/80 backdrop-blur-md">
+            <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
               <CardContent>
                 <PDFEditor />
               </CardContent>
@@ -403,12 +425,14 @@ export default function Workspace() {
           </div>
         )}
 
-        {/* Tab Image Editor với Pintura */}
+        {/* Tab Image Editor */}
         {activeTab === "Image Editor" && (
           <div className="flex-1">
-            <Card className="bg-white/80 backdrop-blur-md">
+            <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
               <CardHeader>
-                <CardTitle>Pintura Image Editor</CardTitle>
+                <CardTitle className="text-green-700">
+                  Pintura Image Editor
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -430,7 +454,9 @@ export default function Workspace() {
                   {/* Hiển thị ảnh đã chỉnh sửa */}
                   {editedImage && (
                     <div className="mt-4">
-                      <p className="text-gray-700 font-medium">Edited Image:</p>
+                      <p className="text-green-700 font-medium">
+                        Edited Image:
+                      </p>
                       <img
                         src={editedImage}
                         alt="Edited"
@@ -440,10 +466,14 @@ export default function Workspace() {
                   )}
                 </div>
               </CardContent>
+              <Pintura />
             </Card>
           </div>
         )}
       </div>
+
+      {/* Trang trí ánh sáng nền */}
+      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-green-300/30 to-transparent pointer-events-none" />
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import "../home/index.css";
 import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import { StartTask, PauseTask } from "@/services/apiServices/taskService";
+import { GetUserTreeByOwnerId } from "@/services/apiServices/userTreesService";
+import { GetAllTrees } from "@/services/apiServices/treesService";
 import parseJwt from "@/services/parseJwt";
 
 const HomePage = () => {
@@ -20,6 +22,8 @@ const HomePage = () => {
   });
   const [currentTask, setCurrentTask] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [userTrees, setUserTrees] = useState([]); // Thêm state để lưu cây sở hữu
+  const [allTrees, setAllTrees] = useState([]); // Thêm state để lưu tất cả cây
 
   // Lấy danh sách task theo cây
   const fetchTasks = async (userTreeId) => {
@@ -51,6 +55,41 @@ const HomePage = () => {
     if (token) {
       const userId = parseJwt(token).sub;
       setUser({ username: "Farmer" });
+      const savedTreeId = localStorage.getItem("selectedTreeId");
+      if (savedTreeId) {
+        setCurrentTree(parseInt(savedTreeId));
+        fetchTasks(parseInt(savedTreeId));
+      }
+    }
+  }, []);
+
+  // Lấy danh sách cây sở hữu và tất cả cây
+  const fetchUserTrees = async (ownerId) => {
+    try {
+      const [ownedTrees, allTrees] = await Promise.all([
+        GetUserTreeByOwnerId(ownerId),
+        GetAllTrees(),
+      ]);
+
+      console.log("Owned Trees:", ownedTrees); // ✅ In dữ liệu để kiểm tra
+      setUserTrees(ownedTrees || []);
+      setAllTrees(allTrees || []);
+    } catch (error) {
+      console.error("Failed to fetch trees", error);
+    }
+  };
+
+  // Cập nhật useEffect để lấy dữ liệu
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      const userId = parseJwt(token).sub;
+      setUser({ username: "Farmer" });
+
+      // Lấy danh sách cây sở hữu
+      fetchUserTrees(userId);
+
+      // Lấy cây mặc định và tasks
       const savedTreeId = localStorage.getItem("selectedTreeId");
       if (savedTreeId) {
         setCurrentTree(parseInt(savedTreeId));
@@ -147,6 +186,11 @@ const HomePage = () => {
     const [hours, minutes, seconds] = timeStr.split(":").map(Number);
     return hours * 3600 + minutes * 60 + seconds;
   };
+
+  // Tìm cây mặc định để hiển thị
+  const displayedTree = allTrees.find(
+    (tree) => tree.treeId === userTrees.find((ut) => ut.finalTreeId)?.finalTreeId
+  ) || { name: "No Tree", imageUrl: "/tree-1.png", level: 0 };
 
   return (
     <motion.div
@@ -260,9 +304,18 @@ const HomePage = () => {
             <h2 className="text-2xl font-semibold text-gray-800">Your Tree</h2>
           </div>
           <div className="text-center">
-            <img src="/tree-1.png" alt="Tree" className="w-32 h-32 mx-auto mb-4" />
-            <p className="font-semibold text-gray-800">Oak - Level 3</p>
-            <p className="text-sm text-gray-500">120 / 200 administrator</p>
+            <img
+              src={displayedTree.imageUrl || "/tree-1.png"}
+              alt={displayedTree.name}
+              className="w-32 h-32 mx-auto mb-4"
+            />
+            <p className="font-semibold text-gray-800">
+              {displayedTree.name}
+            </p>
+            <p className="text-sm text-gray-500">
+              {/* hiển thị số cây đang sở hữu trong tài khoản*/}
+              {userTrees.length > 0 ? `You owned ${userTrees.length} trees in your garden` : "No trees owned"}
+            </p>
           </div>
           <Button
             className="mt-4 w-full bg-green-600 text-white hover:bg-green-700"
