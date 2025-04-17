@@ -73,6 +73,7 @@ export function DateTimePicker({ label, date, onDateChange, onTimeChange }) {
   );
 }
 
+// phần hiển thị các tab trong task list
 export function TaskColumn({
   title,
   taskList,
@@ -100,6 +101,7 @@ export function TaskColumn({
       : taskList.filter((task) => task.status === 4 || task.status === 3);
 
   return (
+    //giao diện hiển thị các task trong task list gồm 3 tab: all, current, complete
     <motion.div
       className={`task-column ${columnKey}`}
       initial={{ y: 20, opacity: 0 }}
@@ -272,6 +274,7 @@ export function TaskItem({
   currentTask,
 }) {
   return (
+    //giao diện hiển thị từng task trong task list, bao gồm tên task, thời gian còn lại, trạng thái task (đang chạy, đã hoàn thành, tạm dừng)
     <motion.div
       initial={{ y: 10, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}

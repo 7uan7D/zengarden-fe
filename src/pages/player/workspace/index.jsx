@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import MusicPlayerController, {
   FullMusicPlayer,
   globalAudioState,
@@ -11,27 +11,29 @@ import "../home/index.css";
 import QuillEditor from "@/components/quill_js/index.jsx";
 import VideoPlayer from "@/components/react_player/index.jsx";
 import PDFEditor from "@/components/react_pdf/index.jsx";
-import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
+import { GetTaskByUserTreeId, StartTask, PauseTask } from "@/services/apiServices/taskService";
 import { GetUserConfigByUserId } from "@/services/apiServices/userConfigService";
+import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
 import parseJwt from "@/services/parseJwt.js";
 import "../workspace/index.css";
+import "../task/index.css"; // Import TaskPage CSS for task styling
 import Pintura from "@/components/pintura/index.jsx";
 import "@pqina/pintura/pintura.css";
 import { openDefaultEditor } from "@pqina/pintura";
+import { LayoutDashboard, FileText, Video, BookOpen, Image, House, Menu, X, CheckCircle } from "lucide-react";
 
 export default function Workspace() {
   const [tasks, setTasks] = useState([]);
   const [currentTask, setCurrentTask] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [userTreeId, setUserTreeId] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const [isPlaying, setIsPlaying] = useState(globalAudioState.isPlaying);
-  const [currentIndex, setCurrentIndex] = useState(
-    globalAudioState.currentIndex
-  );
+  const [currentIndex, setCurrentIndex] = useState(globalAudioState.currentIndex);
   const [activeTab, setActiveTab] = useState("Your Space");
   const [backgroundUrl, setBackgroundUrl] = useState("");
-
-  /** State và ref cho Image Editor */
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [editedImage, setEditedImage] = useState(null);
   const fileInputRef = useRef(null);
 
@@ -43,26 +45,54 @@ export default function Workspace() {
     setCurrentIndex(globalAudioState.currentIndex);
   }, [globalAudioState.currentIndex]);
 
+  /** Lấy userTreeId từ URL hoặc userTrees */
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const treeId = urlParams.get("userTreeId");
+    if (treeId) {
+      setUserTreeId(treeId);
+    } else {
+      const fetchDefaultTree = async () => {
+        try {
+          const token = localStorage.getItem("token");
+          if (!token) return;
+          const userId = parseJwt(token)?.sub;
+          const userTrees = await GetUserTreeByUserId(userId);
+          if (userTrees.length > 0) {
+            const savedTreeId = localStorage.getItem("selectedTreeId");
+            const found = userTrees.find((tree) => tree.userTreeId === parseInt(savedTreeId));
+            const defaultTreeId = found ? found.userTreeId : userTrees[0].userTreeId;
+            setUserTreeId(defaultTreeId);
+          }
+        } catch (error) {
+          console.error("Failed to fetch user trees:", error);
+        }
+      };
+      fetchDefaultTree();
+    }
+  }, [location]);
+
   /** Hàm lấy danh sách task */
-  const fetchTasks = async (userTreeId) => {
+  const fetchTasks = async (treeId) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found");
+      return;
+    }
+
     try {
-      const taskData = await GetTaskByUserTreeId(userTreeId);
-      setTasks(taskData.filter((task) => task.taskTypeName === "Simple"));
-      const urlParams = new URLSearchParams(location.search);
-      const taskId = urlParams.get("taskId");
-      const runningTask = taskData.find(
-        (task) => task.taskId === parseInt(taskId)
-      );
-      if (runningTask && runningTask.status === 1) {
-        setCurrentTask({
-          column: "simple",
-          taskIndex: taskData.indexOf(runningTask),
-          time: runningTask.totalDuration * 60,
-        });
-        setIsRunning(true);
+      let taskData = [];
+      if (treeId) {
+        console.log("Fetching tasks for userTreeId:", treeId);
+        taskData = await GetTaskByUserTreeId(treeId);
+        console.log("Raw task data:", taskData);
+        taskData.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+        const simpleTasks = taskData.filter((task) => task.taskTypeName === "Simple");
+        console.log("Filtered simple tasks:", simpleTasks);
+        setTasks(simpleTasks);
       }
     } catch (error) {
-      console.error("Failed to fetch tasks", error);
+      console.error("Failed to fetch tasks:", error);
     }
   };
 
@@ -83,31 +113,70 @@ export default function Workspace() {
     fetchUserConfig();
   }, []);
 
-  /** Lấy task dựa trên userTreeId từ URL */
+  /** Lấy task khi userTreeId thay đổi */
   useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const userTreeId = urlParams.get("userTreeId");
     if (userTreeId) {
       fetchTasks(userTreeId);
     }
-  }, [location]);
+  }, [userTreeId]);
+
+  /** Khôi phục currentTask từ localStorage */
+  useEffect(() => {
+    const saved = localStorage.getItem("currentTask");
+    if (saved && tasks.length > 0) {
+      const {
+        column,
+        taskIndex,
+        time,
+        totalTime,
+        workDuration,
+        breakTime,
+        lastUpdated,
+        isRunning: savedIsRunning,
+      } = JSON.parse(saved);
+
+      const task = tasks[taskIndex];
+      if (task && column === "simple") {
+        const elapsed = Math.floor((Date.now() - lastUpdated) / 1000);
+        const updatedTime = savedIsRunning ? Math.max(time - elapsed, 0) : time;
+
+        setCurrentTask({
+          taskIndex,
+          time: updatedTime,
+          totalTime,
+          workDuration,
+          breakTime,
+          lastUpdated: Date.now(),
+          status: task.status,
+        });
+        setIsRunning(savedIsRunning && updatedTime > 0);
+      }
+    }
+  }, [tasks]);
 
   /** Logic chạy Timer cho task */
   useEffect(() => {
     const interval = setInterval(() => {
-      if (currentTask && isRunning && currentTask.time > 0) {
+      if (currentTask && isRunning && currentTask.time > 0 && ![2, 3, 4].includes(currentTask.status)) {
+        const now = Date.now();
+        const elapsed = Math.floor((now - currentTask.lastUpdated) / 1000);
         setCurrentTask((prev) => ({
           ...prev,
-          time: prev.time - 1,
+          time: Math.max(prev.time - elapsed, 0),
+          lastUpdated: now,
         }));
       } else if (currentTask && currentTask.time === 0) {
-        setTasks((prev) =>
-          prev.map((task, index) =>
-            index === currentTask.taskIndex ? { ...task, status: 4 } : task
-          )
-        );
+        setTasks((prev) => {
+          const updated = [...prev];
+          updated[currentTask.taskIndex] = {
+            ...updated[currentTask.taskIndex],
+            status: 4,
+          };
+          return updated;
+        });
         setCurrentTask(null);
         setIsRunning(false);
+        localStorage.removeItem("currentTask");
       }
     }, 1000);
     return () => clearInterval(interval);
@@ -117,32 +186,127 @@ export default function Workspace() {
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
-      .toString()
-      .padStart(2, "0")}`;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
-  /** Toggle timer cho task */
-  const toggleTimer = (taskIndex) => {
+  /** Bắt đầu chạy task */
+  const startTimer = async (taskIndex) => {
     const task = tasks[taskIndex];
+    const totalDurationSeconds = task.totalDuration * 60;
+    const initialTime = task.remainingTime
+      ? typeof task.remainingTime === "string"
+        ? timeStringToSeconds(task.remainingTime)
+        : task.remainingTime * 60
+      : totalDurationSeconds;
+
+    try {
+      await StartTask(task.taskId);
+    } catch (error) {
+      console.error("Failed to start task:", error);
+      return;
+    }
+
+    setTasks((prev) => {
+      const updated = [...prev];
+      updated[taskIndex] = { ...updated[taskIndex], status: 1 };
+      return updated;
+    });
+
+    setCurrentTask({
+      taskIndex,
+      time: initialTime,
+      totalTime: totalDurationSeconds,
+      workDuration: task.workDuration * 60,
+      breakTime: task.breakTime * 60,
+      lastUpdated: Date.now(),
+      status: 1,
+    });
+    setIsRunning(true);
+    localStorage.setItem("currentTask", JSON.stringify({
+      column: "simple",
+      taskIndex,
+      time: initialTime,
+      totalTime: totalDurationSeconds,
+      workDuration: task.workDuration * 60,
+      breakTime: task.breakTime * 60,
+      lastUpdated: Date.now(),
+      isRunning: true,
+    }));
+  };
+
+  /** Chuyển đổi trạng thái chạy/pause của task */
+  const toggleTimer = async (taskIndex) => {
+    const task = tasks[taskIndex];
+    const totalDurationSeconds = task.totalDuration * 60;
+
     if (isRunning) {
-      setTasks((prev) =>
-        prev.map((t, idx) => (idx === taskIndex ? { ...t, status: 2 } : t))
-      );
+      try {
+        await PauseTask(task.taskId);
+      } catch (error) {
+        console.error("Failed to pause task:", error);
+      }
+      setTasks((prev) => {
+        const updated = [...prev];
+        updated[taskIndex] = { ...updated[taskIndex], status: 2 };
+        return updated;
+      });
+      setCurrentTask((prev) => ({
+        ...prev,
+        lastUpdated: Date.now(),
+        status: 2,
+      }));
       setIsRunning(false);
+      localStorage.setItem("currentTask", JSON.stringify({
+        ...JSON.parse(localStorage.getItem("currentTask")),
+        isRunning: false,
+        status: 2,
+      }));
     } else {
-      setTasks((prev) =>
-        prev.map((t, idx) => (idx === taskIndex ? { ...t, status: 1 } : t))
-      );
+      try {
+        await StartTask(task.taskId);
+      } catch (error) {
+        console.error("Failed to resume task:", error);
+      }
+      setTasks((prev) => {
+        const updated = [...prev];
+        updated[taskIndex] = { ...updated[taskIndex], status: 1 };
+        return updated;
+      });
+
+      const initialTime = task.remainingTime
+        ? typeof task.remainingTime === "string"
+          ? timeStringToSeconds(task.remainingTime)
+          : task.remainingTime * 60
+        : totalDurationSeconds;
+
       setCurrentTask({
-        column: "simple",
         taskIndex,
-        time: task.remainingTime
-          ? task.remainingTime * 60
-          : task.totalDuration * 60,
+        time: initialTime,
+        totalTime: totalDurationSeconds,
+        workDuration: task.workDuration * 60,
+        breakTime: task.breakTime * 60,
+        lastUpdated: Date.now(),
+        status: 1,
       });
       setIsRunning(true);
+      localStorage.setItem("currentTask", JSON.stringify({
+        column: "simple",
+        taskIndex,
+        time: initialTime,
+        totalTime: totalDurationSeconds,
+        workDuration: task.workDuration * 60,
+        breakTime: task.breakTime * 60,
+        lastUpdated: Date.now(),
+        isRunning: true,
+        status: 1,
+      }));
     }
+  };
+
+  /** Chuyển đổi thời gian dạng string sang giây */
+  const timeStringToSeconds = (timeStr) => {
+    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+    return hours * 3600 + minutes * 60 + seconds;
   };
 
   /** Mở Pintura Image Editor */
@@ -171,6 +335,11 @@ export default function Workspace() {
     fileInputRef.current.click();
   };
 
+  /** Toggle sidebar */
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
   /** Component đồng hồ hiển thị thời gian hiện tại */
   const Clock = () => {
     const [time, setTime] = useState(new Date());
@@ -196,242 +365,292 @@ export default function Workspace() {
     );
   };
 
+  const sidebarTabs = [
+    { name: "Your Space", icon: <LayoutDashboard size={24} /> },
+    { name: "Rich Text", icon: <FileText size={24} /> },
+    { name: "Watch Videos", icon: <Video size={24} /> },
+    { name: "PDF Reader", icon: <BookOpen size={24} /> },
+    { name: "Image Editor", icon: <Image size={24} /> },
+    { name: "Return to Homepage", icon: <House size={24} />, action: () => navigate("/home") },
+  ];
+
   return (
     <div
-      className="min-h-screen flex flex-col p-6 bg-gradient-to-b from-green-100 to-green-200 mt-20 relative overflow-hidden"
+      className="min-h-screen w-full bg-gradient-to-b from-green-100 to-green-200 relative overflow-hidden"
       style={{
         backgroundImage: `url(${backgroundUrl})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
-      {/* Trang trí lá cây */}
-      <div className="absolute top-0 left-0 w-full h-24 bg-[url('/leaf-pattern.png')] bg-repeat-x opacity-30 pointer-events-none" />
-
-      {/* Tiêu đề và Tabs */}
+      {/* Sidebar */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-6 z-10"
+        className="fixed top-0 left-0 h-full bg-white/90 backdrop-blur-md shadow-lg border-r-2 border-green-300 z-20"
+        animate={{ width: isSidebarCollapsed ? 68 : 250 }}
+        transition={{ duration: 0.3 }}
       >
-        {/* Đồng hồ hiển thị thời gian hiện tại */}
-        <Clock />
-        <div className="flex gap-3 mt-6 justify-center flex-wrap">
-          {[
-            "Your Space",
-            "Rich Text",
-            "Watch Videos",
-            "PDF Reader",
-            "Image Editor",
-          ].map((tab) => (
+        <div className="flex items-center justify-between p-4">
+          {!isSidebarCollapsed && <h2 className="text-lg font-semibold text-green-700">Workspace</h2>}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="text-green-700 bg-gray-300 hover:bg-green-200"
+          >
+            {isSidebarCollapsed ? <Menu size={24} /> : <X size={24} />}
+          </Button>
+        </div>
+        <nav className="flex flex-col gap-2 p-2">
+          {sidebarTabs.map((tab) => (
             <motion.button
-              key={tab}
-              whileHover={{ scale: 1.1 }}
+              key={tab.name}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className={`px-4 py-2 rounded-full font-semibold transition-all ${
-                activeTab === tab
-                  ? "bg-green-600 text-white shadow-lg"
-                  : "bg-amber-100 text-green-800 border-2 border-green-300 hover:bg-green-200"
+              className={`flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
+                activeTab === tab.name
+                  ? "bg-green-600 text-white"
+                  : "text-green-700 bg-gray-300 hover:bg-green-100"
               }`}
-              onClick={() => setActiveTab(tab)}
-              style={{
-                clipPath:
-                  "polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%)",
+              onClick={() => {
+                if (tab.action) {
+                  tab.action();
+                } else {
+                  setActiveTab(tab.name);
+                }
               }}
             >
-              {tab}
+              {tab.icon}
+              {!isSidebarCollapsed && <span className="text-sm font-medium">{tab.name}</span>}
             </motion.button>
           ))}
-        </div>
+        </nav>
       </motion.div>
 
-      {/* Nội dung chính */}
-      <div className="flex flex-1 flex-col gap-6 z-10">
-        {activeTab === "Your Space" && (
-          <div className="flex gap-6">
-            {/* Khu vực Task - Chiếm 25% chiều rộng, bên trái */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="w-1/4"
-            >
+      {/* Main Content */}
+      <div className="flex-1 p-6 pt-10 ml-[80px]">
+        {/* Trang trí lá cây */}
+        <div className="absolute top-0 left-0 w-full h-24 bg-[url('/leaf-pattern.png')] bg-repeat-x opacity-30 pointer-events-none" />
+
+        {/* Tiêu đề và Clock */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-6 z-10"
+        >
+          <Clock />
+        </motion.div>
+
+        {/* Nội dung chính */}
+        <div className="flex flex-1 flex-col gap-6 z-10">
+          {activeTab === "Your Space" && (
+            <div className="flex gap-6">
+              {/* Khu vực Task - Chiếm 33% chiều rộng, bên trái */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="w-1/3"
+              >
+                <div className="task-column simple">
+                  <h2 className="text-[#10b981]">Simple Tasks</h2>
+                  <CardContent className="p-0">
+                    {tasks.length === 0 ? (
+                      <p className="text-gray-600">No Simple Tasks found.</p>
+                    ) : (
+                      <ul className="grid gap-3">
+                        {tasks.map((task, index) => {
+                          const totalDurationSeconds = task.totalDuration * 60;
+                          const isCurrentTask = currentTask && currentTask.taskIndex === index;
+                          const remainingTime = isCurrentTask ? currentTask.time : totalDurationSeconds;
+                          const workDurationSeconds = task.workDuration * 60;
+                          const breakTimeSeconds = task.breakTime * 60;
+                          const cycleDuration = workDurationSeconds + breakTimeSeconds;
+                          const completedCycles = Math.floor((totalDurationSeconds - remainingTime) / cycleDuration);
+                          const remainingInCycle = (totalDurationSeconds - remainingTime) % cycleDuration;
+
+                          let workProgress, breakProgress;
+                          if (task.status === 4 || task.status === 3) {
+                            const totalCycles = Math.ceil(totalDurationSeconds / cycleDuration);
+                            workProgress = (workDurationSeconds / totalDurationSeconds) * 100 * totalCycles;
+                            breakProgress = (breakTimeSeconds / totalDurationSeconds) * 100 * totalCycles;
+                          } else {
+                            workProgress =
+                              (task.workDuration / task.totalDuration) *
+                              100 *
+                              (completedCycles +
+                                (remainingInCycle < workDurationSeconds
+                                  ? remainingInCycle / workDurationSeconds
+                                  : 1));
+                            breakProgress =
+                              (task.breakTime / task.totalDuration) *
+                              100 *
+                              (completedCycles +
+                                (remainingInCycle >= workDurationSeconds
+                                  ? (remainingInCycle - workDurationSeconds) / breakTimeSeconds
+                                  : 0));
+                          }
+
+                          return (
+                            <li key={task.taskId} className="task-item">
+                              <div className="task-info">
+                                <span
+                                  className={`font-medium ${
+                                    task.status === 4 ? "line-through text-gray-500" : "text-gray-700"
+                                  }`}
+                                >
+                                  {task.taskName}
+                                </span>
+                                <div className="progress-container">
+                                  <span className="text-sm text-gray-600">
+                                    Remaining: {formatTime(remainingTime)}
+                                    {task.status === 4 && (
+                                      <span className="text-sm text-green-600 ml-2">Done</span>
+                                    )}
+                                  </span>
+                                  <div className={`progress-bar-container ${isCurrentTask ? "active" : ""}`}>
+                                    <div className="progress-bar">
+                                      <div
+                                        className="work-progress"
+                                        style={{ width: `${Math.min(workProgress, 100)}%` }}
+                                      />
+                                      <div
+                                        className="break-progress"
+                                        style={{ width: `${Math.min(breakProgress, 100)}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="task-actions">
+                                {isCurrentTask && (
+                                  <span className="text-sm text-gray-600">
+                                    {remainingInCycle < workDurationSeconds
+                                      ? `Work: ${formatTime(workDurationSeconds - remainingInCycle)}`
+                                      : `Break: ${formatTime(cycleDuration - remainingInCycle)}`}
+                                  </span>
+                                )}
+                                {task.status === 1 ? (
+                                  <Button onClick={() => toggleTimer(index)}>Pause</Button>
+                                ) : task.status === 2 ? (
+                                  <Button onClick={() => toggleTimer(index)}>Resume</Button>
+                                ) : task.status === 0 ? (
+                                  <Button
+                                    onClick={() => startTimer(index)}
+                                    disabled={currentTask !== null}
+                                  >
+                                    Start
+                                  </Button>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <CheckCircle className="w-5 h-5 text-green-600" />
+                                    <span className="text-sm text-green-600">Done</span>
+                                  </div>
+                                )}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </CardContent>
+                </div>
+              </motion.div>
+
+              {/* Không gian trống bên phải */}
+              <div className="flex-1"></div>
+
+              {/* Music Player */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="absolute bottom-8 w-[91%] mx-auto"
+              >
+                <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
+                  <CardContent className="p-1">
+                    <FullMusicPlayer setPlaying={setIsPlaying} setCurrentIndex={setCurrentIndex} />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </div>
+          )}
+
+          {activeTab === "Rich Text" && (
+            <div className="flex-1">
+              <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
+                <CardContent className="mt-4">
+                  <QuillEditor />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === "Watch Videos" && (
+            <div className="flex-1">
               <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
                 <CardHeader>
-                  <CardTitle className="text-green-700">
-                    Simple Tasks
-                  </CardTitle>
+                  <CardTitle className="text-green-700">Watch Videos</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-4">
-                    {tasks.map((task, index) => {
-                      const totalDurationSeconds = task.totalDuration * 60;
-                      const isCurrentTask =
-                        currentTask &&
-                        currentTask.column === "simple" &&
-                        currentTask.taskIndex === index;
-                      const remainingTime = isCurrentTask
-                        ? currentTask.time
-                        : totalDurationSeconds;
-                      return (
-                        <li
-                          key={task.taskId}
-                          className="flex justify-between items-center p-2 bg-gray-100 rounded-lg"
-                        >
-                          <div className="flex-1">
-                            <span
-                              className={`font-medium ${
-                                task.status === 4
-                                  ? "line-through text-gray-500"
-                                  : ""
-                              }`}
-                            >
-                              {task.taskName}
-                            </span>
-                            <div className="text-sm text-gray-600">
-                              Remaining: {formatTime(remainingTime)}
-                              {task.status === 4 && (
-                                <span className="text-sm text-green-600 ml-2">
-                                  Done
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {task.status === 1 ? (
-                              <Button onClick={() => toggleTimer(index)}>
-                                Pause
-                              </Button>
-                            ) : task.status === 2 ? (
-                              <Button onClick={() => toggleTimer(index)}>
-                                Resume
-                              </Button>
-                            ) : task.status === 0 ? (
-                              <Button
-                                onClick={() => toggleTimer(index)}
-                                disabled={currentTask !== null}
-                              >
-                                Start
-                              </Button>
-                            ) : (
-                              <span className="text-sm text-green-600">
-                                Done
-                              </span>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  <VideoPlayer />
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
+          )}
 
-            {/* Không gian trống bên phải */}
-            <div className="flex-1"></div>
-
-            {/* Music Player - Đặt ở dưới, chiếm 98% chiều ngang, không sát đáy */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="absolute bottom-16 w-[98%] mx-auto"
-            >
+          {activeTab === "PDF Reader" && (
+            <div className="flex-1">
               <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
-                <CardContent className="p-1">
-                  <FullMusicPlayer
-                    setPlaying={setIsPlaying}
-                    setCurrentIndex={setCurrentIndex}
-                  />
+                <CardContent>
+                  <PDFEditor />
                 </CardContent>
               </Card>
-            </motion.div>
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Tab Rich Text */}
-        {activeTab === "Rich Text" && (
-          <div className="flex-1">
-            <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
-              <CardContent className="mt-4">
-                <QuillEditor />
-              </CardContent>
-            </Card>
-          </div>
-        )}
+          {activeTab === "Image Editor" && (
+            <div className="flex-1">
+              <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-green-700">Pintura Image Editor</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <Button
+                      onClick={handleUploadClick}
+                      className="bg-green-600 text-white hover:bg-green-700"
+                    >
+                      Upload Image
+                    </Button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    {editedImage && (
+                      <div className="mt-4">
+                        <p className="text-green-700 font-medium">Edited Image:</p>
+                        <img
+                          src={editedImage}
+                          alt="Edited"
+                          className="max-w-full h-auto rounded-lg shadow-md"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+                <Pintura />
+              </Card>
+            </div>
+          )}
+        </div>
 
-        {/* Tab Watch Videos */}
-        {activeTab === "Watch Videos" && (
-          <div className="flex-1">
-            <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-green-700">Watch Videos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <VideoPlayer />
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Tab PDF Editor */}
-        {activeTab === "PDF Reader" && (
-          <div className="flex-1">
-            <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
-              <CardContent>
-                <PDFEditor />
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Tab Image Editor */}
-        {activeTab === "Image Editor" && (
-          <div className="flex-1">
-            <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-green-700">
-                  Pintura Image Editor
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <Button
-                    onClick={handleUploadClick}
-                    className="bg-green-600 text-white hover:bg-green-700"
-                  >
-                    Upload Image
-                  </Button>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                  {editedImage && (
-                    <div className="mt-4">
-                      <p className="text-green-700 font-medium">
-                        Edited Image:
-                      </p>
-                      <img
-                        src={editedImage}
-                        alt="Edited"
-                        className="max-w-full h-auto rounded-lg shadow-md"
-                      />
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-              <Pintura />
-            </Card>
-          </div>
-        )}
+        {/* Trang trí ánh sáng nền */}
+        <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-green-300/30 to-transparent pointer-events-none" />
       </div>
-
-      {/* Trang trí ánh sáng nền */}
-      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-green-300/30 to-transparent pointer-events-none" />
     </div>
   );
 }
