@@ -19,16 +19,6 @@ import Pintura from "@/components/pintura/index.jsx";
 import "@pqina/pintura/pintura.css";
 import { openDefaultEditor } from "@pqina/pintura";
 
-// Danh sách cây
-const gardenTrees = [
-  { id: 1, name: "Oak", image: "/tree-1.png" },
-  { id: 2, name: "Birch", image: "/tree-2.png" },
-  { id: 3, name: "Maple", image: "/tree-3.png" },
-  { id: 4, name: "Pine", image: "/tree-4.png" },
-  { id: 5, name: "Willow", image: "/tree-5.png" },
-  { id: 6, name: "Cedar", image: "/tree-6.png" },
-];
-
 export default function Workspace() {
   const [tasks, setTasks] = useState([]);
   const [currentTask, setCurrentTask] = useState(null);
@@ -41,11 +31,11 @@ export default function Workspace() {
   const [activeTab, setActiveTab] = useState("Your Space");
   const [backgroundUrl, setBackgroundUrl] = useState("");
 
-  // State cho Image Editor
-  const [editedImage, setEditedImage] = useState(null); // Lưu ảnh đã chỉnh sửa
-  const fileInputRef = useRef(null); // Ref để kích hoạt input file
+  /** State và ref cho Image Editor */
+  const [editedImage, setEditedImage] = useState(null);
+  const fileInputRef = useRef(null);
 
-  // Gán callback cho MusicPlayerController
+  /** Gán callback cho MusicPlayerController */
   globalAudioState.setPlaying = setIsPlaying;
   globalAudioState.setCurrentIndex = setCurrentIndex;
 
@@ -53,7 +43,7 @@ export default function Workspace() {
     setCurrentIndex(globalAudioState.currentIndex);
   }, [globalAudioState.currentIndex]);
 
-  // Hàm lấy danh sách task
+  /** Hàm lấy danh sách task */
   const fetchTasks = async (userTreeId) => {
     try {
       const taskData = await GetTaskByUserTreeId(userTreeId);
@@ -76,6 +66,7 @@ export default function Workspace() {
     }
   };
 
+  /** Lấy cấu hình người dùng (background) */
   useEffect(() => {
     const fetchUserConfig = async () => {
       try {
@@ -92,6 +83,7 @@ export default function Workspace() {
     fetchUserConfig();
   }, []);
 
+  /** Lấy task dựa trên userTreeId từ URL */
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const userTreeId = urlParams.get("userTreeId");
@@ -100,7 +92,7 @@ export default function Workspace() {
     }
   }, [location]);
 
-  // Logic chạy Timer
+  /** Logic chạy Timer cho task */
   useEffect(() => {
     const interval = setInterval(() => {
       if (currentTask && isRunning && currentTask.time > 0) {
@@ -121,7 +113,7 @@ export default function Workspace() {
     return () => clearInterval(interval);
   }, [currentTask, isRunning]);
 
-  // Hàm định dạng thời gian
+  /** Định dạng thời gian cho timer */
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -130,7 +122,7 @@ export default function Workspace() {
       .padStart(2, "0")}`;
   };
 
-  // Hàm toggle timer
+  /** Toggle timer cho task */
   const toggleTimer = (taskIndex) => {
     const task = tasks[taskIndex];
     if (isRunning) {
@@ -153,23 +145,20 @@ export default function Workspace() {
     }
   };
 
-  // Hàm mở Pintura Image Editor
+  /** Mở Pintura Image Editor */
   const openImageEditor = (file) => {
     const editor = openDefaultEditor({
-      src: file, // Ảnh được chọn từ input
-      imageCropAspectRatio: 1, // Tỷ lệ cắt mặc định (có thể thay đổi)
+      src: file,
+      imageCropAspectRatio: 1,
       onProcess: ({ dest }) => {
-        // Khi hoàn tất chỉnh sửa, lưu ảnh đã chỉnh sửa
         const editedUrl = URL.createObjectURL(dest);
         setEditedImage(editedUrl);
       },
     });
-    editor.on("close", () => {
-      // Xử lý khi editor đóng (nếu cần)
-    });
+    editor.on("close", () => {});
   };
 
-  // Hàm xử lý khi chọn file
+  /** Xử lý khi chọn file ảnh */
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -177,9 +166,34 @@ export default function Workspace() {
     }
   };
 
-  // Hàm kích hoạt input file khi nhấn nút
+  /** Kích hoạt input file */
   const handleUploadClick = () => {
     fileInputRef.current.click();
+  };
+
+  /** Component đồng hồ hiển thị thời gian hiện tại */
+  const Clock = () => {
+    const [time, setTime] = useState(new Date());
+
+    useEffect(() => {
+      const timer = setInterval(() => {
+        setTime(new Date());
+      }, 1000);
+      return () => clearInterval(timer);
+    }, []);
+
+    const formattedTime = time.toLocaleTimeString("en-US", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+
+    return (
+      <div className="text-5xl font-semibold text-black drop-shadow-md text-center mt-2">
+        {formattedTime}
+      </div>
+    );
   };
 
   return (
@@ -194,18 +208,15 @@ export default function Workspace() {
       {/* Trang trí lá cây */}
       <div className="absolute top-0 left-0 w-full h-24 bg-[url('/leaf-pattern.png')] bg-repeat-x opacity-30 pointer-events-none" />
 
-      {/* Tiêu đề Workspace */}
+      {/* Tiêu đề và Tabs */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="mb-6 z-10"
       >
-        <h1 className="text-4xl font-bold text-green-800 drop-shadow-lg text-center">
-          Workspace
-        </h1>
-
-        {/* Tabs dạng lá cây */}
+        {/* Đồng hồ hiển thị thời gian hiện tại */}
+        <Clock />
         <div className="flex gap-3 mt-6 justify-center flex-wrap">
           {[
             "Your Space",
@@ -235,158 +246,108 @@ export default function Workspace() {
         </div>
       </motion.div>
 
-      {/* Nội dung của các tab */}
+      {/* Nội dung chính */}
       <div className="flex flex-1 flex-col gap-6 z-10">
         {activeTab === "Your Space" && (
-          <>
-            {/* Khu vực Task và Music Player */}
-            <div className="flex gap-6">
-            {/* Danh sách công việc */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="w-1/3"
-              >
-                <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="text-green-700">
-                      Simple Tasks
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-4">
-                      {tasks.map((task, index) => {
-                        const totalDurationSeconds = task.totalDuration * 60;
-                        const isCurrentTask =
-                          currentTask &&
-                          currentTask.column === "simple" &&
-                          currentTask.taskIndex === index;
-                        const remainingTime = isCurrentTask
-                          ? currentTask.time
-                          : totalDurationSeconds;
-                        return (
-                          <li
-                            key={task.taskId}
-                            className="flex justify-between items-center p-2 bg-gray-100 rounded-lg"
-                          >
-                            <div className="flex-1">
-                              <span
-                                className={`font-medium ${
-                                  task.status === 4
-                                    ? "line-through text-gray-500"
-                                    : ""
-                                }`}
-                              >
-                                {task.taskName}
-                              </span>
-                              <div className="text-sm text-gray-600">
-                                Remaining: {formatTime(remainingTime)}
-                                {task.status === 4 && (
-                                  <span className="text-sm text-green-600 ml-2">
-                                    Done
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {task.status === 1 ? (
-                                <Button onClick={() => toggleTimer(index)}>
-                                  Pause
-                                </Button>
-                              ) : task.status === 2 ? (
-                                <Button onClick={() => toggleTimer(index)}>
-                                  Resume
-                                </Button>
-                              ) : task.status === 0 ? (
-                                <Button
-                                  onClick={() => toggleTimer(index)}
-                                  disabled={currentTask !== null}
-                                >
-                                  Start
-                                </Button>
-                              ) : (
-                                <span className="text-sm text-green-600">
+          <div className="flex gap-6">
+            {/* Khu vực Task - Chiếm 25% chiều rộng, bên trái */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="w-1/4"
+            >
+              <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-green-700">
+                    Simple Tasks
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-4">
+                    {tasks.map((task, index) => {
+                      const totalDurationSeconds = task.totalDuration * 60;
+                      const isCurrentTask =
+                        currentTask &&
+                        currentTask.column === "simple" &&
+                        currentTask.taskIndex === index;
+                      const remainingTime = isCurrentTask
+                        ? currentTask.time
+                        : totalDurationSeconds;
+                      return (
+                        <li
+                          key={task.taskId}
+                          className="flex justify-between items-center p-2 bg-gray-100 rounded-lg"
+                        >
+                          <div className="flex-1">
+                            <span
+                              className={`font-medium ${
+                                task.status === 4
+                                  ? "line-through text-gray-500"
+                                  : ""
+                              }`}
+                            >
+                              {task.taskName}
+                            </span>
+                            <div className="text-sm text-gray-600">
+                              Remaining: {formatTime(remainingTime)}
+                              {task.status === 4 && (
+                                <span className="text-sm text-green-600 ml-2">
                                   Done
                                 </span>
                               )}
                             </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {task.status === 1 ? (
+                              <Button onClick={() => toggleTimer(index)}>
+                                Pause
+                              </Button>
+                            ) : task.status === 2 ? (
+                              <Button onClick={() => toggleTimer(index)}>
+                                Resume
+                              </Button>
+                            ) : task.status === 0 ? (
+                              <Button
+                                onClick={() => toggleTimer(index)}
+                                disabled={currentTask !== null}
+                              >
+                                Start
+                              </Button>
+                            ) : (
+                              <span className="text-sm text-green-600">
+                                Done
+                              </span>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-              {/* Khu vực trống ở giữa - có thể thêm widget sau này */}
-              <div className="flex-1" />
+            {/* Không gian trống bên phải */}
+            <div className="flex-1"></div>
 
-              {/* Music Player - giữ nguyên kích cỡ gốc */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-                className="w-1/4"
-              >
-                <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="text-green-700">
-                      Music Player
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <FullMusicPlayer
-                      setPlaying={setIsPlaying}
-                      setCurrentIndex={setCurrentIndex}
-                    />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-
-            {/* Khu vực vườn cây - xếp ngang, cuộn được */}
+            {/* Music Player - Đặt ở dưới, chiếm 98% chiều ngang, không sát đáy */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="mt-6"
+              className="absolute bottom-16 w-[98%] mx-auto"
             >
-              <Card className="bg-amber-50 backdrop-blur-md border-2 border-green-400 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="text-green-800">Your Garden</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex overflow-x-auto gap-6 pb-4 scrollbar-thin scrollbar-thumb-green-300 scrollbar-track-amber-100">
-                    {gardenTrees.map((tree) => (
-                      <motion.div
-                        key={tree.id}
-                        className="flex flex-col items-center min-w-[140px] p-4 bg-green-50 rounded-lg border border-green-200 shadow-sm"
-                        whileHover={{ scale: 1.05, rotate: 2 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                      >
-                        <div className="relative">
-                          <img
-                            src={tree.image}
-                            alt={tree.name}
-                            className="w-20 h-20 object-cover rounded-full"
-                            onError={(e) => {
-                              e.target.src =
-                                "https://media.istockphoto.com/id/537418258/vector/tree.jpg?s=612x612&w=0&k=20&c=YMdnc5cGziKA9Aaxq4MVgwcHBs2gajeBZ33bf9FfdZ8=";
-                            }}
-                          />
-                          <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-amber-700 rounded-full border-2 border-green-300" />
-                        </div>
-                        <p className="mt-2 text-sm font-semibold text-green-900">
-                          {tree.name}
-                        </p>
-                      </motion.div>
-                    ))}
-                  </div>
+              <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
+                <CardContent className="p-1">
+                  <FullMusicPlayer
+                    setPlaying={setIsPlaying}
+                    setCurrentIndex={setCurrentIndex}
+                  />
                 </CardContent>
               </Card>
             </motion.div>
-          </>
+          </div>
         )}
 
         {/* Tab Rich Text */}
@@ -436,14 +397,12 @@ export default function Workspace() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Nút để tải ảnh lên */}
                   <Button
                     onClick={handleUploadClick}
                     className="bg-green-600 text-white hover:bg-green-700"
                   >
                     Upload Image
                   </Button>
-                  {/* Input file ẩn */}
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -451,7 +410,6 @@ export default function Workspace() {
                     accept="image/*"
                     className="hidden"
                   />
-                  {/* Hiển thị ảnh đã chỉnh sửa */}
                   {editedImage && (
                     <div className="mt-4">
                       <p className="text-green-700 font-medium">
