@@ -1,25 +1,40 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
 import ItemDetail from "./ItemDetail";
-import { GetBagItems, GetItemDetailByItemId } from "@/services/apiServices/itemService";
+import { GetBagItems, GetItemDetailByItemId, UseItem } from "@/services/apiServices/itemService";
 
 const InventoryDialog = ({ open, setOpen, user }) => {
   const [inventoryItems, setInventoryItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const fetchInventoryData = async () => {
+  /* Hàm lấy dữ liệu inventory từ API, được bọc trong useCallback để tối ưu hóa */
+  const fetchInventoryData = useCallback(async () => {
     try {
+      /* Lấy bagId từ user, kiểm tra nếu không có thì trả về mảng rỗng */
       const bagId = user?.bag?.bagId;
+      if (!bagId) {
+        console.error("Bag ID is undefined");
+        setInventoryItems([]);
+        return [];
+      }
       console.log("Bag ID:", bagId);
-
+      /* Gọi API để lấy danh sách item trong túi (bag) */
       const bagItemsResponse = await GetBagItems(bagId);
-      const bagItems = bagItemsResponse?.data || bagItemsResponse || [];
+      /* Đảm bảo dữ liệu trả về là mảng, xử lý các trường hợp dữ liệu không đúng định dạng */
+      const bagItems = Array.isArray(bagItemsResponse?.data)
+        ? bagItemsResponse.data
+        : Array.isArray(bagItemsResponse)
+        ? bagItemsResponse
+        : [];
 
+      /* Lặp qua từng bagItem để lấy chi tiết item */
       const inventoryPromises = bagItems.map(async (bagItem) => {
         const item = bagItem.item || {};
         let itemDetail = {};
         try {
+          /* Gọi API để lấy chi tiết item dựa trên itemId */
           const detailResponse = await GetItemDetailByItemId(
             item.itemId || bagItem.itemId
           );
@@ -28,6 +43,7 @@ const InventoryDialog = ({ open, setOpen, user }) => {
           console.warn("Không lấy được chi tiết item", item.itemId, err);
         }
 
+        /* Tạo object chứa thông tin item để hiển thị */
         return {
           bagItemId: bagItem.bagItemId,
           itemId: item.itemId || bagItem.itemId,
@@ -44,19 +60,43 @@ const InventoryDialog = ({ open, setOpen, user }) => {
         };
       });
 
+      /* Chờ tất cả promise hoàn thành và cập nhật state */
       const inventory = await Promise.all(inventoryPromises);
       setInventoryItems(inventory);
+      return inventory;
     } catch (error) {
       console.error("❌ Lỗi khi lấy inventory:", error);
+      setInventoryItems([]);
+      return [];
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (open) {
-      fetchInventoryData();
+      fetchInventoryData().then((items) => {
+        console.log("Fetched inventory items:", items);
+        setInventoryItems(items);
+      });
     }
-  }, [open]);
+  }, [open, fetchInventoryData]);
 
+  /* Hàm xử lý hành động sử dụng item */
+  const handleUseItem = async (bagItemId) => {
+    try {
+      /* Gọi API để sử dụng item */
+      const result = await UseItem(bagItemId);
+      console.log("Use item result:", result);
+      /* Cập nhật lại danh sách inventory sau khi sử dụng */
+      const updatedItems = await fetchInventoryData();
+      setInventoryItems(updatedItems);
+      toast.success("Item used successfully!");
+    } catch (error) {
+      console.error("Error using item:", error);
+      toast.error(error.response?.data?.message || "Failed to use item!");
+    }
+  };
+
+  /* Hàm chuyển đổi type ID thành tên loại item để hiển thị */
   const getTypeTextFromTypeId = (type) => {
     switch (type) {
       case 0:
@@ -73,15 +113,19 @@ const InventoryDialog = ({ open, setOpen, user }) => {
     }
   };
 
+  /* Hàm render danh sách item theo loại (type) */
   const renderInventoryList = (type) => {
-    const filteredItems = inventoryItems.filter(
-      (item) => item.itemType === type
-    );
+    /* Lọc các item theo loại, đảm bảo inventoryItems là mảng */
+    const filteredItems = Array.isArray(inventoryItems)
+      ? inventoryItems.filter((item) => item.itemType === type)
+      : [];
 
+    /* Nếu không có item nào thì hiển thị thông báo */
     if (filteredItems.length === 0) {
       return <div className="p-4">No items found for {type}</div>;
     }
 
+    /* Hiển thị danh sách item trong lưới */
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
         {filteredItems.map((item) => (
@@ -108,6 +152,7 @@ const InventoryDialog = ({ open, setOpen, user }) => {
     );
   };
 
+  /* Giao diện chính của dialog */
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-5xl max-h-[80vh] p-0 overflow-hidden">
@@ -115,9 +160,10 @@ const InventoryDialog = ({ open, setOpen, user }) => {
           <DialogTitle className="text-2xl font-bold">Inventory</DialogTitle>
         </DialogHeader>
         <Tabs
-          defaultValue="trees"
+          defaultValue="items"
           className="flex flex-col md:flex-row h-[60vh] overflow-hidden"
         >
+          {/* Danh sách các tab để chọn loại item */}
           <div className="w-full md:w-[15%] bg-gray-50 border-r overflow-y-auto">
             <TabsList className="grid grid-cols-1 gap-2 p-4 bg-gray-50">
               <TabsTrigger value="items" className="text-sm py-3">
@@ -134,14 +180,24 @@ const InventoryDialog = ({ open, setOpen, user }) => {
               </TabsTrigger>
             </TabsList>
           </div>
+          {/* Hiển thị danh sách item theo tab được chọn */}
           <div className="w-full md:w-[50%] border-r overflow-y-auto">
             <TabsContent value="items">{renderInventoryList("items")}</TabsContent>
-            <TabsContent value="backgrounds">{renderInventoryList("backgrounds")}</TabsContent>
+            <TabsContent value="backgrounds">
+              {renderInventoryList("backgrounds")}
+            </TabsContent>
             <TabsContent value="music">{renderInventoryList("music")}</TabsContent>
-            <TabsContent value="avatars">{renderInventoryList("avatars")}</TabsContent>
+            <TabsContent value="avatars">
+              {renderInventoryList("avatars")}
+            </TabsContent>
           </div>
+          {/* Hiển thị chi tiết item được chọn */}
           <div className="w-full md:w-[35%] p-6 overflow-y-auto">
-            <ItemDetail selectedItem={selectedItem} inventoryItems={inventoryItems} setInventoryItems={setInventoryItems} />
+            <ItemDetail
+              selectedItem={selectedItem}
+              inventoryItems={inventoryItems}
+              handleUseItem={handleUseItem}
+            />
           </div>
         </Tabs>
       </DialogContent>

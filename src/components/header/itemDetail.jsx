@@ -1,8 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { UseItem } from "@/services/apiServices/itemService";
 
-const ItemDetail = ({ selectedItem, inventoryItems, setInventoryItems }) => {
+const ItemDetail = ({ selectedItem, inventoryItems, handleUseItem }) => {
   if (!selectedItem) {
     return (
       <div className="flex-1 flex items-center justify-center h-full">
@@ -29,17 +28,6 @@ const ItemDetail = ({ selectedItem, inventoryItems, setInventoryItems }) => {
     : false;
 
   const disableEquip = isItemType && isAnotherItemEquipped;
-
-  const handleUseItem = async () => {
-    try {
-      const result = await UseItem(selectedItem.bagItemId);
-      console.log("Use item result:", result);
-      const updatedItems = await fetchInventoryData(); // Giả sử bạn có hàm này từ parent
-      setInventoryItems(updatedItems);
-    } catch (error) {
-      console.error("Error using item:", error);
-    }
-  };
 
   return (
     <motion.div
@@ -69,7 +57,7 @@ const ItemDetail = ({ selectedItem, inventoryItems, setInventoryItems }) => {
       {isOwned ? (
         <Button
           className="mt-4 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
-          onClick={handleUseItem}
+          onClick={() => handleUseItem(selectedItem.bagItemId)}
           disabled={disableEquip}
         >
           {isEquippable ? "Equip" : "Use"}
