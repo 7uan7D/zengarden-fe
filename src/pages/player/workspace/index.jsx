@@ -16,11 +16,12 @@ import { GetUserConfigByUserId } from "@/services/apiServices/userConfigService"
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
 import parseJwt from "@/services/parseJwt.js";
 import "../workspace/index.css";
-import "../task/index.css"; // Import TaskPage CSS for task styling
+import "../task/index.css";
 import Pintura from "@/components/pintura/index.jsx";
 import "@pqina/pintura/pintura.css";
 import { openDefaultEditor } from "@pqina/pintura";
 import { LayoutDashboard, FileText, Video, BookOpen, Image, House, Menu, X, CheckCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function Workspace() {
   const [tasks, setTasks] = useState([]);
@@ -401,28 +402,39 @@ export default function Workspace() {
           </Button>
         </div>
         <nav className="flex flex-col gap-2 p-2">
-          {sidebarTabs.map((tab) => (
-            <motion.button
-              key={tab.name}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
-                activeTab === tab.name
-                  ? "bg-green-600 text-white"
-                  : "text-green-700 bg-gray-300 hover:bg-green-100"
-              }`}
-              onClick={() => {
-                if (tab.action) {
-                  tab.action();
-                } else {
-                  setActiveTab(tab.name);
-                }
-              }}
-            >
-              {tab.icon}
-              {!isSidebarCollapsed && <span className="text-sm font-medium">{tab.name}</span>}
-            </motion.button>
-          ))}
+          {/* phần hiển thị tên tab khi đang collapse */}
+          <TooltipProvider>
+            {sidebarTabs.map((tab) => (
+              <Tooltip key={tab.name}>
+                <TooltipTrigger asChild>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
+                      activeTab === tab.name
+                        ? "bg-green-600 text-white"
+                        : "text-green-700 bg-gray-300 hover:bg-green-100"
+                    }`}
+                    onClick={() => {
+                      if (tab.action) {
+                        tab.action();
+                      } else {
+                        setActiveTab(tab.name);
+                      }
+                    }}
+                  >
+                    {tab.icon}
+                    {!isSidebarCollapsed && <span className="text-sm font-medium">{tab.name}</span>}
+                  </motion.button>
+                </TooltipTrigger>
+                {isSidebarCollapsed && (
+                  <TooltipContent side="right">
+                    <p>{tab.name}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            ))}
+          </TooltipProvider>
         </nav>
       </motion.div>
 
@@ -445,12 +457,12 @@ export default function Workspace() {
         <div className="flex flex-1 flex-col gap-6 z-10">
           {activeTab === "Your Space" && (
             <div className="flex gap-6">
-              {/* Khu vực Task - Chiếm 33% chiều rộng, bên trái */}
+              {/* Khu vực Task - Chiếm 25% chiều rộng, bên trái */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="w-1/3"
+                className="w-1/4"
               >
                 <div className="task-column simple">
                   <h2 className="text-[#10b981]">Simple Tasks</h2>
