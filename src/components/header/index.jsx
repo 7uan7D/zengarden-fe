@@ -2,7 +2,11 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetTrigger } from "@/components/ui/sheet";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
@@ -12,9 +16,9 @@ import { GetUserInfo } from "@/services/apiServices/userService";
 import { GetUserConfigByUserId } from "@/services/apiServices/userConfigService";
 import { useUserExperience } from "@/context/UserExperienceContext";
 import NotificationBell from "@/components/notification/NotificationBell";
-import LoginForm from "./LoginForm";
-import ProfileDialog from "./ProfileDialog";
-import InventoryDialog from "./InventoryDialog";
+import LoginForm from "./loginForm";
+import ProfileDialog from "./profileDialog";
+import InventoryDialog from "./inventoryDialog";
 import "@/components/header/index.css";
 import { toast } from "sonner";
 
@@ -275,7 +279,10 @@ const Header = () => {
                   <span>Farmer Verified</span>
                 </motion.div>
               </SheetTrigger>
-              <LoginForm setIsLoggedIn={setIsLoggedIn} setIsSheetOpen={setIsSheetOpen} />
+              <LoginForm
+                setIsLoggedIn={setIsLoggedIn}
+                setIsSheetOpen={setIsSheetOpen}
+              />
             </Sheet>
           )}
         </div>
@@ -381,7 +388,10 @@ const Header = () => {
                       <span>Farmer Verified</span>
                     </motion.div>
                   </SheetTrigger>
-                  <LoginForm setIsLoggedIn={setIsLoggedIn} setIsSheetOpen={setIsSheetOpen} />
+                  <LoginForm
+                    setIsLoggedIn={setIsLoggedIn}
+                    setIsSheetOpen={setIsSheetOpen}
+                  />
                 </Sheet>
               )}
             </div>
