@@ -39,6 +39,10 @@ const pageVariants = {
   exit: { opacity: 0, transition: { duration: 0.2 } },
 };
 
+/** Mảng các path không hiển thị MusicPlayerController */
+const excludedPaths = ["/", "/faq", "/workspace", "/policy"];
+const excludedPathsHeader = ["/workspace"];
+
 function AnimatedRoutes() {
   const location = useLocation();
   const [isPlaying, setIsPlaying] = useState(false); // Trạng thái phát nhạc
@@ -49,9 +53,13 @@ function AnimatedRoutes() {
       <TreeExperienceProvider>
         <>
           <TimerProvider>
-            <Header />
+            {!excludedPathsHeader.includes(location.pathname) && (
+              <div>
+                <Header/>
+              </div>
+            )}
             {/* Chỉ hiển thị MusicPlayerController nếu không phải trang HeroPage */}
-            {location.pathname !== "/" && (
+            {!excludedPaths.includes(location.pathname) && (
               <div className="fixed top-4 left-4 z-50">
                 <MusicPlayerController
                   positionClass="fixed top-4 left-4 z-50"
@@ -83,7 +91,11 @@ function AnimatedRoutes() {
                 </Routes>
               </motion.div>
             </AnimatePresence>
-            <Footer />
+            {!excludedPathsHeader.includes(location.pathname) && (
+              <div>
+                <Footer/>
+              </div>
+            )}
           </TimerProvider>
         </>
       </TreeExperienceProvider>
