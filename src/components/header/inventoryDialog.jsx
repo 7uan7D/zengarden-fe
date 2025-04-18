@@ -1,9 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import ItemDetail from "./ItemDetail";
-import { GetBagItems, GetItemDetailByItemId, UseItem } from "@/services/apiServices/itemService";
+import ItemDetail from "./itemDetail";
+import {
+  GetBagItems,
+  GetItemDetailByItemId,
+  UseItem,
+} from "@/services/apiServices/itemService";
 
 const InventoryDialog = ({ open, setOpen, user }) => {
   const [inventoryItems, setInventoryItems] = useState([]);
@@ -182,11 +191,15 @@ const InventoryDialog = ({ open, setOpen, user }) => {
           </div>
           {/* Hiển thị danh sách item theo tab được chọn */}
           <div className="w-full md:w-[50%] border-r overflow-y-auto">
-            <TabsContent value="items">{renderInventoryList("items")}</TabsContent>
+            <TabsContent value="items">
+              {renderInventoryList("items")}
+            </TabsContent>
             <TabsContent value="backgrounds">
               {renderInventoryList("backgrounds")}
             </TabsContent>
-            <TabsContent value="music">{renderInventoryList("music")}</TabsContent>
+            <TabsContent value="music">
+              {renderInventoryList("music")}
+            </TabsContent>
             <TabsContent value="avatars">
               {renderInventoryList("avatars")}
             </TabsContent>
