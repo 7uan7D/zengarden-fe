@@ -115,8 +115,6 @@ const InventoryDialog = ({ open, setOpen, user }) => {
         return "avatars";
       case 3:
         return "backgrounds";
-      case 4:
-        return "music";
       default:
         return "others";
     }
@@ -181,9 +179,6 @@ const InventoryDialog = ({ open, setOpen, user }) => {
               <TabsTrigger value="backgrounds" className="text-sm py-3">
                 Backgrounds
               </TabsTrigger>
-              <TabsTrigger value="music" className="text-sm py-3">
-                Music
-              </TabsTrigger>
               <TabsTrigger value="avatars" className="text-sm py-3">
                 Avatars
               </TabsTrigger>
@@ -196,9 +191,6 @@ const InventoryDialog = ({ open, setOpen, user }) => {
             </TabsContent>
             <TabsContent value="backgrounds">
               {renderInventoryList("backgrounds")}
-            </TabsContent>
-            <TabsContent value="music">
-              {renderInventoryList("music")}
             </TabsContent>
             <TabsContent value="avatars">
               {renderInventoryList("avatars")}

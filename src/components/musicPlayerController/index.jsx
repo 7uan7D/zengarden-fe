@@ -138,7 +138,7 @@ export default function MusicPlayerController({
 
   return (
     <div
-      className={`flex items-center gap-2 bg-white rounded-lg shadow-md border border-gray-200 p-3 mt-20 ${positionClass}`}
+      className={`flex items-center gap-2 bg-white rounded-lg shadow-md border border-gray-200 p-3 ${positionClass}`}
     >
       {/* Nút thu gọn/mở rộng */}
       <Button
@@ -148,9 +148,9 @@ export default function MusicPlayerController({
         onClick={() => setIsCollapsed(!isCollapsed)}
       >
         {isCollapsed ? (
-          <ChevronRight className="h-3 w-3" />
-        ) : (
           <ChevronLeft className="h-3 w-3" />
+        ) : (
+          <ChevronRight className="h-3 w-3" />
         )}
       </Button>
 

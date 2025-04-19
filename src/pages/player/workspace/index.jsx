@@ -464,7 +464,7 @@ export default function Workspace() {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="w-1/4"
               >
-                <div className="task-column simple">
+                {/* <div className="task-column simple">
                   <h2 className="text-[#10b981]">Simple Tasks</h2>
                   <CardContent className="p-0">
                     {tasks.length === 0 ? (
@@ -566,7 +566,7 @@ export default function Workspace() {
                       </ul>
                     )}
                   </CardContent>
-                </div>
+                </div> */}
               </motion.div>
 
               {/* Không gian trống bên phải */}

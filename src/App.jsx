@@ -28,6 +28,7 @@ import Workspace from "./pages/player/workspace";
 import { UserExperienceProvider } from "@/context/UserExperienceContext";
 import { TreeExperienceProvider } from "./context/TreeExperienceContext";
 import MusicPlayerController from "./components/musicPlayerController";
+import TaskOverlay from "../src/pages/player/task/task_overlay"; // Thêm import
 import ChallengeDetails from "./pages/player/challenges/ChallengeDetails";
 import { TimerProvider } from "./pages/player/workspace/timerContext";
 import Policy from "./components/policy";
@@ -39,7 +40,7 @@ const pageVariants = {
   exit: { opacity: 0, transition: { duration: 0.2 } },
 };
 
-/** Mảng các path không hiển thị MusicPlayerController */
+/** Mảng các path không hiển thị MusicPlayerController và TaskOverlay */
 const excludedPaths = ["/", "/faq", "/workspace", "/policy"];
 const excludedPathsHeader = ["/workspace"];
 
@@ -55,17 +56,23 @@ function AnimatedRoutes() {
           <TimerProvider>
             {!excludedPathsHeader.includes(location.pathname) && (
               <div>
-                <Header/>
+                <Header />
               </div>
             )}
-            {/* Chỉ hiển thị MusicPlayerController nếu không phải trang HeroPage */}
+            {/* Hiển thị MusicPlayerController */}
             {!excludedPaths.includes(location.pathname) && (
-              <div className="fixed top-4 left-4 z-50">
+              <div className="fixed bottom-4 right-4 z-50">
                 <MusicPlayerController
-                  positionClass="fixed top-4 left-4 z-50"
+                  positionClass="fixed bottom-4 right-4 z-50 mb-5"
                   setPlaying={setIsPlaying}
                   setCurrentIndex={setCurrentIndex}
                 />
+              </div>
+            )}
+            {/* Hiển thị TaskOverlay */}
+            {!excludedPaths.includes(location.pathname) && (
+              <div className="fixed top-4 left-4 z-50 mt-20">
+                <TaskOverlay />
               </div>
             )}
             <AnimatePresence mode="wait">
@@ -93,7 +100,7 @@ function AnimatedRoutes() {
             </AnimatePresence>
             {!excludedPathsHeader.includes(location.pathname) && (
               <div>
-                <Footer/>
+                <Footer />
               </div>
             )}
           </TimerProvider>

@@ -145,7 +145,7 @@ export function TreeInfoHeader({
   handleOpen, // Thêm props handleOpen
 }) {
   const selectedTree = userTrees.find(
-    (tree) => tree.userTreeId === currentTree
+    (tree) => tree.userTreeId === currentTree 
   );
   const treeLevel = selectedTree?.levelId;
   const finalTreeId = selectedTree?.finalTreeId;
