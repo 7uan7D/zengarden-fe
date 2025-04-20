@@ -72,8 +72,14 @@ const NotificationBell = () => {
         .start()
         .then(() => {
           console.log("Connected to notification hub");
-          connection.on("ReceiveNotification", (title, message) => {
-            setNotifications((prev) => [...prev, { title, message }]);
+          connection.on("ReceiveNotification", (content, createdAt) => {
+            setNotifications((prev) => [
+              ...prev,
+              {
+                title: "🔔 New Notification",
+                message: `${content} ${createdAt}`,
+              },
+            ]);
             setShake(true);
             setTimeout(() => setShake(false), 500);
           });
