@@ -10,6 +10,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import parseJwt from "@/services/parseJwt";
 
 const formatDateFromMessage = (message) => {
   const dateMatch = message.match(
@@ -32,13 +33,35 @@ const NotificationBell = () => {
   const [connection, setConnection] = useState(null);
   const [shake, setShake] = useState(false);
 
+  // useEffect(() => {
+  //   const newConnection = new HubConnectionBuilder()
+  //     .withUrl("https://zengarden-be.onrender.com/hubs/notification", {
+  //       withCredentials: true,
+  //     })
+  //     .withAutomaticReconnect()
+  //     .build();
+
+  //   setConnection(newConnection);
+  // }, []);
+
   useEffect(() => {
-    const newConnection = new HubConnectionBuilder()
-      .withUrl("https://zengarden-be.onrender.com/hubs/notification", {
-        withCredentials: true,
-      })
-      .withAutomaticReconnect()
-      .build();
+    const token = localStorage.getItem("token");
+    const baseUrl = "https://zengarden-be.onrender.com/hubs/notification";
+
+    const newConnection = token
+      ? (() => {
+          const decoded = parseJwt(token);
+          const userId = decoded.sub;
+
+          return new HubConnectionBuilder()
+            .withUrl(`${baseUrl}?userId=${userId}`, { withCredentials: true })
+            .withAutomaticReconnect()
+            .build();
+        })()
+      : new HubConnectionBuilder()
+          .withUrl(baseUrl, { withCredentials: true })
+          .withAutomaticReconnect()
+          .build();
 
     setConnection(newConnection);
   }, []);
@@ -49,8 +72,14 @@ const NotificationBell = () => {
         .start()
         .then(() => {
           console.log("Connected to notification hub");
-          connection.on("ReceiveNotification", (title, message) => {
-            setNotifications((prev) => [...prev, { title, message }]);
+          connection.on("ReceiveNotification", (content, createdAt) => {
+            setNotifications((prev) => [
+              ...prev,
+              {
+                title: "🔔 New Notification",
+                message: `${content} ${createdAt}`,
+              },
+            ]);
             setShake(true);
             setTimeout(() => setShake(false), 500);
           });
