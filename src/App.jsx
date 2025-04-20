@@ -43,6 +43,7 @@ const pageVariants = {
 /** Mảng các path không hiển thị MusicPlayerController và TaskOverlay */
 const excludedPaths = ["/", "/faq", "/workspace", "/policy"];
 const excludedPathsHeader = ["/workspace"];
+const excludedPathsTasks = ["/", "/faq", "/workspace", "/policy", "/task"];
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -70,7 +71,7 @@ function AnimatedRoutes() {
               </div>
             )}
             {/* Hiển thị TaskOverlay */}
-            {!excludedPaths.includes(location.pathname) && (
+            {!excludedPathsTasks.includes(location.pathname) && (
               <div className="fixed top-4 left-4 z-50 mt-20">
                 <TaskOverlay />
               </div>
