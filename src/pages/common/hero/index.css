@@ -42,7 +42,7 @@ p {
   font-weight: 500;
   border-radius: 8px;
   cursor: pointer;
-  transition: 0.01s ease-in-out;
+  transition: 0.3s ease-in-out;
   border: none;
 }
 
@@ -55,8 +55,107 @@ p {
   background: #609994;
   transform: scale(1.05);
 }
+
+/* Hero Section */
 .hero {
-  margin-bottom: 1%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  min-height: 100vh;
+  padding: 80px 5%;
+  gap: 40px;
+  background: linear-gradient(to bottom, #f9fafb, #e3f2e1);
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 500px;
+}
+
+.hero-content h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #609994;
+  margin-bottom: 20px;
+}
+
+.hero-content p {
+  font-size: 1.3rem;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.hero-carousel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  height: 400px;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(96, 153, 148, 0.8);
+  color: white;
+  border: none;
+  padding: 12px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+}
+
+.carousel-btn:hover {
+  background: #609994;
+}
+
+.prev {
+  left: 10px;
+}
+
+.next {
+  right: 10px;
+}
+
+.carousel-dots {
+  position: absolute;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.dot.active {
+  background: #609994;
 }
 
 /* Section chung */
@@ -65,18 +164,18 @@ p {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 95vh; /* Mỗi section chiếm 1 màn hình */
+  min-height: 95vh;
   padding: 40px 10px;
 }
 
 /* Gamify Section */
 .gamify-section {
-  background: #ffffff; /* Màu trắng cho Gamify */
+  background: linear-gradient(to bottom, #e3f2e1, #f9fafb); /* Đảo ngược gradient */
 }
 
 /* Benefits Section */
 .benefits-section {
-  background:linear-gradient(to bottom, #f9fafb, #e3f2e1);
+  background: linear-gradient(to bottom, #f9fafb, #e3f2e1); /* Giống hero */
 }
 
 .gamify-content {
@@ -107,26 +206,26 @@ p {
 
 .card {
   padding: 15px;
-  transition: transform 0.01s ease-in-out;
+  transition: transform 0.3s ease-in-out;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
   text-align: center;
-  min-height: 300px; /* Tăng chiều cao tối thiểu để chứa ảnh tốt hơn */
+  min-height: 300px;
   width: 100%;
-  overflow: hidden; /* Đảm bảo ảnh không tràn ra ngoài */
+  overflow: hidden;
 }
 
 .card-img {
-  width: 100%; /* Chiếm toàn bộ chiều rộng của card */
-  height: 250px; /* Chiều cao cố định để đồng nhất giữa các card */
-  object-fit: contain; /* Giữ tỉ lệ ảnh, cắt phần thừa nếu cần */
-  border-radius: 8px; /* Bo góc cho ảnh */
-  margin-bottom: 10px; /* Khoảng cách giữa ảnh và nội dung */
+  width: 100%;
+  height: 250px;
+  object-fit: contain;
+  border-radius: 8px;
+  margin-bottom: 10px;
 }
 
 .card:hover {
-  transform: translateY(-5px);
+  transform: scale(1.05); /* Giữ hiệu ứng hover */
 }
 
 .card h2 {
@@ -142,6 +241,32 @@ p {
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding: 40px 5%;
+  }
+
+  .hero-content {
+    max-width: 100%;
+    margin-bottom: 30px;
+  }
+
+  .hero-content h1 {
+    font-size: 2.5rem;
+  }
+
+  .hero-content p {
+    font-size: 1.1rem;
+  }
+
+  .carousel-container {
+    max-width: 100%;
+    height: 300px;
+  }
+}
+
 @media (max-width: 768px) {
   .gamify-content {
     padding: 0 15px;
