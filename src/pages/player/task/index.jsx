@@ -59,12 +59,12 @@ const initialTasks = {
       endDate: "22/04/2025",
       status: null,
       focusMethodName: "Pomodoro",
-      totalDuration: 2,
-      workDuration: 1.5,
-      breakTime: 0.5,
+      totalDuration: 0.5,
+      workDuration: 0.5,
+      breakTime: 0,
       userTreeName: "Chilly",
       taskTypeName: "Simple",
-      remainingTime: 2 * 60,
+      remainingTime: 0.5 * 60,
       priority: 1,
     },
     {
@@ -242,7 +242,7 @@ export default function TaskPage() {
     challenge: "all",
   });
   const [taskData, setTaskData] = useState(initialTasks);
-  const [timers, setTimers] = useState({}); // state quan lý thời gian cho các task
+  const [timers, setTimers] = useState({}); // state quản lý thời gian cho các task
   const [activeTaskKey, setActiveTaskKey] = useState(null); // key của task đang hoạt động
   const intervalRefs = useRef({}); // tham chiếu đến các interval để dọn dẹp sau này
 
@@ -663,8 +663,8 @@ export default function TaskPage() {
                         <div className="flex flex-col gap-1 text-left">
                           <span
                             className={`text-sm ${task.status === 4 || (remainingTime <= 0 && currentTaskStatus !== 0)
-                                ? "text-red-600"
-                                : "text-gray-600"
+                              ? "text-red-600"
+                              : "text-gray-600"
                               }`}
                           >
                             {task.status !== 3 &&
@@ -691,7 +691,7 @@ export default function TaskPage() {
                             </div>
                           </div>
                           {/* Hiển thị thời gian làm việc và thời gian nghỉ nếu task chưa hoàn thành hoặc quá hạn */}
-                          {task.status !== 4 && task.status !== 3 && (
+                          {task.status !== 4 && task.status !== 3 && !(remainingTime <= 0 && currentTaskStatus !== 0) && (
                             <div className="text-xs text-gray-500 mt-1">
                               {currentTaskStatus === 0 ? (
                                 <span className="text-gray-400">Not Started</span>
@@ -727,37 +727,39 @@ export default function TaskPage() {
                           </span>
                         ) : (
                           <div className="flex gap-2">
-                            <Button
-                              onClick={() =>
-                                handleTaskAction(
-                                  columnKey,
-                                  index,
-                                  currentTaskStatus === 0
-                                    ? "start"
-                                    : currentTaskStatus === 1
-                                      ? "pause"
-                                      : "resume"
-                                )
-                              }
-                              className={
-                                currentTaskStatus === 1
-                                  ? "bg-yellow-500 hover:bg-yellow-600"
-                                  : currentTaskStatus === 2
-                                    ? "bg-blue-500 hover:bg-blue-600"
-                                    : "bg-green-500 hover:bg-green-600"
-                              }
-                              disabled={
-                                currentTaskStatus === 0 &&
-                                activeTaskKey !== null &&
-                                activeTaskKey !== taskKey
-                              }
-                            >
-                              {currentTaskStatus === 0
-                                ? "Start"
-                                : currentTaskStatus === 1
-                                  ? "Pause"
-                                  : "Resume"}
-                            </Button>
+                            {!(remainingTime <= 0 && currentTaskStatus !== 0) && (
+                              <Button
+                                onClick={() =>
+                                  handleTaskAction(
+                                    columnKey,
+                                    index,
+                                    currentTaskStatus === 0
+                                      ? "start"
+                                      : currentTaskStatus === 1
+                                        ? "pause"
+                                        : "resume"
+                                  )
+                                }
+                                className={
+                                  currentTaskStatus === 1
+                                    ? "bg-yellow-500 hover:bg-yellow-600"
+                                    : currentTaskStatus === 2
+                                      ? "bg-blue-500 hover:bg-blue-600"
+                                      : "bg-green-500 hover:bg-green-600"
+                                }
+                                disabled={
+                                  currentTaskStatus === 0 &&
+                                  activeTaskKey !== null &&
+                                  activeTaskKey !== taskKey
+                                }
+                              >
+                                {currentTaskStatus === 0
+                                  ? "Start"
+                                  : currentTaskStatus === 1
+                                    ? "Pause"
+                                    : "Resume"}
+                              </Button>
+                            )}
                             {remainingTime <= 120 &&
                               remainingTime >= 0 &&
                               currentTaskStatus !== 0 && (
