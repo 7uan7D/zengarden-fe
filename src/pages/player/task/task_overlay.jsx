@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { useTreeExperience } from "@/context/TreeExperienceContext";
 import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import { PauseTask, StartTask } from "@/services/apiServices/taskService";
-import { ConfirmCompletionDialog } from "./task_dialog";
 import "../task/index.css";
 
 export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 mt-20" }) {

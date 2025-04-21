@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -33,8 +33,14 @@ import { GetBagItems } from "@/services/apiServices/itemService";
 import { CircleCheckBig, CircleX } from "lucide-react";
 import "../task/index.css";
 
-// Dữ liệu cứng cho các cột task
-const tasks = {
+// Hàm chuyển đổi startDate sang định dạng so sánh được (YYYYMMDD)
+const parseDate = (dateStr) => {
+  const [day, month, year] = dateStr.split("/").map(Number);
+  return year * 10000 + month * 100 + day;
+};
+
+// Dữ liệu cứng với priority được gán theo startDate
+const initialTasks = {
   daily: [],
   simple: [
     {
@@ -44,26 +50,28 @@ const tasks = {
       endDate: "05/04/2025",
       status: null,
       focusMethodName: "Pomodoro",
-      totalDuration: 60,
-      workDuration: 25,
+      totalDuration: 6,
+      workDuration: 2.5,
+      breakTime: 1,
+      userTreeName: "Chilly",
+      taskTypeName: "Simple",
+      remainingTime: 6 * 60,
+      priority: 1,
+    },
+    {
+      taskName: "Write Unit Tests",
+      taskDescription: "Write unit tests for authentication module",
+      startDate: "01/04/2025",
+      endDate: "10/04/2025",
+      status: 4,
+      focusMethodName: "Pomodoro",
+      totalDuration: 50,
+      workDuration: 20,
       breakTime: 5,
       userTreeName: "Chilly",
       taskTypeName: "Simple",
-      remainingTime: 60 * 60, // 60 minutes in seconds
-    },
-    {
-      taskName: "Code Review",
-      taskDescription: "Review team member's code for new feature",
-      startDate: "03/04/2025",
-      endDate: "04/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 45,
-      workDuration: 20,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Simple",
-      remainingTime: 45 * 60,
+      remainingTime: 0,
+      priority: 2,
     },
     {
       taskName: "Update Documentation",
@@ -78,20 +86,22 @@ const tasks = {
       userTreeName: "Chilly",
       taskTypeName: "Simple",
       remainingTime: 90 * 60,
+      priority: 3,
     },
     {
-      taskName: "Write Unit Tests",
-      taskDescription: "Write unit tests for authentication module",
-      startDate: "01/04/2025",
-      endDate: "10/04/2025",
-      status: 4, // Expired
+      taskName: "Code Review",
+      taskDescription: "Review team member's code for new feature",
+      startDate: "03/04/2025",
+      endDate: "04/04/2025",
+      status: null,
       focusMethodName: "Pomodoro",
-      totalDuration: 50,
+      totalDuration: 45,
       workDuration: 20,
-      breakTime: 5,
+      breakTime: 10,
       userTreeName: "Chilly",
       taskTypeName: "Simple",
-      remainingTime: 0, // Expired tasks typically have no remaining time
+      remainingTime: 45 * 60,
+      priority: 4,
     },
   ],
   complex: [
@@ -108,6 +118,22 @@ const tasks = {
       userTreeName: "Chilly",
       taskTypeName: "Complex",
       remainingTime: 120 * 60,
+      priority: 1,
+    },
+    {
+      taskName: "Implement Payment Gateway",
+      taskDescription: "Integrate payment gateway for e-commerce platform",
+      startDate: "01/04/2025",
+      endDate: "15/04/2025",
+      status: 3,
+      focusMethodName: "Pomodoro",
+      totalDuration: 150,
+      workDuration: 50,
+      breakTime: 10,
+      userTreeName: "Chilly",
+      taskTypeName: "Complex",
+      remainingTime: 0,
+      priority: 2,
     },
     {
       taskName: "Database Optimization",
@@ -122,6 +148,7 @@ const tasks = {
       userTreeName: "Chilly",
       taskTypeName: "Complex",
       remainingTime: 100 * 60,
+      priority: 3,
     },
     {
       taskName: "UI Redesign",
@@ -136,20 +163,7 @@ const tasks = {
       userTreeName: "Chilly",
       taskTypeName: "Complex",
       remainingTime: 80 * 60,
-    },
-    {
-      taskName: "Implement Payment Gateway",
-      taskDescription: "Integrate payment gateway for e-commerce platform",
-      startDate: "01/04/2025",
-      endDate: "15/04/2025",
-      status: 3, // Done
-      focusMethodName: "Pomodoro",
-      totalDuration: 150,
-      workDuration: 50,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Complex",
-      remainingTime: 0, // Completed tasks have no remaining time
+      priority: 4,
     },
   ],
   challenge: [
@@ -166,20 +180,7 @@ const tasks = {
       userTreeName: "Chilly",
       taskTypeName: "Challenge",
       remainingTime: 90 * 60,
-    },
-    {
-      taskName: "Open Source Contribution",
-      taskDescription: "Contribute to an open-source project",
-      startDate: "05/04/2025",
-      endDate: "20/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 110,
-      workDuration: 40,
-      breakTime: 15,
-      userTreeName: "Chilly",
-      taskTypeName: "Challenge",
-      remainingTime: 110 * 60,
+      priority: 1,
     },
     {
       taskName: "Learn New Framework",
@@ -194,6 +195,22 @@ const tasks = {
       userTreeName: "Chilly",
       taskTypeName: "Challenge",
       remainingTime: 100 * 60,
+      priority: 2,
+    },
+    {
+      taskName: "Open Source Contribution",
+      taskDescription: "Contribute to an open-source project",
+      startDate: "05/04/2025",
+      endDate: "20/04/2025",
+      status: null,
+      focusMethodName: "Pomodoro",
+      totalDuration: 110,
+      workDuration: 40,
+      breakTime: 15,
+      userTreeName: "Chilly",
+      taskTypeName: "Challenge",
+      remainingTime: 110 * 60,
+      priority: 3,
     },
   ],
 };
@@ -215,7 +232,10 @@ export default function TaskPage() {
     complex: "all",
     challenge: "all",
   });
-  const [taskStatus, setTaskStatus] = useState({}); // Track status of each task (0: Not started, 1: Running, 2: Paused)
+  const [taskData, setTaskData] = useState(initialTasks);
+  const [timers, setTimers] = useState({});
+  const [activeTaskKey, setActiveTaskKey] = useState(null); // New state to track active task
+  const intervalRefs = useRef({});
 
   const { refreshXp } = useUserExperience();
   const { treeExp, refreshTreeExp } = useTreeExperience();
@@ -231,7 +251,7 @@ export default function TaskPage() {
       ? `/images/lv${treeLevel}.png`
       : selectedFinalTree?.imageUrl || "/images/default.png";
 
-  // Fetch all trees and user trees on component mount
+  // Fetch trees and user data
   useEffect(() => {
     const fetchTrees = async () => {
       try {
@@ -281,6 +301,15 @@ export default function TaskPage() {
     }
   }, [userTrees]);
 
+  // Cleanup intervals on component unmount
+  useEffect(() => {
+    return () => {
+      Object.values(intervalRefs.current).forEach((intervalId) =>
+        clearInterval(intervalId)
+      );
+    };
+  }, []);
+
   const handleCreateTree = async () => {
     try {
       setIsCreating(true);
@@ -308,7 +337,6 @@ export default function TaskPage() {
     }
   };
 
-  // Format time in MM:SS format
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -317,19 +345,186 @@ export default function TaskPage() {
       .padStart(2, "0")}`;
   };
 
-  // Handle Start/Pause/Resume button click
-  const handleTaskAction = (columnKey, index) => {
+  // Handle Start/Pause/Resume/Finish actions
+  const handleTaskAction = (columnKey, index, action) => {
     const taskKey = `${columnKey}-${index}`;
-    setTaskStatus((prev) => {
-      const currentStatus = prev[taskKey] || 0;
-      if (currentStatus === 0) {
-        return { ...prev, [taskKey]: 1 }; // Start -> Running
-      } else if (currentStatus === 1) {
-        return { ...prev, [taskKey]: 2 }; // Running -> Paused
-      } else {
-        return { ...prev, [taskKey]: 1 }; // Paused -> Running
-      }
-    });
+    const task = taskData[columnKey][index];
+
+    if (action === "start") {
+      setActiveTaskKey(taskKey); // Set the active task
+      setTimers((prev) => ({
+        ...prev,
+        [taskKey]: {
+          isWorkPhase: true,
+          currentWorkTime: task.workDuration * 60,
+          currentBreakTime: task.breakTime * 60,
+          remainingTime: task.remainingTime,
+          isRunning: true,
+          totalWorkCompleted: 0,
+          totalBreakCompleted: 0,
+        },
+      }));
+
+      intervalRefs.current[taskKey] = setInterval(() => {
+        setTimers((prev) => {
+          const timer = prev[taskKey];
+          if (!timer || !timer.isRunning) return prev;
+
+          let {
+            isWorkPhase,
+            currentWorkTime,
+            currentBreakTime,
+            remainingTime,
+            totalWorkCompleted,
+            totalBreakCompleted,
+          } = timer;
+
+          if (remainingTime <= 0) {
+            clearInterval(intervalRefs.current[taskKey]);
+            setTaskData((prevData) => {
+              const newData = { ...prevData };
+              newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
+              return newData;
+            });
+            setActiveTaskKey(null); // Clear active task
+            return {
+              ...prev,
+              [taskKey]: { ...timer, isRunning: false },
+            };
+          }
+
+          if (isWorkPhase) {
+            currentWorkTime -= 1;
+            remainingTime -= 1;
+            if (currentWorkTime <= 0) {
+              totalWorkCompleted += task.workDuration * 60;
+              isWorkPhase = false;
+              currentWorkTime = task.workDuration * 60;
+              currentBreakTime = task.breakTime * 60;
+            }
+          } else {
+            currentBreakTime -= 1;
+            remainingTime -= 1;
+            if (currentBreakTime <= 0) {
+              totalBreakCompleted += task.breakTime * 60;
+              isWorkPhase = true;
+              currentWorkTime = task.workDuration * 60;
+              currentBreakTime = task.breakTime * 60;
+            }
+          }
+
+          setTaskData((prevData) => {
+            const newData = { ...prevData };
+            newData[columnKey][index] = { ...task, remainingTime };
+            return newData;
+          });
+
+          return {
+            ...prev,
+            [taskKey]: {
+              ...timer,
+              isWorkPhase,
+              currentWorkTime,
+              currentBreakTime,
+              remainingTime,
+              totalWorkCompleted,
+              totalBreakCompleted,
+            },
+          };
+        });
+      }, 1000);
+    } else if (action === "pause") {
+      setTimers((prev) => ({
+        ...prev,
+        [taskKey]: { ...prev[taskKey], isRunning: false },
+      }));
+      clearInterval(intervalRefs.current[taskKey]);
+    } else if (action === "resume") {
+      setTimers((prev) => ({
+        ...prev,
+        [taskKey]: { ...prev[taskKey], isRunning: true },
+      }));
+      intervalRefs.current[taskKey] = setInterval(() => {
+        setTimers((prev) => {
+          const timer = prev[taskKey];
+          if (!timer || !timer.isRunning) return prev;
+
+          let {
+            isWorkPhase,
+            currentWorkTime,
+            currentBreakTime,
+            remainingTime,
+            totalWorkCompleted,
+            totalBreakCompleted,
+          } = timer;
+
+          if (remainingTime <= 0) {
+            clearInterval(intervalRefs.current[taskKey]);
+            setTaskData((prevData) => {
+              const newData = { ...prevData };
+              newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
+              return newData;
+            });
+            setActiveTaskKey(null); // Clear active task
+            return {
+              ...prev,
+              [taskKey]: { ...timer, isRunning: false },
+            };
+          }
+
+          if (isWorkPhase) {
+            currentWorkTime -= 1;
+            remainingTime -= 1;
+            if (currentWorkTime <= 0) {
+              totalWorkCompleted += task.workDuration * 60;
+              isWorkPhase = false;
+              currentWorkTime = task.workDuration * 60;
+              currentBreakTime = task.breakTime * 60;
+            }
+          } else {
+            currentBreakTime -= 1;
+            remainingTime -= 1;
+            if (currentBreakTime <= 0) {
+              totalBreakCompleted += task.breakTime * 60;
+              isWorkPhase = true;
+              currentWorkTime = task.workDuration * 60;
+              currentBreakTime = task.breakTime * 60;
+            }
+          }
+
+          setTaskData((prevData) => {
+            const newData = { ...prevData };
+            newData[columnKey][index] = { ...task, remainingTime };
+            return newData;
+          });
+
+          return {
+            ...prev,
+            [taskKey]: {
+              ...timer,
+              isWorkPhase,
+              currentWorkTime,
+              currentBreakTime,
+              remainingTime,
+              totalWorkCompleted,
+              totalBreakCompleted,
+            },
+          };
+        });
+      }, 1000);
+    } else if (action === "finish") {
+      clearInterval(intervalRefs.current[taskKey]);
+      setTimers((prev) => ({
+        ...prev,
+        [taskKey]: { ...prev[taskKey], isRunning: false },
+      }));
+      setTaskData((prevData) => {
+        const newData = { ...prevData };
+        newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
+        return newData;
+      });
+      setActiveTaskKey(null); // Clear active task
+    }
   };
 
   const renderTaskColumn = (title, taskList, columnKey) => {
@@ -338,7 +533,10 @@ export default function TaskPage() {
         ? taskList
         : activeTabs[columnKey] === "current"
         ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
-        : taskList.filter((task) => task.status === 4 || task.status === 3);
+        : taskList.filter((task) => task.status === 3);
+
+    // Sắp xếp theo priority
+    const sortedTasks = [...filteredTasks].sort((a, b) => a.priority - b.priority);
 
     return (
       <div className="task-column-container">
@@ -351,7 +549,6 @@ export default function TaskPage() {
             }
           >
             <TabsList className="bg-transparent flex">
-              {/** Phần hiển thị active tab của cột Task */}
               <TabsTrigger
                 value="all"
                 className="data-[state=active]:text-green-500 border-none px-2 text-sm"
@@ -382,53 +579,38 @@ export default function TaskPage() {
         >
           <ScrollArea className="h-[400px] overflow-y-auto">
             <div className="grid gap-3">
-              {filteredTasks.map((task, index) => {
-                const totalDurationSeconds = task.totalDuration * 60; //  Convert minutes to seconds
-                const remainingTime = task.remainingTime; // Remaining time in seconds
-                const workDurationSeconds = task.workDuration * 60; // Convert minutes to seconds
-                const breakTimeSeconds = task.breakTime * 60; // Convert minutes to seconds
-                const cycleDuration = workDurationSeconds + breakTimeSeconds; // phần thời gian của 1 chu kỳ làm việc và nghỉ ngơi
-                const completedCycles = Math.floor(
-                  (totalDurationSeconds - remainingTime) / cycleDuration // phần số chu kỳ đã hoàn thành
-                );
-                const remainingInCycle =
-                  (totalDurationSeconds - remainingTime) % cycleDuration; // phần thời gian còn lại trong chu kỳ hiện tại
+              {sortedTasks.map((task, index) => {
+                const totalDurationSeconds = task.totalDuration * 60;
+                const taskKey = `${columnKey}-${index}`;
+                const timer = timers[taskKey] || {};
+                const {
+                  isWorkPhase = true,
+                  currentWorkTime = task.workDuration * 60,
+                  currentBreakTime = task.breakTime * 60,
+                  remainingTime = task.remainingTime,
+                  totalWorkCompleted = 0,
+                  totalBreakCompleted = 0,
+                } = timer;
 
-                let workProgress, breakProgress;
-                if (task.status === 4 || task.status === 3) {
-                  const totalCycles = Math.ceil(
-                    totalDurationSeconds / cycleDuration // phần số chu kỳ hoàn thành
-                  );
-                  workProgress =
-                    (workDurationSeconds / totalDurationSeconds) *
-                    100 *
-                    totalCycles; // phần trăm thời gian làm việc đã hoàn thành
-                  breakProgress =
-                    (breakTimeSeconds / totalDurationSeconds) * 100 * totalCycles; // phần trăm thời gian nghỉ ngơi đã hoàn thành
-                } else {
-                  workProgress =
-                    (task.workDuration / task.totalDuration) *
-                    100 *
-                    (completedCycles +
-                      (remainingInCycle < workDurationSeconds
-                        ? remainingInCycle / workDurationSeconds
-                        : 1)); 
-                  breakProgress =
-                    (task.breakTime / task.totalDuration) *
-                    100 *
-                    (completedCycles +
-                      (remainingInCycle >= workDurationSeconds
-                        ? (remainingInCycle - workDurationSeconds) /
-                          breakTimeSeconds
-                        : 0));
-                }
+                // Tính tiến độ mỗi giây
+                const workProgress =
+                  ((totalWorkCompleted +
+                    (isWorkPhase ? task.workDuration * 60 - currentWorkTime : 0)) /
+                    totalDurationSeconds) * 100;
+                const breakProgress =
+                  ((totalBreakCompleted +
+                    (!isWorkPhase ? task.breakTime * 60 - currentBreakTime : 0)) /
+                    totalDurationSeconds) * 100;
 
-                const taskKey = `${columnKey}-${index}`; // Unique key for each task
-                const currentTaskStatus = taskStatus[taskKey] || 0; // 0: Not started, 1: Running, 2: Paused
+                const currentTaskStatus = timer.isRunning
+                  ? 1
+                  : timer.currentWorkTime !== undefined
+                  ? 2
+                  : 0;
 
                 return (
                   <motion.div
-                    key={index}
+                    key={`${task.taskName}-${task.priority}`}
                     initial={{ y: 10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
@@ -447,8 +629,12 @@ export default function TaskPage() {
                           </span>
                         </div>
                         <div className="flex flex-col gap-1 text-left">
-                          <span className="text-sm text-gray-600 flex items-center gap-1">
-                            Remaining: {formatTime(remainingTime)}
+                          <span className="text-sm text-gray-600">
+                            {task.status === 3
+                              ? "Done"
+                              : task.status === 4
+                              ? "Expired"
+                              : `Remaining: ${formatTime(remainingTime)}`}
                           </span>
                           <div className="progress-bar-container">
                             <div className="progress-bar">
@@ -465,6 +651,23 @@ export default function TaskPage() {
                                 }}
                               />
                             </div>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {task.status === 3 ? (
+                              <span className="text-green-500">Completed</span>
+                            ) : task.status === 4 ? (
+                              <span className="text-red-500">Expired</span>
+                            ) : currentTaskStatus === 0 ? (
+                              <span className="text-gray-400">Not Started</span>
+                            ) : isWorkPhase ? (
+                              <span className="text-blue-500 font-medium">
+                                Work: {formatTime(currentWorkTime)}
+                              </span>
+                            ) : (
+                              <span className="text-yellow-500 font-medium">
+                                Break: {formatTime(currentBreakTime)}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -486,22 +689,51 @@ export default function TaskPage() {
                             Expired
                           </span>
                         ) : (
-                          <Button
-                            onClick={() => handleTaskAction(columnKey, index)}
-                            className={
-                              currentTaskStatus === 1
-                                ? "bg-yellow-500 hover:bg-yellow-600"
-                                : currentTaskStatus === 2
-                                ? "bg-blue-500 hover:bg-blue-600"
-                                : "bg-green-500 hover:bg-green-600"
-                            }
-                          >
-                            {currentTaskStatus === 0
-                              ? "Start"
-                              : currentTaskStatus === 1
-                              ? "Pause"
-                              : "Resume"}
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() =>
+                                handleTaskAction(
+                                  columnKey,
+                                  index,
+                                  currentTaskStatus === 0
+                                    ? "start"
+                                    : currentTaskStatus === 1
+                                    ? "pause"
+                                    : "resume"
+                                )
+                              }
+                              className={
+                                currentTaskStatus === 1
+                                  ? "bg-yellow-500 hover:bg-yellow-600"
+                                  : currentTaskStatus === 2
+                                  ? "bg-blue-500 hover:bg-blue-600"
+                                  : "bg-green-500 hover:bg-green-600"
+                              }
+                              disabled={
+                                currentTaskStatus === 0 &&
+                                activeTaskKey !== null &&
+                                activeTaskKey !== taskKey
+                              }
+                            >
+                              {currentTaskStatus === 0
+                                ? "Start"
+                                : currentTaskStatus === 1
+                                ? "Pause"
+                                : "Resume"}
+                            </Button>
+                            {remainingTime <= 120 &&
+                              remainingTime > 0 &&
+                              currentTaskStatus !== 0 && (
+                                <Button
+                                  onClick={() =>
+                                    handleTaskAction(columnKey, index, "finish")
+                                  }
+                                  className="bg-orange-500 hover:bg-orange-600"
+                                >
+                                  Finish
+                                </Button>
+                              )}
+                          </div>
                         )}
                       </div>
                     </Card>
@@ -550,7 +782,6 @@ export default function TaskPage() {
       transition={{ duration: 0.5 }}
     >
       <div className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 shadow-md"></div>
-      {/* Task Tree Header */}
       <div className="py-10 flex-grow">
         <div className="bg-[#CCFFCC] text-black p-6 rounded-lg shadow-md mb-6 flex items-center gap-6 relative mt-6">
           <div
@@ -725,6 +956,9 @@ export default function TaskPage() {
                 <p>
                   <strong>Task Type:</strong> {selectedTask?.taskTypeName}
                 </p>
+                <p>
+                  <strong>Priority:</strong> {selectedTask?.priority}
+                </p>
                 {selectedTask?.remainingTime !== null && (
                   <p>
                     <strong>Remaining Time:</strong>{" "}
@@ -821,11 +1055,11 @@ export default function TaskPage() {
           </DropdownMenu>
         </div>
 
-        <div className="grid grid-cols-4 gap-3 w-full">
-          {renderTaskColumn("Daily Task", tasks.daily, "daily")}
-          {renderTaskColumn("Simple Task", tasks.simple, "simple")}
-          {renderTaskColumn("Complex Task", tasks.complex, "complex")}
-          {renderTaskColumn("Challenge Task", tasks.challenge, "challenge")}
+        <div className="grid grid-cols-4 gap-4 w-full">
+          {renderTaskColumn("Daily Task", taskData.daily, "daily")}
+          {renderTaskColumn("Simple Task", taskData.simple, "simple")}
+          {renderTaskColumn("Complex Task", taskData.complex, "complex")}
+          {renderTaskColumn("Challenge Task", taskData.challenge, "challenge")}
         </div>
       </div>
     </motion.div>

@@ -74,6 +74,10 @@
   height: 100%;
 } /* Trang trí cột task với nền trắng, bo góc, bóng đổ nhẹ, và chiều cao full */
 
+.task-column{
+  padding: 2%;
+}
+
 .task-column-title {
   font-size: 1rem;
   font-weight: 1000;
@@ -147,7 +151,7 @@
 } /* Tạo hiệu ứng tối màu hơn khi hover vào nút trong task */
 
 .progress-bar-container {
-  width: 90%; /* Tăng độ dài thanh total time */
+  width: 85%; /* Tăng độ dài thanh total time */
   height: 8px;
   background: #e5e7eb;
   border-radius: 4px;
@@ -160,8 +164,10 @@
 } /* Tăng chiều cao thanh tổng thời gian khi task đang chạy */
 
 .progress-bar {
-  height: 100%;
   display: flex;
+  width: 100%;
+  height: 8px; /* Điều chỉnh chiều cao thanh tiến độ */
+  background-color: #e5e7eb; /* Màu nền (gray-200) */
 } /* Trang trí thanh tiến trình bên trong với chiều cao full, bố cục flex */
 
 .work-progress {
