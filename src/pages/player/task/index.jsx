@@ -39,6 +39,15 @@ const parseDate = (dateStr) => {
   return year * 10000 + month * 100 + day;
 };
 
+// Hàm lấy ngày hiện tại ở định dạng DD/MM/YYYY
+const getCurrentDateStr = () => {
+  const today = new Date();
+  const day = String(today.getDate()).padStart(2, "0");
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const year = today.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 // Dữ liệu cứng với priority được gán theo startDate
 const initialTasks = {
   daily: [],
@@ -47,15 +56,15 @@ const initialTasks = {
       taskName: "Complete Project Proposal",
       taskDescription: "Draft and finalize project proposal for client meeting",
       startDate: "01/04/2025",
-      endDate: "05/04/2025",
+      endDate: "22/04/2025",
       status: null,
       focusMethodName: "Pomodoro",
-      totalDuration: 6,
-      workDuration: 2.5,
-      breakTime: 1,
+      totalDuration: 2,
+      workDuration: 1.5,
+      breakTime: 0.5,
       userTreeName: "Chilly",
       taskTypeName: "Simple",
-      remainingTime: 6 * 60,
+      remainingTime: 2 * 60,
       priority: 1,
     },
     {
@@ -216,7 +225,7 @@ const initialTasks = {
 };
 
 export default function TaskPage() {
-  // State declarations
+  // Khai báo các state cần thiết
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
   const [currentTree, setCurrentTree] = useState(0);
   const [userTrees, setUserTrees] = useState([]);
@@ -233,9 +242,9 @@ export default function TaskPage() {
     challenge: "all",
   });
   const [taskData, setTaskData] = useState(initialTasks);
-  const [timers, setTimers] = useState({});
-  const [activeTaskKey, setActiveTaskKey] = useState(null); // New state to track active task
-  const intervalRefs = useRef({});
+  const [timers, setTimers] = useState({}); // state quan lý thời gian cho các task
+  const [activeTaskKey, setActiveTaskKey] = useState(null); // key của task đang hoạt động
+  const intervalRefs = useRef({}); // tham chiếu đến các interval để dọn dẹp sau này
 
   const { refreshXp } = useUserExperience();
   const { treeExp, refreshTreeExp } = useTreeExperience();
@@ -251,7 +260,7 @@ export default function TaskPage() {
       ? `/images/lv${treeLevel}.png`
       : selectedFinalTree?.imageUrl || "/images/default.png";
 
-  // Fetch trees and user data
+  // Fetch trees và user data
   useEffect(() => {
     const fetchTrees = async () => {
       try {
@@ -337,6 +346,7 @@ export default function TaskPage() {
     }
   };
 
+  // Hàm định dạng thời gian từ giây sang phút:giây
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -351,7 +361,7 @@ export default function TaskPage() {
     const task = taskData[columnKey][index];
 
     if (action === "start") {
-      setActiveTaskKey(taskKey); // Set the active task
+      setActiveTaskKey(taskKey);
       setTimers((prev) => ({
         ...prev,
         [taskKey]: {
@@ -359,6 +369,7 @@ export default function TaskPage() {
           currentWorkTime: task.workDuration * 60,
           currentBreakTime: task.breakTime * 60,
           remainingTime: task.remainingTime,
+          overdueTime: 0, // Initialize overdue time
           isRunning: true,
           totalWorkCompleted: 0,
           totalBreakCompleted: 0,
@@ -375,42 +386,51 @@ export default function TaskPage() {
             currentWorkTime,
             currentBreakTime,
             remainingTime,
+            overdueTime,
             totalWorkCompleted,
             totalBreakCompleted,
           } = timer;
 
-          if (remainingTime <= 0) {
+          // Check if task has passed endDate
+          const currentDate = parseDate(getCurrentDateStr());
+          const endDate = parseDate(task.endDate);
+          if (currentDate > endDate) {
             clearInterval(intervalRefs.current[taskKey]);
             setTaskData((prevData) => {
               const newData = { ...prevData };
-              newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
+              newData[columnKey][index] = { ...task, status: 4, remainingTime: 0 };
               return newData;
             });
-            setActiveTaskKey(null); // Clear active task
+            setActiveTaskKey(null);
             return {
               ...prev,
               [taskKey]: { ...timer, isRunning: false },
             };
           }
 
-          if (isWorkPhase) {
-            currentWorkTime -= 1;
-            remainingTime -= 1;
-            if (currentWorkTime <= 0) {
-              totalWorkCompleted += task.workDuration * 60;
-              isWorkPhase = false;
-              currentWorkTime = task.workDuration * 60;
-              currentBreakTime = task.breakTime * 60;
+          if (remainingTime > 0) {
+            if (isWorkPhase) {
+              currentWorkTime -= 1;
+              remainingTime -= 1;
+              if (currentWorkTime <= 0) {
+                totalWorkCompleted += task.workDuration * 60;
+                isWorkPhase = false;
+                currentWorkTime = task.workDuration * 60;
+                currentBreakTime = task.breakTime * 60;
+              }
+            } else {
+              currentBreakTime -= 1;
+              remainingTime -= 1;
+              if (currentBreakTime <= 0) {
+                totalBreakCompleted += task.breakTime * 60;
+                isWorkPhase = true;
+                currentWorkTime = task.workDuration * 60;
+                currentBreakTime = task.breakTime * 60;
+              }
             }
           } else {
-            currentBreakTime -= 1;
-            remainingTime -= 1;
-            if (currentBreakTime <= 0) {
-              totalBreakCompleted += task.breakTime * 60;
-              isWorkPhase = true;
-              currentWorkTime = task.workDuration * 60;
-              currentBreakTime = task.breakTime * 60;
-            }
+            // Task is overdue
+            overdueTime += 1;
           }
 
           setTaskData((prevData) => {
@@ -427,6 +447,7 @@ export default function TaskPage() {
               currentWorkTime,
               currentBreakTime,
               remainingTime,
+              overdueTime,
               totalWorkCompleted,
               totalBreakCompleted,
             },
@@ -454,42 +475,51 @@ export default function TaskPage() {
             currentWorkTime,
             currentBreakTime,
             remainingTime,
+            overdueTime,
             totalWorkCompleted,
             totalBreakCompleted,
           } = timer;
 
-          if (remainingTime <= 0) {
+          // Check if task has passed endDate
+          const currentDate = parseDate(getCurrentDateStr());
+          const endDate = parseDate(task.endDate);
+          if (currentDate > endDate) {
             clearInterval(intervalRefs.current[taskKey]);
             setTaskData((prevData) => {
               const newData = { ...prevData };
-              newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
+              newData[columnKey][index] = { ...task, status: 4, remainingTime: 0 };
               return newData;
             });
-            setActiveTaskKey(null); // Clear active task
+            setActiveTaskKey(null);
             return {
               ...prev,
               [taskKey]: { ...timer, isRunning: false },
             };
           }
 
-          if (isWorkPhase) {
-            currentWorkTime -= 1;
-            remainingTime -= 1;
-            if (currentWorkTime <= 0) {
-              totalWorkCompleted += task.workDuration * 60;
-              isWorkPhase = false;
-              currentWorkTime = task.workDuration * 60;
-              currentBreakTime = task.breakTime * 60;
+          if (remainingTime > 0) {
+            if (isWorkPhase) {
+              currentWorkTime -= 1;
+              remainingTime -= 1;
+              if (currentWorkTime <= 0) {
+                totalWorkCompleted += task.workDuration * 60;
+                isWorkPhase = false;
+                currentWorkTime = task.workDuration * 60;
+                currentBreakTime = task.breakTime * 60;
+              }
+            } else {
+              currentBreakTime -= 1;
+              remainingTime -= 1;
+              if (currentBreakTime <= 0) {
+                totalBreakCompleted += task.breakTime * 60;
+                isWorkPhase = true;
+                currentWorkTime = task.workDuration * 60;
+                currentBreakTime = task.breakTime * 60;
+              }
             }
           } else {
-            currentBreakTime -= 1;
-            remainingTime -= 1;
-            if (currentBreakTime <= 0) {
-              totalBreakCompleted += task.breakTime * 60;
-              isWorkPhase = true;
-              currentWorkTime = task.workDuration * 60;
-              currentBreakTime = task.breakTime * 60;
-            }
+            // Task is overdue
+            overdueTime += 1;
           }
 
           setTaskData((prevData) => {
@@ -506,6 +536,7 @@ export default function TaskPage() {
               currentWorkTime,
               currentBreakTime,
               remainingTime,
+              overdueTime,
               totalWorkCompleted,
               totalBreakCompleted,
             },
@@ -523,7 +554,7 @@ export default function TaskPage() {
         newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
         return newData;
       });
-      setActiveTaskKey(null); // Clear active task
+      setActiveTaskKey(null);
     }
   };
 
@@ -532,8 +563,8 @@ export default function TaskPage() {
       activeTabs[columnKey] === "all"
         ? taskList
         : activeTabs[columnKey] === "current"
-        ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
-        : taskList.filter((task) => task.status === 3);
+          ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
+          : taskList.filter((task) => task.status === 3);
 
     // Sắp xếp theo priority
     const sortedTasks = [...filteredTasks].sort((a, b) => a.priority - b.priority);
@@ -588,6 +619,7 @@ export default function TaskPage() {
                   currentWorkTime = task.workDuration * 60,
                   currentBreakTime = task.breakTime * 60,
                   remainingTime = task.remainingTime,
+                  overdueTime = 0,
                   totalWorkCompleted = 0,
                   totalBreakCompleted = 0,
                 } = timer;
@@ -605,8 +637,8 @@ export default function TaskPage() {
                 const currentTaskStatus = timer.isRunning
                   ? 1
                   : timer.currentWorkTime !== undefined
-                  ? 2
-                  : 0;
+                    ? 2
+                    : 0;
 
                 return (
                   <motion.div
@@ -629,12 +661,18 @@ export default function TaskPage() {
                           </span>
                         </div>
                         <div className="flex flex-col gap-1 text-left">
-                          <span className="text-sm text-gray-600">
-                            {task.status === 3
-                              ? "Done"
-                              : task.status === 4
-                              ? "Expired"
-                              : `Remaining: ${formatTime(remainingTime)}`}
+                          <span
+                            className={`text-sm ${task.status === 4 || (remainingTime <= 0 && currentTaskStatus !== 0)
+                                ? "text-red-600"
+                                : "text-gray-600"
+                              }`}
+                          >
+                            {task.status !== 3 &&
+                              (task.status === 4
+                                ? `Overdue: ${formatTime(overdueTime)}`
+                                : remainingTime <= 0 && currentTaskStatus !== 0
+                                  ? `Overdue: ${formatTime(overdueTime)}`
+                                  : `Remaining: ${formatTime(remainingTime)}`)}
                           </span>
                           <div className="progress-bar-container">
                             <div className="progress-bar">
@@ -652,23 +690,22 @@ export default function TaskPage() {
                               />
                             </div>
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {task.status === 3 ? (
-                              <span className="text-green-500">Completed</span>
-                            ) : task.status === 4 ? (
-                              <span className="text-red-500">Expired</span>
-                            ) : currentTaskStatus === 0 ? (
-                              <span className="text-gray-400">Not Started</span>
-                            ) : isWorkPhase ? (
-                              <span className="text-blue-500 font-medium">
-                                Work: {formatTime(currentWorkTime)}
-                              </span>
-                            ) : (
-                              <span className="text-yellow-500 font-medium">
-                                Break: {formatTime(currentBreakTime)}
-                              </span>
-                            )}
-                          </div>
+                          {/* Hiển thị thời gian làm việc và thời gian nghỉ nếu task chưa hoàn thành hoặc quá hạn */}
+                          {task.status !== 4 && task.status !== 3 && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {currentTaskStatus === 0 ? (
+                                <span className="text-gray-400">Not Started</span>
+                              ) : isWorkPhase ? (
+                                <span className="text-blue-500 font-medium">
+                                  Work: {formatTime(currentWorkTime)}
+                                </span>
+                              ) : (
+                                <span className="text-yellow-500 font-medium">
+                                  Break: {formatTime(currentBreakTime)}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
@@ -698,16 +735,16 @@ export default function TaskPage() {
                                   currentTaskStatus === 0
                                     ? "start"
                                     : currentTaskStatus === 1
-                                    ? "pause"
-                                    : "resume"
+                                      ? "pause"
+                                      : "resume"
                                 )
                               }
                               className={
                                 currentTaskStatus === 1
                                   ? "bg-yellow-500 hover:bg-yellow-600"
                                   : currentTaskStatus === 2
-                                  ? "bg-blue-500 hover:bg-blue-600"
-                                  : "bg-green-500 hover:bg-green-600"
+                                    ? "bg-blue-500 hover:bg-blue-600"
+                                    : "bg-green-500 hover:bg-green-600"
                               }
                               disabled={
                                 currentTaskStatus === 0 &&
@@ -718,11 +755,11 @@ export default function TaskPage() {
                               {currentTaskStatus === 0
                                 ? "Start"
                                 : currentTaskStatus === 1
-                                ? "Pause"
-                                : "Resume"}
+                                  ? "Pause"
+                                  : "Resume"}
                             </Button>
                             {remainingTime <= 120 &&
-                              remainingTime > 0 &&
+                              remainingTime >= 0 &&
                               currentTaskStatus !== 0 && (
                                 <Button
                                   onClick={() =>
@@ -798,11 +835,10 @@ export default function TaskPage() {
             <div className="w-32 h-32 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
               <img
                 src={userTrees.length > 0 ? treeImageSrc : addIcon}
-                className={`object-contain ${
-                  userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
-                    ? "w-10 h-10"
-                    : "w-30 h-30"
-                }`}
+                className={`object-contain ${userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
+                  ? "w-10 h-10"
+                  : "w-30 h-30"
+                  }`}
               />
             </div>
           </div>
@@ -862,23 +898,23 @@ export default function TaskPage() {
               {userTrees.filter(
                 (tree) => tree.treeStatus === 1 || tree.treeStatus === 2
               ).length < 2 && (
-                <div
-                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
-                  onClick={() => {
-                    setIsTreeDialogOpen(false);
-                    setIsCreateTreeDialogOpen(true);
-                  }}
-                >
-                  <img
-                    src={addIcon}
-                    alt="Add New Tree"
-                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
-                  />
-                  <h3 className="font-bold mt-2 text-green-600">
-                    Create New Tree
-                  </h3>
-                </div>
-              )}
+                  <div
+                    className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
+                    onClick={() => {
+                      setIsTreeDialogOpen(false);
+                      setIsCreateTreeDialogOpen(true);
+                    }}
+                  >
+                    <img
+                      src={addIcon}
+                      alt="Add New Tree"
+                      className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+                    />
+                    <h3 className="font-bold mt-2 text-green-600">
+                      Create New Tree
+                    </h3>
+                  </div>
+                )}
             </DialogContent>
           </Dialog>
 
@@ -933,8 +969,8 @@ export default function TaskPage() {
                   {selectedTask?.status === 3
                     ? "Completed"
                     : selectedTask?.status === 4
-                    ? "Expired"
-                    : "In Progress"}
+                      ? "Expired"
+                      : "In Progress"}
                 </p>
                 <p>
                   <strong>Focus Method:</strong> {selectedTask?.focusMethodName}
@@ -992,9 +1028,8 @@ export default function TaskPage() {
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
                       {selectedTree.levelId === 4
                         ? "Level Max"
-                        : `${treeExp.totalXp} / ${
-                            treeExp.totalXp + treeExp.xpToNextLevel
-                          } XP`}
+                        : `${treeExp.totalXp} / ${treeExp.totalXp + treeExp.xpToNextLevel
+                        } XP`}
                     </span>
                   </div>
                 )}
@@ -1039,16 +1074,16 @@ export default function TaskPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => {}}>
+              <DropdownMenuItem onClick={() => { }}>
                 Daily Task
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {}}>
+              <DropdownMenuItem onClick={() => { }}>
                 Simple Task
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {}}>
+              <DropdownMenuItem onClick={() => { }}>
                 Complex Task
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {}}>
+              <DropdownMenuItem onClick={() => { }}>
                 Challenge Task
               </DropdownMenuItem>
             </DropdownMenuContent>

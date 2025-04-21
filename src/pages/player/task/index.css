@@ -79,8 +79,8 @@
 }
 
 .task-column-title {
-  font-size: 1rem;
-  font-weight: 1000;
+  font-size: 1.15rem;
+  font-weight: bolder;
   text-align: center;
 } /* Trang trí tiêu đề cột task với kích thước chữ lớn, đậm, căn giữa, và viền dưới */
 
