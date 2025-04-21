@@ -36,14 +36,23 @@ const Header = () => {
   const location = useLocation();
   const { totalXp, levelId, xpToNextLevel, refreshXp } = useUserExperience();
 
-  const navItems = [
-    { path: "/task", label: "Tasks" },
-    { path: "/workspace", label: "Workspace" },
-    { path: "/tree", label: "Trees" },
-    { path: "/calendar", label: "Calendar" },
-    { path: "/marketplace", label: "Marketplace" },
-    { path: "/challenges", label: "Challenges" },
-  ];
+  const [navItems, setNavItems] = useState([
+    { path: "/task", label: "Tasks", hasUpdate: false },
+    { path: "/workspace", label: "Workspace", hasUpdate: false },
+    { path: "/tree", label: "Trees", hasUpdate: false },
+    { path: "/calendar", label: "Calendar", hasUpdate: false },
+    { path: "/marketplace", label: "Marketplace", hasUpdate: false },
+    { path: "/challenges", label: "Challenges", hasUpdate: false },
+  ]);
+
+  useEffect(() => {
+    const currentPath = location.pathname;
+    setNavItems((prev) =>
+      prev.map((item) =>
+        item.path === currentPath ? { ...item, hasUpdate: false } : item
+      )
+    );
+  }, [location.pathname]);
 
   useEffect(() => {
     refreshXp();
@@ -126,13 +135,18 @@ const Header = () => {
               <div
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`text-sm font-semibold cursor-pointer transition-colors duration-200 ${
+                className={`relative text-sm font-semibold cursor-pointer transition-colors duration-200 ${
                   location.pathname === item.path
                     ? "text-green-600 font-bold"
                     : "text-gray-900 hover:text-green-600"
                 }`}
               >
                 {item.label}
+
+                {/* Chấm đỏ nếu có update */}
+                {item.hasUpdate && (
+                  <span className="absolute -top-1 -right-2 w-2 h-2 bg-red-500 rounded-full" />
+                )}
               </div>
             ))}
           </div>
@@ -201,7 +215,7 @@ const Header = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <NotificationBell />
+                  <NotificationBell setNavItems={setNavItems} />
                 </div>
                 <Popover>
                   <PopoverTrigger asChild>
