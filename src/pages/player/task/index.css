@@ -68,29 +68,34 @@
 /* Task Columns - Giao diện các cột task */
 .task-column {
   background: #ffffff;
-  border-radius: 0.75rem;
+  border-radius: 0.4rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 1rem;
   height: 100%;
 } /* Trang trí cột task với nền trắng, bo góc, bóng đổ nhẹ, và chiều cao full */
 
-.task-column h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-} /* Trang trí tiêu đề cột task với kích thước lớn, đậm, và khoảng cách dưới */
+.task-column-title {
+  font-size: 1rem;
+  font-weight: 1000;
+  text-align: center;
+} /* Trang trí tiêu đề cột task với kích thước chữ lớn, đậm, căn giữa, và viền dưới */
 
-.task-column.daily h2 {
-  color: #3b82f6;
-} /* Trang trí tiêu đề cột Daily Task với màu xanh dương */
-
-.task-column.simple h2 {
-  color: #10b981;
-} /* Trang trí tiêu đề cột Simple Task với màu xanh lá */
-
-.task-column.complex h2 {
-  color: #f59e0b;
-} /* Trang trí tiêu đề cột Complex Task với màu cam */
+.task-column-title.daily {
+  color: #3b82f6; /* Blue-500 for Daily Task */
+  background: none;
+}
+.task-column-title.simple {
+  color: #22c55e; /* Green-500 for Simple Task */
+  background: none;
+}
+.task-column-title.complex {
+  color: #f90303; /* Red for Complex Task */
+  background: none;
+}
+.task-column-title.challenge {
+  color: #f59e0b; /* Amber-500 for Challenge Task */
+  background: none;
+}
 
 .task-item {
   display: flex;
