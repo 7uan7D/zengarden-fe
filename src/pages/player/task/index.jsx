@@ -310,15 +310,6 @@ export default function TaskPage() {
     }
   }, [userTrees]);
 
-  // Cleanup intervals on component unmount
-  useEffect(() => {
-    return () => {
-      Object.values(intervalRefs.current).forEach((intervalId) =>
-        clearInterval(intervalId)
-      );
-    };
-  }, []);
-
   const handleCreateTree = async () => {
     try {
       setIsCreating(true);
@@ -345,6 +336,15 @@ export default function TaskPage() {
       refreshTreeExp(currentTree);
     }
   };
+
+  // Task từ đây xuống dưới
+  useEffect(() => {
+    return () => {
+      Object.values(intervalRefs.current).forEach((intervalId) =>
+        clearInterval(intervalId)
+      );
+    };
+  }, []);
 
   // Hàm định dạng thời gian từ giây sang phút:giây
   const formatTime = (seconds) => {
@@ -398,7 +398,11 @@ export default function TaskPage() {
             clearInterval(intervalRefs.current[taskKey]);
             setTaskData((prevData) => {
               const newData = { ...prevData };
-              newData[columnKey][index] = { ...task, status: 4, remainingTime: 0 };
+              newData[columnKey][index] = {
+                ...task,
+                status: 4,
+                remainingTime: 0,
+              };
               return newData;
             });
             setActiveTaskKey(null);
@@ -487,7 +491,11 @@ export default function TaskPage() {
             clearInterval(intervalRefs.current[taskKey]);
             setTaskData((prevData) => {
               const newData = { ...prevData };
-              newData[columnKey][index] = { ...task, status: 4, remainingTime: 0 };
+              newData[columnKey][index] = {
+                ...task,
+                status: 4,
+                remainingTime: 0,
+              };
               return newData;
             });
             setActiveTaskKey(null);
@@ -567,7 +575,9 @@ export default function TaskPage() {
         : taskList.filter((task) => task.status === 3);
 
     // Sắp xếp theo priority
-    const sortedTasks = [...filteredTasks].sort((a, b) => a.priority - b.priority);
+    const sortedTasks = [...filteredTasks].sort(
+      (a, b) => a.priority - b.priority
+    );
 
     return (
       <div className="task-column-container">
@@ -627,12 +637,18 @@ export default function TaskPage() {
                 // Tính tiến độ mỗi giây
                 const workProgress =
                   ((totalWorkCompleted +
-                    (isWorkPhase ? task.workDuration * 60 - currentWorkTime : 0)) /
-                    totalDurationSeconds) * 100;
+                    (isWorkPhase
+                      ? task.workDuration * 60 - currentWorkTime
+                      : 0)) /
+                    totalDurationSeconds) *
+                  100;
                 const breakProgress =
                   ((totalBreakCompleted +
-                    (!isWorkPhase ? task.breakTime * 60 - currentBreakTime : 0)) /
-                    totalDurationSeconds) * 100;
+                    (!isWorkPhase
+                      ? task.breakTime * 60 - currentBreakTime
+                      : 0)) /
+                    totalDurationSeconds) *
+                  100;
 
                 const currentTaskStatus = timer.isRunning
                   ? 1
@@ -665,7 +681,9 @@ export default function TaskPage() {
                   >
                     <Card className="task-item relative">
                       {/* Thêm nhãn priority, chỉ áp dụng cho Simple, Complex, Challenge */}
-                      {["simple", "complex", "challenge"].includes(columnKey) && (
+                      {["simple", "complex", "challenge"].includes(
+                        columnKey
+                      ) && (
                         <div
                           className={`priority-label priority-${
                             task.priority <= 2
@@ -724,7 +742,9 @@ export default function TaskPage() {
                           </div>
                           {task.status !== 4 &&
                             task.status !== 3 &&
-                            !(remainingTime <= 0 && currentTaskStatus !== 0) && (
+                            !(
+                              remainingTime <= 0 && currentTaskStatus !== 0
+                            ) && (
                               <div className="text-xs text-gray-500 mt-1">
                                 {currentTaskStatus === 0 ? (
                                   <span className="text-gray-400">
@@ -762,7 +782,9 @@ export default function TaskPage() {
                           </span>
                         ) : (
                           <div className="flex gap-2">
-                            {!(remainingTime <= 0 && currentTaskStatus !== 0) && (
+                            {!(
+                              remainingTime <= 0 && currentTaskStatus !== 0
+                            ) && (
                               <Button
                                 onClick={() =>
                                   handleTaskAction(
@@ -821,6 +843,7 @@ export default function TaskPage() {
     );
   };
 
+  //Task từ đây lên trên
   const progress = treeExp
     ? (treeExp.totalXp / (treeExp.totalXp + treeExp.xpToNextLevel)) * 100
     : 0;
@@ -872,10 +895,11 @@ export default function TaskPage() {
             <div className="w-32 h-32 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
               <img
                 src={userTrees.length > 0 ? treeImageSrc : addIcon}
-                className={`object-contain ${userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
-                  ? "w-10 h-10"
-                  : "w-30 h-30"
-                  }`}
+                className={`object-contain ${
+                  userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
+                    ? "w-10 h-10"
+                    : "w-30 h-30"
+                }`}
               />
             </div>
           </div>
@@ -887,7 +911,10 @@ export default function TaskPage() {
               </DialogTitle>
               {userTrees
                 .filter(
-                  (tree) => tree.treeStatus === 0 || tree.treeStatus === 1
+                  (tree) =>
+                    tree.treeStatus === 0 ||
+                    tree.treeStatus === 1 ||
+                    tree.treeStatus === 2
                 )
                 .map((tree) => {
                   const totalNeeded = tree.totalXp + tree.xpToNextLevel;
@@ -933,25 +960,28 @@ export default function TaskPage() {
                   );
                 })}
               {userTrees.filter(
-                (tree) => tree.treeStatus === 1 || tree.treeStatus === 2
+                (tree) =>
+                  tree.treeStatus === 1 ||
+                  tree.treeStatus === 2 ||
+                  tree.treeStatus === 0
               ).length < 2 && (
-                  <div
-                    className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
-                    onClick={() => {
-                      setIsTreeDialogOpen(false);
-                      setIsCreateTreeDialogOpen(true);
-                    }}
-                  >
-                    <img
-                      src={addIcon}
-                      alt="Add New Tree"
-                      className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
-                    />
-                    <h3 className="font-bold mt-2 text-green-600">
-                      Create New Tree
-                    </h3>
-                  </div>
-                )}
+                <div
+                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
+                  onClick={() => {
+                    setIsTreeDialogOpen(false);
+                    setIsCreateTreeDialogOpen(true);
+                  }}
+                >
+                  <img
+                    src={addIcon}
+                    alt="Add New Tree"
+                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+                  />
+                  <h3 className="font-bold mt-2 text-green-600">
+                    Create New Tree
+                  </h3>
+                </div>
+              )}
             </DialogContent>
           </Dialog>
 
@@ -1065,8 +1095,9 @@ export default function TaskPage() {
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
                       {selectedTree.levelId === 4
                         ? "Level Max"
-                        : `${treeExp.totalXp} / ${treeExp.totalXp + treeExp.xpToNextLevel
-                        } XP`}
+                        : `${treeExp.totalXp} / ${
+                            treeExp.totalXp + treeExp.xpToNextLevel
+                          } XP`}
                     </span>
                   </div>
                 )}
@@ -1111,16 +1142,14 @@ export default function TaskPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => { }}>
-                Daily Task
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { }}>
+              <DropdownMenuItem onClick={() => {}}>Daily Task</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {}}>
                 Simple Task
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { }}>
+              <DropdownMenuItem onClick={() => {}}>
                 Complex Task
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { }}>
+              <DropdownMenuItem onClick={() => {}}>
                 Challenge Task
               </DropdownMenuItem>
             </DropdownMenuContent>
