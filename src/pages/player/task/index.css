@@ -74,7 +74,7 @@
   height: 100%;
 } /* Trang trí cột task với nền trắng, bo góc, bóng đổ nhẹ, và chiều cao full */
 
-.task-column{
+.task-column {
   padding: 2%;
 }
 
@@ -212,3 +212,31 @@
 .task-dialog button:hover {
   background: linear-gradient(90deg, #059669, #10b981);
 } /* Tạo hiệu ứng gradient tối hơn khi hover vào nút trong dialog */
+
+/* Priority Label - Giao diện nhãn priority trên task */
+.priority-label {
+  font-size: 0.75rem; /* text-xs */
+  line-height: 1rem;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Thêm bóng nhẹ để nhãn nổi bật */
+} /* Định dạng chung cho nhãn priority với kích thước chữ nhỏ, z-index để hiển thị trên cùng, bóng nhẹ */
+
+.priority-high {
+  background: #ef4444; /* Red-500 cho priority 1 và 2 */
+} /* Nhãn priority 1 và 2 màu đỏ */
+
+.priority-medium {
+  background: #eab308; /* Yellow-500 cho priority 3 và 4 */
+} /* Nhãn priority 3 và 4 màu vàng */
+
+.priority-low {
+  background: #22c55e; /* Green-500 cho priority 5 trở lên */
+} /* Nhãn priority 5 trở lên màu xanh lá */
+
+.priority_custom{
+  border-bottom-left-radius: 1.2rem;
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0.3rem;
+  border-top-left-radius: 0;
+
+}

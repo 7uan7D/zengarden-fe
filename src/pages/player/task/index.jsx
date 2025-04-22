@@ -563,8 +563,8 @@ export default function TaskPage() {
       activeTabs[columnKey] === "all"
         ? taskList
         : activeTabs[columnKey] === "current"
-          ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
-          : taskList.filter((task) => task.status === 3);
+        ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
+        : taskList.filter((task) => task.status === 3);
 
     // Sắp xếp theo priority
     const sortedTasks = [...filteredTasks].sort((a, b) => a.priority - b.priority);
@@ -637,8 +637,24 @@ export default function TaskPage() {
                 const currentTaskStatus = timer.isRunning
                   ? 1
                   : timer.currentWorkTime !== undefined
-                    ? 2
-                    : 0;
+                  ? 2
+                  : 0;
+
+                // Hàm chuyển priority thành nhãn (1st, 2nd, 3rd,...)
+                const getPriorityLabel = (priority) => {
+                  switch (priority) {
+                    case 1:
+                      return "1st";
+                    case 2:
+                      return "2nd";
+                    case 3:
+                      return "3rd";
+                    case 4:
+                      return "4th";
+                    default:
+                      return `${priority}th`;
+                  }
+                };
 
                 return (
                   <motion.div
@@ -647,7 +663,21 @@ export default function TaskPage() {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
                   >
-                    <Card className="task-item">
+                    <Card className="task-item relative">
+                      {/* Thêm nhãn priority, chỉ áp dụng cho Simple, Complex, Challenge */}
+                      {["simple", "complex", "challenge"].includes(columnKey) && (
+                        <div
+                          className={`priority-label priority-${
+                            task.priority <= 2
+                              ? "high"
+                              : task.priority <= 4
+                              ? "medium"
+                              : "low"
+                          } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom`}
+                        >
+                          {getPriorityLabel(task.priority)}
+                        </div>
+                      )}
                       <div className="flex-1 flex flex-col justify-between text-left">
                         <div
                           className="cursor-pointer"
@@ -662,17 +692,19 @@ export default function TaskPage() {
                         </div>
                         <div className="flex flex-col gap-1 text-left">
                           <span
-                            className={`text-sm ${task.status === 4 || (remainingTime <= 0 && currentTaskStatus !== 0)
-                              ? "text-red-600"
-                              : "text-gray-600"
-                              }`}
+                            className={`text-sm ${
+                              task.status === 4 ||
+                              (remainingTime <= 0 && currentTaskStatus !== 0)
+                                ? "text-red-600"
+                                : "text-gray-600"
+                            }`}
                           >
                             {task.status !== 3 &&
                               (task.status === 4
                                 ? `Overdue: ${formatTime(overdueTime)}`
                                 : remainingTime <= 0 && currentTaskStatus !== 0
-                                  ? `Overdue: ${formatTime(overdueTime)}`
-                                  : `Remaining: ${formatTime(remainingTime)}`)}
+                                ? `Overdue: ${formatTime(overdueTime)}`
+                                : `Remaining: ${formatTime(remainingTime)}`)}
                           </span>
                           <div className="progress-bar-container">
                             <div className="progress-bar">
@@ -690,22 +722,25 @@ export default function TaskPage() {
                               />
                             </div>
                           </div>
-                          {/* Hiển thị thời gian làm việc và thời gian nghỉ nếu task chưa hoàn thành hoặc quá hạn */}
-                          {task.status !== 4 && task.status !== 3 && !(remainingTime <= 0 && currentTaskStatus !== 0) && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {currentTaskStatus === 0 ? (
-                                <span className="text-gray-400">Not Started</span>
-                              ) : isWorkPhase ? (
-                                <span className="text-blue-500 font-medium">
-                                  Work: {formatTime(currentWorkTime)}
-                                </span>
-                              ) : (
-                                <span className="text-yellow-500 font-medium">
-                                  Break: {formatTime(currentBreakTime)}
-                                </span>
-                              )}
-                            </div>
-                          )}
+                          {task.status !== 4 &&
+                            task.status !== 3 &&
+                            !(remainingTime <= 0 && currentTaskStatus !== 0) && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {currentTaskStatus === 0 ? (
+                                  <span className="text-gray-400">
+                                    Not Started
+                                  </span>
+                                ) : isWorkPhase ? (
+                                  <span className="text-blue-500 font-medium">
+                                    Work: {formatTime(currentWorkTime)}
+                                  </span>
+                                ) : (
+                                  <span className="text-yellow-500 font-medium">
+                                    Break: {formatTime(currentBreakTime)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
@@ -736,16 +771,16 @@ export default function TaskPage() {
                                     currentTaskStatus === 0
                                       ? "start"
                                       : currentTaskStatus === 1
-                                        ? "pause"
-                                        : "resume"
+                                      ? "pause"
+                                      : "resume"
                                   )
                                 }
                                 className={
                                   currentTaskStatus === 1
                                     ? "bg-yellow-500 hover:bg-yellow-600"
                                     : currentTaskStatus === 2
-                                      ? "bg-blue-500 hover:bg-blue-600"
-                                      : "bg-green-500 hover:bg-green-600"
+                                    ? "bg-blue-500 hover:bg-blue-600"
+                                    : "bg-green-500 hover:bg-green-600"
                                 }
                                 disabled={
                                   currentTaskStatus === 0 &&
@@ -756,8 +791,8 @@ export default function TaskPage() {
                                 {currentTaskStatus === 0
                                   ? "Start"
                                   : currentTaskStatus === 1
-                                    ? "Pause"
-                                    : "Resume"}
+                                  ? "Pause"
+                                  : "Resume"}
                               </Button>
                             )}
                             {remainingTime <= 120 &&
@@ -971,8 +1006,8 @@ export default function TaskPage() {
                   {selectedTask?.status === 3
                     ? "Completed"
                     : selectedTask?.status === 4
-                      ? "Expired"
-                      : "In Progress"}
+                    ? "Expired"
+                    : "In Progress"}
                 </p>
                 <p>
                   <strong>Focus Method:</strong> {selectedTask?.focusMethodName}
