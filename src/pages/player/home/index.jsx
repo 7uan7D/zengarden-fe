@@ -414,7 +414,7 @@ const HomePage = () => {
           </div>
           <div className="text-center">
             {marketplaceItems.length > 0 ? (
-              <div className="carousel-container">
+              <div className="home-carousel-container">
                 <div className="highlight-banner">
                   <span>Highlight</span>
                 </div>

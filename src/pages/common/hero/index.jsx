@@ -240,16 +240,12 @@ export default function HeroPage() {
             <motion.button
               className="carousel-btn prev"
               onClick={goToPrevious}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
             >
               ❮
             </motion.button>
             <motion.button
               className="carousel-btn next"
               onClick={goToNext}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
             >
               ❯
             </motion.button>

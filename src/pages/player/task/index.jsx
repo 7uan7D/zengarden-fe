@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
 import { GetAllTrees } from "@/services/apiServices/treesService";
 import { CreateUserTree } from "@/services/apiServices/userTreesService";
@@ -38,6 +39,7 @@ import {
   StartTask,
   PauseTask,
   CompleteTask,
+  CreateTask,
 } from "@/services/apiServices/taskService";
 // thư viện kéo thả
 import {
@@ -55,6 +57,74 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChangePriority } from "@/services/apiServices/taskService";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import TimePicker from "react-time-picker";
+import "react-time-picker/dist/TimePicker.css";
+import "react-clock/dist/Clock.css";
+import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
+
+// Component con để chọn ngày và giờ cho task
+const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const selectedDate = date ? new Date(date) : undefined;
+  const formattedTime = date
+    ? new Date(date).toISOString().split("T")[1].slice(0, 5)
+    : "00:00";
+
+  const handleDateSelect = useCallback(
+    (newDate) => {
+      onDateChange(newDate);
+      setIsPopoverOpen(false);
+    },
+    [onDateChange]
+  );
+
+  const handleTimeChange = useCallback(
+    (time) => {
+      onTimeChange(time);
+    },
+    [onTimeChange]
+  );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Label className="font-medium text-gray-700">{label}</Label>
+      <div className="flex items-center gap-2">
+        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-[150px] h-10 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+            >
+              {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="p-2 shadow-md bg-white rounded-lg">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+            />
+          </PopoverContent>
+        </Popover>
+        <TimePicker
+          onChange={handleTimeChange}
+          value={formattedTime}
+          disableClock={true}
+          className="h-10 w-[100px] text-center border-gray-300 rounded-lg focus:border-green-500 focus:ring focus:ring-green-200 transition-all"
+          clearIcon={null}
+          clockIcon={null}
+        />
+      </div>
+    </div>
+  );
+};
 
 // Hàm chuyển đổi startDate sang định dạng so sánh được (YYYYMMDD)
 const parseDate = (dateStr) => {
@@ -81,7 +151,7 @@ export default function TaskPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [newTreeName, setNewTreeName] = useState("");
 
-  //Task
+  // Task
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
   const [activeTabs, setActiveTabs] = useState({
@@ -102,7 +172,7 @@ export default function TaskPage() {
   const [activeTaskKey, setActiveTaskKey] = useState(null); // key của task đang hoạt động
   const intervalRefs = useRef({}); // tham chiếu đến các interval để dọn dẹp sau này
 
-  //Tree
+  // Tree
   const { refreshXp } = useUserExperience();
   const { treeExp, refreshTreeExp } = useTreeExperience();
 
@@ -203,7 +273,7 @@ export default function TaskPage() {
     }
   }, [selectedTree]);
 
-  //lấy dữ liệu task
+  // lấy dữ liệu task
   const fetchTasks = async (userTreeId) => {
     try {
       const data = await GetTaskByUserTreeId(userTreeId);
@@ -441,6 +511,110 @@ export default function TaskPage() {
 
     setTimers(newTimers);
   }, [taskData]);
+
+  // State và logic cho Dialog tạo task
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [taskType, setTaskType] = useState("");
+  const [taskCreateData, setTaskCreateData] = useState({
+    focusMethodId: null,
+    taskTypeId: null,
+    userTreeId: selectedTree?.userTreeId || null,
+    taskName: "",
+    taskDescription: "",
+    totalDuration: "",
+    startDate: new Date().toISOString(),
+    endDate: new Date().toISOString(),
+    workDuration: "",
+    breakTime: "",
+  });
+  const [step, setStep] = useState(1);
+  const [focusSuggestion, setFocusSuggestion] = useState(null);
+
+  useEffect(() => {
+    setTaskCreateData((prev) => ({
+      ...prev,
+      userTreeId: selectedTree?.userTreeId || null,
+    }));
+  }, [selectedTree]);
+
+  const handleOpen = (type, taskTypeId) => {
+    setTaskType(type);
+    setTaskCreateData((prev) => ({
+      ...prev,
+      taskTypeId: taskTypeId,
+      userTreeId: selectedTree?.userTreeId || null,
+    }));
+    setIsTaskDialogOpen(true);
+  };
+
+  const handleNext = async () => {
+    if (step === 1) {
+      try {
+        const response = await SuggestTaskFocusMethods(taskCreateData);
+        setFocusSuggestion(response);
+        setTaskCreateData((prev) => ({
+          ...prev,
+          focusMethodId: response.focusMethodId,
+          workDuration: response.defaultDuration,
+          breakTime: response.defaultBreak,
+        }));
+        setStep(2);
+      } catch (error) {
+        console.error("Error fetching suggestions", error);
+      }
+    } else {
+      setStep(3);
+    }
+  };
+
+  const handleBack = () => {
+    setStep(step - 1);
+  };
+
+  const handleCreateTask = async () => {
+    try {
+      const response = await CreateTask(taskCreateData);
+      console.log("Task created successfully:", response);
+      setIsTaskDialogOpen(false);
+      setStep(1);
+      setTaskCreateData({
+        focusMethodId: null,
+        taskTypeId: null,
+        userTreeId: selectedTree?.userTreeId || null,
+        taskName: "",
+        taskDescription: "",
+        totalDuration: "",
+        startDate: new Date().toISOString(),
+        endDate: new Date().toISOString(),
+        workDuration: "",
+        breakTime: "",
+      });
+      fetchTasks(selectedTree?.userTreeId);
+    } catch (error) {
+      console.error("Error creating task:", error);
+    }
+  };
+
+  const handleDateChange = useCallback((field, date) => {
+    setTaskCreateData((prev) => ({
+      ...prev,
+      [field]: date
+        ? date.toISOString().split("T")[0] +
+          "T" +
+          (prev[field]?.split("T")[1] || "00:00:00.000Z")
+        : null,
+    }));
+  }, []);
+
+  const handleTimeChange = useCallback((field, time) => {
+    if (!time) return;
+    setTaskCreateData((prev) => ({
+      ...prev,
+      [field]: prev[field]
+        ? prev[field].split("T")[0] + "T" + time + ":00.000Z"
+        : null,
+    }));
+  }, []);
 
   const renderTaskColumn = (title, taskList, columnKey) => {
     const filteredTasks =
@@ -715,7 +889,7 @@ export default function TaskPage() {
     );
   };
 
-  //Task từ đây lên trên
+  // Task từ đây lên trên
   const progress = treeExp
     ? (treeExp.totalXp / (treeExp.totalXp + treeExp.xpToNextLevel)) * 100
     : 0;
@@ -949,6 +1123,201 @@ export default function TaskPage() {
             </DialogContent>
           </Dialog>
 
+          {/* Dialog tạo task */}
+          <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+            <DialogContent className="max-w-lg bg-white rounded-xl shadow-2xl p-6 task-dialog">
+              <DialogHeader className="relative bg-gradient-to-r from-green-500 to-teal-500 p-4 rounded-t-xl shadow-md">
+                <DialogTitle className="text-2xl font-bold text-white tracking-tight">
+                  {step === 3 ? "Confirm Task" : "Create Task"}
+                </DialogTitle>
+                <DialogDescription className="text-sm text-gray-100 mt-1">
+                  {step === 1 && "Fill in the details for your new task."}
+                  {step === 2 && "Suggested focus method based on your task."}
+                  {step === 3 && "Review and confirm your task details."}
+                </DialogDescription>
+              </DialogHeader>
+
+              {step === 1 && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Task Name</Label>
+                    <Input
+                      name="taskName"
+                      placeholder="Enter task name"
+                      value={taskCreateData.taskName}
+                      onChange={(e) =>
+                        setTaskCreateData({ ...taskCreateData, taskName: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea
+                      name="taskDescription"
+                      placeholder="Describe your task"
+                      value={taskCreateData.taskDescription}
+                      onChange={(e) =>
+                        setTaskCreateData({
+                          ...taskCreateData,
+                          taskDescription: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Duration (minutes)</Label>
+                    <Input
+                      type="number"
+                      placeholder="Task duration"
+                      value={taskCreateData.totalDuration}
+                      onChange={(e) =>
+                        setTaskCreateData({
+                          ...taskCreateData,
+                          totalDuration: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    <DateTimePicker
+                      label="Start Date"
+                      date={taskCreateData.startDate}
+                      onDateChange={(newDate) =>
+                        handleDateChange("startDate", newDate)
+                      }
+                      onTimeChange={(time) =>
+                        handleTimeChange("startDate", time)
+                      }
+                    />
+                    <DateTimePicker
+                      label="End Date"
+                      date={taskCreateData.endDate}
+                      onDateChange={(newDate) =>
+                        handleDateChange("endDate", newDate)
+                      }
+                      onTimeChange={(time) => handleTimeChange("endDate", time)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && focusSuggestion && (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-lg font-semibold">
+                      {focusSuggestion.focusMethodName}
+                    </p>
+                    <p>XP Multiplier: {focusSuggestion.xpMultiplier}</p>
+                    <p className="text-sm text-gray-500">
+                      Min Duration: {focusSuggestion.minDuration} mins, Max
+                      Duration: {focusSuggestion.maxDuration} mins
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Min Break: {focusSuggestion.minBreak} mins, Max Break:{" "}
+                      {focusSuggestion.maxBreak} mins
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Work Duration (minutes)</Label>
+                    <Input
+                      type="number"
+                      min={focusSuggestion.minDuration}
+                      max={focusSuggestion.maxDuration}
+                      value={taskCreateData.workDuration}
+                      onChange={(e) =>
+                        setTaskCreateData({
+                          ...taskCreateData,
+                          workDuration: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <p className="text-sm text-gray-500">
+                      Recommended: {focusSuggestion.defaultDuration} mins
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Break Time (minutes)</Label>
+                    <Input
+                      type="number"
+                      min={focusSuggestion.minBreak}
+                      max={focusSuggestion.maxBreak}
+                      value={taskCreateData.breakTime}
+                      onChange={(e) =>
+                        setTaskCreateData({
+                          ...taskCreateData,
+                          breakTime: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <p className="text-sm text-gray-500">
+                      Recommended: {focusSuggestion.defaultBreak} mins
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="space-y-4">
+                  <p>
+                    <strong>Task Name:</strong> {taskCreateData.taskName}
+                  </p>
+                  <p>
+                    <strong>Description:</strong> {taskCreateData.taskDescription}
+                  </p>
+                  <p>
+                    <strong>Total Duration:</strong> {taskCreateData.totalDuration}{" "}
+                    minutes
+                  </p>
+                  <p>
+                    <strong>Start Date:</strong> {taskCreateData.startDate.toString()}
+                  </p>
+                  <p>
+                    <strong>End Date:</strong> {taskCreateData.endDate.toString()}
+                  </p>
+                  <p>
+                    <strong>Focus Method:</strong>{" "}
+                    {focusSuggestion?.focusMethodName}
+                  </p>
+                  <p>
+                    <strong>Work Duration:</strong> {taskCreateData.workDuration}{" "}
+                    minutes
+                  </p>
+                  <p>
+                    <strong>Break Time:</strong> {taskCreateData.breakTime} minutes
+                  </p>
+                </div>
+              )}
+
+              <DialogFooter>
+                {step > 1 && (
+                  <Button
+                    variant="ghost"
+                    className="bg-white border-black"
+                    onClick={handleBack}
+                  >
+                    Back
+                  </Button>
+                )}
+                {step < 3 && (
+                  <Button
+                    className="bg-green-600 text-white hover:bg-green-700"
+                    onClick={handleNext}
+                  >
+                    Next
+                  </Button>
+                )}
+                {step === 3 && (
+                  <Button
+                    className="bg-green-600 text-white hover:bg-green-700"
+                    onClick={() => handleCreateTask(taskCreateData)}
+                  >
+                    Create
+                  </Button>
+                )}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <div className="flex-1">
             {selectedTree ? (
               <>
@@ -1014,15 +1383,11 @@ export default function TaskPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => {}}>Daily Task</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {}}>
+              <DropdownMenuItem onClick={() => handleOpen("Simple Task", 2)}>
                 Simple Task
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {}}>
+              <DropdownMenuItem onClick={() => handleOpen("Complex Task", 3)}>
                 Complex Task
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {}}>
-                Challenge Task
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
