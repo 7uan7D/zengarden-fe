@@ -1,4 +1,4 @@
-import { BarChart2, DollarSign, Menu, Settings, ShoppingBag, TrendingUp, Users, ScrollText, CalendarCheck, Trophy, Leaf } from "lucide-react"
+import { BarChart2, DollarSign, Menu, Settings, ShoppingBag, TrendingUp, Users, ScrollText, CalendarCheck, Trophy, Leaf, PackageOpen } from "lucide-react"
 import React from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { Link } from "react-router-dom"
@@ -10,6 +10,7 @@ const SIDEBAR_ITEMS = [
     { name: 'Tasks', icon: CalendarCheck, color: '#3B82F6', href: '/tasks' },
     { name: 'Challenges', icon: Trophy, color: '#F59E0B', href: '/challenges-admin' },
     { name: 'Trees', icon: Leaf, color: '#0ECB70', href: '/trees' },
+    { name: 'Packages', icon: PackageOpen, color: '#2FE123', href: '/packages' },
     { name: 'User Experience Log', icon: ScrollText, color: '#6EE7B7', href: '/userXPLog' },
     { name: 'Tree Experience Log', icon: ScrollText, color: '#9621B6', href: '/treeXPLog' },
     // { name: 'Sales', icon: DollarSign, color: '#10B981', href: '/sales' },
