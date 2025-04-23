@@ -32,6 +32,13 @@ import { useTreeExperience } from "@/context/TreeExperienceContext";
 import { GetBagItems } from "@/services/apiServices/itemService";
 import { CircleCheckBig, CircleX } from "lucide-react";
 import "../task/index.css";
+//api task
+import {
+  GetTaskByUserTreeId,
+  StartTask,
+  PauseTask,
+  CompleteTask,
+} from "@/services/apiServices/taskService";
 
 // Hàm chuyển đổi startDate sang định dạng so sánh được (YYYYMMDD)
 const parseDate = (dateStr) => {
@@ -48,182 +55,6 @@ const getCurrentDateStr = () => {
   return `${day}/${month}/${year}`;
 };
 
-// Dữ liệu cứng với priority được gán theo startDate
-const initialTasks = {
-  daily: [],
-  simple: [
-    {
-      taskName: "Complete Project Proposal",
-      taskDescription: "Draft and finalize project proposal for client meeting",
-      startDate: "01/04/2025",
-      endDate: "22/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 0.5,
-      workDuration: 0.5,
-      breakTime: 0,
-      userTreeName: "Chilly",
-      taskTypeName: "Simple",
-      remainingTime: 0.5 * 60,
-      priority: 1,
-    },
-    {
-      taskName: "Write Unit Tests",
-      taskDescription: "Write unit tests for authentication module",
-      startDate: "01/04/2025",
-      endDate: "10/04/2025",
-      status: 4,
-      focusMethodName: "Pomodoro",
-      totalDuration: 50,
-      workDuration: 20,
-      breakTime: 5,
-      userTreeName: "Chilly",
-      taskTypeName: "Simple",
-      remainingTime: 0,
-      priority: 2,
-    },
-    {
-      taskName: "Update Documentation",
-      taskDescription: "Update API documentation for version 2.0",
-      startDate: "02/04/2025",
-      endDate: "06/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 90,
-      workDuration: 30,
-      breakTime: 15,
-      userTreeName: "Chilly",
-      taskTypeName: "Simple",
-      remainingTime: 90 * 60,
-      priority: 3,
-    },
-    {
-      taskName: "Code Review",
-      taskDescription: "Review team member's code for new feature",
-      startDate: "03/04/2025",
-      endDate: "04/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 45,
-      workDuration: 20,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Simple",
-      remainingTime: 45 * 60,
-      priority: 4,
-    },
-  ],
-  complex: [
-    {
-      taskName: "Develop New Feature",
-      taskDescription: "Implement user authentication module",
-      startDate: "01/04/2025",
-      endDate: "10/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 120,
-      workDuration: 45,
-      breakTime: 15,
-      userTreeName: "Chilly",
-      taskTypeName: "Complex",
-      remainingTime: 120 * 60,
-      priority: 1,
-    },
-    {
-      taskName: "Implement Payment Gateway",
-      taskDescription: "Integrate payment gateway for e-commerce platform",
-      startDate: "01/04/2025",
-      endDate: "15/04/2025",
-      status: 3,
-      focusMethodName: "Pomodoro",
-      totalDuration: 150,
-      workDuration: 50,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Complex",
-      remainingTime: 0,
-      priority: 2,
-    },
-    {
-      taskName: "Database Optimization",
-      taskDescription: "Optimize database queries for performance",
-      startDate: "02/04/2025",
-      endDate: "08/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 100,
-      workDuration: 40,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Complex",
-      remainingTime: 100 * 60,
-      priority: 3,
-    },
-    {
-      taskName: "UI Redesign",
-      taskDescription: "Redesign dashboard for better UX",
-      startDate: "04/04/2025",
-      endDate: "12/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 80,
-      workDuration: 35,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Complex",
-      remainingTime: 80 * 60,
-      priority: 4,
-    },
-  ],
-  challenge: [
-    {
-      taskName: "30-Day Coding Challenge",
-      taskDescription: "Complete one coding problem daily for 30 days",
-      startDate: "01/04/2025",
-      endDate: "30/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 90,
-      workDuration: 30,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Challenge",
-      remainingTime: 90 * 60,
-      priority: 1,
-    },
-    {
-      taskName: "Learn New Framework",
-      taskDescription: "Learn and build a project with a new framework",
-      startDate: "03/04/2025",
-      endDate: "25/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 100,
-      workDuration: 35,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Challenge",
-      remainingTime: 100 * 60,
-      priority: 2,
-    },
-    {
-      taskName: "Open Source Contribution",
-      taskDescription: "Contribute to an open-source project",
-      startDate: "05/04/2025",
-      endDate: "20/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 110,
-      workDuration: 40,
-      breakTime: 15,
-      userTreeName: "Chilly",
-      taskTypeName: "Challenge",
-      remainingTime: 110 * 60,
-      priority: 3,
-    },
-  ],
-};
-
 export default function TaskPage() {
   // Khai báo các state cần thiết
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
@@ -233,6 +64,8 @@ export default function TaskPage() {
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newTreeName, setNewTreeName] = useState("");
+
+  //Task
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
   const [activeTabs, setActiveTabs] = useState({
@@ -241,11 +74,19 @@ export default function TaskPage() {
     complex: "all",
     challenge: "all",
   });
-  const [taskData, setTaskData] = useState(initialTasks);
+
+  const [taskData, setTaskData] = useState({
+    daily: [],
+    simple: [],
+    complex: [],
+    challenge: [],
+  });
+
   const [timers, setTimers] = useState({}); // state quản lý thời gian cho các task
   const [activeTaskKey, setActiveTaskKey] = useState(null); // key của task đang hoạt động
   const intervalRefs = useRef({}); // tham chiếu đến các interval để dọn dẹp sau này
 
+  //Tree
   const { refreshXp } = useUserExperience();
   const { treeExp, refreshTreeExp } = useTreeExperience();
 
@@ -338,6 +179,67 @@ export default function TaskPage() {
   };
 
   // Task từ đây xuống dưới
+
+  // usertreeid cho task
+  useEffect(() => {
+    if (selectedTree?.userTreeId) {
+      fetchTasks(selectedTree.userTreeId);
+    }
+  }, [selectedTree]);
+
+  //lấy dữ liệu task
+  const fetchTasks = async (userTreeId) => {
+    try {
+      const data = await GetTaskByUserTreeId(userTreeId);
+
+      const groupedTasks = {
+        daily: [],
+        simple: [],
+        complex: [],
+        challenge: [],
+      };
+
+      data.forEach((task) => {
+        const formattedTask = {
+          taskId: task.taskId,
+          taskName: task.taskName,
+          taskDescription: task.taskDescription,
+          startDate: new Date(task.startDate).toLocaleDateString("en-GB"),
+          endDate: new Date(task.endDate).toLocaleDateString("en-GB"),
+          status: task.status,
+          focusMethodName: task.focusMethodName,
+          totalDuration: task.totalDuration,
+          workDuration: task.workDuration,
+          breakTime: task.breakTime,
+          userTreeName: task.userTreeName,
+          taskTypeName: task.taskTypeName,
+          remainingTime: convertToMinutes(task.remainingTime) * 60,
+          priority: task.priority,
+        };
+
+        const type = task.taskTypeName?.toLowerCase();
+        if (groupedTasks[type]) {
+          groupedTasks[type].push(formattedTask);
+        }
+      });
+
+      // Sắp xếp theo priority
+      for (const type in groupedTasks) {
+        groupedTasks[type].sort((a, b) => a.priority - b.priority);
+      }
+
+      setTaskData(groupedTasks);
+    } catch (error) {
+      console.error("Lỗi lấy task:", error);
+    }
+  };
+
+  // Helper chuyển thời gian kiểu "00:30:00" thành phút
+  const convertToMinutes = (timeString) => {
+    const [hours, minutes, seconds] = timeString.split(":").map(Number);
+    return hours * 60 + minutes + seconds / 60;
+  };
+
   useEffect(() => {
     return () => {
       Object.values(intervalRefs.current).forEach((intervalId) =>
@@ -356,97 +258,36 @@ export default function TaskPage() {
   };
 
   // Handle Start/Pause/Resume/Finish actions
-  const handleTaskAction = (columnKey, index, action) => {
+  const handleTaskAction = async (columnKey, index, action) => {
     const taskKey = `${columnKey}-${index}`;
     const task = taskData[columnKey][index];
 
-    if (action === "start") {
-      setActiveTaskKey(taskKey);
-      setTimers((prev) => ({
-        ...prev,
-        [taskKey]: {
-          isWorkPhase: true,
-          currentWorkTime: task.workDuration * 60,
-          currentBreakTime: task.breakTime * 60,
-          remainingTime: task.remainingTime,
-          overdueTime: 0, // Initialize overdue time
-          isRunning: true,
-          totalWorkCompleted: 0,
-          totalBreakCompleted: 0,
-        },
-      }));
+    try {
+      if (action === "start" || action === "resume") {
+        // Gọi API StartTask (cả khi start và resume đều gọi cùng API này)
+        await StartTask(task.taskId);
 
-      intervalRefs.current[taskKey] = setInterval(() => {
-        setTimers((prev) => {
-          const timer = prev[taskKey];
-          if (!timer || !timer.isRunning) return prev;
+        setActiveTaskKey(taskKey);
+        setTimers((prev) => ({
+          ...prev,
+          [taskKey]: {
+            isWorkPhase: true,
+            currentWorkTime: task.workDuration * 60,
+            currentBreakTime: task.breakTime * 60,
+            remainingTime: task.remainingTime,
+            overdueTime: 0,
+            isRunning: true,
+            totalWorkCompleted: 0,
+            totalBreakCompleted: 0,
+          },
+        }));
 
-          let {
-            isWorkPhase,
-            currentWorkTime,
-            currentBreakTime,
-            remainingTime,
-            overdueTime,
-            totalWorkCompleted,
-            totalBreakCompleted,
-          } = timer;
+        intervalRefs.current[taskKey] = setInterval(() => {
+          setTimers((prev) => {
+            const timer = prev[taskKey];
+            if (!timer || !timer.isRunning) return prev;
 
-          // Check if task has passed endDate
-          const currentDate = parseDate(getCurrentDateStr());
-          const endDate = parseDate(task.endDate);
-          if (currentDate > endDate) {
-            clearInterval(intervalRefs.current[taskKey]);
-            setTaskData((prevData) => {
-              const newData = { ...prevData };
-              newData[columnKey][index] = {
-                ...task,
-                status: 4,
-                remainingTime: 0,
-              };
-              return newData;
-            });
-            setActiveTaskKey(null);
-            return {
-              ...prev,
-              [taskKey]: { ...timer, isRunning: false },
-            };
-          }
-
-          if (remainingTime > 0) {
-            if (isWorkPhase) {
-              currentWorkTime -= 1;
-              remainingTime -= 1;
-              if (currentWorkTime <= 0) {
-                totalWorkCompleted += task.workDuration * 60;
-                isWorkPhase = false;
-                currentWorkTime = task.workDuration * 60;
-                currentBreakTime = task.breakTime * 60;
-              }
-            } else {
-              currentBreakTime -= 1;
-              remainingTime -= 1;
-              if (currentBreakTime <= 0) {
-                totalBreakCompleted += task.breakTime * 60;
-                isWorkPhase = true;
-                currentWorkTime = task.workDuration * 60;
-                currentBreakTime = task.breakTime * 60;
-              }
-            }
-          } else {
-            // Task is overdue
-            overdueTime += 1;
-          }
-
-          setTaskData((prevData) => {
-            const newData = { ...prevData };
-            newData[columnKey][index] = { ...task, remainingTime };
-            return newData;
-          });
-
-          return {
-            ...prev,
-            [taskKey]: {
-              ...timer,
+            let {
               isWorkPhase,
               currentWorkTime,
               currentBreakTime,
@@ -454,117 +295,136 @@ export default function TaskPage() {
               overdueTime,
               totalWorkCompleted,
               totalBreakCompleted,
-            },
-          };
-        });
-      }, 1000);
-    } else if (action === "pause") {
-      setTimers((prev) => ({
-        ...prev,
-        [taskKey]: { ...prev[taskKey], isRunning: false },
-      }));
-      clearInterval(intervalRefs.current[taskKey]);
-    } else if (action === "resume") {
-      setTimers((prev) => ({
-        ...prev,
-        [taskKey]: { ...prev[taskKey], isRunning: true },
-      }));
-      intervalRefs.current[taskKey] = setInterval(() => {
-        setTimers((prev) => {
-          const timer = prev[taskKey];
-          if (!timer || !timer.isRunning) return prev;
+            } = timer;
 
-          let {
-            isWorkPhase,
-            currentWorkTime,
-            currentBreakTime,
-            remainingTime,
-            overdueTime,
-            totalWorkCompleted,
-            totalBreakCompleted,
-          } = timer;
-
-          // Check if task has passed endDate
-          const currentDate = parseDate(getCurrentDateStr());
-          const endDate = parseDate(task.endDate);
-          if (currentDate > endDate) {
-            clearInterval(intervalRefs.current[taskKey]);
-            setTaskData((prevData) => {
-              const newData = { ...prevData };
-              newData[columnKey][index] = {
-                ...task,
-                status: 4,
-                remainingTime: 0,
+            const currentDate = parseDate(getCurrentDateStr());
+            const endDate = parseDate(task.endDate);
+            if (currentDate > endDate) {
+              clearInterval(intervalRefs.current[taskKey]);
+              setTaskData((prevData) => {
+                const newData = { ...prevData };
+                newData[columnKey][index] = {
+                  ...task,
+                  status: 4,
+                  remainingTime: 0,
+                };
+                return newData;
+              });
+              setActiveTaskKey(null);
+              return {
+                ...prev,
+                [taskKey]: { ...timer, isRunning: false },
               };
-              return newData;
-            });
-            setActiveTaskKey(null);
-            return {
-              ...prev,
-              [taskKey]: { ...timer, isRunning: false },
-            };
-          }
+            }
 
-          if (remainingTime > 0) {
-            if (isWorkPhase) {
-              currentWorkTime -= 1;
-              remainingTime -= 1;
-              if (currentWorkTime <= 0) {
-                totalWorkCompleted += task.workDuration * 60;
-                isWorkPhase = false;
-                currentWorkTime = task.workDuration * 60;
-                currentBreakTime = task.breakTime * 60;
+            if (remainingTime > 0) {
+              if (isWorkPhase) {
+                currentWorkTime -= 1;
+                remainingTime -= 1;
+                if (currentWorkTime <= 0) {
+                  totalWorkCompleted += task.workDuration * 60;
+                  isWorkPhase = false;
+                  currentWorkTime = task.workDuration * 60;
+                  currentBreakTime = task.breakTime * 60;
+                }
+              } else {
+                currentBreakTime -= 1;
+                remainingTime -= 1;
+                if (currentBreakTime <= 0) {
+                  totalBreakCompleted += task.breakTime * 60;
+                  isWorkPhase = true;
+                  currentWorkTime = task.workDuration * 60;
+                  currentBreakTime = task.breakTime * 60;
+                }
               }
             } else {
-              currentBreakTime -= 1;
-              remainingTime -= 1;
-              if (currentBreakTime <= 0) {
-                totalBreakCompleted += task.breakTime * 60;
-                isWorkPhase = true;
-                currentWorkTime = task.workDuration * 60;
-                currentBreakTime = task.breakTime * 60;
-              }
+              overdueTime += 1;
             }
-          } else {
-            // Task is overdue
-            overdueTime += 1;
-          }
 
-          setTaskData((prevData) => {
-            const newData = { ...prevData };
-            newData[columnKey][index] = { ...task, remainingTime };
-            return newData;
+            setTaskData((prevData) => {
+              const newData = { ...prevData };
+              newData[columnKey][index] = { ...task, remainingTime };
+              return newData;
+            });
+
+            return {
+              ...prev,
+              [taskKey]: {
+                ...timer,
+                isWorkPhase,
+                currentWorkTime,
+                currentBreakTime,
+                remainingTime,
+                overdueTime,
+                totalWorkCompleted,
+                totalBreakCompleted,
+              },
+            };
           });
+        }, 1000);
+      } else if (action === "pause") {
+        await PauseTask(task.taskId);
 
-          return {
-            ...prev,
-            [taskKey]: {
-              ...timer,
-              isWorkPhase,
-              currentWorkTime,
-              currentBreakTime,
-              remainingTime,
-              overdueTime,
-              totalWorkCompleted,
-              totalBreakCompleted,
-            },
-          };
+        setTimers((prev) => ({
+          ...prev,
+          [taskKey]: { ...prev[taskKey], isRunning: false },
+        }));
+        clearInterval(intervalRefs.current[taskKey]);
+      } else if (action === "finish") {
+        await CompleteTask(task.taskId, selectedTree.userTreeId);
+
+        clearInterval(intervalRefs.current[taskKey]);
+        setTimers((prev) => ({
+          ...prev,
+          [taskKey]: { ...prev[taskKey], isRunning: false },
+        }));
+        setTaskData((prevData) => {
+          const newData = { ...prevData };
+          newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
+          return newData;
         });
-      }, 1000);
-    } else if (action === "finish") {
-      clearInterval(intervalRefs.current[taskKey]);
-      setTimers((prev) => ({
-        ...prev,
-        [taskKey]: { ...prev[taskKey], isRunning: false },
-      }));
-      setTaskData((prevData) => {
-        const newData = { ...prevData };
-        newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
-        return newData;
-      });
-      setActiveTaskKey(null);
+        setActiveTaskKey(null);
+      }
+    } catch (error) {
+      console.error("Task action error:", error);
     }
   };
+
+  useEffect(() => {
+    const newTimers = {};
+    Object.keys(taskData).forEach((columnKey) => {
+      taskData[columnKey].forEach((task, index) => {
+        const taskKey = `${columnKey}-${index}`;
+        if (task.status === 1) {
+          // đang chạy
+          newTimers[taskKey] = {
+            isWorkPhase: true,
+            currentWorkTime: task.workDuration * 60,
+            currentBreakTime: task.breakTime * 60,
+            remainingTime: task.remainingTime,
+            overdueTime: 0,
+            isRunning: true,
+            totalWorkCompleted: 0,
+            totalBreakCompleted: 0,
+          };
+        } else if (task.status === 2) {
+          // bị pause
+          newTimers[taskKey] = {
+            isWorkPhase: true,
+            currentWorkTime: task.workDuration * 60,
+            currentBreakTime: task.breakTime * 60,
+            remainingTime: task.remainingTime,
+            overdueTime: 0,
+            isRunning: false,
+            totalWorkCompleted: 0,
+            totalBreakCompleted: 0,
+          };
+        }
+      });
+    });
+
+    setTimers(newTimers);
+  }, [taskData]);
 
   const renderTaskColumn = (title, taskList, columnKey) => {
     const filteredTasks =
@@ -650,12 +510,8 @@ export default function TaskPage() {
                     totalDurationSeconds) *
                   100;
 
-                const currentTaskStatus = timer.isRunning
-                  ? 1
-                  : timer.currentWorkTime !== undefined
-                  ? 2
-                  : 0;
-
+                const currentTaskStatus =
+                  task.status === 1 ? 1 : task.status === 2 ? 2 : 0;
                 // Hàm chuyển priority thành nhãn (1st, 2nd, 3rd,...)
                 const getPriorityLabel = (priority) => {
                   switch (priority) {
