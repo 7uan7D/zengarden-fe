@@ -28,7 +28,7 @@ const formatDateFromMessage = (message) => {
   });
 };
 
-const NotificationBell = () => {
+const NotificationBell = ({ setNavItems }) => {
   const [notifications, setNotifications] = useState([]);
   const [connection, setConnection] = useState(null);
   const [shake, setShake] = useState(false);
@@ -72,14 +72,23 @@ const NotificationBell = () => {
         .start()
         .then(() => {
           console.log("Connected to notification hub");
-          connection.on("ReceiveNotification", (content, createdAt) => {
+          connection.on("ReceiveNotification", (title, content, createdAt) => {
             setNotifications((prev) => [
               ...prev,
               {
-                title: "🔔 New Notification",
+                title: title,
                 message: `${content} ${createdAt}`,
               },
             ]);
+            if (title.includes("Marketplace")) {
+              setNavItems((prev) =>
+                prev.map((item) =>
+                  item.path === "/marketplace"
+                    ? { ...item, hasUpdate: true }
+                    : item
+                )
+              );
+            }
             setShake(true);
             setTimeout(() => setShake(false), 500);
           });
