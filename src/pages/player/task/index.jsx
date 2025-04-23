@@ -39,6 +39,22 @@ import {
   PauseTask,
   CompleteTask,
 } from "@/services/apiServices/taskService";
+// thư viện kéo thả
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { ChangePriority } from "@/services/apiServices/taskService";
 
 // Hàm chuyển đổi startDate sang định dạng so sánh được (YYYYMMDD)
 const parseDate = (dateStr) => {

@@ -58,3 +58,16 @@ export async function CompleteTask(taskId, userTreeId) {
   });
   return response.data;
 }
+
+export async function ChangePriority(userTreeId, reorderedTasks) {
+  const response = await axios.post(
+    `/Task/reorder/${userTreeId}`,
+    reorderedTasks, // đây là phần body chứa mảng taskId + priority
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  return response.data;
+}
