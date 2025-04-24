@@ -11,10 +11,11 @@ const SIDEBAR_ITEMS = [
     { name: 'Challenges', icon: Trophy, color: '#F59E0B', href: '/challenges-admin' },
     { name: 'Trees', icon: Leaf, color: '#0ECB70', href: '/trees' },
     { name: 'Packages', icon: PackageOpen, color: '#2FE123', href: '/packages' },
+    { name: 'Trade History', icon: BarChart2, color: '#FBBF24', href: '/trade-history' },
     { name: 'User Experience Log', icon: ScrollText, color: '#6EE7B7', href: '/userXPLog' },
     { name: 'Tree Experience Log', icon: ScrollText, color: '#9621B6', href: '/treeXPLog' },
     // { name: 'Sales', icon: DollarSign, color: '#10B981', href: '/sales' },
-    { name: 'Analytics', icon: TrendingUp, color: '#3B82F6', href: '/analytics' },
+    // { name: 'Analytics', icon: TrendingUp, color: '#3B82F6', href: '/analytics' },
     { name: 'Settings', icon: Settings, color: '#6366F1', href: '/settings' },
 ]
 

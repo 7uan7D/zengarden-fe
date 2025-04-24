@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "../ui/button"
 import { toast } from "sonner"
-import { GetTaskById } from "@/services/apiServices/taskService"
+import useTaskData from "@/hooks/useTaskData"
 
 const TreeXPLogTable = () => {
+    const { taskData } = useTaskData()
     const [treeXPLogData, setTreeXPLogData] = useState(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -148,7 +149,7 @@ const TreeXPLogTable = () => {
                     <thead>
                         <tr>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Log Id</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Task Id</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Task Name</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Activity Type</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>XP Amount</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Created At</th>
@@ -174,11 +175,18 @@ const TreeXPLogTable = () => {
                                     /> */}
                                     {item.logId}
                                 </td>
-
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                    {item.taskId === null ? 'none' : item.taskId}
+                                    {item.taskId === null ? 'none' : taskData.find((task) => task.taskId === item.taskId)?.taskName}
                                 </td>
-                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.activityType}</td>
+                                <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                    {item.activityType === 0 ? 'Task XP'
+                                        : item.activityType === 1 ? 'Web XP'
+                                            : item.activityType === 2 ? 'Daily XP'
+                                                : item.activityType === 3 ? 'Streak XP'
+                                                    : item.activityType === 4 ? 'Decay'
+                                                        : item.activityType === 5 ? 'Item XP'
+                                                            : 'ProtectXp'}
+                                </td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.xpAmount.toFixed(2)} XP</td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                     {new Date(item.createdAt).toLocaleDateString('en-US', {

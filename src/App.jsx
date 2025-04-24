@@ -34,6 +34,7 @@ import { TimerProvider } from "./pages/player/workspace/timerContext";
 import Policy from "./components/policy";
 import Trees from "./pages/Trees";
 import Packages from "./pages/Packages";
+import TradeHistory from "./pages/TradeHistory";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -128,6 +129,7 @@ function AdminLayout() {
         <Route path="/challenges-admin" element={<Challenge />} />
         <Route path="/trees" element={<Trees />} />
         <Route path="/packages" element={<Packages />} />
+        <Route path="/trade-history" element={<TradeHistory />} />
         <Route path="/userXPLog" element={<UserXPLog />} />
         <Route path="/treeXPLog" element={<TreeXPLog />} />
         <Route path="/sales" element={<Sales />} />
@@ -148,6 +150,7 @@ function ConditionalRoutes() {
     location.pathname.startsWith("/challenges-admin") ||
     location.pathname.startsWith("/trees") ||
     location.pathname.startsWith("/packages") ||
+    location.pathname.startsWith("/trade-history") ||
     location.pathname.startsWith("/userXPLog") ||
     location.pathname.startsWith("/treeXPLog") ||
     location.pathname.startsWith("/sales") ||
