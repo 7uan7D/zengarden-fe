@@ -429,7 +429,7 @@ export default function TaskPage() {
 
             setTaskData((prevData) => {
               const newData = { ...prevData };
-              newData[columnKey][index] = { ...task, remainingTime };
+              newData[columnKey][index] = { ...task, status: 1, remainingTime };
               return newData;
             });
 
@@ -455,6 +455,15 @@ export default function TaskPage() {
           ...prev,
           [taskKey]: { ...prev[taskKey], isRunning: false },
         }));
+        setTaskData((prevData) => {
+          const newData = { ...prevData };
+          newData[columnKey][index] = {
+            ...task,
+            status: 2,
+            remainingTime: Math.round(remainingTime),
+          };
+          return newData;
+        });
         clearInterval(intervalRefs.current[taskKey]);
       } else if (action === "finish") {
         await CompleteTask(task.taskId, selectedTree.userTreeId);
@@ -1174,7 +1183,10 @@ export default function TaskPage() {
                       placeholder="Enter task name"
                       value={taskCreateData.taskName}
                       onChange={(e) =>
-                        setTaskCreateData({ ...taskCreateData, taskName: e.target.value })
+                        setTaskCreateData({
+                          ...taskCreateData,
+                          taskName: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -1290,28 +1302,32 @@ export default function TaskPage() {
                     <strong>Task Name:</strong> {taskCreateData.taskName}
                   </p>
                   <p>
-                    <strong>Description:</strong> {taskCreateData.taskDescription}
+                    <strong>Description:</strong>{" "}
+                    {taskCreateData.taskDescription}
                   </p>
                   <p>
-                    <strong>Total Duration:</strong> {taskCreateData.totalDuration}{" "}
-                    minutes
+                    <strong>Total Duration:</strong>{" "}
+                    {taskCreateData.totalDuration} minutes
                   </p>
                   <p>
-                    <strong>Start Date:</strong> {taskCreateData.startDate.toString()}
+                    <strong>Start Date:</strong>{" "}
+                    {taskCreateData.startDate.toString()}
                   </p>
                   <p>
-                    <strong>End Date:</strong> {taskCreateData.endDate.toString()}
+                    <strong>End Date:</strong>{" "}
+                    {taskCreateData.endDate.toString()}
                   </p>
                   <p>
                     <strong>Focus Method:</strong>{" "}
                     {focusSuggestion?.focusMethodName}
                   </p>
                   <p>
-                    <strong>Work Duration:</strong> {taskCreateData.workDuration}{" "}
-                    minutes
+                    <strong>Work Duration:</strong>{" "}
+                    {taskCreateData.workDuration} minutes
                   </p>
                   <p>
-                    <strong>Break Time:</strong> {taskCreateData.breakTime} minutes
+                    <strong>Break Time:</strong> {taskCreateData.breakTime}{" "}
+                    minutes
                   </p>
                 </div>
               )}
