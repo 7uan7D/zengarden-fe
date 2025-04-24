@@ -497,40 +497,35 @@ export default function TaskPage() {
     Object.keys(taskData).forEach((columnKey) => {
       taskData[columnKey].forEach((task, index) => {
         const taskKey = `${columnKey}-${index}`;
-        const isRunning = task.status === 1;
-        newTimers[taskKey] = {
-          isWorkPhase: true,
-          currentWorkTime: task.workDuration * 60,
-          currentBreakTime: task.breakTime * 60,
-          remainingTime: task.remainingTime,
-          overdueTime: 0,
-          isRunning,
-          totalWorkCompleted: 0,
-          totalBreakCompleted: 0,
-        };
-
-        // Nếu đang chạy thì khởi động interval
-        if (isRunning) {
-          intervalRefs.current[taskKey] = setInterval(() => {
-            setTimers((prev) => {
-              const timer = prev[taskKey];
-              if (!timer || !timer.isRunning) return prev;
-
-              // timer logic giống như bạn đã viết ở trên
-              // ...
-            });
-          }, 1000);
+        if (task.status === 1) {
+          // đang chạy
+          newTimers[taskKey] = {
+            isWorkPhase: true,
+            currentWorkTime: task.workDuration * 60,
+            currentBreakTime: task.breakTime * 60,
+            remainingTime: task.remainingTime,
+            overdueTime: 0,
+            isRunning: true,
+            totalWorkCompleted: 0,
+            totalBreakCompleted: 0,
+          };
+        } else if (task.status === 2) {
+          // bị pause
+          newTimers[taskKey] = {
+            isWorkPhase: true,
+            currentWorkTime: task.workDuration * 60,
+            currentBreakTime: task.breakTime * 60,
+            remainingTime: task.remainingTime,
+            overdueTime: 0,
+            isRunning: false,
+            totalWorkCompleted: 0,
+            totalBreakCompleted: 0,
+          };
         }
       });
     });
 
     setTimers(newTimers);
-
-    return () => {
-      // clear hết interval khi unmount hoặc taskData thay đổi
-      Object.values(intervalRefs.current).forEach(clearInterval);
-      intervalRefs.current = {};
-    };
   }, [taskData]);
 
   // State và logic cho Dialog tạo task
