@@ -451,20 +451,27 @@ export default function TaskPage() {
       } else if (action === "pause") {
         await PauseTask(task.taskId);
 
+        const currentTimer = timers[taskKey];
+
         setTimers((prev) => ({
           ...prev,
           [taskKey]: { ...prev[taskKey], isRunning: false },
         }));
+
         setTaskData((prevData) => {
           const newData = { ...prevData };
           newData[columnKey][index] = {
             ...task,
             status: 2,
-            remainingTime: Math.round(remainingTime),
+            remainingTime: Math.round(currentTimer?.remainingTime || 0),
           };
           return newData;
         });
-        clearInterval(intervalRefs.current[taskKey]);
+
+        if (intervalRefs.current[taskKey]) {
+          clearInterval(intervalRefs.current[taskKey]);
+          delete intervalRefs.current[taskKey];
+        }
       } else if (action === "finish") {
         await CompleteTask(task.taskId, selectedTree.userTreeId);
 
