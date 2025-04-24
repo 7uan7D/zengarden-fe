@@ -497,34 +497,58 @@ export default function TaskPage() {
           <ScrollArea className="h-[400px] overflow-y-auto">
             <div className="grid gap-3">
               {sortedTasks.map((task, index) => {
-                const totalDurationSeconds = task.totalDuration * 60;
+                const remainingTime = task.remainingTime || 0;
+                const overdueTime = remainingTime < 0 ? -remainingTime : 0;
                 const taskKey = `${columnKey}-${index}`;
                 const timer = timers[taskKey] || {};
-                const {
-                  isWorkPhase = true,
-                  currentWorkTime = task.workDuration * 60,
-                  currentBreakTime = task.breakTime * 60,
-                  remainingTime = task.remainingTime,
-                  overdueTime = 0,
-                  totalWorkCompleted = 0,
-                  totalBreakCompleted = 0,
-                } = timer;
+                const { totalWorkCompleted = 0, totalBreakCompleted = 0 } =
+                  timer;
 
-                // Tính tiến độ mỗi giây
-                const workProgress =
-                  ((totalWorkCompleted +
-                    (isWorkPhase
-                      ? task.workDuration * 60 - currentWorkTime
-                      : 0)) /
-                    totalDurationSeconds) *
-                  100;
-                const breakProgress =
-                  ((totalBreakCompleted +
-                    (!isWorkPhase
-                      ? task.breakTime * 60 - currentBreakTime
-                      : 0)) /
-                    totalDurationSeconds) *
-                  100;
+                const totalDurationSeconds = task.totalDuration * 60;
+                const remainTime = task.remainingTime;
+                const elapsedTime = totalDurationSeconds - remainTime;
+                const cycleDuration = (task.workDuration + task.breakTime) * 60;
+                const completedCycles = Math.floor(elapsedTime / cycleDuration);
+                const timeInCurrentCycle = elapsedTime % cycleDuration;
+
+                let isWorkPhase = true;
+                let currentWorkTime = task.workDuration * 60;
+                let currentBreakTime = task.breakTime * 60;
+
+                if (timeInCurrentCycle < task.workDuration * 60) {
+                  isWorkPhase = true;
+                  currentWorkTime = task.workDuration * 60 - timeInCurrentCycle;
+                } else {
+                  isWorkPhase = false;
+                  const timeIntoBreak =
+                    timeInCurrentCycle - task.workDuration * 60;
+                  currentBreakTime = task.breakTime * 60 - timeIntoBreak;
+                }
+
+                // Tạo mảng các phase để render thanh tiến độ xen kẽ
+                const phases = [];
+
+                for (let i = 0; i < completedCycles; i++) {
+                  phases.push({
+                    type: "work",
+                    duration: task.workDuration * 60,
+                  });
+                  phases.push({ type: "break", duration: task.breakTime * 60 });
+                }
+
+                // current phase
+                if (timeInCurrentCycle < task.workDuration * 60) {
+                  phases.push({ type: "work", duration: timeInCurrentCycle });
+                } else {
+                  phases.push({
+                    type: "work",
+                    duration: task.workDuration * 60,
+                  });
+                  phases.push({
+                    type: "break",
+                    duration: timeInCurrentCycle - task.workDuration * 60,
+                  });
+                }
 
                 const currentTaskStatus =
                   task.status === 1 ? 1 : task.status === 2 ? 2 : 0;
@@ -597,19 +621,23 @@ export default function TaskPage() {
                                 : `Remaining: ${formatTime(remainingTime)}`)}
                           </span>
                           <div className="progress-bar-container">
-                            <div className="progress-bar">
-                              <div
-                                className="work-progress bg-blue-500"
-                                style={{
-                                  width: `${Math.min(workProgress, 100)}%`,
-                                }}
-                              />
-                              <div
-                                className="break-progress bg-yellow-500"
-                                style={{
-                                  width: `${Math.min(breakProgress, 100)}%`,
-                                }}
-                              />
+                            <div className="progress-bar flex h-2 rounded overflow-hidden">
+                              {phases.map((phase, idx) => (
+                                <div
+                                  key={idx}
+                                  className={
+                                    phase.type === "work"
+                                      ? "bg-blue-500"
+                                      : "bg-yellow-500"
+                                  }
+                                  style={{
+                                    width: `${
+                                      (phase.duration / totalDurationSeconds) *
+                                      100
+                                    }%`,
+                                  }}
+                                />
+                              ))}
                             </div>
                           </div>
                           {task.status !== 4 &&
