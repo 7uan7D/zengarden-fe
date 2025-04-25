@@ -349,6 +349,8 @@ export default function TaskPage() {
     const task = taskData[columnKey][index];
 
     try {
+      setLoadingTaskKey(taskKey);
+
       if (action === "start" || action === "resume") {
         // Gọi API StartTask (cả khi start và resume đều gọi cùng API này)
         await StartTask(task.taskId);
@@ -448,6 +450,19 @@ export default function TaskPage() {
             };
           });
         }, 1000);
+        //task overlay
+        localStorage.setItem(
+          "currentTask",
+          JSON.stringify({
+            taskId: task.taskId,
+            title: task.title,
+            remainingTime: task.remainingTime,
+            status: 1, // running
+            columnKey,
+            index,
+            taskKey,
+          })
+        );
       } else if (action === "pause") {
         await PauseTask(task.taskId);
 
@@ -472,6 +487,19 @@ export default function TaskPage() {
           clearInterval(intervalRefs.current[taskKey]);
           delete intervalRefs.current[taskKey];
         }
+        //task overlay
+        localStorage.setItem(
+          "currentTask",
+          JSON.stringify({
+            taskId: task.taskId,
+            title: task.title,
+            remainingTime: Math.round(currentTimer?.remainingTime || 0),
+            status: 2, // paused
+            columnKey,
+            index,
+            taskKey,
+          })
+        );
       } else if (action === "finish") {
         await CompleteTask(task.taskId, selectedTree.userTreeId);
 
@@ -485,12 +513,17 @@ export default function TaskPage() {
           newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
           return newData;
         });
+        localStorage.removeItem("currentTask");
         setActiveTaskKey(null);
       }
     } catch (error) {
       console.error("Task action error:", error);
+    } finally {
+      setLoadingTaskKey(null);
     }
   };
+
+  const [loadingTaskKey, setLoadingTaskKey] = useState(null);
 
   useEffect(() => {
     const newTimers = {};
@@ -895,16 +928,40 @@ export default function TaskPage() {
                                     : "bg-green-500 hover:bg-green-600"
                                 }
                                 disabled={
-                                  currentTaskStatus === 0 &&
-                                  activeTaskKey !== null &&
-                                  activeTaskKey !== taskKey
+                                  (currentTaskStatus === 0 &&
+                                    activeTaskKey !== null &&
+                                    activeTaskKey !== taskKey) ||
+                                  loadingTaskKey === taskKey // 🔒 Disable khi đang loading
                                 }
                               >
-                                {currentTaskStatus === 0
-                                  ? "Start"
-                                  : currentTaskStatus === 1
-                                  ? "Pause"
-                                  : "Resume"}
+                                {loadingTaskKey === taskKey ? (
+                                  <svg
+                                    className="animate-spin h-5 w-5 text-white mx-auto"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    />
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                    />
+                                  </svg>
+                                ) : currentTaskStatus === 0 ? (
+                                  "Start"
+                                ) : currentTaskStatus === 1 ? (
+                                  "Pause"
+                                ) : (
+                                  "Resume"
+                                )}
                               </Button>
                             )}
                             {remainingTime <= 120 &&

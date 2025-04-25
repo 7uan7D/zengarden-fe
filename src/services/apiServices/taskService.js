@@ -62,7 +62,7 @@ export async function CompleteTask(taskId, userTreeId) {
 export async function ChangePriority(userTreeId, reorderedTasks) {
   const response = await axios.post(
     `/Task/reorder/${userTreeId}`,
-    reorderedTasks, // đây là phần body chứa mảng taskId + priority
+    reorderedTasks,
     {
       headers: {
         "Content-Type": "application/json",
