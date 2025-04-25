@@ -3,10 +3,17 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react"; // Import icon spinner
-import { GetTaskByUserTreeId, PauseTask, StartTask, CompleteTask } from "@/services/apiServices/taskService";
+import {
+  GetTaskByUserTreeId,
+  PauseTask,
+  StartTask,
+  CompleteTask,
+} from "@/services/apiServices/taskService";
 import "../task/index.css";
 
-export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 mt-20" }) {
+export default function TaskOverlay({
+  positionClass = "fixed top-4 left-4 z-50 mt-20",
+}) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [timers, setTimers] = useState({});
@@ -33,7 +40,7 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
       if (selectedTreeId) {
         const taskData = await GetTaskByUserTreeId(selectedTreeId);
         const runningTasks = taskData
-          .filter((task) => task.status === 1)
+          .filter((task) => task.status === 1 || task.status === 2)
           .map((task) => ({
             taskId: task.taskId,
             taskName: task.taskName,
@@ -56,7 +63,7 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
             currentBreakTime: task.breakTime * 60,
             remainingTime: task.remainingTime,
             overdueTime: 0,
-            isRunning: true,
+            isRunning: task.status === 1,
             totalWorkCompleted: 0,
             totalBreakCompleted: 0,
           };
@@ -128,7 +135,9 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
             overdueTime += 1;
             setTasks((prevTasks) =>
               prevTasks.map((t, i) =>
-                i === parseInt(index) ? { ...t, status: 4, remainingTime: 0 } : t
+                i === parseInt(index)
+                  ? { ...t, status: 4, remainingTime: 0 }
+                  : t
               )
             );
             clearInterval(intervalRefs.current[taskKey]);
@@ -305,9 +314,14 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
               const isLoading = loadingTaskKey === taskKey;
 
               return (
-                <Card key={task.taskId} className="task-item flex justify-between p-3">
+                <Card
+                  key={task.taskId}
+                  className="task-item flex justify-between p-3"
+                >
                   <div className="flex-1 flex flex-col justify-between text-left">
-                    <span className="text-gray-700 font-medium">{task.taskName}</span>
+                    <span className="text-gray-700 font-medium">
+                      {task.taskName}
+                    </span>
                     <div className="flex flex-col gap-1 text-left">
                       <span
                         className={`text-sm ${
@@ -324,7 +338,9 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
                             <div
                               key={idx}
                               className={
-                                phase.type === "work" ? "bg-blue-500" : "bg-yellow-500"
+                                phase.type === "work"
+                                  ? "bg-blue-500"
+                                  : "bg-yellow-500"
                               }
                               style={{
                                 width: `${
@@ -335,19 +351,21 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
                           ))}
                         </div>
                       </div>
-                      {task.status !== 3 && task.status !== 4 && remainingTime > 0 && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {isWorkPhase ? (
-                            <span className="text-blue-500 font-medium">
-                              Work: {formatTime(currentWorkTime)}
-                            </span>
-                          ) : (
-                            <span className="text-yellow-500 font-medium">
-                              Break: {formatTime(currentBreakTime)}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                      {task.status !== 3 &&
+                        task.status !== 4 &&
+                        remainingTime > 0 && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            {isWorkPhase ? (
+                              <span className="text-blue-500 font-medium">
+                                Work: {formatTime(currentWorkTime)}
+                              </span>
+                            ) : (
+                              <span className="text-yellow-500 font-medium">
+                                Break: {formatTime(currentBreakTime)}
+                              </span>
+                            )}
+                          </div>
+                        )}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -361,7 +379,9 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
                           <Button
                             variant="outline"
                             className="text-green-600 border-green-600 hover:bg-green-50 flex items-center gap-2"
-                            onClick={() => handleCompleteTask(task.taskId, index)}
+                            onClick={() =>
+                              handleCompleteTask(task.taskId, index)
+                            }
                             disabled={isLoading}
                           >
                             {isLoading ? (
