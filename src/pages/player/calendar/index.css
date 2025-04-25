@@ -1,0 +1,11 @@
+.checkin-available {
+  cursor: pointer;
+  border: 2px dashed #22c55e !important;
+  background-color: #ecfdf5 !important;
+  transition: 0.3s;
+}
+
+.checkin-available:hover {
+  background-color: #bbf7d0 !important;
+  transform: scale(1.05);
+}

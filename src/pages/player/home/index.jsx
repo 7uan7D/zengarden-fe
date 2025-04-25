@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { Calendar, ShoppingCart, Leaf, Trophy, Clock } from "lucide-react";
 import { toast } from "sonner";
 import "../home/index.css";
-import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
-import { StartTask, PauseTask } from "@/services/apiServices/taskService";
+import { GetTaskByUserTreeId, StartTask, PauseTask } from "@/services/apiServices/taskService";
 import { GetUserTreeByOwnerId } from "@/services/apiServices/userTreesService";
 import { GetAllTrees } from "@/services/apiServices/treesService";
+import { GetAllItems } from "@/services/apiServices/itemService";
 import parseJwt from "@/services/parseJwt";
 
 const HomePage = () => {
@@ -22,8 +22,10 @@ const HomePage = () => {
   });
   const [currentTask, setCurrentTask] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [userTrees, setUserTrees] = useState([]); // Thêm state để lưu cây sở hữu
-  const [allTrees, setAllTrees] = useState([]); // Thêm state để lưu tất cả cây
+  const [userTrees, setUserTrees] = useState([]);
+  const [allTrees, setAllTrees] = useState([]);
+  const [marketplaceItems, setMarketplaceItems] = useState([]);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   // Lấy danh sách task theo cây
   const fetchTasks = async (userTreeId) => {
@@ -49,20 +51,6 @@ const HomePage = () => {
     }
   };
 
-  // Lấy cây mặc định từ localStorage hoặc API
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const userId = parseJwt(token).sub;
-      setUser({ username: "Farmer" });
-      const savedTreeId = localStorage.getItem("selectedTreeId");
-      if (savedTreeId) {
-        setCurrentTree(parseInt(savedTreeId));
-        fetchTasks(parseInt(savedTreeId));
-      }
-    }
-  }, []);
-
   // Lấy danh sách cây sở hữu và tất cả cây
   const fetchUserTrees = async (ownerId) => {
     try {
@@ -70,12 +58,30 @@ const HomePage = () => {
         GetUserTreeByOwnerId(ownerId),
         GetAllTrees(),
       ]);
-
-      console.log("Owned Trees:", ownedTrees); // ✅ In dữ liệu để kiểm tra
       setUserTrees(ownedTrees || []);
       setAllTrees(allTrees || []);
     } catch (error) {
       console.error("Failed to fetch trees", error);
+    }
+  };
+
+  // Lấy danh sách items từ Marketplace
+  const fetchMarketplaceItems = async () => {
+    try {
+      const items = await GetAllItems();
+      const typeMap = {
+        Items: [0, 1],
+        Avatar: [2],
+        Background: [3],
+        Music: [4],
+      };
+      const filteredItems = Object.keys(typeMap).map((category) => {
+        const firstItem = items.find((item) => typeMap[category].includes(item.type));
+        return firstItem ? { ...firstItem, category } : null;
+      }).filter(Boolean);
+      setMarketplaceItems(filteredItems);
+    } catch (error) {
+      console.error("Failed to fetch marketplace items", error);
     }
   };
 
@@ -86,10 +92,9 @@ const HomePage = () => {
       const userId = parseJwt(token).sub;
       setUser({ username: "Farmer" });
 
-      // Lấy danh sách cây sở hữu
       fetchUserTrees(userId);
+      fetchMarketplaceItems();
 
-      // Lấy cây mặc định và tasks
       const savedTreeId = localStorage.getItem("selectedTreeId");
       if (savedTreeId) {
         setCurrentTree(parseInt(savedTreeId));
@@ -97,6 +102,31 @@ const HomePage = () => {
       }
     }
   }, []);
+
+  // Tự động chuyển slide
+  useEffect(() => {
+    if (marketplaceItems.length === 0) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % marketplaceItems.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [marketplaceItems.length]);
+
+  // Hàm điều hướng carousel
+  const goToPrevious = () => {
+    setCurrentSlideIndex((prevIndex) =>
+      prevIndex === 0 ? marketplaceItems.length - 1 : prevIndex - 1
+    );
+  };
+
+  const goToNext = () => {
+    setCurrentSlideIndex((prevIndex) => (prevIndex + 1) % marketplaceItems.length);
+  };
+
+  const goToSlide = (index) => {
+    setCurrentSlideIndex(index);
+  };
 
   // Logic Timer
   const startTimer = async (column, taskIndex) => {
@@ -119,7 +149,7 @@ const HomePage = () => {
       column,
       taskIndex,
       time: initialTime,
-      totalTime: totalDurationSeconds, // Lưu totalTime để tính progress
+      totalTime: totalDurationSeconds,
     });
     setIsRunning(true);
   };
@@ -154,7 +184,7 @@ const HomePage = () => {
             ? timeStringToSeconds(task.remainingTime)
             : task.remainingTime * 60
           : totalDurationSeconds,
-        totalTime: totalDurationSeconds, // Lưu totalTime để tính progress
+        totalTime: totalDurationSeconds,
       });
       setIsRunning(true);
     }
@@ -192,6 +222,14 @@ const HomePage = () => {
     (tree) => tree.treeId === userTrees.find((ut) => ut.finalTreeId)?.finalTreeId
   ) || { name: "No Tree", imageUrl: "/tree-1.png", level: 0 };
 
+  // Map màu cho rarity
+  const rarityColorMap = {
+    common: "text-gray-600",
+    rare: "text-blue-600",
+    epic: "text-purple-800",
+    legendary: "text-orange-500",
+  };
+
   return (
     <motion.div
       className="p-6 pt-2 mt-20 max-w-6xl mx-auto"
@@ -213,7 +251,7 @@ const HomePage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Task Widget */}
         <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow lg:col-span-2">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3 dimenticaremb-4">
             <Clock className="w-6 h-6 text-cyan-600" />
             <h2 className="text-2xl font-semibold text-gray-800">Your Tasks</h2>
           </div>
@@ -265,7 +303,6 @@ const HomePage = () => {
                           )}
                         </div>
                       </div>
-                      {/* Thanh tiến độ và remaining time */}
                       {currentTask?.column === type && currentTask?.taskIndex === 0 && (
                         <div className="flex flex-col gap-1">
                           <div className="w-full h-2 bg-gray-200 rounded-full">
@@ -313,7 +350,6 @@ const HomePage = () => {
               {displayedTree.name}
             </p>
             <p className="text-sm text-gray-500">
-              {/* hiển thị số cây đang sở hữu trong tài khoản*/}
               {userTrees.length > 0 ? `You owned ${userTrees.length} trees in your garden` : "No trees owned"}
             </p>
           </div>
@@ -377,12 +413,91 @@ const HomePage = () => {
             <h2 className="text-2xl font-semibold text-gray-800">Marketplace</h2>
           </div>
           <div className="text-center">
-            <div className="h-16 w-16 bg-purple-100 rounded-lg mx-auto mb-4"></div>
-            <p className="font-semibold text-gray-800">Items Item 1</p>
-            <p className="text-sm text-gray-500 flex items-center justify-center">
-              <img src="/src/assets/images/coin.png" alt="Coin" className="w-5 h-5 mr-1" />
-              100
-            </p>
+            {marketplaceItems.length > 0 ? (
+              <div className="home-carousel-container">
+                <div className="highlight-banner">
+                  <span>Highlight</span>
+                </div>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentSlideIndex}
+                    initial={{ opacity: 0, x: 100 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -100 }}
+                    transition={{ duration: 0.5 }}
+                    className="carousel-slide"
+                  >
+                    {(() => {
+                      const item = marketplaceItems[currentSlideIndex];
+                      return (
+                        <>
+                          {item.category === "Music" ? (
+                            <div className="relative w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mx-auto mb-4">
+                              <button
+                                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-sm"
+                                onClick={() => {
+                                  const audio = new Audio(item.itemDetail.mediaUrl);
+                                  audio.currentTime = 0;
+                                  audio.play();
+                                  audio.ontimeupdate = () => {
+                                    if (audio.currentTime > 15) {
+                                      audio.pause();
+                                      audio.currentTime = 0;
+                                    }
+                                  };
+                                }}
+                              >
+                                ▶️ Preview
+                              </button>
+                            </div>
+                          ) : (
+                            <img
+                              src={item.itemDetail.mediaUrl}
+                              alt={item.name}
+                              className={`mx-auto mb-4 ${
+                                item.category === "Background" ? "w-64 h-16 object-cover rounded-lg" : "h-16 w-16 object-cover rounded-lg"
+                              }`}
+                            />
+                          )}
+                          <p className={`font-semibold ${rarityColorMap[item.rarity?.toLowerCase()] || "text-gray-400"}`}>
+                            {item.rarity}
+                          </p>
+                          <p className="font-semibold text-gray-800">{item.name}</p>
+                          <p className="text-sm text-gray-500 flex items-center justify-center">
+                            <img src="public\images\coin.png" alt="Coin" className="w-5 h-5 mr-1" />
+                            {item.cost}
+                          </p>
+                        </>
+                      );
+                    })()}
+                  </motion.div>
+                </AnimatePresence>
+                <motion.button
+                  className="carousel-btn prev"
+                  onClick={goToPrevious}
+                >
+                  ❮
+                </motion.button>
+                <motion.button
+                  className="carousel-btn next"
+                  onClick={goToNext}
+                >
+                  ❯
+                </motion.button>
+                <div className="carousel-dots">
+                  {marketplaceItems.map((_, index) => (
+                    <motion.span
+                      key={index}
+                      className={`dot ${index === currentSlideIndex ? "active" : ""}`}
+                      onClick={() => goToSlide(index)}
+                      whileHover={{ scale: 1 }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No items available</p>
+            )}
           </div>
           <Button
             className="mt-4 w-full bg-purple-600 text-white hover:bg-purple-700"
