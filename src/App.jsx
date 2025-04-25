@@ -41,14 +41,20 @@ const pageVariants = {
 };
 
 /** Mảng các path không hiển thị MusicPlayerController và TaskOverlay */
-const excludedPaths = ["/", "/faq", "/workspace", "/policy"];
+const excludedPaths = ["/", "/faq", "/policy", "/workspace"];
 const excludedPathsHeader = ["/workspace"];
-const excludedPathsTasks = ["/", "/faq", "/workspace", "/policy", "/task"];
+const excludedPathsTasks = ["/","/home" , "/faq", "/policy", "/task"];
 
 function AnimatedRoutes() {
   const location = useLocation();
   const [isPlaying, setIsPlaying] = useState(false); // Trạng thái phát nhạc
   const [currentIndex, setCurrentIndex] = useState(0); // Chỉ số bài hát
+
+  // Xác định positionClass cho TaskOverlay dựa trên pathname
+  const rightPositionPaths = ["/workspace", "/marketplace"]; //Path để hiển thị vị trí cho TaskOverlay
+  const taskOverlayPositionClass = rightPositionPaths.includes(location.pathname)
+    ? "fixed top-12 right-4 z-50 mt-20"
+    : "fixed top-6 left-4 z-50 mt-20";
 
   return (
     <UserExperienceProvider>
@@ -71,9 +77,9 @@ function AnimatedRoutes() {
               </div>
             )}
             {/* Hiển thị TaskOverlay */}
-             {!excludedPathsTasks.includes(location.pathname) && (
-              <div className="fixed top-4 left-4 z-50 mt-20">
-                <TaskOverlay />
+            {!excludedPathsTasks.includes(location.pathname) && (
+              <div className={taskOverlayPositionClass}>
+                <TaskOverlay positionClass={taskOverlayPositionClass} />
               </div>
             )}
             <AnimatePresence mode="wait">

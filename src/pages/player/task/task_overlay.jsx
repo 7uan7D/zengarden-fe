@@ -222,8 +222,10 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
 
   return (
     <div
-      className={`flex flex-col gap-2 bg-white rounded-lg shadow-md border border-gray-200 p-3 ${positionClass}`}
-      style={{ width: "300px" }} // Tăng chiều rộng lên 300px
+      className={`flex flex-col gap-2 bg-white rounded-lg shadow-md border border-gray-200 ${
+        isCollapsed ? "p-1" : "p-3"
+      } ${positionClass}`}
+      style={{ width: isCollapsed ? "35px" : "300px" }} //Kích thước của TaskOverlay khi thu gọn hoặc mở rộng
     >
       {/* Nội dung chính */}
       {!isCollapsed && (
@@ -237,11 +239,7 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
               className="h-6 w-6 p-0 bg-transparent text-gray-500 hover:bg-gray-100"
               onClick={() => setIsCollapsed(!isCollapsed)}
             >
-              {isCollapsed ? (
-                <ChevronRight className="h-3 w-3" />
-              ) : (
-                <ChevronLeft className="h-3 w-3" />
-              )}
+              <ChevronLeft className="h-3 w-3" />
             </Button>
           </div>
           {tasks.length === 0 ? (
