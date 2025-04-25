@@ -370,6 +370,12 @@ export default function TaskPage() {
           },
         }));
 
+        setTaskData((prevData) => {
+          const newData = { ...prevData };
+          newData[columnKey][index] = { ...task, status: 1 };
+          return newData;
+        });
+
         intervalRefs.current[taskKey] = setInterval(() => {
           setTimers((prev) => {
             const timer = prev[taskKey];
@@ -389,6 +395,7 @@ export default function TaskPage() {
             const endDate = parseDate(task.endDate);
             if (currentDate > endDate) {
               clearInterval(intervalRefs.current[taskKey]);
+
               setTaskData((prevData) => {
                 const newData = { ...prevData };
                 newData[columnKey][index] = {
