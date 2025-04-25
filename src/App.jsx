@@ -28,7 +28,7 @@ import Workspace from "./pages/player/workspace";
 import { UserExperienceProvider } from "@/context/UserExperienceContext";
 import { TreeExperienceProvider } from "./context/TreeExperienceContext";
 import MusicPlayerController from "./components/musicPlayerController";
-import TaskOverlay from "../src/pages/player/task/task_overlay"; // Thêm import
+// import TaskOverlay from "../src/pages/player/task/task_overlay";
 import ChallengeDetails from "./pages/player/challenges/ChallengeDetails";
 import { TimerProvider } from "./pages/player/workspace/timerContext";
 import Policy from "./components/policy";
@@ -73,11 +73,11 @@ function AnimatedRoutes() {
               </div>
             )}
             {/* Hiển thị TaskOverlay */}
-            {!excludedPathsTasks.includes(location.pathname) && (
+            {/* {!excludedPathsTasks.includes(location.pathname) && (
               <div className="fixed top-4 left-4 z-50 mt-20">
                 <TaskOverlay />
               </div>
-            )}
+            )} */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
@@ -96,7 +96,10 @@ function AnimatedRoutes() {
                   <Route path="/marketplace" element={<Marketplace />} />
                   <Route path="/task" element={<TaskPage />} />
                   <Route path="/challenges" element={<Challenges />} />
-                  <Route path="/challenges/:id" element={<ChallengeDetails />} />
+                  <Route
+                    path="/challenges/:id"
+                    element={<ChallengeDetails />}
+                  />
                   <Route path="/policy" element={<Policy />} />
                 </Routes>
               </motion.div>

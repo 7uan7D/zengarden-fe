@@ -46,6 +46,19 @@ const Header = () => {
   ]);
 
   useEffect(() => {
+    const calendarHasUpdate =
+      localStorage.getItem("calendarHasUpdate") === "true";
+
+    setNavItems((prev) =>
+      prev.map((item) =>
+        item.path === "/calendar"
+          ? { ...item, hasUpdate: calendarHasUpdate }
+          : item
+      )
+    );
+  }, []);
+
+  useEffect(() => {
     const currentPath = location.pathname;
     setNavItems((prev) =>
       prev.map((item) =>

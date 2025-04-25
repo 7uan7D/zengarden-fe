@@ -5,7 +5,6 @@
   margin-bottom: 1rem;
 }
 
-/* === 3. Sửa màu task-type thành đen === */
 .task-type {
   display: flex;
   justify-content: center;
@@ -18,15 +17,15 @@
 }
 
 .daily {
-  background-color: #000000; /* Đen cho Daily */
+  background-color: #000000;
 }
 
 .simple {
-  background-color: #000000; /* Đen cho Simple */
+  background-color: #000000;
 }
 
 .complex {
-  background-color: #000000; /* Đen cho Complex */
+  background-color: #000000;
 }
 
 .task-detail {
@@ -37,4 +36,90 @@
   justify-content: space-between;
   align-items: center;
   background-color: #ffffff;
+}
+
+/* Carousel styles */
+.home-carousel-container {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  height: 200px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-slide {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(96, 153, 148, 0.8);
+  color: white;
+  border: none;
+  padding: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.3s ease;
+}
+
+.carousel-btn:hover {
+  background: #609994;
+}
+
+.prev {
+  left: 10px;
+}
+
+.next {
+  right: 10px;
+}
+
+.carousel-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.dot.active {
+  background: #609994;
+}
+
+/* Highlight banner styles */
+.highlight-banner {
+  position: absolute;
+  top: 15px;
+  left: -30px;
+  background: #e7a509;
+  color: white;
+  padding: 5px 30px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: "Poppins", sans-serif;
+  transform: rotate(-45deg);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 10;
 }

@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { useTreeExperience } from "@/context/TreeExperienceContext";
 import { GetTaskByUserTreeId } from "@/services/apiServices/taskService";
 import { PauseTask, StartTask } from "@/services/apiServices/taskService";
+
 import "../task/index.css";
 
 export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 mt-20" }) {
@@ -12,9 +13,6 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
   const [tasks, setTasks] = useState([]);
   const [currentTask, setCurrentTask] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [taskToComplete, setTaskToComplete] = useState(null);
-  const { treeExp, refreshTreeExp } = useTreeExperience();
 
   // Hàm định dạng thời gian
   const formatTime = (seconds) => {
@@ -260,23 +258,6 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
           )}
         </div>
       )}
-
-      {/* Dialog xác nhận hoàn thành */}
-      <ConfirmCompletionDialog
-        isConfirmDialogOpen={isConfirmDialogOpen}
-        setIsConfirmDialogOpen={setIsConfirmDialogOpen}
-        taskToComplete={taskToComplete}
-        setTaskToComplete={setTaskToComplete}
-        selectedTree={{ userTreeId: localStorage.getItem("selectedTreeId") }}
-        tasks={{ overlay: tasks }}
-        setTasks={setTasks}
-        currentTask={currentTask}
-        setCurrentTask={setCurrentTask}
-        setIsRunning={setIsRunning}
-        refreshTreeExp={refreshTreeExp}
-        currentTree={localStorage.getItem("selectedTreeId")}
-        fetchTasks={fetchRunningTasks}
-      />
     </div>
   );
 }

@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
 import { GetAllTrees } from "@/services/apiServices/treesService";
 import { CreateUserTree } from "@/services/apiServices/userTreesService";
@@ -32,6 +33,98 @@ import { useTreeExperience } from "@/context/TreeExperienceContext";
 import { GetBagItems } from "@/services/apiServices/itemService";
 import { CircleCheckBig, CircleX } from "lucide-react";
 import "../task/index.css";
+//api task
+import {
+  GetTaskByUserTreeId,
+  StartTask,
+  PauseTask,
+  CompleteTask,
+  CreateTask,
+} from "@/services/apiServices/taskService";
+// thư viện kéo thả
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { ChangePriority } from "@/services/apiServices/taskService";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import TimePicker from "react-time-picker";
+import "react-time-picker/dist/TimePicker.css";
+import "react-clock/dist/Clock.css";
+import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
+
+// Component con để chọn ngày và giờ cho task
+const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const selectedDate = date ? new Date(date) : undefined;
+  const formattedTime = date
+    ? new Date(date).toISOString().split("T")[1].slice(0, 5)
+    : "00:00";
+
+  const handleDateSelect = useCallback(
+    (newDate) => {
+      onDateChange(newDate);
+      setIsPopoverOpen(false);
+    },
+    [onDateChange]
+  );
+
+  const handleTimeChange = useCallback(
+    (time) => {
+      onTimeChange(time);
+    },
+    [onTimeChange]
+  );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Label className="font-medium text-gray-700">{label}</Label>
+      <div className="flex items-center gap-2">
+        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-[150px] h-10 border-gray-300 text-gray-700 hover:bg-gray-100 rounded-lg transition-all"
+            >
+              {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="p-2 shadow-md bg-white rounded-lg">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+            />
+          </PopoverContent>
+        </Popover>
+        <TimePicker
+          onChange={handleTimeChange}
+          value={formattedTime}
+          disableClock={true}
+          className="h-10 w-[100px] text-center border-gray-300 rounded-lg focus:border-green-500 focus:ring focus:ring-green-200 transition-all"
+          clearIcon={null}
+          clockIcon={null}
+        />
+      </div>
+    </div>
+  );
+};
 
 // Hàm chuyển đổi startDate sang định dạng so sánh được (YYYYMMDD)
 const parseDate = (dateStr) => {
@@ -48,182 +141,6 @@ const getCurrentDateStr = () => {
   return `${day}/${month}/${year}`;
 };
 
-// Dữ liệu cứng với priority được gán theo startDate
-const initialTasks = {
-  daily: [],
-  simple: [
-    {
-      taskName: "Complete Project Proposal",
-      taskDescription: "Draft and finalize project proposal for client meeting",
-      startDate: "01/04/2025",
-      endDate: "22/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 0.5,
-      workDuration: 0.5,
-      breakTime: 0,
-      userTreeName: "Chilly",
-      taskTypeName: "Simple",
-      remainingTime: 0.5 * 60,
-      priority: 1,
-    },
-    {
-      taskName: "Write Unit Tests",
-      taskDescription: "Write unit tests for authentication module",
-      startDate: "01/04/2025",
-      endDate: "10/04/2025",
-      status: 4,
-      focusMethodName: "Pomodoro",
-      totalDuration: 50,
-      workDuration: 20,
-      breakTime: 5,
-      userTreeName: "Chilly",
-      taskTypeName: "Simple",
-      remainingTime: 0,
-      priority: 2,
-    },
-    {
-      taskName: "Update Documentation",
-      taskDescription: "Update API documentation for version 2.0",
-      startDate: "02/04/2025",
-      endDate: "06/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 90,
-      workDuration: 30,
-      breakTime: 15,
-      userTreeName: "Chilly",
-      taskTypeName: "Simple",
-      remainingTime: 90 * 60,
-      priority: 3,
-    },
-    {
-      taskName: "Code Review",
-      taskDescription: "Review team member's code for new feature",
-      startDate: "03/04/2025",
-      endDate: "04/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 45,
-      workDuration: 20,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Simple",
-      remainingTime: 45 * 60,
-      priority: 4,
-    },
-  ],
-  complex: [
-    {
-      taskName: "Develop New Feature",
-      taskDescription: "Implement user authentication module",
-      startDate: "01/04/2025",
-      endDate: "10/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 120,
-      workDuration: 45,
-      breakTime: 15,
-      userTreeName: "Chilly",
-      taskTypeName: "Complex",
-      remainingTime: 120 * 60,
-      priority: 1,
-    },
-    {
-      taskName: "Implement Payment Gateway",
-      taskDescription: "Integrate payment gateway for e-commerce platform",
-      startDate: "01/04/2025",
-      endDate: "15/04/2025",
-      status: 3,
-      focusMethodName: "Pomodoro",
-      totalDuration: 150,
-      workDuration: 50,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Complex",
-      remainingTime: 0,
-      priority: 2,
-    },
-    {
-      taskName: "Database Optimization",
-      taskDescription: "Optimize database queries for performance",
-      startDate: "02/04/2025",
-      endDate: "08/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 100,
-      workDuration: 40,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Complex",
-      remainingTime: 100 * 60,
-      priority: 3,
-    },
-    {
-      taskName: "UI Redesign",
-      taskDescription: "Redesign dashboard for better UX",
-      startDate: "04/04/2025",
-      endDate: "12/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 80,
-      workDuration: 35,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Complex",
-      remainingTime: 80 * 60,
-      priority: 4,
-    },
-  ],
-  challenge: [
-    {
-      taskName: "30-Day Coding Challenge",
-      taskDescription: "Complete one coding problem daily for 30 days",
-      startDate: "01/04/2025",
-      endDate: "30/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 90,
-      workDuration: 30,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Challenge",
-      remainingTime: 90 * 60,
-      priority: 1,
-    },
-    {
-      taskName: "Learn New Framework",
-      taskDescription: "Learn and build a project with a new framework",
-      startDate: "03/04/2025",
-      endDate: "25/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 100,
-      workDuration: 35,
-      breakTime: 10,
-      userTreeName: "Chilly",
-      taskTypeName: "Challenge",
-      remainingTime: 100 * 60,
-      priority: 2,
-    },
-    {
-      taskName: "Open Source Contribution",
-      taskDescription: "Contribute to an open-source project",
-      startDate: "05/04/2025",
-      endDate: "20/04/2025",
-      status: null,
-      focusMethodName: "Pomodoro",
-      totalDuration: 110,
-      workDuration: 40,
-      breakTime: 15,
-      userTreeName: "Chilly",
-      taskTypeName: "Challenge",
-      remainingTime: 110 * 60,
-      priority: 3,
-    },
-  ],
-};
-
 export default function TaskPage() {
   // Khai báo các state cần thiết
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
@@ -233,6 +150,8 @@ export default function TaskPage() {
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newTreeName, setNewTreeName] = useState("");
+
+  // Task
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
   const [activeTabs, setActiveTabs] = useState({
@@ -241,11 +160,19 @@ export default function TaskPage() {
     complex: "all",
     challenge: "all",
   });
-  const [taskData, setTaskData] = useState(initialTasks);
+
+  const [taskData, setTaskData] = useState({
+    daily: [],
+    simple: [],
+    complex: [],
+    challenge: [],
+  });
+
   const [timers, setTimers] = useState({}); // state quản lý thời gian cho các task
   const [activeTaskKey, setActiveTaskKey] = useState(null); // key của task đang hoạt động
   const intervalRefs = useRef({}); // tham chiếu đến các interval để dọn dẹp sau này
 
+  // Tree
   const { refreshXp } = useUserExperience();
   const { treeExp, refreshTreeExp } = useTreeExperience();
 
@@ -310,15 +237,6 @@ export default function TaskPage() {
     }
   }, [userTrees]);
 
-  // Cleanup intervals on component unmount
-  useEffect(() => {
-    return () => {
-      Object.values(intervalRefs.current).forEach((intervalId) =>
-        clearInterval(intervalId)
-      );
-    };
-  }, []);
-
   const handleCreateTree = async () => {
     try {
       setIsCreating(true);
@@ -346,6 +264,76 @@ export default function TaskPage() {
     }
   };
 
+  // Task từ đây xuống dưới
+
+  // usertreeid cho task
+  useEffect(() => {
+    if (selectedTree?.userTreeId) {
+      fetchTasks(selectedTree.userTreeId);
+    }
+  }, [selectedTree]);
+
+  // lấy dữ liệu task
+  const fetchTasks = async (userTreeId) => {
+    try {
+      const data = await GetTaskByUserTreeId(userTreeId);
+
+      const groupedTasks = {
+        daily: [],
+        simple: [],
+        complex: [],
+        challenge: [],
+      };
+
+      data.forEach((task) => {
+        const formattedTask = {
+          taskId: task.taskId,
+          taskName: task.taskName,
+          taskDescription: task.taskDescription,
+          startDate: new Date(task.startDate).toLocaleDateString("en-GB"),
+          endDate: new Date(task.endDate).toLocaleDateString("en-GB"),
+          status: task.status,
+          focusMethodName: task.focusMethodName,
+          totalDuration: task.totalDuration,
+          workDuration: task.workDuration,
+          breakTime: task.breakTime,
+          userTreeName: task.userTreeName,
+          taskTypeName: task.taskTypeName,
+          remainingTime: convertToMinutes(task.remainingTime) * 60,
+          priority: task.priority,
+        };
+
+        const type = task.taskTypeName?.toLowerCase();
+        if (groupedTasks[type]) {
+          groupedTasks[type].push(formattedTask);
+        }
+      });
+
+      // Sắp xếp theo priority
+      for (const type in groupedTasks) {
+        groupedTasks[type].sort((a, b) => a.priority - b.priority);
+      }
+
+      setTaskData(groupedTasks);
+    } catch (error) {
+      console.error("Lỗi lấy task:", error);
+    }
+  };
+
+  // Helper chuyển thời gian kiểu "00:30:00" thành phút
+  const convertToMinutes = (timeString) => {
+    const [hours, minutes, seconds] = timeString.split(":").map(Number);
+    return hours * 60 + minutes + seconds / 60;
+  };
+
+  useEffect(() => {
+    return () => {
+      Object.values(intervalRefs.current).forEach((intervalId) =>
+        clearInterval(intervalId)
+      );
+    };
+  }, []);
+
   // Hàm định dạng thời gian từ giây sang phút:giây
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -356,93 +344,44 @@ export default function TaskPage() {
   };
 
   // Handle Start/Pause/Resume/Finish actions
-  const handleTaskAction = (columnKey, index, action) => {
+  const handleTaskAction = async (columnKey, index, action) => {
     const taskKey = `${columnKey}-${index}`;
     const task = taskData[columnKey][index];
 
-    if (action === "start") {
-      setActiveTaskKey(taskKey);
-      setTimers((prev) => ({
-        ...prev,
-        [taskKey]: {
-          isWorkPhase: true,
-          currentWorkTime: task.workDuration * 60,
-          currentBreakTime: task.breakTime * 60,
-          remainingTime: task.remainingTime,
-          overdueTime: 0, // Initialize overdue time
-          isRunning: true,
-          totalWorkCompleted: 0,
-          totalBreakCompleted: 0,
-        },
-      }));
+    try {
+      setLoadingTaskKey(taskKey);
 
-      intervalRefs.current[taskKey] = setInterval(() => {
-        setTimers((prev) => {
-          const timer = prev[taskKey];
-          if (!timer || !timer.isRunning) return prev;
+      if (action === "start" || action === "resume") {
+        // Gọi API StartTask (cả khi start và resume đều gọi cùng API này)
+        await StartTask(task.taskId);
 
-          let {
-            isWorkPhase,
-            currentWorkTime,
-            currentBreakTime,
-            remainingTime,
-            overdueTime,
-            totalWorkCompleted,
-            totalBreakCompleted,
-          } = timer;
+        setActiveTaskKey(taskKey);
+        setTimers((prev) => ({
+          ...prev,
+          [taskKey]: {
+            isWorkPhase: true,
+            currentWorkTime: task.workDuration * 60,
+            currentBreakTime: task.breakTime * 60,
+            remainingTime: task.remainingTime,
+            overdueTime: 0,
+            isRunning: true,
+            totalWorkCompleted: 0,
+            totalBreakCompleted: 0,
+          },
+        }));
 
-          // Check if task has passed endDate
-          const currentDate = parseDate(getCurrentDateStr());
-          const endDate = parseDate(task.endDate);
-          if (currentDate > endDate) {
-            clearInterval(intervalRefs.current[taskKey]);
-            setTaskData((prevData) => {
-              const newData = { ...prevData };
-              newData[columnKey][index] = { ...task, status: 4, remainingTime: 0 };
-              return newData;
-            });
-            setActiveTaskKey(null);
-            return {
-              ...prev,
-              [taskKey]: { ...timer, isRunning: false },
-            };
-          }
+        setTaskData((prevData) => {
+          const newData = { ...prevData };
+          newData[columnKey][index] = { ...task, status: 1 };
+          return newData;
+        });
 
-          if (remainingTime > 0) {
-            if (isWorkPhase) {
-              currentWorkTime -= 1;
-              remainingTime -= 1;
-              if (currentWorkTime <= 0) {
-                totalWorkCompleted += task.workDuration * 60;
-                isWorkPhase = false;
-                currentWorkTime = task.workDuration * 60;
-                currentBreakTime = task.breakTime * 60;
-              }
-            } else {
-              currentBreakTime -= 1;
-              remainingTime -= 1;
-              if (currentBreakTime <= 0) {
-                totalBreakCompleted += task.breakTime * 60;
-                isWorkPhase = true;
-                currentWorkTime = task.workDuration * 60;
-                currentBreakTime = task.breakTime * 60;
-              }
-            }
-          } else {
-            // Task is overdue
-            overdueTime += 1;
-          }
+        intervalRefs.current[taskKey] = setInterval(() => {
+          setTimers((prev) => {
+            const timer = prev[taskKey];
+            if (!timer || !timer.isRunning) return prev;
 
-          setTaskData((prevData) => {
-            const newData = { ...prevData };
-            newData[columnKey][index] = { ...task, remainingTime };
-            return newData;
-          });
-
-          return {
-            ...prev,
-            [taskKey]: {
-              ...timer,
+            let {
               isWorkPhase,
               currentWorkTime,
               currentBreakTime,
@@ -450,124 +389,301 @@ export default function TaskPage() {
               overdueTime,
               totalWorkCompleted,
               totalBreakCompleted,
-            },
-          };
-        });
-      }, 1000);
-    } else if (action === "pause") {
-      setTimers((prev) => ({
-        ...prev,
-        [taskKey]: { ...prev[taskKey], isRunning: false },
-      }));
-      clearInterval(intervalRefs.current[taskKey]);
-    } else if (action === "resume") {
-      setTimers((prev) => ({
-        ...prev,
-        [taskKey]: { ...prev[taskKey], isRunning: true },
-      }));
-      intervalRefs.current[taskKey] = setInterval(() => {
-        setTimers((prev) => {
-          const timer = prev[taskKey];
-          if (!timer || !timer.isRunning) return prev;
+            } = timer;
 
-          let {
-            isWorkPhase,
-            currentWorkTime,
-            currentBreakTime,
-            remainingTime,
-            overdueTime,
-            totalWorkCompleted,
-            totalBreakCompleted,
-          } = timer;
+            const currentDate = parseDate(getCurrentDateStr());
+            const endDate = parseDate(task.endDate);
+            if (currentDate > endDate) {
+              clearInterval(intervalRefs.current[taskKey]);
 
-          // Check if task has passed endDate
-          const currentDate = parseDate(getCurrentDateStr());
-          const endDate = parseDate(task.endDate);
-          if (currentDate > endDate) {
-            clearInterval(intervalRefs.current[taskKey]);
-            setTaskData((prevData) => {
-              const newData = { ...prevData };
-              newData[columnKey][index] = { ...task, status: 4, remainingTime: 0 };
-              return newData;
-            });
-            setActiveTaskKey(null);
-            return {
-              ...prev,
-              [taskKey]: { ...timer, isRunning: false },
-            };
-          }
+              setTaskData((prevData) => {
+                const newData = { ...prevData };
+                newData[columnKey][index] = {
+                  ...task,
+                  status: 4,
+                  remainingTime: 0,
+                };
+                return newData;
+              });
+              setActiveTaskKey(null);
+              return {
+                ...prev,
+                [taskKey]: { ...timer, isRunning: false },
+              };
+            }
 
-          if (remainingTime > 0) {
-            if (isWorkPhase) {
-              currentWorkTime -= 1;
-              remainingTime -= 1;
-              if (currentWorkTime <= 0) {
-                totalWorkCompleted += task.workDuration * 60;
-                isWorkPhase = false;
-                currentWorkTime = task.workDuration * 60;
-                currentBreakTime = task.breakTime * 60;
+            if (remainingTime > 0) {
+              if (isWorkPhase) {
+                currentWorkTime -= 1;
+                remainingTime -= 1;
+                if (currentWorkTime <= 0) {
+                  totalWorkCompleted += task.workDuration * 60;
+                  isWorkPhase = false;
+                  currentWorkTime = task.workDuration * 60;
+                  currentBreakTime = task.breakTime * 60;
+                }
+              } else {
+                currentBreakTime -= 1;
+                remainingTime -= 1;
+                if (currentBreakTime <= 0) {
+                  totalBreakCompleted += task.breakTime * 60;
+                  isWorkPhase = true;
+                  currentWorkTime = task.workDuration * 60;
+                  currentBreakTime = task.breakTime * 60;
+                }
               }
             } else {
-              currentBreakTime -= 1;
-              remainingTime -= 1;
-              if (currentBreakTime <= 0) {
-                totalBreakCompleted += task.breakTime * 60;
-                isWorkPhase = true;
-                currentWorkTime = task.workDuration * 60;
-                currentBreakTime = task.breakTime * 60;
-              }
+              overdueTime += 1;
             }
-          } else {
-            // Task is overdue
-            overdueTime += 1;
-          }
 
-          setTaskData((prevData) => {
-            const newData = { ...prevData };
-            newData[columnKey][index] = { ...task, remainingTime };
-            return newData;
+            setTaskData((prevData) => {
+              const newData = { ...prevData };
+              newData[columnKey][index] = { ...task, status: 1, remainingTime };
+              return newData;
+            });
+
+            return {
+              ...prev,
+              [taskKey]: {
+                ...timer,
+                isWorkPhase,
+                currentWorkTime,
+                currentBreakTime,
+                remainingTime,
+                overdueTime,
+                totalWorkCompleted,
+                totalBreakCompleted,
+              },
+            };
           });
+        }, 1000);
+        //task overlay
+        localStorage.setItem(
+          "currentTask",
+          JSON.stringify({
+            taskId: task.taskId,
+            title: task.title,
+            remainingTime: task.remainingTime,
+            status: 1, // running
+            columnKey,
+            index,
+            taskKey,
+          })
+        );
+      } else if (action === "pause") {
+        await PauseTask(task.taskId);
 
-          return {
-            ...prev,
-            [taskKey]: {
-              ...timer,
-              isWorkPhase,
-              currentWorkTime,
-              currentBreakTime,
-              remainingTime,
-              overdueTime,
-              totalWorkCompleted,
-              totalBreakCompleted,
-            },
+        const currentTimer = timers[taskKey];
+
+        setTimers((prev) => ({
+          ...prev,
+          [taskKey]: { ...prev[taskKey], isRunning: false },
+        }));
+
+        setTaskData((prevData) => {
+          const newData = { ...prevData };
+          newData[columnKey][index] = {
+            ...task,
+            status: 2,
+            remainingTime: Math.round(currentTimer?.remainingTime || 0),
           };
+          return newData;
         });
-      }, 1000);
-    } else if (action === "finish") {
-      clearInterval(intervalRefs.current[taskKey]);
-      setTimers((prev) => ({
-        ...prev,
-        [taskKey]: { ...prev[taskKey], isRunning: false },
-      }));
-      setTaskData((prevData) => {
-        const newData = { ...prevData };
-        newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
-        return newData;
-      });
-      setActiveTaskKey(null);
+
+        if (intervalRefs.current[taskKey]) {
+          clearInterval(intervalRefs.current[taskKey]);
+          delete intervalRefs.current[taskKey];
+        }
+        //task overlay
+        localStorage.setItem(
+          "currentTask",
+          JSON.stringify({
+            taskId: task.taskId,
+            title: task.title,
+            remainingTime: Math.round(currentTimer?.remainingTime || 0),
+            status: 2, // paused
+            columnKey,
+            index,
+            taskKey,
+          })
+        );
+      } else if (action === "finish") {
+        await CompleteTask(task.taskId, selectedTree.userTreeId);
+
+        clearInterval(intervalRefs.current[taskKey]);
+        setTimers((prev) => ({
+          ...prev,
+          [taskKey]: { ...prev[taskKey], isRunning: false },
+        }));
+        setTaskData((prevData) => {
+          const newData = { ...prevData };
+          newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
+          return newData;
+        });
+        localStorage.removeItem("currentTask");
+        setActiveTaskKey(null);
+      }
+    } catch (error) {
+      console.error("Task action error:", error);
+    } finally {
+      setLoadingTaskKey(null);
     }
   };
+
+  const [loadingTaskKey, setLoadingTaskKey] = useState(null);
+
+  useEffect(() => {
+    const newTimers = {};
+    Object.keys(taskData).forEach((columnKey) => {
+      taskData[columnKey].forEach((task, index) => {
+        const taskKey = `${columnKey}-${index}`;
+        if (task.status === 1) {
+          // đang chạy
+          newTimers[taskKey] = {
+            isWorkPhase: true,
+            currentWorkTime: task.workDuration * 60,
+            currentBreakTime: task.breakTime * 60,
+            remainingTime: task.remainingTime,
+            overdueTime: 0,
+            isRunning: true,
+            totalWorkCompleted: 0,
+            totalBreakCompleted: 0,
+          };
+        } else if (task.status === 2) {
+          // bị pause
+          newTimers[taskKey] = {
+            isWorkPhase: true,
+            currentWorkTime: task.workDuration * 60,
+            currentBreakTime: task.breakTime * 60,
+            remainingTime: task.remainingTime,
+            overdueTime: 0,
+            isRunning: false,
+            totalWorkCompleted: 0,
+            totalBreakCompleted: 0,
+          };
+        }
+      });
+    });
+
+    setTimers(newTimers);
+  }, [taskData]);
+
+  // State và logic cho Dialog tạo task
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [taskType, setTaskType] = useState("");
+  const [taskCreateData, setTaskCreateData] = useState({
+    focusMethodId: null,
+    taskTypeId: null,
+    userTreeId: selectedTree?.userTreeId || null,
+    taskName: "",
+    taskDescription: "",
+    totalDuration: "",
+    startDate: new Date().toISOString(),
+    endDate: new Date().toISOString(),
+    workDuration: "",
+    breakTime: "",
+  });
+  const [step, setStep] = useState(1);
+  const [focusSuggestion, setFocusSuggestion] = useState(null);
+
+  useEffect(() => {
+    setTaskCreateData((prev) => ({
+      ...prev,
+      userTreeId: selectedTree?.userTreeId || null,
+    }));
+  }, [selectedTree]);
+
+  const handleOpen = (type, taskTypeId) => {
+    setTaskType(type);
+    setTaskCreateData((prev) => ({
+      ...prev,
+      taskTypeId: taskTypeId,
+      userTreeId: selectedTree?.userTreeId || null,
+    }));
+    setIsTaskDialogOpen(true);
+  };
+
+  const handleNext = async () => {
+    if (step === 1) {
+      try {
+        const response = await SuggestTaskFocusMethods(taskCreateData);
+        setFocusSuggestion(response);
+        setTaskCreateData((prev) => ({
+          ...prev,
+          focusMethodId: response.focusMethodId,
+          workDuration: response.defaultDuration,
+          breakTime: response.defaultBreak,
+        }));
+        setStep(2);
+      } catch (error) {
+        console.error("Error fetching suggestions", error);
+      }
+    } else {
+      setStep(3);
+    }
+  };
+
+  const handleBack = () => {
+    setStep(step - 1);
+  };
+
+  const handleCreateTask = async () => {
+    try {
+      const response = await CreateTask(taskCreateData);
+      console.log("Task created successfully:", response);
+      setIsTaskDialogOpen(false);
+      setStep(1);
+      setTaskCreateData({
+        focusMethodId: null,
+        taskTypeId: null,
+        userTreeId: selectedTree?.userTreeId || null,
+        taskName: "",
+        taskDescription: "",
+        totalDuration: "",
+        startDate: new Date().toISOString(),
+        endDate: new Date().toISOString(),
+        workDuration: "",
+        breakTime: "",
+      });
+      fetchTasks(selectedTree?.userTreeId);
+    } catch (error) {
+      console.error("Error creating task:", error);
+    }
+  };
+
+  const handleDateChange = useCallback((field, date) => {
+    setTaskCreateData((prev) => ({
+      ...prev,
+      [field]: date
+        ? date.toISOString().split("T")[0] +
+          "T" +
+          (prev[field]?.split("T")[1] || "00:00:00.000Z")
+        : null,
+    }));
+  }, []);
+
+  const handleTimeChange = useCallback((field, time) => {
+    if (!time) return;
+    setTaskCreateData((prev) => ({
+      ...prev,
+      [field]: prev[field]
+        ? prev[field].split("T")[0] + "T" + time + ":00.000Z"
+        : null,
+    }));
+  }, []);
 
   const renderTaskColumn = (title, taskList, columnKey) => {
     const filteredTasks =
       activeTabs[columnKey] === "all"
         ? taskList
         : activeTabs[columnKey] === "current"
-          ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
-          : taskList.filter((task) => task.status === 3);
+        ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
+        : taskList.filter((task) => task.status === 3);
 
     // Sắp xếp theo priority
-    const sortedTasks = [...filteredTasks].sort((a, b) => a.priority - b.priority);
+    const sortedTasks = [...filteredTasks].sort(
+      (a, b) => a.priority - b.priority
+    );
 
     return (
       <div className="task-column-container">
@@ -611,34 +727,76 @@ export default function TaskPage() {
           <ScrollArea className="h-[400px] overflow-y-auto">
             <div className="grid gap-3">
               {sortedTasks.map((task, index) => {
-                const totalDurationSeconds = task.totalDuration * 60;
+                const remainingTime = task.remainingTime || 0;
+                const overdueTime = remainingTime < 0 ? -remainingTime : 0;
                 const taskKey = `${columnKey}-${index}`;
                 const timer = timers[taskKey] || {};
-                const {
-                  isWorkPhase = true,
-                  currentWorkTime = task.workDuration * 60,
-                  currentBreakTime = task.breakTime * 60,
-                  remainingTime = task.remainingTime,
-                  overdueTime = 0,
-                  totalWorkCompleted = 0,
-                  totalBreakCompleted = 0,
-                } = timer;
+                const { totalWorkCompleted = 0, totalBreakCompleted = 0 } =
+                  timer;
 
-                // Tính tiến độ mỗi giây
-                const workProgress =
-                  ((totalWorkCompleted +
-                    (isWorkPhase ? task.workDuration * 60 - currentWorkTime : 0)) /
-                    totalDurationSeconds) * 100;
-                const breakProgress =
-                  ((totalBreakCompleted +
-                    (!isWorkPhase ? task.breakTime * 60 - currentBreakTime : 0)) /
-                    totalDurationSeconds) * 100;
+                const totalDurationSeconds = task.totalDuration * 60;
+                const remainTime = task.remainingTime;
+                const elapsedTime = totalDurationSeconds - remainTime;
+                const cycleDuration = (task.workDuration + task.breakTime) * 60;
+                const completedCycles = Math.floor(elapsedTime / cycleDuration);
+                const timeInCurrentCycle = elapsedTime % cycleDuration;
 
-                const currentTaskStatus = timer.isRunning
-                  ? 1
-                  : timer.currentWorkTime !== undefined
-                    ? 2
-                    : 0;
+                let isWorkPhase = true;
+                let currentWorkTime = task.workDuration * 60;
+                let currentBreakTime = task.breakTime * 60;
+
+                if (timeInCurrentCycle < task.workDuration * 60) {
+                  isWorkPhase = true;
+                  currentWorkTime = task.workDuration * 60 - timeInCurrentCycle;
+                } else {
+                  isWorkPhase = false;
+                  const timeIntoBreak =
+                    timeInCurrentCycle - task.workDuration * 60;
+                  currentBreakTime = task.breakTime * 60 - timeIntoBreak;
+                }
+
+                // Tạo mảng các phase để render thanh tiến độ xen kẽ
+                const phases = [];
+
+                for (let i = 0; i < completedCycles; i++) {
+                  phases.push({
+                    type: "work",
+                    duration: task.workDuration * 60,
+                  });
+                  phases.push({ type: "break", duration: task.breakTime * 60 });
+                }
+
+                // current phase
+                if (timeInCurrentCycle < task.workDuration * 60) {
+                  phases.push({ type: "work", duration: timeInCurrentCycle });
+                } else {
+                  phases.push({
+                    type: "work",
+                    duration: task.workDuration * 60,
+                  });
+                  phases.push({
+                    type: "break",
+                    duration: timeInCurrentCycle - task.workDuration * 60,
+                  });
+                }
+
+                const currentTaskStatus =
+                  task.status === 1 ? 1 : task.status === 2 ? 2 : 0;
+                // Hàm chuyển priority thành nhãn (1st, 2nd, 3rd,...)
+                const getPriorityLabel = (priority) => {
+                  switch (priority) {
+                    case 1:
+                      return "1st";
+                    case 2:
+                      return "2nd";
+                    case 3:
+                      return "3rd";
+                    case 4:
+                      return "4th";
+                    default:
+                      return `${priority}th`;
+                  }
+                };
 
                 return (
                   <motion.div
@@ -647,7 +805,23 @@ export default function TaskPage() {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
                   >
-                    <Card className="task-item">
+                    <Card className="task-item relative">
+                      {/* Thêm nhãn priority, chỉ áp dụng cho Simple, Complex, Challenge */}
+                      {["simple", "complex", "challenge"].includes(
+                        columnKey
+                      ) && (
+                        <div
+                          className={`priority-label priority-${
+                            task.priority <= 2
+                              ? "high"
+                              : task.priority <= 4
+                              ? "medium"
+                              : "low"
+                          } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom`}
+                        >
+                          {getPriorityLabel(task.priority)}
+                        </div>
+                      )}
                       <div className="flex-1 flex flex-col justify-between text-left">
                         <div
                           className="cursor-pointer"
@@ -662,50 +836,61 @@ export default function TaskPage() {
                         </div>
                         <div className="flex flex-col gap-1 text-left">
                           <span
-                            className={`text-sm ${task.status === 4 || (remainingTime <= 0 && currentTaskStatus !== 0)
-                              ? "text-red-600"
-                              : "text-gray-600"
-                              }`}
+                            className={`text-sm ${
+                              task.status === 4 ||
+                              (remainingTime <= 0 && currentTaskStatus !== 0)
+                                ? "text-red-600"
+                                : "text-gray-600"
+                            }`}
                           >
                             {task.status !== 3 &&
                               (task.status === 4
                                 ? `Overdue: ${formatTime(overdueTime)}`
                                 : remainingTime <= 0 && currentTaskStatus !== 0
-                                  ? `Overdue: ${formatTime(overdueTime)}`
-                                  : `Remaining: ${formatTime(remainingTime)}`)}
+                                ? `Overdue: ${formatTime(overdueTime)}`
+                                : `Remaining: ${formatTime(remainingTime)}`)}
                           </span>
                           <div className="progress-bar-container">
-                            <div className="progress-bar">
-                              <div
-                                className="work-progress bg-blue-500"
-                                style={{
-                                  width: `${Math.min(workProgress, 100)}%`,
-                                }}
-                              />
-                              <div
-                                className="break-progress bg-yellow-500"
-                                style={{
-                                  width: `${Math.min(breakProgress, 100)}%`,
-                                }}
-                              />
+                            <div className="progress-bar flex h-2 rounded overflow-hidden">
+                              {phases.map((phase, idx) => (
+                                <div
+                                  key={idx}
+                                  className={
+                                    phase.type === "work"
+                                      ? "bg-blue-500"
+                                      : "bg-yellow-500"
+                                  }
+                                  style={{
+                                    width: `${
+                                      (phase.duration / totalDurationSeconds) *
+                                      100
+                                    }%`,
+                                  }}
+                                />
+                              ))}
                             </div>
                           </div>
-                          {/* Hiển thị thời gian làm việc và thời gian nghỉ nếu task chưa hoàn thành hoặc quá hạn */}
-                          {task.status !== 4 && task.status !== 3 && !(remainingTime <= 0 && currentTaskStatus !== 0) && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {currentTaskStatus === 0 ? (
-                                <span className="text-gray-400">Not Started</span>
-                              ) : isWorkPhase ? (
-                                <span className="text-blue-500 font-medium">
-                                  Work: {formatTime(currentWorkTime)}
-                                </span>
-                              ) : (
-                                <span className="text-yellow-500 font-medium">
-                                  Break: {formatTime(currentBreakTime)}
-                                </span>
-                              )}
-                            </div>
-                          )}
+                          {task.status !== 4 &&
+                            task.status !== 3 &&
+                            !(
+                              remainingTime <= 0 && currentTaskStatus !== 0
+                            ) && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {currentTaskStatus === 0 ? (
+                                  <span className="text-gray-400">
+                                    Not Started
+                                  </span>
+                                ) : isWorkPhase ? (
+                                  <span className="text-blue-500 font-medium">
+                                    Work: {formatTime(currentWorkTime)}
+                                  </span>
+                                ) : (
+                                  <span className="text-yellow-500 font-medium">
+                                    Break: {formatTime(currentBreakTime)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
@@ -727,7 +912,9 @@ export default function TaskPage() {
                           </span>
                         ) : (
                           <div className="flex gap-2">
-                            {!(remainingTime <= 0 && currentTaskStatus !== 0) && (
+                            {!(
+                              remainingTime <= 0 && currentTaskStatus !== 0
+                            ) && (
                               <Button
                                 onClick={() =>
                                   handleTaskAction(
@@ -736,28 +923,52 @@ export default function TaskPage() {
                                     currentTaskStatus === 0
                                       ? "start"
                                       : currentTaskStatus === 1
-                                        ? "pause"
-                                        : "resume"
+                                      ? "pause"
+                                      : "resume"
                                   )
                                 }
                                 className={
                                   currentTaskStatus === 1
                                     ? "bg-yellow-500 hover:bg-yellow-600"
                                     : currentTaskStatus === 2
-                                      ? "bg-blue-500 hover:bg-blue-600"
-                                      : "bg-green-500 hover:bg-green-600"
+                                    ? "bg-blue-500 hover:bg-blue-600"
+                                    : "bg-green-500 hover:bg-green-600"
                                 }
                                 disabled={
-                                  currentTaskStatus === 0 &&
-                                  activeTaskKey !== null &&
-                                  activeTaskKey !== taskKey
+                                  (currentTaskStatus === 0 &&
+                                    activeTaskKey !== null &&
+                                    activeTaskKey !== taskKey) ||
+                                  loadingTaskKey === taskKey // 🔒 Disable khi đang loading
                                 }
                               >
-                                {currentTaskStatus === 0
-                                  ? "Start"
-                                  : currentTaskStatus === 1
-                                    ? "Pause"
-                                    : "Resume"}
+                                {loadingTaskKey === taskKey ? (
+                                  <svg
+                                    className="animate-spin h-5 w-5 text-white mx-auto"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <circle
+                                      className="opacity-25"
+                                      cx="12"
+                                      cy="12"
+                                      r="10"
+                                      stroke="currentColor"
+                                      strokeWidth="4"
+                                    />
+                                    <path
+                                      className="opacity-75"
+                                      fill="currentColor"
+                                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                    />
+                                  </svg>
+                                ) : currentTaskStatus === 0 ? (
+                                  "Start"
+                                ) : currentTaskStatus === 1 ? (
+                                  "Pause"
+                                ) : (
+                                  "Resume"
+                                )}
                               </Button>
                             )}
                             {remainingTime <= 120 &&
@@ -786,6 +997,7 @@ export default function TaskPage() {
     );
   };
 
+  // Task từ đây lên trên
   const progress = treeExp
     ? (treeExp.totalXp / (treeExp.totalXp + treeExp.xpToNextLevel)) * 100
     : 0;
@@ -837,10 +1049,11 @@ export default function TaskPage() {
             <div className="w-32 h-32 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
               <img
                 src={userTrees.length > 0 ? treeImageSrc : addIcon}
-                className={`object-contain ${userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
-                  ? "w-10 h-10"
-                  : "w-30 h-30"
-                  }`}
+                className={`object-contain ${
+                  userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
+                    ? "w-10 h-10"
+                    : "w-30 h-30"
+                }`}
               />
             </div>
           </div>
@@ -852,7 +1065,10 @@ export default function TaskPage() {
               </DialogTitle>
               {userTrees
                 .filter(
-                  (tree) => tree.treeStatus === 0 || tree.treeStatus === 1
+                  (tree) =>
+                    tree.treeStatus === 0 ||
+                    tree.treeStatus === 1 ||
+                    tree.treeStatus === 2
                 )
                 .map((tree) => {
                   const totalNeeded = tree.totalXp + tree.xpToNextLevel;
@@ -898,25 +1114,28 @@ export default function TaskPage() {
                   );
                 })}
               {userTrees.filter(
-                (tree) => tree.treeStatus === 1 || tree.treeStatus === 2
+                (tree) =>
+                  tree.treeStatus === 1 ||
+                  tree.treeStatus === 2 ||
+                  tree.treeStatus === 0
               ).length < 2 && (
-                  <div
-                    className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
-                    onClick={() => {
-                      setIsTreeDialogOpen(false);
-                      setIsCreateTreeDialogOpen(true);
-                    }}
-                  >
-                    <img
-                      src={addIcon}
-                      alt="Add New Tree"
-                      className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
-                    />
-                    <h3 className="font-bold mt-2 text-green-600">
-                      Create New Tree
-                    </h3>
-                  </div>
-                )}
+                <div
+                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
+                  onClick={() => {
+                    setIsTreeDialogOpen(false);
+                    setIsCreateTreeDialogOpen(true);
+                  }}
+                >
+                  <img
+                    src={addIcon}
+                    alt="Add New Tree"
+                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+                  />
+                  <h3 className="font-bold mt-2 text-green-600">
+                    Create New Tree
+                  </h3>
+                </div>
+              )}
             </DialogContent>
           </Dialog>
 
@@ -971,8 +1190,8 @@ export default function TaskPage() {
                   {selectedTask?.status === 3
                     ? "Completed"
                     : selectedTask?.status === 4
-                      ? "Expired"
-                      : "In Progress"}
+                    ? "Expired"
+                    : "In Progress"}
                 </p>
                 <p>
                   <strong>Focus Method:</strong> {selectedTask?.focusMethodName}
@@ -1012,6 +1231,208 @@ export default function TaskPage() {
             </DialogContent>
           </Dialog>
 
+          {/* Dialog tạo task */}
+          <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+            <DialogContent className="max-w-lg bg-white rounded-xl shadow-2xl p-6 task-dialog">
+              <DialogHeader className="relative bg-gradient-to-r from-green-500 to-teal-500 p-4 rounded-t-xl shadow-md">
+                <DialogTitle className="text-2xl font-bold text-white tracking-tight">
+                  {step === 3 ? "Confirm Task" : "Create Task"}
+                </DialogTitle>
+                <DialogDescription className="text-sm text-gray-100 mt-1">
+                  {step === 1 && "Fill in the details for your new task."}
+                  {step === 2 && "Suggested focus method based on your task."}
+                  {step === 3 && "Review and confirm your task details."}
+                </DialogDescription>
+              </DialogHeader>
+
+              {step === 1 && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Task Name</Label>
+                    <Input
+                      name="taskName"
+                      placeholder="Enter task name"
+                      value={taskCreateData.taskName}
+                      onChange={(e) =>
+                        setTaskCreateData({
+                          ...taskCreateData,
+                          taskName: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea
+                      name="taskDescription"
+                      placeholder="Describe your task"
+                      value={taskCreateData.taskDescription}
+                      onChange={(e) =>
+                        setTaskCreateData({
+                          ...taskCreateData,
+                          taskDescription: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Duration (minutes)</Label>
+                    <Input
+                      type="number"
+                      placeholder="Task duration"
+                      value={taskCreateData.totalDuration}
+                      onChange={(e) =>
+                        setTaskCreateData({
+                          ...taskCreateData,
+                          totalDuration: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    <DateTimePicker
+                      label="Start Date"
+                      date={taskCreateData.startDate}
+                      onDateChange={(newDate) =>
+                        handleDateChange("startDate", newDate)
+                      }
+                      onTimeChange={(time) =>
+                        handleTimeChange("startDate", time)
+                      }
+                    />
+                    <DateTimePicker
+                      label="End Date"
+                      date={taskCreateData.endDate}
+                      onDateChange={(newDate) =>
+                        handleDateChange("endDate", newDate)
+                      }
+                      onTimeChange={(time) => handleTimeChange("endDate", time)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && focusSuggestion && (
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-lg font-semibold">
+                      {focusSuggestion.focusMethodName}
+                    </p>
+                    <p>XP Multiplier: {focusSuggestion.xpMultiplier}</p>
+                    <p className="text-sm text-gray-500">
+                      Min Duration: {focusSuggestion.minDuration} mins, Max
+                      Duration: {focusSuggestion.maxDuration} mins
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Min Break: {focusSuggestion.minBreak} mins, Max Break:{" "}
+                      {focusSuggestion.maxBreak} mins
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Work Duration (minutes)</Label>
+                    <Input
+                      type="number"
+                      min={focusSuggestion.minDuration}
+                      max={focusSuggestion.maxDuration}
+                      value={taskCreateData.workDuration}
+                      onChange={(e) =>
+                        setTaskCreateData({
+                          ...taskCreateData,
+                          workDuration: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <p className="text-sm text-gray-500">
+                      Recommended: {focusSuggestion.defaultDuration} mins
+                    </p>
+                  </div>
+                  <div>
+                    <Label>Break Time (minutes)</Label>
+                    <Input
+                      type="number"
+                      min={focusSuggestion.minBreak}
+                      max={focusSuggestion.maxBreak}
+                      value={taskCreateData.breakTime}
+                      onChange={(e) =>
+                        setTaskCreateData({
+                          ...taskCreateData,
+                          breakTime: Number(e.target.value),
+                        })
+                      }
+                    />
+                    <p className="text-sm text-gray-500">
+                      Recommended: {focusSuggestion.defaultBreak} mins
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div className="space-y-4">
+                  <p>
+                    <strong>Task Name:</strong> {taskCreateData.taskName}
+                  </p>
+                  <p>
+                    <strong>Description:</strong>{" "}
+                    {taskCreateData.taskDescription}
+                  </p>
+                  <p>
+                    <strong>Total Duration:</strong>{" "}
+                    {taskCreateData.totalDuration} minutes
+                  </p>
+                  <p>
+                    <strong>Start Date:</strong>{" "}
+                    {taskCreateData.startDate.toString()}
+                  </p>
+                  <p>
+                    <strong>End Date:</strong>{" "}
+                    {taskCreateData.endDate.toString()}
+                  </p>
+                  <p>
+                    <strong>Focus Method:</strong>{" "}
+                    {focusSuggestion?.focusMethodName}
+                  </p>
+                  <p>
+                    <strong>Work Duration:</strong>{" "}
+                    {taskCreateData.workDuration} minutes
+                  </p>
+                  <p>
+                    <strong>Break Time:</strong> {taskCreateData.breakTime}{" "}
+                    minutes
+                  </p>
+                </div>
+              )}
+
+              <DialogFooter>
+                {step > 1 && (
+                  <Button
+                    variant="ghost"
+                    className="bg-white border-black"
+                    onClick={handleBack}
+                  >
+                    Back
+                  </Button>
+                )}
+                {step < 3 && (
+                  <Button
+                    className="bg-green-600 text-white hover:bg-green-700"
+                    onClick={handleNext}
+                  >
+                    Next
+                  </Button>
+                )}
+                {step === 3 && (
+                  <Button
+                    className="bg-green-600 text-white hover:bg-green-700"
+                    onClick={() => handleCreateTask(taskCreateData)}
+                  >
+                    Create
+                  </Button>
+                )}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <div className="flex-1">
             {selectedTree ? (
               <>
@@ -1030,8 +1451,9 @@ export default function TaskPage() {
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
                       {selectedTree.levelId === 4
                         ? "Level Max"
-                        : `${treeExp.totalXp} / ${treeExp.totalXp + treeExp.xpToNextLevel
-                        } XP`}
+                        : `${treeExp.totalXp} / ${
+                            treeExp.totalXp + treeExp.xpToNextLevel
+                          } XP`}
                     </span>
                   </div>
                 )}
@@ -1076,17 +1498,11 @@ export default function TaskPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => { }}>
-                Daily Task
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { }}>
+              <DropdownMenuItem onClick={() => handleOpen("Simple Task", 2)}>
                 Simple Task
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { }}>
+              <DropdownMenuItem onClick={() => handleOpen("Complex Task", 3)}>
                 Complex Task
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => { }}>
-                Challenge Task
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
