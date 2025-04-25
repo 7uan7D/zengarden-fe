@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Loader2 } from "lucide-react"; // Import icon spinner
 import { GetTaskByUserTreeId, PauseTask, StartTask, CompleteTask } from "@/services/apiServices/taskService";
 import "../task/index.css";
 
@@ -9,6 +10,7 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [timers, setTimers] = useState({});
+  const [loadingTaskKey, setLoadingTaskKey] = useState(null); // Theo dõi loading
   const intervalRefs = useRef({});
 
   // Hàm định dạng thời gian từ giây sang phút:giây
@@ -25,6 +27,7 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
     const token = localStorage.getItem("token");
     if (!token) return;
 
+    setLoadingTaskKey("fetch-tasks"); // Bắt đầu loading
     try {
       const selectedTreeId = localStorage.getItem("selectedTreeId");
       if (selectedTreeId) {
@@ -62,6 +65,8 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
       }
     } catch (error) {
       console.error("Failed to fetch running tasks", error);
+    } finally {
+      setLoadingTaskKey(null); // Kết thúc loading
     }
   };
 
@@ -167,6 +172,7 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
     const task = tasks[index];
     const taskKey = `overlay-${index}`;
 
+    setLoadingTaskKey(taskKey); // Bắt đầu loading cho task cụ thể
     try {
       if (timers[taskKey]?.isRunning) {
         // Pause
@@ -199,24 +205,30 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
       }
     } catch (error) {
       console.error("Failed to toggle task:", error);
+    } finally {
+      setLoadingTaskKey(null); // Kết thúc loading
     }
   };
 
   // Hoàn thành task
   const handleCompleteTask = async (taskId, index) => {
+    const taskKey = `overlay-${index}`;
+    setLoadingTaskKey(taskKey); // Bắt đầu loading cho task cụ thể
     try {
       const selectedTreeId = localStorage.getItem("selectedTreeId");
       await CompleteTask(taskId, selectedTreeId);
       setTasks((prev) =>
         prev.map((t, i) => (i === index ? { ...t, status: 3 } : t))
       );
-      clearInterval(intervalRefs.current[`overlay-${index}`]);
+      clearInterval(intervalRefs.current[taskKey]);
       setTimers((prev) => ({
         ...prev,
-        [`overlay-${index}`]: { ...prev[`overlay-${index}`], isRunning: false },
+        [taskKey]: { ...prev[taskKey], isRunning: false },
       }));
     } catch (error) {
       console.error("Failed to complete task:", error);
+    } finally {
+      setLoadingTaskKey(null); // Kết thúc loading
     }
   };
 
@@ -225,7 +237,7 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
       className={`flex flex-col gap-2 bg-white rounded-lg shadow-md border border-gray-200 ${
         isCollapsed ? "p-1" : "p-3"
       } ${positionClass}`}
-      style={{ width: isCollapsed ? "35px" : "300px" }} //Kích thước của TaskOverlay khi thu gọn hoặc mở rộng
+      style={{ width: isCollapsed ? "40px" : "400px" }}
     >
       {/* Nội dung chính */}
       {!isCollapsed && (
@@ -242,7 +254,11 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
               <ChevronLeft className="h-3 w-3" />
             </Button>
           </div>
-          {tasks.length === 0 ? (
+          {loadingTaskKey === "fetch-tasks" ? (
+            <div className="flex justify-center items-center py-4">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+            </div>
+          ) : tasks.length === 0 ? (
             <p className="text-xs text-gray-600">No tasks running</p>
           ) : (
             tasks.map((task, index) => {
@@ -286,6 +302,7 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
               }
 
               const isAlmostDone = remainingTime <= 120 && remainingTime > 0;
+              const isLoading = loadingTaskKey === taskKey;
 
               return (
                 <Card key={task.taskId} className="task-item flex justify-between p-3">
@@ -343,21 +360,33 @@ export default function TaskOverlay({ positionClass = "fixed top-4 left-4 z-50 m
                         {isAlmostDone && (
                           <Button
                             variant="outline"
-                            className="text-green-600 border-green-600 hover:bg-green-50"
+                            className="text-green-600 border-green-600 hover:bg-green-50 flex items-center gap-2"
                             onClick={() => handleCompleteTask(task.taskId, index)}
+                            disabled={isLoading}
                           >
-                            Complete
+                            {isLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              "Complete"
+                            )}
                           </Button>
                         )}
                         <Button
                           onClick={() => toggleTimer(index)}
                           className={
                             timer.isRunning
-                              ? "bg-yellow-500 hover:bg-yellow-600"
-                              : "bg-blue-500 hover:bg-blue-600"
+                              ? "bg-yellow-500 hover:bg-yellow-600 flex items-center gap-2"
+                              : "bg-blue-500 hover:bg-blue-600 flex items-center gap-2"
                           }
+                          disabled={isLoading}
                         >
-                          {timer.isRunning ? "Pause" : "Resume"}
+                          {isLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : timer.isRunning ? (
+                            "Pause"
+                          ) : (
+                            "Resume"
+                          )}
                         </Button>
                       </>
                     )}
