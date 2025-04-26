@@ -462,6 +462,7 @@ export default function TaskPage() {
           "currentTask",
           JSON.stringify({
             taskId: task.taskId,
+            taskName: task.taskName,
             title: task.title,
             remainingTime: task.remainingTime,
             status: 1, // running
