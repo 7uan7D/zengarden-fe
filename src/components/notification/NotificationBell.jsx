@@ -46,7 +46,7 @@ const NotificationBell = ({ setNavItems }) => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const baseUrl = "https://zengarden-be.onrender.com/hubs/notification";
+    const baseUrl = "https://zengarden-be-fdre.onrender.com/hubs/notification";
 
     const newConnection = token
       ? (() => {
