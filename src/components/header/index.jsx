@@ -259,20 +259,6 @@ const Header = () => {
                       </Button>
                       <Button
                         variant="ghost"
-                        className="justify-start border-none hover:bg-gray-100 focus:border-none focus:ring-0 bg-white"
-                        onClick={() => console.log("Settings clicked")}
-                      >
-                        Wallet
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="justify-start border-none hover:bg-gray-100 focus:border-none focus:ring-0 bg-white"
-                        onClick={() => console.log("Settings clicked")}
-                      >
-                        Settings
-                      </Button>
-                      <Button
-                        variant="ghost"
                         className="justify-start border-none hover:bg-gray-100 focus:border-none focus:ring-0 text-red-500 bg-white"
                         onClick={handleLogout}
                       >
