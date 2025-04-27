@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import useChallengeData from "@/hooks/useChallengeData"
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService"
-import { ActiveChallengeById, CancelChallengeById, GetChallengeById, UpdateChallengeById } from "@/services/apiServices/challengeService"
+import { ActiveChallengeById, CancelChallengeById, GetChallengeById, GetRankingByChallengeId, SelectWinnerByChallengeId, UpdateChallengeById } from "@/services/apiServices/challengeService"
 
 const ChallengesModerateTable = () => {
     const { challengeData, isLoadingState, error } = useChallengeData()
@@ -22,14 +22,31 @@ const ChallengesModerateTable = () => {
     const [openEditChallenge, setOpenEditChallenge] = useState(false)
     const [openStartChallenge, setOpenStartChallenge] = useState(false)
     const [openCancelChallenge, setOpenCancelChallenge] = useState(false)
+    const [openSelectWinner, setOpenSelectWinner] = useState(false)
     const [openStates, setOpenStates] = useState({})
     const [isLoading, setIsLoading] = useState(false)
+    const [rankingData, setRankingData] = useState([])
 
     useEffect(() => {
         if (challengeData) {
             setFilteredChallenges(challengeData)
         }
     }, [challengeData])
+
+    useEffect(() => {
+        const fetchRanking = async () => {
+            if (!selectedChallengeId || !openSelectWinner) return
+
+            try {
+                const data = await GetRankingByChallengeId(selectedChallengeId)
+                setRankingData(data)
+            } catch (error) {
+                console.error('Error fetching ranking:', error)
+            }
+        }
+
+        fetchRanking()
+    }, [selectedChallengeId, openSelectWinner])
 
     const [editChallenge, setEditChallenge] = useState({
         challengeTypeId: 0,
@@ -41,6 +58,11 @@ const ChallengesModerateTable = () => {
         endDate: '',
     })
 
+    const [selectWinnerChange, setSelectWinnerChange] = useState({
+        userId: 0,
+        reason: "string"
+    })
+
     useEffect(() => {
         if (selectedChallengeId) {
             setIsLoading(true)
@@ -50,7 +72,7 @@ const ChallengesModerateTable = () => {
                     challengeName: data.challengeName || '',
                     description: data.description || '',
                     reward: data.reward || 0,
-                    maxParticipants: data.maxParticipants || 'none',
+                    maxParticipants: data.maxParticipants || 0,
                     startDate: data.startDate || '',
                     endDate: data.endDate || '',
                 }))
@@ -168,6 +190,39 @@ const ChallengesModerateTable = () => {
         }
     }
 
+    const handleSelectWinnerClick = (challengeId) => {
+        setSelectedChallengeId(challengeId)
+        setOpenSelectWinner(true)
+    }
+
+    const handleSelectWinnerChange = (e) => {
+        const { id, value } = e.target
+        setSelectWinnerChange((prev) => ({
+            ...prev,
+            [id]: value,
+        }))
+    }
+
+    const handleSaveWinner = async () => {
+        console.log('Saving changes with data: ', selectWinnerChange)
+        if(selectedChallengeId) {
+            setIsLoading(true)
+            try {
+                await SelectWinnerByChallengeId(selectedChallengeId, selectWinnerChange)
+                toast.success('The information has been updated successfully!')
+
+                setTimeout(() => {
+                    window.location.reload()
+                }, 3000)
+            } catch (error) {
+                console.log('Failed to select winner:', error)
+                toast.error('Select winner failed!')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+    }
+
     // const handleDeleteClick = (taskId) => {
     //     setSelectedTaskId(taskId)
     //     setOpenDeleteTask(true)
@@ -278,8 +333,14 @@ const ChallengesModerateTable = () => {
                                             </td>
                                             <td className='px-5 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <button
+                                                    onClick={() => handleEditClick(challenge.challengeId)}
+                                                    className={'mr-2 bg-transparent text-indigo-400 hover:text-indigo-300'}
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
                                                     onClick={() => handleStartClick(challenge.challengeId)}
-                                                    className={`mr-2 bg-transparent ${challenge.status !== 0 ? 'text-gray-500' : 'text-indigo-400 hover:text-indigo-300'}`}
+                                                    className={`mr-2 bg-transparent ${challenge.status !== 0 ? 'text-gray-500' : 'text-green-400 hover:text-green-300'}`}
                                                     disabled={challenge.status !== 0}
                                                 >
                                                     Start
@@ -292,10 +353,11 @@ const ChallengesModerateTable = () => {
                                                     Cancel
                                                 </button>
                                                 <button
-                                                    onClick={() => handleEditClick(challenge.challengeId)}
-                                                    className={'mr-2 bg-transparent text-indigo-400 hover:text-indigo-300'}
+                                                    onClick={() => handleSelectWinnerClick(challenge.challengeId)}
+                                                    className={`bg-transparent ${challenge.status !== 2 ? 'text-gray-500' : 'text-yellow-600 hover:text-yellow-500'}`}
+                                                    disabled={challenge.status !== 2}
                                                 >
-                                                    Edit
+                                                    Select Winner
                                                 </button>
                                             </td>
                                         </motion.tr>
@@ -518,7 +580,7 @@ const ChallengesModerateTable = () => {
                                                     id='challengeTypeId'
                                                     value={editChallenge.challengeTypeId}
                                                     onChange={handleChange}
-                                                    className="w-full p-2 border border-gray-300 rounded-md bg-gray-800 text-sm"
+                                                    className='w-full p-2 border border-gray-300 rounded-md bg-gray-800 text-sm'
                                                 >
                                                     <option value='' disabled>Select Challenge Type</option>
                                                     {challengeTypes.map((challenge) => (
@@ -565,6 +627,107 @@ const ChallengesModerateTable = () => {
                     </Tabs>
                 </DialogContent>
             </Dialog>
+
+            {/* <Dialog open={openSelectWinner} onOpenChange={setOpenSelectWinner}>
+                <DialogContent className='dialog-overlay bg-gray-800 text-white'>
+                    <DialogHeader>
+                        <DialogTitle>Select Winner</DialogTitle>
+                    </DialogHeader>
+
+                    <Tabs className='w-[462px]'>
+                        <TabsContent className='p-4'>
+                            <Card className='bg-gray-800 text-white'>
+                                <CardHeader>
+                                    <CardDescription className='text-gray-400'>
+                                        Choose a winner for this challenge.
+                                    </CardDescription>
+                                </CardHeader>
+
+                                <CardContent className='space-y-2 bg-gray-800'>
+                                    {editChallenge ? (
+                                        <>
+                                            <p className='text-sm text-emerald-500 flex items-center text-left font-bold'>
+                                                Leaderboard:
+                                            </p>
+
+                                                    <div className='overflow-x-auto'>
+                                                        <table className='min-w-full divide-y divide-gray-200'>
+                                                            <thead className='bg-gray-800'>
+                                                                <tr>
+                                                                    <th className='py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider'>Rank</th>
+                                                                    <th className='py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider'>User</th>
+                                                                    <th className='py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider'>Progress</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody className='bg-gray-800 divide-y divide-gray-200'>
+                                                                {rankingData && rankingData.length > 0 ? (
+                                                                    rankingData.map((user, index) => (
+                                                                        <tr key={index}>
+                                                                            <td className={`py-4 whitespace-nowrap text-sm font-medium text-center ${index === 0 ? 'text-rose-500' : index === 1 ? 'text-pink-500' : index === 2 ? 'text-fuchsia-500' : 'text-gray-500'}`}>
+                                                                                {index === 0 ? '1st' : index === 1 ? '2nd' : index === 2 ? '3rd' : `${index + 1}th`}
+                                                                            </td>
+
+                                                                            <td className={`py-4 whitespace-nowrap text-sm font-bold text-center ${index === 0 ? 'text-rose-500' : index === 1 ? 'text-pink-500' : index === 2 ? 'text-fuchsia-500' : 'text-gray-500'}`}>
+                                                                                {user.userName}
+                                                                            </td>
+
+                                                                            <td className={`py-4 whitespace-nowrap text-sm font-bold text-center ${index === 0 ? 'text-rose-500' : index === 1 ? 'text-pink-500' : index === 2 ? 'text-fuchsia-500' : 'text-gray-500'}`}>
+                                                                                {user.progress}%
+                                                                            </td>
+                                                                        </tr>
+                                                                    ))
+                                                                ) : (
+                                                                    <tr>
+                                                                        <td className='py-4 whitespace-nowrap text-sm text-gray-500 text-center' colSpan='3'>Loading ranking data.</td>
+                                                                    </tr>
+                                                                )}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='userId'>Participant</Label>
+                                                <select
+                                                    id='userId'
+                                                    value={selectWinnerChange.userId}
+                                                    onChange={handleSelectWinnerChange}
+                                                    className='w-full p-2 border border-gray-300 rounded-md bg-gray-800 text-sm'
+                                                >
+                                                    <option value='' disabled>Select A Participant</option>
+                                                    {rankingData.map((user) => (
+                                                        <option key={user.userId} value={user.userId}>
+                                                            {user.userName}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='reason'>Reason</Label>
+                                                <Input
+                                                    id='reason'
+                                                    value={selectWinnerChange.reason}
+                                                    onChange={handleSelectWinnerChange}
+                                                />
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className='text-sm text-gray-500'>Loading challenge...</p>
+                                    )}
+                                </CardContent>
+                                <CardFooter>
+                                    <Button
+                                        className='bg-[#83aa6c] text-white'
+                                        onClick={handleSaveWinner}
+                                        disabled={isLoading}
+                                    >
+                                        Save Changes
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                </DialogContent>
+            </Dialog> */}
         </motion.div>
     )
 }

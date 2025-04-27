@@ -132,3 +132,21 @@ export async function UpdateChallengeById(challengeId, challenge) {
     );
     return response.data;
 }
+
+export async function SelectWinnerByChallengeId(challengeId, winners) {
+    const token = localStorage.getItem("token");
+    const response = await axios.patch(
+        `/Challenges/select-winner?challengeId=${challengeId}`,
+        {
+            winners: [
+                {winners}
+            ]
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
+}

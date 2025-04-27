@@ -300,7 +300,7 @@ const UsersTable = () => {
                                                     />
                                                 </div>
                                                 <div className='space-y-1 mb-3'>
-                                                    <Label htmlFor='roleId'>Role:</Label>
+                                                    <Label htmlFor='roleId'>Role</Label>
                                                     <select
                                                         id='roleId'
                                                         value={editUser.roleId}
