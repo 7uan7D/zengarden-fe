@@ -1,8 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +28,16 @@ const ProfileDialog = ({ open, setOpen, user, setUser }) => {
     email: user?.email || "",
     phone: user?.phone || "",
   });
+
+  useEffect(() => {
+    if (user) {
+      setEditUser({
+        userName: user.userName || "",
+        email: user.email || "",
+        phone: user.phone || "",
+      });
+    }
+  }, [user]);
   const [isLoading, setIsLoading] = useState(false);
   const [passwords, setPasswords] = useState({
     currentPassword: "",
@@ -133,15 +155,18 @@ const ProfileDialog = ({ open, setOpen, user, setUser }) => {
                     </div>
                     <div className="space-y-1">
                       <Label>Wallet</Label>
-                      {user?.wallet?.length > 0 ? (
-                        <ul className="list-disc list-inside text-sm text-gray-700">
-                          {user.wallet.map((wallet, index) => (
-                            <li key={index}>{wallet}</li>
-                          ))}
-                        </ul>
+                      {user?.wallet ? (
+                        <div className="flex items-center space-x-[2px] text-sm text-gray-700">
+                          <img
+                            src="/images/coin.png"
+                            alt="Coin"
+                            className="w-5 h-5"
+                          />
+                          <span>{user.wallet.balance}</span>
+                        </div>
                       ) : (
                         <p className="text-sm text-gray-500">
-                          No wallets available
+                          No wallet available
                         </p>
                       )}
                     </div>

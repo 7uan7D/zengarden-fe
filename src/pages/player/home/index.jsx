@@ -10,7 +10,14 @@ import { GetTaskByUserTreeId, StartTask, PauseTask } from "@/services/apiService
 import { GetUserTreeByOwnerId } from "@/services/apiServices/userTreesService";
 import { GetAllTrees } from "@/services/apiServices/treesService";
 import { GetAllItems } from "@/services/apiServices/itemService";
+import { GetTaskByUserId } from "@/services/apiServices/taskService";
 import parseJwt from "@/services/parseJwt";
+import dayjs from "dayjs";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
 const HomePage = () => {
   const [user, setUser] = useState(null);
@@ -20,6 +27,7 @@ const HomePage = () => {
     simple: [],
     complex: [],
   });
+  const [weeklyTasks, setWeeklyTasks] = useState([]);
   const [currentTask, setCurrentTask] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [userTrees, setUserTrees] = useState([]);
@@ -85,6 +93,33 @@ const HomePage = () => {
     }
   };
 
+  // Lấy danh sách task trong tuần hiện tại
+  const fetchWeeklyTasks = async (userId) => {
+    try {
+      const tasks = await GetTaskByUserId(userId);
+      const today = dayjs();
+      const startOfWeek = today.startOf("week"); // Thứ Hai
+      const endOfWeek = today.endOf("week"); // Chủ Nhật
+
+      const weeklyTasks = tasks
+        .filter((task) => {
+          const taskStart = dayjs(task.startDate);
+          const taskEnd = dayjs(task.endDate);
+          return (
+            (taskStart.isSameOrAfter(startOfWeek) &&
+             taskStart.isSameOrBefore(endOfWeek)) ||
+            (taskEnd.isSameOrAfter(startOfWeek) &&
+             taskEnd.isSameOrBefore(endOfWeek))
+          );
+        })
+        .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+        .slice(0, 5); // Giới hạn tối đa 5 task
+      setWeeklyTasks(weeklyTasks);
+    } catch (error) {
+      console.error("Failed to fetch weekly tasks", error);
+    }
+  };
+
   // Cập nhật useEffect để lấy dữ liệu
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -94,6 +129,7 @@ const HomePage = () => {
 
       fetchUserTrees(userId);
       fetchMarketplaceItems();
+      fetchWeeklyTasks(userId);
 
       const savedTreeId = localStorage.getItem("selectedTreeId");
       if (savedTreeId) {
@@ -248,10 +284,10 @@ const HomePage = () => {
       </div>
 
       {/* Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="home-grid">
         {/* Task Widget */}
-        <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow lg:col-span-2">
-          <div className="flex items-center gap-3 dimenticaremb-4">
+        <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow widget-card task-widget">
+          <div className="flex items-center gap-3 mb-4">
             <Clock className="w-6 h-6 text-cyan-600" />
             <h2 className="text-2xl font-semibold text-gray-800">Your Tasks</h2>
           </div>
@@ -335,7 +371,7 @@ const HomePage = () => {
         </Card>
 
         {/* Trees Widget */}
-        <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow">
+        <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow widget-card">
           <div className="flex items-center gap-3 mb-4">
             <Leaf className="w-6 h-6 text-green-600" />
             <h2 className="text-2xl font-semibold text-gray-800">Your Tree</h2>
@@ -362,7 +398,7 @@ const HomePage = () => {
         </Card>
 
         {/* Challenges Widget */}
-        <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow">
+        <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow widget-card">
           <div className="flex items-center gap-3 mb-4">
             <Trophy className="w-6 h-6 text-yellow-600" />
             <h2 className="text-2xl font-semibold text-gray-800">Challenges</h2>
@@ -383,20 +419,22 @@ const HomePage = () => {
         </Card>
 
         {/* Calendar Widget */}
-        <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow">
+        <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow widget-card calendar-widget">
           <div className="flex items-center gap-3 mb-4">
             <Calendar className="w-6 h-6 text-blue-600" />
             <h2 className="text-2xl font-semibold text-gray-800">Calendar</h2>
           </div>
           <ul className="text-sm text-gray-600 space-y-2">
-            <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-600 rounded-full" />
-              Mar 25: Task Deadline
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-600 rounded-full" />
-              Mar 28: Challenge Starts
-            </li>
+            {weeklyTasks.length > 0 ? (
+              weeklyTasks.map((task) => (
+                <li key={task.taskId} className="flex items-center gap-2">
+                  <span className="w-2 h-2 bg-blue-600 rounded-full" />
+                  {dayjs(task.startDate).format("MMM DD")}: {task.taskName}
+                </li>
+              ))
+            ) : (
+              <li className="text-sm text-gray-500">No tasks this week</li>
+            )}
           </ul>
           <Button
             className="mt-4 w-full bg-blue-600 text-white hover:bg-blue-700"
@@ -407,7 +445,7 @@ const HomePage = () => {
         </Card>
 
         {/* Marketplace Widget */}
-        <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow">
+        <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow widget-card">
           <div className="flex items-center gap-3 mb-4">
             <ShoppingCart className="w-6 h-6 text-purple-600" />
             <h2 className="text-2xl font-semibold text-gray-800">Marketplace</h2>
@@ -463,8 +501,8 @@ const HomePage = () => {
                             {item.rarity}
                           </p>
                           <p className="font-semibold text-gray-800">{item.name}</p>
-                          <p className="text-sm text-gray-500 flex items-center justify-center">
-                            <img src="public\images\coin.png" alt="Coin" className="w-5 h-5 mr-1" />
+                          <p className="text-sm text-gray- suite 208 Huntington Beach, CA 92647 gray-500 flex items-center justify-center">
+                            <img src="public/images/coin.png" alt="Coin" className="w-5 h-5 mr-1" />
                             {item.cost}
                           </p>
                         </>

@@ -17,15 +17,18 @@
 }
 
 .daily {
-  background-color: #000000;
+  background-color: #cffafe; /* bg-cyan-100 */
+  color: #0e7490; /* text-cyan-700 */
 }
 
 .simple {
-  background-color: #000000;
+  background-color: #dcfce7; /* bg-green-100 */
+  color: #15803d; /* text-green-700 */
 }
 
 .complex {
-  background-color: #000000;
+  background-color: #f3e8ff; /* bg-purple-100 */
+  color: #6b21a8; /* text-purple-700 */
 }
 
 .task-detail {
@@ -122,4 +125,39 @@
   transform: rotate(-45deg);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 10;
+}
+
+/* Grid container for widgets */
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+  align-items: start; /* Mỗi ô có chiều cao riêng */
+}
+
+@media (min-width: 768px) {
+  .home-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .task-widget {
+    grid-column: span 2; /* Task widget chiếm 2 cột */
+  }
+}
+
+/* Widget Card */
+.widget-card {
+  height: auto; /* Chiều cao dựa trên nội dung */
+  min-height: 150px; /* Đảm bảo không quá ngắn */
+}
+
+/* Calendar Widget */
+.calendar-widget {
+  max-height: 300px; /* Giới hạn chiều cao tối đa */
+  overflow-y: auto; /* Thanh cuộn nếu nội dung dài */
 }

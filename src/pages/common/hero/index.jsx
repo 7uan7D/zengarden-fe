@@ -2,21 +2,19 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import "./index.css";
-import { RegisterService } from "@/services/apiServices/authService";
 import { Toaster, toast } from "sonner";
+import { RegisterService } from "@/services/apiServices/authService";
+import "./index.css";
 
 export default function HeroPage() {
   const navigate = useNavigate();
@@ -35,15 +33,18 @@ export default function HeroPage() {
   const carouselItems = [
     {
       src: "/images/hero_image_1.png",
-      caption: "Grow your virtual garden with daily tasks!",
+      caption: "Cultivate your productivity with ZenGarden!",
+      subCaption: "Grow your virtual garden daily.",
     },
     {
       src: "/images/hero_image_2.png",
-      caption: "Stay productive and earn rewards!",
+      caption: "Stay focused, earn rewards!",
+      subCaption: "Turn tasks into fun challenges.",
     },
     {
       src: "/images/hero_image_3.png",
-      caption: "Find peace in your ZenGarden!",
+      caption: "Find calm in your ZenGarden!",
+      subCaption: "Relax with serene visuals.",
     },
   ];
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -55,17 +56,6 @@ export default function HeroPage() {
     }, 5000);
     return () => clearInterval(interval);
   }, [carouselItems.length]);
-
-  // Hàm điều hướng carousel
-  const goToPrevious = () => {
-    setCurrentImageIndex((prevIndex) =>
-      prevIndex === 0 ? carouselItems.length - 1 : prevIndex - 1
-    );
-  };
-
-  const goToNext = () => {
-    setCurrentImageIndex((prevIndex) => (prevIndex + 1) % carouselItems.length);
-  };
 
   const goToImage = (index) => {
     setCurrentImageIndex(index);
@@ -89,7 +79,6 @@ export default function HeroPage() {
       if (token) {
         localStorage.setItem("token", token);
         toast.success("Registration successful!");
-
         setTimeout(() => {
           navigate("/home");
         }, 500);
@@ -104,76 +93,69 @@ export default function HeroPage() {
   };
 
   return (
-    <div className="main-container">
-      <div className="hero">
+    <div className="hero-page">
+      {/* Hero Section */}
+      <section className="hero-section">
+        <div className="hero-overlay"></div>
         <div className="hero-content">
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.8 }}
           >
             Welcome to ZenGarden
           </motion.h1>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            style={{ fontSize: "1.5rem", color: "#83aa6c", fontWeight: 500 }}
-          >
-            Your Journey to Productivity
-          </motion.h2>
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Grow your plants, complete tasks, and find your zen every day!
+            Transform your daily tasks into a journey of growth and serenity.
           </motion.p>
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <Drawer>
-              <DrawerTrigger asChild>
-                <motion.button
-                  className="btn"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Get Started
-                </motion.button>
-              </DrawerTrigger>
-              <DrawerContent>
-                <div className="mx-auto w-full max-w-sm p-4">
-                  <DrawerHeader>
-                    <DrawerTitle>Sign Up</DrawerTitle>
-                    <DrawerDescription>
-                      Join ZenGarden and start your journey.
-                    </DrawerDescription>
-                  </DrawerHeader>
-                  <div className="grid gap-4">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button className="hero-btn">Start Your Journey</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Create Your ZenGarden Account</DialogTitle>
+                  <DialogDescription>
+                    Sign up to start growing your virtual garden.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
                     <Label htmlFor="userName">Username</Label>
                     <Input
                       id="userName"
-                      type="text"
-                      placeholder="Zenman"
+                      placeholder="ZenGardener"
                       onChange={handleChange}
                     />
+                  </div>
+                  <div className="grid gap-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="example@email.com"
+                      placeholder="you@example.com"
                       onChange={handleChange}
                     />
+                  </div>
+                  <div className="grid gap-2">
                     <Label htmlFor="phone">Phone</Label>
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="Enter your phone number"
+                      placeholder="Your phone number"
                       onChange={handleChange}
                     />
+                  </div>
+                  <div className="grid gap-2">
                     <Label htmlFor="password">Password</Label>
                     <Input
                       id="password"
@@ -181,6 +163,8 @@ export default function HeroPage() {
                       placeholder="••••••••"
                       onChange={handleChange}
                     />
+                  </div>
+                  <div className="grid gap-2">
                     <Label htmlFor="confirmPassword">Confirm Password</Label>
                     <Input
                       id="confirmPassword"
@@ -189,225 +173,145 @@ export default function HeroPage() {
                       onChange={handleChange}
                     />
                   </div>
-                  <DrawerFooter className="mt-4">
-                    <Button onClick={handleSubmit} disabled={isSubmitting}>
-                      {isSubmitting ? "Signing Up..." : "Sign Up"}
-                    </Button>
-                    <DrawerClose asChild>
-                      <Button variant="outline">Cancel</Button>
-                    </DrawerClose>
-                  </DrawerFooter>
                 </div>
-              </DrawerContent>
-              <Toaster expand={true} />
-            </Drawer>
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? "Creating Account..." : "Sign Up"}
+                </Button>
+              </DialogContent>
+            </Dialog>
           </motion.div>
         </div>
         <div className="hero-carousel">
-          <div className="carousel-container">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentImageIndex}
-                initial={{ opacity: 0, x: 100 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{ duration: 0.5 }}
-                style={{ position: "relative", width: "100%", height: "100%" }}
-              >
-                <img
-                  src={carouselItems[currentImageIndex].src}
-                  alt={`Hero image ${currentImageIndex + 1}`}
-                  className="carousel-img"
-                />
-                <p
-                  style={{
-                    position: "absolute",
-                    bottom: "30px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    color: "white",
-                    background: "rgba(0, 0, 0, 0.6)",
-                    padding: "8px 16px",
-                    borderRadius: "4px",
-                    fontSize: "1rem",
-                    textAlign: "center",
-                  }}
-                >
-                  {carouselItems[currentImageIndex].caption}
-                </p>
-              </motion.div>
-            </AnimatePresence>
-            <motion.button
-              className="carousel-btn prev"
-              onClick={goToPrevious}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentImageIndex}
+              className="carousel-slide"
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.7 }}
             >
-              ❮
-            </motion.button>
-            <motion.button
-              className="carousel-btn next"
-              onClick={goToNext}
-            >
-              ❯
-            </motion.button>
-            <div className="carousel-dots">
-              {carouselItems.map((_, index) => (
-                <motion.span
-                  key={index}
-                  className={`dot ${index === currentImageIndex ? "active" : ""}`}
-                  onClick={() => goToImage(index)}
-                  whileHover={{ scale: 1.2 }}
-                />
-              ))}
-            </div>
+              <img
+                src={carouselItems[currentImageIndex].src}
+                alt={`Hero image ${currentImageIndex + 1}`}
+                className="carousel-img"
+              />
+              <div className="carousel-caption">
+                <h2>{carouselItems[currentImageIndex].caption}</h2>
+                <p>{carouselItems[currentImageIndex].subCaption}</p>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+          <div className="carousel-dots">
+            {carouselItems.map((_, index) => (
+              <span
+                key={index}
+                className={`dot ${index === currentImageIndex ? "active" : ""}`}
+                onClick={() => goToImage(index)}
+              />
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="section gamify-section">
+      {/* Gamify Section */}
+      <section className="gamify-section">
         <motion.div
-          className="gamify-content"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          className="section-content"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
         >
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            Gamify Your Life
-          </motion.h1>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            style={{ fontSize: "1.5rem", color: "#609994", fontWeight: 500 }}
-          >
-            Turn Tasks into Adventures
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            ZenGarden transforms your daily routine into a fun game with rewards, challenges, and a vibrant community to keep you motivated.
-          </motion.p>
+          <h2>Gamify Your Productivity</h2>
+          <p>Turn your daily tasks into an engaging adventure with rewards and growth.</p>
         </motion.div>
-        <div className="cards">
+        <div className="gamify-cards">
           <motion.div
-            className="card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            whileHover={{ scale: 1.05 }}
+            className="gamify-card"
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
           >
-            <img
-              src="/images/task_status.png"
-              alt="Track Tasks"
-              className="card-img"
-            />
-            <h2>Track Tasks 📝</h2>
-            <p>Manage your goals and to-dos with ZenGarden's intuitive workspace.</p>
+            <img src="/images/task_status.png" alt="Track Tasks" />
+            <h3>Track Your Goals</h3>
+            <p>Organize tasks effortlessly with our intuitive workspace.</p>
           </motion.div>
           <motion.div
-            className="card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.0 }}
-            whileHover={{ scale: 1.05 }}
+            className="gamify-card"
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            viewport={{ once: true }}
           >
-            <img
-              src="/images/grow_plants.png"
-              alt="Grow Plants"
-              className="card-img"
-            />
-            <h2>Grow Plants 🌱</h2>
-            <p>Nurture your virtual garden as you complete daily tasks.</p>
+            <img src="/images/grow_plants.png" alt="Grow Plants" />
+            <h3>Nurture Your Garden</h3>
+            <p>Watch your virtual plants thrive as you complete tasks.</p>
           </motion.div>
           <motion.div
-            className="card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.2 }}
-            whileHover={{ scale: 1.05 }}
+            className="gamify-card"
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            viewport={{ once: true }}
           >
-            <img src="/images/relax.png" alt="Relax" className="card-img" />
-            <h2>Relax 🌿</h2>
-            <p>Unwind with calming visuals and a serene atmosphere.</p>
+            <img src="/images/relax.png" alt="Relax" />
+            <h3>Find Serenity</h3>
+            <p>Relax with calming visuals and a peaceful interface.</p>
           </motion.div>
         </div>
-      </div>
+      </section>
 
-      <div className="section benefits-section">
+      {/* Benefits Section */}
+      <section className="benefits-section">
         <motion.div
-          className="gamify-content"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          className="section-content"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
         >
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            ZenGarden Benefits
-          </motion.h1>
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            style={{ fontSize: "1.5rem", color: "#609994", fontWeight: 500 }}
-          >
-            Elevate Your Daily Routine
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            Discover how ZenGarden helps you stay productive, calm, and motivated every day.
-          </motion.p>
+          <h2>Why ZenGarden?</h2>
+          <p>Elevate your routine with productivity, mindfulness, and fun.</p>
         </motion.div>
-        <div className="cards">
+        <div className="benefits-cards">
           <motion.div
-            className="card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            whileHover={{ scale: 1.05 }}
+            className="benefit-card"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true }}
           >
-            <img src="/images/tasks.png" alt="Productivity" className="card-img" />
-            <h2>Boost Productivity 🚀</h2>
-            <p>Turn tasks into fun challenges with rewarding progress.</p>
+            <div className="benefit-icon">🚀</div>
+            <h3>Boost Productivity</h3>
+            <p>Turn tasks into rewarding challenges.</p>
           </motion.div>
           <motion.div
-            className="card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.0 }}
-            whileHover={{ scale: 1.05 }}
+            className="benefit-card"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            viewport={{ once: true }}
           >
-            <img
-              src="/images/grow_plants.png"
-              alt="Nurture Mind"
-              className="card-img"
-            />
-            <h2>Nurture Mind 🌼</h2>
-            <p>Build healthy habits with your thriving virtual garden.</p>
+            <div className="benefit-icon">🌼</div>
+            <h3>Mindful Growth</h3>
+            <p>Build habits with your virtual garden.</p>
           </motion.div>
           <motion.div
-            className="card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 1.2 }}
-            whileHover={{ scale: 1.05 }}
+            className="benefit-card"
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            viewport={{ once: true }}
           >
-            <img src="/images/relax.png" alt="Find Zen" className="card-img" />
-            <h2>Find Zen 🌟</h2>
-            <p>Relax with a serene interface to reduce daily stress.</p>
+            <div className="benefit-icon">🌟</div>
+            <h3>Find Your Zen</h3>
+            <p>Reduce stress with a serene experience.</p>
           </motion.div>
         </div>
-      </div>
+      </section>
+      <Toaster expand={true} />
     </div>
   );
 }
