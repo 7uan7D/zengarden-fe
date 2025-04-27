@@ -34,7 +34,6 @@ const UsersTable = () => {
         roleId: null,
     })
 
-    console.log("")
     useEffect(() => {
         if (selectedUserId) {
             setIsLoading(true)

@@ -12,15 +12,16 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import useChallengeData from "@/hooks/useChallengeData"
 import { GetAllChallengeTypes } from "@/services/apiServices/challengeTypeService"
-import { ActiveChallengeById } from "@/services/apiServices/challengeService"
+import { ActiveChallengeById, CancelChallengeById, GetChallengeById, UpdateChallengeById } from "@/services/apiServices/challengeService"
 
 const ChallengesModerateTable = () => {
     const { challengeData, isLoadingState, error } = useChallengeData()
     const [searchTerm, setSearchTerm] = useState('')
     const [filteredChallenges, setFilteredChallenges] = useState(challengeData)
-    // const [openEditTask, setOpenEditTask] = useState(false)
-    // const [selectedTaskId, setSelectedTaskId] = useState(null)
-    // const [openDeleteTask, setOpenDeleteTask] = useState(false)
+    const [selectedChallengeId, setSelectedChallengeId] = useState(null)
+    const [openEditChallenge, setOpenEditChallenge] = useState(false)
+    const [openStartChallenge, setOpenStartChallenge] = useState(false)
+    const [openCancelChallenge, setOpenCancelChallenge] = useState(false)
     const [openStates, setOpenStates] = useState({})
     const [isLoading, setIsLoading] = useState(false)
 
@@ -30,45 +31,41 @@ const ChallengesModerateTable = () => {
         }
     }, [challengeData])
 
-    // const [editTask, setEditTask] = useState({
-    //     taskId: null,
-    //     taskName: '',
-    //     taskDescription: '',
-    //     taskNote: '',
-    //     totalDuration: 0,
-    //     workDuration: 0,
-    //     breakTime: 0,
-    //     startDate: '',
-    //     endDate: '',
-    // })
+    const [editChallenge, setEditChallenge] = useState({
+        challengeTypeId: 0,
+        challengeName: '',
+        description: '',
+        reward: 0,
+        maxParticipants: 0,
+        startDate: '',
+        endDate: '',
+    })
 
-    // useEffect(() => {
-    //     if (selectedTaskId) {
-    //         setIsLoading(true)
-    //         GetTaskById(selectedTaskId)
-    //             .then((data) => setEditTask({
-    //                 taskId: data.taskId || null,
-    //                 taskName: data.taskName || '',
-    //                 taskDescription: data.taskDescription || '',
-    //                 taskNote: data.taskNote || 'none',
-    //                 totalDuration: data.totalDuration || 0,
-    //                 workDuration: data.workDuration || 0,
-    //                 breakTime: data.breakTime || 0,
-    //                 startDate: data.startDate || '',
-    //                 endDate: data.endDate || '',
-    //             }))
-    //             .catch((error) => console.error('Failed to load task info:', error))
-    //             .finally(() => setIsLoading(false))
-    //     }
-    // }, [selectedTaskId])
+    useEffect(() => {
+        if (selectedChallengeId) {
+            setIsLoading(true)
+            GetChallengeById(selectedChallengeId)
+                .then((data) => setEditChallenge({
+                    challengeTypeId: data.challengeTypeId || 0,
+                    challengeName: data.challengeName || '',
+                    description: data.description || '',
+                    reward: data.reward || 0,
+                    maxParticipants: data.maxParticipants || 'none',
+                    startDate: data.startDate || '',
+                    endDate: data.endDate || '',
+                }))
+                .catch((error) => console.error('Failed to load challenge info:', error))
+                .finally(() => setIsLoading(false))
+        }
+    }, [selectedChallengeId])
 
-    // const handleChange = (e) => {
-    //     const { id, value } = e.target
-    //     setEditTask((prev) => ({
-    //         ...prev,
-    //         [id]: value,
-    //     }))
-    // }
+    const handleChange = (e) => {
+        const { id, value } = e.target
+        setEditChallenge((prev) => ({
+            ...prev,
+            [id]: value,
+        }))
+    }
 
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase()
@@ -97,8 +94,14 @@ const ChallengesModerateTable = () => {
         fetchChallengeTypes()
     }, [])
 
-    const [openStartChallenge, setOpenStartChallenge] = useState(false)
-    const [selectedChallengeId, setSelectedChallengeId] = useState(null)
+    if (!filteredChallenges) {
+        return <div>Loading...</div>
+    }
+
+    if (error) {
+        return <div>{error.message}</div>
+    }
+
     const handleStartClick = (challengeId) => {
         setSelectedChallengeId(challengeId)
         setOpenStartChallenge(true)
@@ -113,43 +116,57 @@ const ChallengesModerateTable = () => {
                 window.location.reload()
             }, 3000)
         } catch (error) {
+            console.log('Failed to start challenge:', error)
+            toast.error('Start challenge failed!')
         } finally {
             setIsLoading(false)
         }
     }
-    
 
-    if (!filteredChallenges) {
-        return <div>Loading...</div>
+    const handleCancelClick = (challengeId) => {
+        setSelectedChallengeId(challengeId)
+        setOpenCancelChallenge(true)
     }
 
-    if (error) {
-        return <div>{error.message}</div>
+    const handleCancelChallenge = async () => {
+        setIsLoading(true)
+        try {
+            await CancelChallengeById(selectedChallengeId)
+            toast.success('The challenge has been cancelled!')
+            setTimeout(() => {
+                window.location.reload()
+            }, 3000)
+        } catch (error) {
+            console.log('Failed to cancel challenge:', error)
+            toast.error('Cancel challenge failed!')
+        } finally {
+            setIsLoading(false)
+        }
     }
 
-    // const handleEditClick = (taskId) => {
-    //     setSelectedTaskId(taskId)
-    //     setOpenEditTask(true)
-    // }
+    const handleEditClick = (challengeId) => {
+        setSelectedChallengeId(challengeId)
+        setOpenEditChallenge(true)
+    }
 
-    // const handleSaveChanges = async () => {
-    //     if (selectedTaskId) {
-    //         setIsLoading(true)
-    //         try {
-    //             await UpdateTaskById(selectedTaskId, editTask)
-    //             toast.success('The information has been updated successfully!')
+    const handleSaveChanges = async () => {
+        if(selectedChallengeId) {
+            setIsLoading(true)
+            try {
+                await UpdateChallengeById(selectedChallengeId, editChallenge)
+                toast.success('The information has been updated successfully!')
 
-    //             setTimeout(() => {
-    //                 window.location.reload()
-    //             }, 3000)
-    //         } catch (error) {
-    //             console.log('Failed to update task:', error)
-    //             toast.error('Update information failed!')
-    //         } finally {
-    //             setIsLoading(false)
-    //         }
-    //     }
-    // }
+                setTimeout(() => {
+                    window.location.reload()
+                }, 3000)
+            } catch (error) {
+                console.log('Failed to update challenge:', error)
+                toast.error('Update information failed!')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+    }
 
     // const handleDeleteClick = (taskId) => {
     //     setSelectedTaskId(taskId)
@@ -215,12 +232,6 @@ const ChallengesModerateTable = () => {
                                 Status
                             </th>
                             <th className='px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Created At
-                            </th>
-                            <th className='px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
-                                Updated At
-                            </th>
-                            <th className='px-5 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>
                                 Actions
                             </th>
                         </tr>
@@ -266,26 +277,6 @@ const ChallengesModerateTable = () => {
                                                 </span>
                                             </td>
                                             <td className='px-5 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                                {new Date(challenge.createdAt).toLocaleDateString('en-US', {
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                    year: 'numeric',
-                                                    hour: 'numeric',
-                                                    minute: 'numeric',
-                                                    second: 'numeric',
-                                                })}
-                                            </td>
-                                            <td className='px-5 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                                {new Date(challenge.updatedAt).toLocaleDateString('en-US', {
-                                                    month: 'short',
-                                                    day: 'numeric',
-                                                    year: 'numeric',
-                                                    hour: 'numeric',
-                                                    minute: 'numeric',
-                                                    second: 'numeric',
-                                                })}
-                                            </td>
-                                            <td className='px-5 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <button
                                                     onClick={() => handleStartClick(challenge.challengeId)}
                                                     className={`mr-2 bg-transparent ${challenge.status !== 0 ? 'text-gray-500' : 'text-indigo-400 hover:text-indigo-300'}`}
@@ -293,13 +284,19 @@ const ChallengesModerateTable = () => {
                                                 >
                                                     Start
                                                 </button>
-                                                {/* <button
+                                                <button
                                                     onClick={() => handleCancelClick(challenge.challengeId)}
                                                     className={`bg-transparent ${challenge.status === 2 || challenge.status === 3 ? 'text-gray-500' : 'text-red-400 hover:text-red-300'}`}
                                                     disabled={challenge.status === 2 || challenge.status === 3}
                                                 >
                                                     Cancel
-                                                </button> */}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleEditClick(challenge.challengeId)}
+                                                    className={'mr-2 bg-transparent text-indigo-400 hover:text-indigo-300'}
+                                                >
+                                                    Edit
+                                                </button>
                                             </td>
                                         </motion.tr>
                                     </div>
@@ -354,6 +351,28 @@ const ChallengesModerateTable = () => {
                                             second: 'numeric',
                                         })}
                                     </p>
+                                    <p className='text-gray-400 text-left text-sm'>
+                                        <p className='text-gray-200 text-sm font-bold mr-1'>Created At: </p>
+                                        {new Date(challenge.createdAt).toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            second: 'numeric',
+                                        })}
+                                    </p>
+                                    <p className='text-gray-400 text-left text-sm'>
+                                        <p className='text-gray-200 text-sm font-bold mr-1'>Updated At: </p>
+                                        {new Date(challenge.updatedAt).toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            second: 'numeric',
+                                        })}
+                                    </p>
                                 </PopoverContent>
                             </Popover>
                         ))}
@@ -390,15 +409,160 @@ const ChallengesModerateTable = () => {
                                     </Button>
                                     <Button
                                         className='bg-red-400 text-white ml-2'
-                                        onClick={() => setOpenDeleteUser(false)}
+                                        onClick={() => setOpenStartChallenge(false)}
                                     >
-                                        Cancel
+                                        Exit
                                     </Button>
                                 </CardFooter>
                             </Card>
                         </TabsContent>
                     </Tabs>
+                </DialogContent>
+            </Dialog>
 
+            <Dialog open={openCancelChallenge} onOpenChange={setOpenCancelChallenge}>
+                <DialogContent className='dialog-overlay bg-gray-800 text-white'>
+                    <DialogHeader>
+                        <DialogTitle>Cancel Challenge</DialogTitle>
+                    </DialogHeader>
+
+                    <Tabs className='w-[462px]'>
+                        <TabsContent className='p-4'>
+                            <Card className='bg-gray-800 text-white'>
+                                <CardHeader>
+                                    <CardDescription className='text-gray-400'>
+                                        Cancel this challenge.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className='space-y-2 bg-gray-800'>
+                                    <div className='space-y-1'>
+                                        <Label>Do you want to cancel this challenge?</Label>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button
+                                        className='bg-[#83aa6c] text-white'
+                                        onClick={handleCancelChallenge}
+                                        disabled={isLoading}
+                                    >
+                                        Cancel Challenge
+                                    </Button>
+                                    <Button
+                                        className='bg-red-400 text-white ml-2'
+                                        onClick={() => setOpenCancelChallenge(false)}
+                                    >
+                                        Exit
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={openEditChallenge} onOpenChange={setOpenEditChallenge}>
+                <DialogContent className='dialog-overlay bg-gray-800 text-white'>
+                    <DialogHeader>
+                        <DialogTitle>Edit Challenge</DialogTitle>
+                    </DialogHeader>
+
+                    <Tabs className='w-[462px]'>
+                        <TabsContent className='p-4'>
+                            <Card className='bg-gray-800 text-white'>
+                                <CardHeader>
+                                    <CardDescription className='text-gray-400'>
+                                        View and update your challenge details here.
+                                    </CardDescription>
+                                </CardHeader>
+
+                                <CardContent className='space-y-2 bg-gray-800'>
+                                    {editChallenge ? (
+                                        <>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='challengeName'>Challenge Name</Label>
+                                                <Input
+                                                    id='challengeName'
+                                                    value={editChallenge.challengeName}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='description'>Description</Label>
+                                                <Input
+                                                    id='description'
+                                                    value={editChallenge.description}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                            <div className='grid grid-cols-2 gap-x-4 gap-y-2'>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='reward'>Reward (coins)</Label>
+                                                    <Input
+                                                        id='reward'
+                                                        value={editChallenge.reward}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                                <div className='space-y-1'>
+                                                    <Label htmlFor='maxParticipants'>Max Paticipants</Label>
+                                                    <Input
+                                                        id='maxParticipants'
+                                                        value={editChallenge.maxParticipants}
+                                                        onChange={handleChange}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='challengeTypeId'>Challenge Type</Label>
+                                                <select
+                                                    id='challengeTypeId'
+                                                    value={editChallenge.challengeTypeId}
+                                                    onChange={handleChange}
+                                                    className="w-full p-2 border border-gray-300 rounded-md bg-gray-800 text-sm"
+                                                >
+                                                    <option value='' disabled>Select Challenge Type</option>
+                                                    {challengeTypes.map((challenge) => (
+                                                        <option key={challenge.challengeTypeId} value={challenge.challengeTypeId}>
+                                                            {challenge.challengeTypeName}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='startDate'>Start Date</Label>
+                                                <Input
+                                                    id='startDate'
+                                                    type='datetime-local'
+                                                    value={editChallenge.startDate}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                            <div className='space-y-1'>
+                                                <Label htmlFor='endDate'>End Date</Label>
+                                                <Input
+                                                    id='endDate'
+                                                    type='datetime-local'
+                                                    value={editChallenge.endDate}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className='text-sm text-gray-500'>Loading challenge...</p>
+                                    )}
+                                </CardContent>
+                                <CardFooter>
+                                    <Button
+                                        className='bg-[#83aa6c] text-white'
+                                        onClick={handleSaveChanges}
+                                        disabled={isLoading}
+                                    >
+                                        Save Changes
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
                 </DialogContent>
             </Dialog>
         </motion.div>
