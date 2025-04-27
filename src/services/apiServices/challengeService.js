@@ -90,3 +90,63 @@ export async function GetProgressByChallengeId(challengeId) {
     );
     return response.data;
 }   
+
+export async function ActiveChallengeById(challengeId) {
+    const token = localStorage.getItem("token");
+    const response = await axios.put(
+        `/Challenges/change-status/${challengeId}`,
+        {},
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
+}
+
+export async function CancelChallengeById(challengeId) {
+    const token = localStorage.getItem("token");
+    const response = await axios.put(
+        `/Challenges/cancel/${challengeId}`,
+        {},
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
+}
+
+export async function UpdateChallengeById(challengeId, challenge) {
+    const token = localStorage.getItem("token");
+    const response = await axios.patch(
+        `/Challenges/update-challenge?challengeId=${challengeId}`,
+        challenge,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
+}
+
+export async function SelectWinnerByChallengeId(challengeId, winners) {
+    const token = localStorage.getItem("token");
+    const response = await axios.patch(
+        `/Challenges/select-winner?challengeId=${challengeId}`,
+        {
+            winners: [
+                {winners}
+            ]
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
+}

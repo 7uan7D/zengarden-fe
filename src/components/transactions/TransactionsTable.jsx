@@ -2,35 +2,37 @@ import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Search, Edit, Trash2 } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import useItemData from "@/hooks/useItemData"
+import useTransactionData from "@/hooks/useTransactionData"
+import useUserData from "@/hooks/useUserData"
 
-const ItemsTable = () => {
-    const { itemData, isLoading, error } = useItemData()
+const TransactionsTable = () => {
+    const { transactionData, isLoading, error } = useTransactionData()
+    const { userData } = useUserData()
     const [searchTerm, setSearchTerm] = useState('')
-    const [filteredItems, setFilteredItems] = useState(itemData)
+    const [filteredTransactions, setFilteredTransactions] = useState(transactionData)
     const [openStates, setOpenStates] = useState({})
 
     useEffect(() => {
-        if (itemData) {
-            setFilteredItems(itemData)
+        if (transactionData) {
+            setFilteredTransactions(transactionData)
         }
-    }, [itemData])
+    }, [transactionData])
 
     const handleSearch = (e) => {
         const term = e.target.value.toLowerCase()
         setSearchTerm(term)
-        if (itemData) {
-            const filtered = itemData.filter(
-                (item) =>
-                    item.itemId.toString().includes(term) ||
-                    item.name.toLowerCase().includes(term) ||
-                    item.rarity.toLowerCase().includes(term)
+        if (transactionData) {
+            const filtered = transactionData.filter(
+                (transaction) =>
+                    transaction.transactionId.toString().includes(term) ||
+                    transaction.userId.toString().includes(term) ||
+                    userData?.find((user) => user.userId === transaction.userId)?.userName?.toLowerCase().includes(term)
             )
-            setFilteredItems(filtered)
+            setFilteredTransactions(filtered)
         }
     }
 
-    if (!filteredItems) {
+    if (!filteredTransactions) {
         return <div>Loading...</div>
     }
 
@@ -46,11 +48,11 @@ const ItemsTable = () => {
             transition={{ duration: 0.3 }}
         >
             <div className='flex justify-between items-center mb-6'>
-                <h2 className='text-xl font-semibold mb-4 text-gray-100'>Item List <p className='text-sm font-light text-gray-500'>(Click for detail)</p></h2>
+                <h2 className='text-xl font-semibold mb-4 text-gray-100'>Transaction List <p className='text-sm font-light text-gray-500'>(Click for detail)</p></h2>
                 <div className='relative'>
                     <input
                         type='text'
-                        placeholder='Search items...'
+                        placeholder='Search transactions...'
                         className='bg-gray-700 text-white placeholder-gray-400 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
                         onChange={handleSearch}
                         value={searchTerm}
@@ -63,77 +65,54 @@ const ItemsTable = () => {
                 <table className='min-w-full divide-y divide-gray-700'>
                     <thead>
                         <tr>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Item ID</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Name</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Transactions ID</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>User ID</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>User Name</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Wallet ID</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Package ID</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Amount</th>
                             <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Type</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Rarity</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Image</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Cost</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Unique</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Sold Quantity</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Monthly Purchase Limit</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Status</th>
+                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Payment Method</th>
                             {/* <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Actions</th> */}
                         </tr>
                     </thead>
 
                     <tbody className='divide-y divide-gray-700'>
-                        {filteredItems.map((item) => (
-                            <Popover key={item.itemId} open={openStates[item.itemId]}>
+                        {filteredTransactions.map((transaction) => (
+                            <Popover key={transaction.transactionId} open={openStates[transaction.transactionId]}>
                                 <PopoverTrigger asChild >
                                     <div style={{ display: 'contents' }}>
                                         <motion.tr
                                             className='hover:bg-gray-700 rounded-lg transition duration-200 cursor-pointer'
-                                            key={item.id}
+                                            key={transaction.id}
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
                                             transition={{ duration: 0.3 }}
                                         >
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>{transaction.transactionId}</td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>{transaction.userId}</td>
                                             <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {item.itemId}
+                                                {userData && userData.find((user) => user.userId === transaction.userId)?.userName}
                                             </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {item.name}
-                                            </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.type}</td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>{transaction.walletId}</td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>{transaction.packageId}</td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>${transaction.amount}</td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{transaction.type}</td>
+                                            <td className='px-2 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span
                                                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    ${item.rarity === "Legendary" ? 'bg-yellow-200 text-yellow-800'
-                                                        : item.rarity === "Epic" ? 'bg-violet-200 text-violet-800'
-                                                            : item.rarity === "Rare" ? 'bg-blue-200 text-blue-800'
-                                                                : 'bg-gray-200 text-gray-800'
+                                                    ${transaction.status === 1 ? 'bg-gray-200 text-gray-800'
+                                                        : transaction.status === 2 ? 'bg-green-200 text-green-800'
+                                                            : 'bg-red-200 text-red-800'
                                                     }`}
                                                 >
-                                                    {item.rarity === "Legendary" ? 'Legendary'
-                                                        : item.rarity === "Epic" ? 'Epic'
-                                                            : item.rarity === "Rare" ? 'Rare'
-                                                                : 'Common'}
+                                                    {transaction.status === 1 ? 'Pending'
+                                                        : transaction.status === 2 ? 'Success'
+                                                            : 'Cancelled'}
                                                 </span>
                                             </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                                <img
-                                                    src={item.itemDetail.mediaUrl}
-                                                    alt={item.name}
-                                                    className='w-14 h-14 rounded-full'
-                                                />
-                                            </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.cost} coins</td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                                <span
-                                                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    ${item.itemDetail.isUnique === true ? 'bg-green-200 text-green-800'
-                                                        : 'bg-red-200 text-red-800'
-                                                    }`}
-                                                >
-                                                    {item.itemDetail.isUnique === true ? 'Unique' : 'Not Unique'}
-                                                </span>
-                                            </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                                {item.itemDetail.sold}
-                                            </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                                {item.itemDetail.monthlyPurchaseLimit === null ? 'No limit' : item.itemDetail.monthlyPurchaseLimit }
-                                            </td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>{transaction.paymentMethod}</td>
                                             {/* <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <button className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>
                                                     <Edit size={18} />
@@ -152,13 +131,25 @@ const ItemsTable = () => {
                                     align='start'
                                     style={{ position: 'fixed', right: '-1460px', top: '20px' }}
                                 >
-                                    <p className='text-gray-200 font-semibold'>{item.name}</p>
+                                    <p className='text-gray-200 font-semibold'>Transaction ID: {transaction.transactionId}</p>
                                     <p className='text-gray-400 text-left text-sm'>
-                                        {item.itemDetail.description}
+                                        <p className='text-gray-200 text-sm font-bold mr-1'>Transaction Ref: </p>
+                                        {transaction.transactionRef}
+                                    </p>
+                                    <p className='text-gray-400 text-left text-sm'>
+                                        <p className='text-gray-200 text-sm font-bold mr-1'>Transaction Time: </p>
+                                        {new Date(transaction.transactionTime).toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            year: 'numeric',
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                            second: 'numeric',
+                                        })}
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Created at: </p>
-                                        {new Date(item.createdAt).toLocaleDateString('en-US', {
+                                        {new Date(transaction.createdAt).toLocaleDateString('en-US', {
                                             month: 'short',
                                             day: 'numeric',
                                             year: 'numeric',
@@ -169,7 +160,7 @@ const ItemsTable = () => {
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Updated at: </p>
-                                        {new Date(item.updatedAt).toLocaleDateString('en-US', {
+                                        {new Date(transaction.updatedAt).toLocaleDateString('en-US', {
                                             month: 'short',
                                             day: 'numeric',
                                             year: 'numeric',
@@ -188,4 +179,4 @@ const ItemsTable = () => {
     )
 }
 
-export default ItemsTable
+export default TransactionsTable

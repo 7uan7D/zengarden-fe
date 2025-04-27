@@ -31,6 +31,7 @@ const UsersTable = () => {
         userName: '',
         email: '',
         phone: '',
+        roleId: null,
     })
 
     useEffect(() => {
@@ -41,6 +42,7 @@ const UsersTable = () => {
                     userName: data.userName || '',
                     email: data.email || '',
                     phone: data.phone || '',
+                    roleId: data.roleId || null,
                 }))
                 .catch((error) => console.error('Failed to load user info:', error))
                 .finally(() => setIsLoading(false))
@@ -125,6 +127,12 @@ const UsersTable = () => {
             }
         }
     }
+
+    const userRolesData = [
+        { roleId: 1, roleName: 'Admin' },
+        { roleId: 2, roleName: 'Player' },
+        { roleId: 3, roleName: 'Moderator' },
+    ]
 
     return (
         <motion.div
@@ -290,6 +298,22 @@ const UsersTable = () => {
                                                         value={editUser.phone}
                                                         onChange={handleChange}
                                                     />
+                                                </div>
+                                                <div className='space-y-1 mb-3'>
+                                                    <Label htmlFor='roleId'>Role</Label>
+                                                    <select
+                                                        id='roleId'
+                                                        value={editUser.roleId}
+                                                        onChange={handleChange}
+                                                        className="w-full p-2 border border-gray-300 rounded-md bg-gray-800 text-sm"
+                                                    >
+                                                        <option value='' disabled>Select User Role</option>
+                                                        {userRolesData.map((user) => (
+                                                            <option key={user.roleId} value={user.roleId}>
+                                                                {user.roleName}
+                                                            </option>
+                                                        ))}
+                                                    </select>
                                                 </div>
                                                 {/* <div className='space-y-1'>
                                                     <Label>Wallet</Label>

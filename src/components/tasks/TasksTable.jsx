@@ -364,7 +364,7 @@ const TasksTable = () => {
                                                     />
                                                 </div>
                                                 <div className='space-y-1'>
-                                                    <Label htmlFor='totalDuration'>Total Duration ({('>')} 30 mins) </Label>
+                                                    <Label htmlFor='totalDuration'>Total Duration (mins) </Label>
                                                     <Input
                                                         id='totalDuration'
                                                         type='number'

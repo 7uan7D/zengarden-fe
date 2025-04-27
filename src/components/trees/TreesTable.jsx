@@ -75,7 +75,8 @@ const TreesTable = () => {
             const filtered = treeData.filter(
                 (tree) =>
                     tree.treeId.toString().includes(term) ||
-                    tree.name.toLowerCase().includes(term)
+                    tree.name.toLowerCase().includes(term) ||
+                    tree.rarity.toLowerCase().includes(term)
             )
             setFilteredTrees(filtered)
         }
