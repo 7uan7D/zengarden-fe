@@ -90,3 +90,17 @@ export async function GetProgressByChallengeId(challengeId) {
     );
     return response.data;
 }   
+
+export async function ActiveChallengeById(challengeId) {
+    const token = localStorage.getItem("token");
+    const response = await axios.put(
+        `/Challenges/change-status/${challengeId}`,
+        {},
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
+}
