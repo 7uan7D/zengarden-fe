@@ -120,8 +120,6 @@ export default function Marketplace() {
       setBagId(bagId);
       const bagItems = await GetBagItems(bagId);
       setBagItems(bagItems);
-
-      console.log("Các item trong túi của user:", bagItems);
     } catch (error) {
       console.error("Lỗi khi lấy bagItems:", error);
     }
@@ -260,7 +258,6 @@ export default function Marketplace() {
   const handleBuyItem = async (itemId) => {
     try {
       const result = await BuyItem(itemId);
-      console.log("Mua thành công:", result);
       await fetchBagItems();
       await fetchAllItems();
       toast.success("Mua item thành công!");
@@ -409,7 +406,7 @@ export default function Marketplace() {
                       {tradeItems.length > 0 ? (
                         tradeItems.map((item, i) => {
                           const treeInfo = allTrees.find(
-                            (tree) => tree.treeId === item.treeAid
+                            (tree) => tree.treeId === item.finalTreeId
                           );
                           const desiredTree = allTrees.find(
                             (tree) => tree.treeId === item.desiredTreeAID

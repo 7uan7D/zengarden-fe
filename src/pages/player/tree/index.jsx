@@ -54,6 +54,7 @@ const Tree = () => {
   const [selectedDesiredTreeId, setSelectedDesiredTreeId] = useState(null);
   const [requesterTreeId, setRequesterTreeId] = useState("");
   const [selectedTree, setSelectedTree] = useState(null);
+  const [userTreeId, setUserTreeId] = useState("");
 
   const handleOpenTreeDialog = (tree) => {
     setSelectedTree(tree);
@@ -162,8 +163,8 @@ const Tree = () => {
   };
 
   const handleTradeClick = async () => {
-    if (!requesterTreeId) {
-      alert("Bạn chưa nhập requesterTreeId!");
+    if (!userTreeId) {
+      alert("Bạn chưa chọn cây!");
       return;
     }
 
@@ -174,14 +175,13 @@ const Tree = () => {
     try {
       const result = await TradeTree({
         requesterId,
-        requesterTreeId: parseInt(requesterTreeId),
+        requesterTreeId: parseInt(userTreeId), // NOTE: truyền userTreeId dưới tên requesterTreeId
         requestDesiredTreeId: selectedDesiredTreeId,
       });
 
       alert("Yêu cầu trade đã được gửi!");
-      // Reset
       setOpenTradeDialog(false);
-      setRequesterTreeId("");
+      setUserTreeId("");
       setSelectedDesiredTreeId(null);
     } catch (error) {
       console.error("Trade thất bại:", error);
@@ -291,6 +291,7 @@ const Tree = () => {
     .map((ut) => {
       const baseTree = trees.find((t) => t.treeId === ut.finalTreeId);
       return {
+        userTreeId: ut.userTreeId,
         finalTreeId: ut.finalTreeId,
         name: baseTree?.name || "Unknown",
         imageUrl: baseTree?.imageUrl || "/placeholder.png",
@@ -331,16 +332,16 @@ const Tree = () => {
                 <div className="grid grid-cols-2 gap-4 max-h-64 overflow-y-auto mt-2">
                   {ownedTradeableTrees.map((tree) => (
                     <div
-                      key={tree.finalTreeId}
+                      key={tree.userTreeId}
                       className={`border rounded-lg p-2 cursor-pointer flex flex-col items-center transition hover:shadow ${
-                        requesterTreeId === tree.finalTreeId
+                        userTreeId === tree.userTreeId
                           ? "border-blue-500 ring-2 ring-blue-300"
                           : ""
                       }`}
-                      onClick={() => setRequesterTreeId(tree.finalTreeId)}
+                      onClick={() => setUserTreeId(tree.userTreeId)}
                     >
                       <img
-                        src={tree.imageUrl}
+                        src={tree.imageUrl || "/fallback.png"}
                         alt={tree.name}
                         className="w-16 h-16 mb-1"
                       />
@@ -359,7 +360,7 @@ const Tree = () => {
                 >
                   Huỷ
                 </Button>
-                <Button disabled={!requesterTreeId} onClick={handleTradeClick}>
+                <Button disabled={!userTreeId} onClick={handleTradeClick}>
                   Trade
                 </Button>
               </div>
