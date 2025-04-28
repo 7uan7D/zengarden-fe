@@ -156,7 +156,7 @@ function AdminLayout() {
 function ConditionalRoutes() {
   const location = useLocation();
   const isAdminRoute =
-    location.pathname.startsWith("/overview") ||
+    // location.pathname.startsWith("/overview") ||
     location.pathname.startsWith("/users") ||
     location.pathname.startsWith("/items") ||
     location.pathname.startsWith("/tasks") ||
@@ -168,8 +168,8 @@ function ConditionalRoutes() {
     location.pathname.startsWith("/userXPLog") ||
     location.pathname.startsWith("/treeXPLog") ||
     location.pathname.startsWith("/challenges-moderate") ||
-    location.pathname.startsWith("/sales") ||
-    location.pathname.startsWith("/analytics") ||
+    // location.pathname.startsWith("/sales") ||
+    // location.pathname.startsWith("/analytics") ||
     location.pathname.startsWith("/settings");
 
   return isAdminRoute ? <AdminLayout /> : <AnimatedRoutes />;
