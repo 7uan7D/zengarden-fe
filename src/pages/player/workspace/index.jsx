@@ -424,7 +424,7 @@ export default function Workspace() {
                     }}
                   >
                     {tab.icon}
-                    {!isSidebarCollapsed && <span className="text-sm font-medium">{tab.name}</span>}
+                    {!isSidebarCollapsed && <span className="text-sm font-medium tab_span">{tab.name}</span>}
                   </motion.button>
                 </TooltipTrigger>
                 {isSidebarCollapsed && (
@@ -464,109 +464,6 @@ export default function Workspace() {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="w-1/4"
               >
-                {/* <div className="task-column simple">
-                  <h2 className="text-[#10b981]">Simple Tasks</h2>
-                  <CardContent className="p-0">
-                    {tasks.length === 0 ? (
-                      <p className="text-gray-600">No Simple Tasks found.</p>
-                    ) : (
-                      <ul className="grid gap-3">
-                        {tasks.map((task, index) => {
-                          const totalDurationSeconds = task.totalDuration * 60;
-                          const isCurrentTask = currentTask && currentTask.taskIndex === index;
-                          const remainingTime = isCurrentTask ? currentTask.time : totalDurationSeconds;
-                          const workDurationSeconds = task.workDuration * 60;
-                          const breakTimeSeconds = task.breakTime * 60;
-                          const cycleDuration = workDurationSeconds + breakTimeSeconds;
-                          const completedCycles = Math.floor((totalDurationSeconds - remainingTime) / cycleDuration);
-                          const remainingInCycle = (totalDurationSeconds - remainingTime) % cycleDuration;
-
-                          let workProgress, breakProgress;
-                          if (task.status === 4 || task.status === 3) {
-                            const totalCycles = Math.ceil(totalDurationSeconds / cycleDuration);
-                            workProgress = (workDurationSeconds / totalDurationSeconds) * 100 * totalCycles;
-                            breakProgress = (breakTimeSeconds / totalDurationSeconds) * 100 * totalCycles;
-                          } else {
-                            workProgress =
-                              (task.workDuration / task.totalDuration) *
-                              100 *
-                              (completedCycles +
-                                (remainingInCycle < workDurationSeconds
-                                  ? remainingInCycle / workDurationSeconds
-                                  : 1));
-                            breakProgress =
-                              (task.breakTime / task.totalDuration) *
-                              100 *
-                              (completedCycles +
-                                (remainingInCycle >= workDurationSeconds
-                                  ? (remainingInCycle - workDurationSeconds) / breakTimeSeconds
-                                  : 0));
-                          }
-
-                          return (
-                            <li key={task.taskId} className="task-item">
-                              <div className="task-info">
-                                <span
-                                  className={`font-medium ${
-                                    task.status === 4 ? "line-through text-gray-500" : "text-gray-700"
-                                  }`}
-                                >
-                                  {task.taskName}
-                                </span>
-                                <div className="progress-container">
-                                  <span className="text-sm text-gray-600">
-                                    Remaining: {formatTime(remainingTime)}
-                                    {task.status === 4 && (
-                                      <span className="text-sm text-green-600 ml-2">Done</span>
-                                    )}
-                                  </span>
-                                  <div className={`progress-bar-container ${isCurrentTask ? "active" : ""}`}>
-                                    <div className="progress-bar">
-                                      <div
-                                        className="work-progress"
-                                        style={{ width: `${Math.min(workProgress, 100)}%` }}
-                                      />
-                                      <div
-                                        className="break-progress"
-                                        style={{ width: `${Math.min(breakProgress, 100)}%` }}
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="task-actions">
-                                {isCurrentTask && (
-                                  <span className="text-sm text-gray-600">
-                                    {remainingInCycle < workDurationSeconds
-                                      ? `Work: ${formatTime(workDurationSeconds - remainingInCycle)}`
-                                      : `Break: ${formatTime(cycleDuration - remainingInCycle)}`}
-                                  </span>
-                                )}
-                                {task.status === 1 ? (
-                                  <Button onClick={() => toggleTimer(index)}>Pause</Button>
-                                ) : task.status === 2 ? (
-                                  <Button onClick={() => toggleTimer(index)}>Resume</Button>
-                                ) : task.status === 0 ? (
-                                  <Button
-                                    onClick={() => startTimer(index)}
-                                    disabled={currentTask !== null}
-                                  >
-                                    Start
-                                  </Button>
-                                ) : (
-                                  <div className="flex items-center gap-2">
-                                    <CheckCircle className="w-5 h-5 text-green-600" />
-                                    <span className="text-sm text-green-600">Done</span>
-                                  </div>
-                                )}
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </CardContent>
-                </div> */}
               </motion.div>
 
               {/* Không gian trống bên phải */}
@@ -624,36 +521,6 @@ export default function Workspace() {
           {activeTab === "Image Editor" && (
             <div className="flex-1">
               <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-green-700">Pintura Image Editor</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <Button
-                      onClick={handleUploadClick}
-                      className="bg-green-600 text-white hover:bg-green-700"
-                    >
-                      Upload Image
-                    </Button>
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleFileChange}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                    {editedImage && (
-                      <div className="mt-4">
-                        <p className="text-green-700 font-medium">Edited Image:</p>
-                        <img
-                          src={editedImage}
-                          alt="Edited"
-                          className="max-w-full h-auto rounded-lg shadow-md"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
                 <Pintura />
               </Card>
             </div>

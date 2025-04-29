@@ -25,7 +25,7 @@ import { GetAllPackages } from "@/services/apiServices/packageService";
 import { PayPackage } from "@/services/apiServices/packageService";
 import { GetAllTransaction } from "@/services/apiServices/transactionService";
 
-// Danh sách các danh mục, thêm "Wallet"
+// Danh sách các danh mục
 const categories = [
   "Items",
   "Avatar",
@@ -33,7 +33,7 @@ const categories = [
   "Music",
   "Trade",
   "Package",
-  "Wallet", // Thêm tab Wallet
+  "Transaction",
 ];
 
 const rarityColorMap = {
@@ -298,7 +298,7 @@ export default function Marketplace() {
     }
 
     const userId = parseInt(decoded.sub);
-    const walletId = userId;
+    const   Id = userId;
 
     try {
       const result = await PayPackage(userId, walletId, packageId);
@@ -485,9 +485,9 @@ export default function Marketplace() {
                 );
               }
 
-              if (cat === "Wallet") {
+              if (cat === "Transaction") {
                 return (
-                  <TabsContent key="Wallet" value="Wallet">
+                  <TabsContent key="Transaction" value="Transaction">
                     <Card>
                       <CardContent className="p-6">
                         <h2 className="text-xl font-semibold mb-4">
