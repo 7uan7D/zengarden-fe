@@ -37,6 +37,7 @@ import Packages from "./pages/Packages";
 import TradeHistory from "./pages/TradeHistory";
 import Transactions from "./pages/Transactions";
 import ChallengesModerate from "./pages/ChallengesModerate";
+import ItemsModerate from "./pages/ItemsModerate";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -145,6 +146,7 @@ function AdminLayout() {
         <Route path="/userXPLog" element={<UserXPLog />} />
         <Route path="/treeXPLog" element={<TreeXPLog />} />
         <Route path="/challenges-moderate" element={<ChallengesModerate />} />
+        <Route path="/items-moderate" element={<ItemsModerate />} />
         <Route path="/sales" element={<Sales />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/settings" element={<Settings />} />
@@ -168,6 +170,7 @@ function ConditionalRoutes() {
     location.pathname.startsWith("/userXPLog") ||
     location.pathname.startsWith("/treeXPLog") ||
     location.pathname.startsWith("/challenges-moderate") ||
+    location.pathname.startsWith("/items-moderate") ||
     // location.pathname.startsWith("/sales") ||
     // location.pathname.startsWith("/analytics") ||
     location.pathname.startsWith("/settings");
