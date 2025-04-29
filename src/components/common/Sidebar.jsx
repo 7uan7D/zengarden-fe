@@ -18,6 +18,7 @@ const SIDEBAR_ITEMS = [
     <hr key="separator" className="my-2 border-t border-gray-700" />,
     { name: 'Challenges Moderate', icon: Trophy, color: '#F59E0B', href: '/challenges-moderate' },
     { name: 'Items Moderate', icon: ShoppingBag, color: '#8B5CF6', href: '/items-moderate' },
+    { name: 'Packages Moderate', icon: PackageOpen, color: '#2FE123', href: '/packages-moderate' },
     // { name: 'Sales', icon: DollarSign, color: '#10B981', href: '/sales' },
     // { name: 'Analytics', icon: TrendingUp, color: '#3B82F6', href: '/analytics' },
     { name: 'Settings', icon: Settings, color: '#6366F1', href: '/settings' },
@@ -32,7 +33,7 @@ const Sidebar = () => {
             animate={{ width: isSidebarOpen ? 256 : 85 }}
             style={{ overflowY: 'auto', maxHeight: '100vh' }}
         >
-            <div className='h-full bg-gray-800 bg-opacity-50 backdrop-blur-md p-4 flex flex-col border-r border-gray-700'>
+            <div className='bg-gray-800 bg-opacity-50 backdrop-blur-md p-4 flex flex-col border-r border-gray-700'>
                 <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}

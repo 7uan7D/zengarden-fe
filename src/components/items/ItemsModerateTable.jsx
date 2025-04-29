@@ -79,9 +79,8 @@ const ItemsModerateTable = () => {
             if (!isNaN(parsedValue)) {
                 processedValue = parsedValue;
             } else {
-                processedValue = 0; // Or your preferred way to handle invalid input
+                processedValue = 0;
                 console.warn(`Invalid number entered for ${id}: ${value}`);
-                // You might want to show a user-friendly error message here
             }
         }
 
@@ -210,15 +209,15 @@ const ItemsModerateTable = () => {
                 <table className='min-w-full divide-y divide-gray-700'>
                     <thead>
                         <tr>
-                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Item ID</th>
-                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Name</th>
-                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Type</th>
-                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Status</th>
-                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Rarity</th>
-                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Image</th>
-                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Cost</th>
-                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Unique</th>
-                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Actions</th>
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Item ID</th>
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Name</th>
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Type</th>
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Status</th>
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Rarity</th>
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Image</th>
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Cost</th>
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Unique</th>
+                            <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Actions</th>
                         </tr>
                     </thead>
 
@@ -234,13 +233,13 @@ const ItemsModerateTable = () => {
                                             animate={{ opacity: 1 }}
                                             transition={{ duration: 0.3 }}
                                         >
-                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
                                                 {item.itemId}
                                             </td>
-                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
                                                 {item.name}
                                             </td>
-                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span>
                                                     {item.type === 0 ? 'XP Protect'
                                                         : item.type === 1 ? 'XP Boost Tree'
@@ -249,7 +248,7 @@ const ItemsModerateTable = () => {
                                                                     : 'Music'}
                                                 </span>
                                             </td>
-                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span
                                                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                                     ${item.status === 0 ? 'bg-green-200 text-green-800'
@@ -260,7 +259,7 @@ const ItemsModerateTable = () => {
                                                         : 'Inactive'}
                                                 </span>
                                             </td>
-                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span
                                                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                                     ${item.rarity === 'Legendary' ? 'bg-yellow-200 text-yellow-800'
@@ -275,15 +274,15 @@ const ItemsModerateTable = () => {
                                                                 : 'Common'}
                                                 </span>
                                             </td>
-                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <img
                                                     src={item.itemDetail.mediaUrl}
                                                     alt={item.name}
                                                     className='w-14 h-14 rounded-full'
                                                 />
                                             </td>
-                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.cost} coins</td>
-                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.cost} coins</td>
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span
                                                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                                     ${item.itemDetail.isUnique === true ? 'bg-green-200 text-green-800'
@@ -293,17 +292,17 @@ const ItemsModerateTable = () => {
                                                     {item.itemDetail.isUnique === true ? 'Unique' : 'Not Unique'}
                                                 </span>
                                             </td>
-                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-3 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <button 
                                                     onClick={() => handleActivateClick(item.itemId)} 
-                                                    className={`bg-transparent ${item.status === 0 ? 'text-gray-500' : 'text-indigo-400 hover:text-indigo-300'}`}
+                                                    className={`bg-transparent mr-2 ${item.status === 0 ? 'text-gray-500' : 'text-indigo-400 hover:text-indigo-300'}`}
                                                     disabled={item.status === 0}
                                                 >
                                                     Activate
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeactivateClick(item.itemId)}
-                                                    className={`bg-transparent ${item.status === 1 ? 'text-gray-500' : 'text-red-400 hover:text-red-300'}`}
+                                                    className={`bg-transparent mr-2 ${item.status === 1 ? 'text-gray-500' : 'text-red-400 hover:text-red-300'}`}
                                                     disabled={item.status === 1}
                                                 >
                                                     Deactivate

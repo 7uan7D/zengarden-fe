@@ -83,13 +83,11 @@ const ItemsModerate = () => {
             ...prev,
             file: file,
         }))
-        console.log(e.target.files[0])
     }
 
     const [isLoading, setIsLoading] = useState(false)
     const handleSaveChanges = async () => {
         console.log('Saving changes with data: ', newItemData)
-        console.log('newItemData.file before send:', newItemData.file)
 
         setIsLoading(true)
         try {
