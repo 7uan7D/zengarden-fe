@@ -352,13 +352,13 @@ const ChallengesModerateTable = () => {
                                                 >
                                                     Cancel
                                                 </button>
-                                                <button
+                                                {/* <button
                                                     onClick={() => handleSelectWinnerClick(challenge.challengeId)}
                                                     className={`bg-transparent ${challenge.status !== 2 ? 'text-gray-500' : 'text-yellow-600 hover:text-yellow-500'}`}
                                                     disabled={challenge.status !== 2}
                                                 >
                                                     Select Winner
-                                                </button>
+                                                </button> */}
                                             </td>
                                         </motion.tr>
                                     </div>

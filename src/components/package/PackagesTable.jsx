@@ -87,7 +87,7 @@ const PackagesTable = () => {
                                         >
                                             <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>{package_.packageId}</td>
                                             <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>{package_.name}</td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{package_.price}</td>
+                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>${package_.price}</td>
                                             <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{package_.amount}</td>
                                             <td className='px-6 py-4 text-left whitespace-nowrap'>
                                                 <span
