@@ -5,6 +5,11 @@ export async function GetAllItems() {
   return response.data;
 }
 
+export async function GetItemById(itemId) {
+  const response = await axios.get(`/Item/${itemId}`);
+  return response.data;
+}
+
 export async function BuyItem(itemId) {
   const token = localStorage.getItem("token");
 
@@ -43,6 +48,72 @@ export async function UseItem(itemBagId) {
       },
       params: {
         itemBagId: itemBagId, // Gửi dưới dạng query param
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function CreateItem(itemData) {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.post(
+    `/Item/create-item`,
+    { ...itemData },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function ActivateItemById(itemId) {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.put(
+    `/Item/active-item/${itemId}`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function DeactivateItemById(itemId) {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.put(
+    `/Item/${itemId}`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
+export async function UpdateItemById(itemId, itemData) {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.put(
+    `/Item/update-item/${itemId}`,
+    { ...itemData },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
       },
     }
   );
