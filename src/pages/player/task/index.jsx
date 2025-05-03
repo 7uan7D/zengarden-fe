@@ -55,6 +55,7 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { useDndMonitor } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { ChangePriority } from "@/services/apiServices/taskService";
 import { format } from "date-fns";
@@ -68,6 +69,7 @@ import TimePicker from "react-time-picker";
 import "react-time-picker/dist/TimePicker.css";
 import "react-clock/dist/Clock.css";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
+import { SortableTask } from "./SortableTask";
 
 // Component con để chọn ngày và giờ cho task
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
@@ -171,6 +173,60 @@ export default function TaskPage() {
   const [timers, setTimers] = useState({}); // state quản lý thời gian cho các task
   const [activeTaskKey, setActiveTaskKey] = useState(null); // key của task đang hoạt động
   const intervalRefs = useRef({}); // tham chiếu đến các interval để dọn dẹp sau này
+
+  //dnd
+
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  const handleDragEnd = async (event, columnKey) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const currentTasks = sortedTasksByColumn[columnKey] || [];
+    const oldIndex = currentTasks.findIndex(
+      (task) => task.taskId === active.id
+    );
+    const newIndex = currentTasks.findIndex((task) => task.taskId === over.id);
+    const userTreeId = selectedTree?.userTreeId;
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Clone danh sách để tránh mutate
+    const newTasks = [...currentTasks];
+
+    // Hoán đổi vị trí
+    [newTasks[oldIndex], newTasks[newIndex]] = [
+      newTasks[newIndex],
+      newTasks[oldIndex],
+    ];
+
+    // Cập nhật lại priority
+    const reordered = newTasks.map((task, index) => ({
+      ...task,
+      priority: index + 1,
+    }));
+
+    const payload = reordered.map(({ taskId, priority }) => ({
+      taskId,
+      priority,
+    }));
+
+    try {
+      await ChangePriority(userTreeId, payload);
+      setSortedTasksByColumn((prev) => ({
+        ...prev,
+        [columnKey]: reordered,
+      }));
+    } catch (err) {
+      console.error("Failed to reorder", err);
+    }
+  };
+
+  //dnd
+  const [sortedTasksByColumn, setSortedTasksByColumn] = useState({});
+
+  const [activeId, setActiveId] = useState(null);
+  const [overId, setOverId] = useState(null);
 
   // Tree
   const { refreshXp } = useUserExperience();
@@ -673,6 +729,7 @@ export default function TaskPage() {
     }));
   }, []);
 
+  //dnd
   const renderTaskColumn = (title, taskList, columnKey) => {
     const filteredTasks =
       activeTabs[columnKey] === "all"
@@ -685,6 +742,45 @@ export default function TaskPage() {
     const sortedTasks = [...filteredTasks].sort(
       (a, b) => a.priority - b.priority
     );
+
+    // Nếu chưa lưu, set ngay vào state để đồng bộ
+    useEffect(() => {
+      if (!sortedTasksByColumn[columnKey]) {
+        setSortedTasksByColumn((prev) => ({
+          ...prev,
+          [columnKey]: sortedTasks,
+        }));
+      }
+    }, [filteredTasks]);
+
+    const InnerSortableTasks = ({
+      sortedTasks,
+      columnKey,
+      timers,
+      overId,
+      setOverId,
+      setActiveId,
+      // các props khác...
+    }) => {
+      // ✅ Hook này nằm trong cây của DndContext nên OK
+      useDndMonitor({
+        onDragStart: ({ active }) => setActiveId(active.id),
+        onDragOver: ({ over }) => setOverId(over?.id || null),
+        onDragEnd: () => {
+          setActiveId(null);
+          setOverId(null);
+        },
+      });
+
+      return (
+        <SortableContext
+          items={sortedTasks.map((task) => task.taskId)}
+          strategy={verticalListSortingStrategy}
+        >
+          {/* render ScrollArea và tasks ở đây */}
+        </SortableContext>
+      );
+    };
 
     return (
       <div className="task-column-container">
@@ -725,274 +821,322 @@ export default function TaskPage() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <ScrollArea className="h-[400px] overflow-y-auto">
-            <div className="grid gap-3">
-              {sortedTasks.map((task, index) => {
-                const remainingTime = task.remainingTime || 0;
-                const overdueTime = remainingTime < 0 ? -remainingTime : 0;
-                const taskKey = `${columnKey}-${index}`;
-                const timer = timers[taskKey] || {};
-                const { totalWorkCompleted = 0, totalBreakCompleted = 0 } =
-                  timer;
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={(event) => handleDragEnd(event, columnKey)}
+          >
+            <InnerSortableTasks
+              sortedTasks={sortedTasks}
+              columnKey={columnKey}
+              timers={timers}
+              overId={overId}
+              setOverId={setOverId}
+              setActiveId={setActiveId}
+            />
+            <SortableContext
+              items={sortedTasks.map((task) => task.taskId)}
+              strategy={verticalListSortingStrategy}
+            >
+              <ScrollArea className="h-[400px] overflow-y-auto">
+                <div className="grid gap-3">
+                  {sortedTasks.map((task, index) => {
+                    const remainingTime = task.remainingTime || 0;
+                    const overdueTime = remainingTime < 0 ? -remainingTime : 0;
+                    const taskKey = `${columnKey}-${index}`;
+                    const timer = timers[taskKey] || {};
+                    const { totalWorkCompleted = 0, totalBreakCompleted = 0 } =
+                      timer;
 
-                const totalDurationSeconds = task.totalDuration * 60;
-                const remainTime = task.remainingTime;
-                const elapsedTime = totalDurationSeconds - remainTime;
-                const cycleDuration = (task.workDuration + task.breakTime) * 60;
-                const completedCycles = Math.floor(elapsedTime / cycleDuration);
-                const timeInCurrentCycle = elapsedTime % cycleDuration;
+                    const totalDurationSeconds = task.totalDuration * 60;
+                    const remainTime = task.remainingTime;
+                    const elapsedTime = totalDurationSeconds - remainTime;
+                    const cycleDuration =
+                      (task.workDuration + task.breakTime) * 60;
+                    const completedCycles = Math.floor(
+                      elapsedTime / cycleDuration
+                    );
+                    const timeInCurrentCycle = elapsedTime % cycleDuration;
 
-                let isWorkPhase = true;
-                let currentWorkTime = task.workDuration * 60;
-                let currentBreakTime = task.breakTime * 60;
+                    let isWorkPhase = true;
+                    let currentWorkTime = task.workDuration * 60;
+                    let currentBreakTime = task.breakTime * 60;
 
-                if (timeInCurrentCycle < task.workDuration * 60) {
-                  isWorkPhase = true;
-                  currentWorkTime = task.workDuration * 60 - timeInCurrentCycle;
-                } else {
-                  isWorkPhase = false;
-                  const timeIntoBreak =
-                    timeInCurrentCycle - task.workDuration * 60;
-                  currentBreakTime = task.breakTime * 60 - timeIntoBreak;
-                }
+                    if (timeInCurrentCycle < task.workDuration * 60) {
+                      isWorkPhase = true;
+                      currentWorkTime =
+                        task.workDuration * 60 - timeInCurrentCycle;
+                    } else {
+                      isWorkPhase = false;
+                      const timeIntoBreak =
+                        timeInCurrentCycle - task.workDuration * 60;
+                      currentBreakTime = task.breakTime * 60 - timeIntoBreak;
+                    }
 
-                // Tạo mảng các phase để render thanh tiến độ xen kẽ
-                const phases = [];
+                    // Tạo mảng các phase để render thanh tiến độ xen kẽ
+                    const phases = [];
 
-                for (let i = 0; i < completedCycles; i++) {
-                  phases.push({
-                    type: "work",
-                    duration: task.workDuration * 60,
-                  });
-                  phases.push({ type: "break", duration: task.breakTime * 60 });
-                }
+                    for (let i = 0; i < completedCycles; i++) {
+                      phases.push({
+                        type: "work",
+                        duration: task.workDuration * 60,
+                      });
+                      phases.push({
+                        type: "break",
+                        duration: task.breakTime * 60,
+                      });
+                    }
 
-                // current phase
-                if (timeInCurrentCycle < task.workDuration * 60) {
-                  phases.push({ type: "work", duration: timeInCurrentCycle });
-                } else {
-                  phases.push({
-                    type: "work",
-                    duration: task.workDuration * 60,
-                  });
-                  phases.push({
-                    type: "break",
-                    duration: timeInCurrentCycle - task.workDuration * 60,
-                  });
-                }
+                    // current phase
+                    if (timeInCurrentCycle < task.workDuration * 60) {
+                      phases.push({
+                        type: "work",
+                        duration: timeInCurrentCycle,
+                      });
+                    } else {
+                      phases.push({
+                        type: "work",
+                        duration: task.workDuration * 60,
+                      });
+                      phases.push({
+                        type: "break",
+                        duration: timeInCurrentCycle - task.workDuration * 60,
+                      });
+                    }
 
-                const currentTaskStatus =
-                  task.status === 1 ? 1 : task.status === 2 ? 2 : 0;
-                // Hàm chuyển priority thành nhãn (1st, 2nd, 3rd,...)
-                const getPriorityLabel = (priority) => {
-                  switch (priority) {
-                    case 1:
-                      return "1st";
-                    case 2:
-                      return "2nd";
-                    case 3:
-                      return "3rd";
-                    case 4:
-                      return "4th";
-                    default:
-                      return `${priority}th`;
-                  }
-                };
+                    const currentTaskStatus =
+                      task.status === 1 ? 1 : task.status === 2 ? 2 : 0;
+                    // Hàm chuyển priority thành nhãn (1st, 2nd, 3rd,...)
+                    const getPriorityLabel = (priority) => {
+                      switch (priority) {
+                        case 1:
+                          return "1st";
+                        case 2:
+                          return "2nd";
+                        case 3:
+                          return "3rd";
+                        case 4:
+                          return "4th";
+                        default:
+                          return `${priority}th`;
+                      }
+                    };
 
-                return (
-                  <motion.div
-                    key={`${task.taskName}-${task.priority}`}
-                    initial={{ y: 10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                  >
-                    <Card className="task-item relative">
-                      {/* Thêm nhãn priority, chỉ áp dụng cho Simple, Complex, Challenge */}
-                      {["simple", "complex", "challenge"].includes(
-                        columnKey
-                      ) && (
-                        <div
-                          className={`priority-label priority-${
-                            task.priority <= 2
-                              ? "high"
-                              : task.priority <= 4
-                              ? "medium"
-                              : "low"
-                          } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom`}
+                    return (
+                      <motion.div
+                        key={`${task.taskName}-${task.priority}`}
+                        initial={{ y: 10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                      >
+                        <SortableTask
+                          key={task.taskId}
+                          task={task}
+                          columnKey={columnKey}
+                          index={index}
+                          overId={overId}
                         >
-                          {getPriorityLabel(task.priority)}
-                        </div>
-                      )}
-                      <div className="flex-1 flex flex-col justify-between text-left">
-                        <div
-                          className="cursor-pointer"
-                          onClick={() => {
-                            setSelectedTask(task);
-                            setIsTaskInfoDialogOpen(true);
-                          }}
-                        >
-                          <span className="text-gray-700 font-medium">
-                            {task.taskName}
-                          </span>
-                        </div>
-                        <div className="flex flex-col gap-1 text-left">
-                          <span
-                            className={`text-sm ${
-                              task.status === 4 ||
-                              (remainingTime <= 0 && currentTaskStatus !== 0)
-                                ? "text-red-600"
-                                : "text-gray-600"
-                            }`}
-                          >
-                            {task.status !== 3 &&
-                              (task.status === 4
-                                ? `Overdue: ${formatTime(overdueTime)}`
-                                : remainingTime <= 0 && currentTaskStatus !== 0
-                                ? `Overdue: ${formatTime(overdueTime)}`
-                                : `Remaining: ${formatTime(remainingTime)}`)}
-                          </span>
-                          <div className="progress-bar-container">
-                            <div className="progress-bar flex h-2 rounded overflow-hidden">
-                              {phases.map((phase, idx) => (
-                                <div
-                                  key={idx}
-                                  className={
-                                    phase.type === "work"
-                                      ? "bg-blue-500"
-                                      : "bg-yellow-500"
-                                  }
-                                  style={{
-                                    width: `${
-                                      (phase.duration / totalDurationSeconds) *
-                                      100
-                                    }%`,
-                                  }}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          {task.status !== 4 &&
-                            task.status !== 3 &&
-                            !(
-                              remainingTime <= 0 && currentTaskStatus !== 0
+                          <Card className="task-item relative">
+                            {/* Thêm nhãn priority, chỉ áp dụng cho Simple, Complex, Challenge */}
+                            {["simple", "complex", "challenge"].includes(
+                              columnKey
                             ) && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                {currentTaskStatus === 0 ? (
-                                  <span className="text-gray-400">
-                                    Not Started
-                                  </span>
-                                ) : isWorkPhase ? (
-                                  <span className="text-blue-500 font-medium">
-                                    Work: {formatTime(currentWorkTime)}
-                                  </span>
-                                ) : (
-                                  <span className="text-yellow-500 font-medium">
-                                    Break: {formatTime(currentBreakTime)}
-                                  </span>
-                                )}
+                              <div
+                                className={`priority-label priority-${
+                                  task.priority <= 2
+                                    ? "high"
+                                    : task.priority <= 4
+                                    ? "medium"
+                                    : "low"
+                                } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom`}
+                              >
+                                {getPriorityLabel(task.priority)}
                               </div>
                             )}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        {task.status === 3 ? (
-                          <span
-                            className="flex items-center gap-1 text-sm"
-                            style={{ color: "#22c55e" }}
-                          >
-                            <CircleCheckBig className="w-4 h-4" />
-                            Done
-                          </span>
-                        ) : task.status === 4 ? (
-                          <span
-                            className="flex items-center gap-1 text-sm"
-                            style={{ color: "#ef4444" }}
-                          >
-                            <CircleX className="w-4 h-4" />
-                            Expired
-                          </span>
-                        ) : (
-                          <div className="flex gap-2">
-                            {!(
-                              remainingTime <= 0 && currentTaskStatus !== 0
-                            ) && (
-                              <Button
-                                onClick={() =>
-                                  handleTaskAction(
-                                    columnKey,
-                                    index,
-                                    currentTaskStatus === 0
-                                      ? "start"
-                                      : currentTaskStatus === 1
-                                      ? "pause"
-                                      : "resume"
-                                  )
-                                }
-                                className={
-                                  currentTaskStatus === 1
-                                    ? "bg-yellow-500 hover:bg-yellow-600"
-                                    : currentTaskStatus === 2
-                                    ? "bg-blue-500 hover:bg-blue-600"
-                                    : "bg-green-500 hover:bg-green-600"
-                                }
-                                disabled={
-                                  (currentTaskStatus === 0 &&
-                                    activeTaskKey !== null &&
-                                    activeTaskKey !== taskKey) ||
-                                  loadingTaskKey === taskKey // 🔒 Disable khi đang loading
-                                }
+                            <div className="flex-1 flex flex-col justify-between text-left">
+                              <div
+                                className="cursor-pointer"
+                                onClick={() => {
+                                  setSelectedTask(task);
+                                  setIsTaskInfoDialogOpen(true);
+                                }}
                               >
-                                {loadingTaskKey === taskKey ? (
-                                  <svg
-                                    className="animate-spin h-5 w-5 text-white mx-auto"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <circle
-                                      className="opacity-25"
-                                      cx="12"
-                                      cy="12"
-                                      r="10"
-                                      stroke="currentColor"
-                                      strokeWidth="4"
-                                    />
-                                    <path
-                                      className="opacity-75"
-                                      fill="currentColor"
-                                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                    />
-                                  </svg>
-                                ) : currentTaskStatus === 0 ? (
-                                  "Start"
-                                ) : currentTaskStatus === 1 ? (
-                                  "Pause"
-                                ) : (
-                                  "Resume"
-                                )}
-                              </Button>
-                            )}
-                            {remainingTime <= 120 &&
-                              remainingTime >= 0 &&
-                              currentTaskStatus !== 0 && (
-                                <Button
-                                  onClick={() =>
-                                    handleTaskAction(columnKey, index, "finish")
-                                  }
-                                  className="bg-orange-500 hover:bg-orange-600"
+                                <span className="text-gray-700 font-medium">
+                                  {task.taskName}
+                                </span>
+                              </div>
+                              <div className="flex flex-col gap-1 text-left">
+                                <span
+                                  className={`text-sm ${
+                                    task.status === 4 ||
+                                    (remainingTime <= 0 &&
+                                      currentTaskStatus !== 0)
+                                      ? "text-red-600"
+                                      : "text-gray-600"
+                                  }`}
                                 >
-                                  Finish
-                                </Button>
+                                  {task.status !== 3 &&
+                                    (task.status === 4
+                                      ? `Overdue: ${formatTime(overdueTime)}`
+                                      : remainingTime <= 0 &&
+                                        currentTaskStatus !== 0
+                                      ? `Overdue: ${formatTime(overdueTime)}`
+                                      : `Remaining: ${formatTime(
+                                          remainingTime
+                                        )}`)}
+                                </span>
+                                <div className="progress-bar-container">
+                                  <div className="progress-bar flex h-2 rounded overflow-hidden">
+                                    {phases.map((phase, idx) => (
+                                      <div
+                                        key={idx}
+                                        className={
+                                          phase.type === "work"
+                                            ? "bg-blue-500"
+                                            : "bg-yellow-500"
+                                        }
+                                        style={{
+                                          width: `${
+                                            (phase.duration /
+                                              totalDurationSeconds) *
+                                            100
+                                          }%`,
+                                        }}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                                {task.status !== 4 &&
+                                  task.status !== 3 &&
+                                  !(
+                                    remainingTime <= 0 &&
+                                    currentTaskStatus !== 0
+                                  ) && (
+                                    <div className="text-xs text-gray-500 mt-1">
+                                      {currentTaskStatus === 0 ? (
+                                        <span className="text-gray-400">
+                                          Not Started
+                                        </span>
+                                      ) : isWorkPhase ? (
+                                        <span className="text-blue-500 font-medium">
+                                          Work: {formatTime(currentWorkTime)}
+                                        </span>
+                                      ) : (
+                                        <span className="text-yellow-500 font-medium">
+                                          Break: {formatTime(currentBreakTime)}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                              {task.status === 3 ? (
+                                <span
+                                  className="flex items-center gap-1 text-sm"
+                                  style={{ color: "#22c55e" }}
+                                >
+                                  <CircleCheckBig className="w-4 h-4" />
+                                  Done
+                                </span>
+                              ) : task.status === 4 ? (
+                                <span
+                                  className="flex items-center gap-1 text-sm"
+                                  style={{ color: "#ef4444" }}
+                                >
+                                  <CircleX className="w-4 h-4" />
+                                  Expired
+                                </span>
+                              ) : (
+                                <div className="flex gap-2">
+                                  {!(
+                                    remainingTime <= 0 &&
+                                    currentTaskStatus !== 0
+                                  ) && (
+                                    <Button
+                                      onClick={() =>
+                                        handleTaskAction(
+                                          columnKey,
+                                          index,
+                                          currentTaskStatus === 0
+                                            ? "start"
+                                            : currentTaskStatus === 1
+                                            ? "pause"
+                                            : "resume"
+                                        )
+                                      }
+                                      className={
+                                        currentTaskStatus === 1
+                                          ? "bg-yellow-500 hover:bg-yellow-600"
+                                          : currentTaskStatus === 2
+                                          ? "bg-blue-500 hover:bg-blue-600"
+                                          : "bg-green-500 hover:bg-green-600"
+                                      }
+                                      disabled={
+                                        (currentTaskStatus === 0 &&
+                                          activeTaskKey !== null &&
+                                          activeTaskKey !== taskKey) ||
+                                        loadingTaskKey === taskKey // 🔒 Disable khi đang loading
+                                      }
+                                    >
+                                      {loadingTaskKey === taskKey ? (
+                                        <svg
+                                          className="animate-spin h-5 w-5 text-white mx-auto"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                          />
+                                          <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                          />
+                                        </svg>
+                                      ) : currentTaskStatus === 0 ? (
+                                        "Start"
+                                      ) : currentTaskStatus === 1 ? (
+                                        "Pause"
+                                      ) : (
+                                        "Resume"
+                                      )}
+                                    </Button>
+                                  )}
+                                  {remainingTime <= 120 &&
+                                    remainingTime >= 0 &&
+                                    currentTaskStatus !== 0 && (
+                                      <Button
+                                        onClick={() =>
+                                          handleTaskAction(
+                                            columnKey,
+                                            index,
+                                            "finish"
+                                          )
+                                        }
+                                        className="bg-orange-500 hover:bg-orange-600"
+                                      >
+                                        Finish
+                                      </Button>
+                                    )}
+                                </div>
                               )}
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </ScrollArea>
+                            </div>
+                          </Card>
+                        </SortableTask>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
+            </SortableContext>
+          </DndContext>
         </motion.div>
       </div>
     );
