@@ -1,0 +1,336 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap");
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  background: #f7fafc;
+  color: #2d3748;
+  min-height: 100vh;
+}
+
+.hero-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding-top: 4.5rem; /* Giữ padding-top cho header */
+}
+
+/* Hero Section */
+.hero-section {
+  position: relative;
+  height: calc(100vh - 4.5rem); /* Chiều cao chính xác để vừa khung hình */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+  padding: 1.5rem 2rem; /* Giảm padding để tiết kiệm không gian */
+  overflow: hidden;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), transparent);
+  z-index: 1;
+}
+
+.hero-content {
+  z-index: 2;
+  text-align: center;
+  max-width: 600px;
+  margin-bottom: 1.5rem; /* Giảm margin để nội dung gọn hơn */
+}
+
+.hero-content h1 {
+  font-size: 3rem; /* Giảm font-size để tiết kiệm không gian */
+  font-weight: 700;
+  color: #2b6cb0;
+  margin-bottom: 1rem;
+}
+
+.hero-content p {
+  font-size: 1.1rem; /* Giảm font-size để gọn hơn */
+  color: #4a5568;
+  margin-bottom: 1.5rem;
+}
+
+.hero-btn {
+  background: #2b6cb0;
+  color: white;
+  padding: 0.6rem 1.8rem; /* Giảm padding để nút nhỏ hơn */
+  font-size: 1rem; /* Giảm font-size */
+  font-weight: 600;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+}
+
+.hero-btn:hover {
+  background: #2c5282;
+  transform: translateY(-2px);
+}
+
+.hero-carousel {
+  z-index: 2;
+  width: 100%;
+  max-width: 700px; /* Giảm max-width để carousel gọn hơn */
+  position: relative;
+}
+
+.carousel-slide {
+  position: relative;
+  width: 100%;
+  height: 300px; /* Giảm chiều cao carousel để vừa khung */
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.carousel-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carousel-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  padding: 1rem; /* Giảm padding để caption nhỏ hơn */
+  color: white;
+  text-align: center;
+}
+
+.carousel-caption h2 {
+  font-size: 1.3rem; /* Giảm font-size */
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+.carousel-caption p {
+  font-size: 0.9rem; /* Giảm font-size */
+  color: #e2e8f0;
+}
+
+.carousel-dots {
+  position: absolute;
+  bottom: 0.5rem; /* Đặt dots sát dưới hơn */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dot {
+  width: 10px; /* Giảm kích thước dot */
+  height: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  background: #2b6cb0;
+  transform: scale(1.3);
+}
+
+/* Gamify Section */
+.gamify-section {
+  padding: 5rem 2rem;
+  background: #ffffff;
+  text-align: center;
+}
+
+.section-content {
+  max-width: 700px;
+  margin: 0 auto 4rem;
+}
+
+.section-content h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 1.5rem;
+}
+
+.section-content p {
+  font-size: 1.1rem;
+  color: #718096;
+}
+
+.gamify-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.gamify-card {
+  background: #edf2f7;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.gamify-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.gamify-card img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.gamify-card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.gamify-card p {
+  font-size: 1rem;
+  color: #718096;
+}
+
+/* Benefits Section */
+.benefits-section {
+  padding: 5rem 2rem;
+  background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+  text-align: center;
+}
+
+.benefits-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.benefit-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.benefit-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.benefit-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.benefit-card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.benefit-card p {
+  font-size: 1rem;
+  color: #718096;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-section {
+    height: calc(100vh - 4.5rem); /* Giữ chiều cao vừa khung hình */
+    padding: 1rem 1rem; /* Giảm padding cho mobile */
+  }
+
+  .hero-content h1 {
+    font-size: 2.2rem; /* Thu nhỏ thêm cho mobile */
+  }
+
+  .hero-content p {
+    font-size: 0.9rem;
+  }
+
+  .hero-btn {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .carousel-slide {
+    height: 250px; /* Giảm chiều cao carousel cho mobile */
+  }
+
+  .carousel-caption h2 {
+    font-size: 1.1rem;
+  }
+
+  .carousel-caption p {
+    font-size: 0.8rem;
+  }
+
+  .carousel-dots {
+    bottom: 0.3rem;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .hero-content {
+    margin-bottom: 1rem; /* Giảm margin để vừa khung */
+  }
+
+  .gamify-section,
+  .benefits-section {
+    padding: 3rem 1rem;
+  }
+
+  .section-content {
+    margin-bottom: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-content h1 {
+    font-size: 1.8rem;
+  }
+
+  .hero-content p {
+    font-size: 0.8rem;
+  }
+
+  .carousel-slide {
+    height: 180px; /* Giảm thêm cho màn hình nhỏ */
+  }
+
+  .hero-btn {
+    padding: 0.4rem 1.2rem;
+    font-size: 0.8rem;
+  }
+
+  .carousel-caption h2 {
+    font-size: 1rem;
+  }
+
+  .carousel-caption p {
+    font-size: 0.7rem;
+  }
+}
