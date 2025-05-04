@@ -176,7 +176,7 @@ const TreeXPLogTable = () => {
                                     {item.logId}
                                 </td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                    {item.taskId === null ? 'none' : taskData && taskData.find((task) => task.taskId === item.taskId)?.taskName}
+                                    {item.taskId === null ? 'None' : taskData && taskData.find((task) => task.taskId === item.taskId)?.taskName}
                                 </td>
                                 <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                     {item.activityType === 0 ? 'Task XP'

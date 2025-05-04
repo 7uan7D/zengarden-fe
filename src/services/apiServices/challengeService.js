@@ -150,3 +150,17 @@ export async function SelectWinnerByChallengeId(challengeId, winners) {
     );
     return response.data;
 }
+
+export async function HandleExpiredChallenges() {
+    const token = localStorage.getItem("token");
+    const response = await axios.post(
+        `/Challenges/handle-expired`,
+        {},
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
+}
