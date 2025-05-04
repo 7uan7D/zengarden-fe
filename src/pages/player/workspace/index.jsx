@@ -121,219 +121,10 @@ export default function Workspace() {
     }
   }, [userTreeId]);
 
-  /** Khôi phục currentTask từ localStorage */
-  useEffect(() => {
-    const saved = localStorage.getItem("currentTask");
-    if (saved && tasks.length > 0) {
-      const {
-        column,
-        taskIndex,
-        time,
-        totalTime,
-        workDuration,
-        breakTime,
-        lastUpdated,
-        isRunning: savedIsRunning,
-      } = JSON.parse(saved);
-
-      const task = tasks[taskIndex];
-      if (task && column === "simple") {
-        const elapsed = Math.floor((Date.now() - lastUpdated) / 1000);
-        const updatedTime = savedIsRunning ? Math.max(time - elapsed, 0) : time;
-
-        setCurrentTask({
-          taskIndex,
-          time: updatedTime,
-          totalTime,
-          workDuration,
-          breakTime,
-          lastUpdated: Date.now(),
-          status: task.status,
-        });
-        setIsRunning(savedIsRunning && updatedTime > 0);
-      }
-    }
-  }, [tasks]);
-
-  /** Logic chạy Timer cho task */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (currentTask && isRunning && currentTask.time > 0 && ![2, 3, 4].includes(currentTask.status)) {
-        const now = Date.now();
-        const elapsed = Math.floor((now - currentTask.lastUpdated) / 1000);
-        setCurrentTask((prev) => ({
-          ...prev,
-          time: Math.max(prev.time - elapsed, 0),
-          lastUpdated: now,
-        }));
-      } else if (currentTask && currentTask.time === 0) {
-        setTasks((prev) => {
-          const updated = [...prev];
-          updated[currentTask.taskIndex] = {
-            ...updated[currentTask.taskIndex],
-            status: 4,
-          };
-          return updated;
-        });
-        setCurrentTask(null);
-        setIsRunning(false);
-        localStorage.removeItem("currentTask");
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [currentTask, isRunning]);
-
-  /** Định dạng thời gian cho timer */
-  const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
-  };
-
-  /** Bắt đầu chạy task */
-  const startTimer = async (taskIndex) => {
-    const task = tasks[taskIndex];
-    const totalDurationSeconds = task.totalDuration * 60;
-    const initialTime = task.remainingTime
-      ? typeof task.remainingTime === "string"
-        ? timeStringToSeconds(task.remainingTime)
-        : task.remainingTime * 60
-      : totalDurationSeconds;
-
-    try {
-      await StartTask(task.taskId);
-    } catch (error) {
-      console.error("Failed to start task:", error);
-      return;
-    }
-
-    setTasks((prev) => {
-      const updated = [...prev];
-      updated[taskIndex] = { ...updated[taskIndex], status: 1 };
-      return updated;
-    });
-
-    setCurrentTask({
-      taskIndex,
-      time: initialTime,
-      totalTime: totalDurationSeconds,
-      workDuration: task.workDuration * 60,
-      breakTime: task.breakTime * 60,
-      lastUpdated: Date.now(),
-      status: 1,
-    });
-    setIsRunning(true);
-    localStorage.setItem("currentTask", JSON.stringify({
-      column: "simple",
-      taskIndex,
-      time: initialTime,
-      totalTime: totalDurationSeconds,
-      workDuration: task.workDuration * 60,
-      breakTime: task.breakTime * 60,
-      lastUpdated: Date.now(),
-      isRunning: true,
-    }));
-  };
-
-  /** Chuyển đổi trạng thái chạy/pause của task */
-  const toggleTimer = async (taskIndex) => {
-    const task = tasks[taskIndex];
-    const totalDurationSeconds = task.totalDuration * 60;
-
-    if (isRunning) {
-      try {
-        await PauseTask(task.taskId);
-      } catch (error) {
-        console.error("Failed to pause task:", error);
-      }
-      setTasks((prev) => {
-        const updated = [...prev];
-        updated[taskIndex] = { ...updated[taskIndex], status: 2 };
-        return updated;
-      });
-      setCurrentTask((prev) => ({
-        ...prev,
-        lastUpdated: Date.now(),
-        status: 2,
-      }));
-      setIsRunning(false);
-      localStorage.setItem("currentTask", JSON.stringify({
-        ...JSON.parse(localStorage.getItem("currentTask")),
-        isRunning: false,
-        status: 2,
-      }));
-    } else {
-      try {
-        await StartTask(task.taskId);
-      } catch (error) {
-        console.error("Failed to resume task:", error);
-      }
-      setTasks((prev) => {
-        const updated = [...prev];
-        updated[taskIndex] = { ...updated[taskIndex], status: 1 };
-        return updated;
-      });
-
-      const initialTime = task.remainingTime
-        ? typeof task.remainingTime === "string"
-          ? timeStringToSeconds(task.remainingTime)
-          : task.remainingTime * 60
-        : totalDurationSeconds;
-
-      setCurrentTask({
-        taskIndex,
-        time: initialTime,
-        totalTime: totalDurationSeconds,
-        workDuration: task.workDuration * 60,
-        breakTime: task.breakTime * 60,
-        lastUpdated: Date.now(),
-        status: 1,
-      });
-      setIsRunning(true);
-      localStorage.setItem("currentTask", JSON.stringify({
-        column: "simple",
-        taskIndex,
-        time: initialTime,
-        totalTime: totalDurationSeconds,
-        workDuration: task.workDuration * 60,
-        breakTime: task.breakTime * 60,
-        lastUpdated: Date.now(),
-        isRunning: true,
-        status: 1,
-      }));
-    }
-  };
-
-  /** Chuyển đổi thời gian dạng string sang giây */
-  const timeStringToSeconds = (timeStr) => {
-    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
-    return hours * 3600 + minutes * 60 + seconds;
-  };
-
-  /** Mở Pintura Image Editor */
-  const openImageEditor = (file) => {
-    const editor = openDefaultEditor({
-      src: file,
-      imageCropAspectRatio: 1,
-      onProcess: ({ dest }) => {
-        const editedUrl = URL.createObjectURL(dest);
-        setEditedImage(editedUrl);
-      },
-    });
-    editor.on("close", () => {});
-  };
-
-  /** Xử lý khi chọn file ảnh */
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      openImageEditor(file);
-    }
-  };
-
-  /** Kích hoạt input file */
-  const handleUploadClick = () => {
-    fileInputRef.current.click();
+  /** Xử lý thay đổi background */
+  const handleBackgroundChange = (url) => {
+    setBackgroundUrl(url);
+    // Có thể thêm logic để lưu background vào user config qua API nếu cần
   };
 
   /** Toggle sidebar */
@@ -402,7 +193,6 @@ export default function Workspace() {
           </Button>
         </div>
         <nav className="flex flex-col gap-2 p-2">
-          {/* phần hiển thị tên tab khi đang collapse */}
           <TooltipProvider>
             {sidebarTabs.map((tab) => (
               <Tooltip key={tab.name}>
@@ -478,7 +268,11 @@ export default function Workspace() {
               >
                 <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
                   <CardContent className="p-1">
-                    <FullMusicPlayer setPlaying={setIsPlaying} setCurrentIndex={setCurrentIndex} />
+                    <FullMusicPlayer
+                      setPlaying={setIsPlaying}
+                      setCurrentIndex={setCurrentIndex}
+                      onBackgroundChange={handleBackgroundChange}
+                    />
                   </CardContent>
                 </Card>
               </motion.div>
@@ -521,7 +315,9 @@ export default function Workspace() {
           {activeTab === "Image Editor" && (
             <div className="flex-1">
               <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
-                <Pintura />
+                <CardContent>
+                  <Pintura />
+                </CardContent>
               </Card>
             </div>
           )}
