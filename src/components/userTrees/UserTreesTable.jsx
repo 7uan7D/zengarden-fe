@@ -52,9 +52,9 @@ const UserTreesTable = () => {
         try {
             await UpdateTreeHealth(selectedUserTree)
             toast.success("User tree health updated successfully!")
-            // setTimeout(() => {
-            //     window.location.reload()
-            // }, 3000)
+            setTimeout(() => {
+                window.location.reload()
+            }, 3000)
         } catch (error) {
             console.error("Failed to update user tree health:", error)
             toast.error("Update user tree health failed!")
