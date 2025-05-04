@@ -18,6 +18,7 @@ import { toast } from "sonner"
 import AdminHeader from "@/components/common/AdminHeader"
 import { AutoPauseTasks, ResetDailyStatus, ResetWeeklyPriorities, UpdateOverdueTasks } from "@/services/apiServices/taskService"
 import { HandleExpiredChallenges } from "@/services/apiServices/challengeService"
+import UserTreesTable from "@/components/userTrees/userTreesTable"
 
 const DataRefreshModerate = () => {
     const [isLoading, setIsLoading] = useState(false)
@@ -26,6 +27,7 @@ const DataRefreshModerate = () => {
     const [openResetDailyStatus, setOpenResetDailyStatus] = useState(false)
     const [openAutoPause, setOpenAutoPause] = useState(false)
     const [openHandleExpiredChallenges, setOpenHandleExpiredChallenges] = useState(false)
+    const [openUpdateTreeHealth, setOpenUpdateTreeHealth] = useState(false)
 
     const handleUpdateOverdue = async () => {
         setIsLoading(true)
@@ -71,7 +73,7 @@ const DataRefreshModerate = () => {
             setIsLoading(false)
         }
     }
-
+    
     const handleHandleExpiredChallenges = async () => {
         setIsLoading(true)
         try {
@@ -111,6 +113,18 @@ const DataRefreshModerate = () => {
             <AdminHeader title={'Data Refresh Moderate'} />
 
             <main className='max-w-7xl mx-auto py-6 px-4 lg:px-8'>
+            <h2 className='text-2xl font-bold mb-4'>Challenges</h2>
+                <div className='flex items-center justify-between mb-4'>
+                    <Button
+                        className='bg-teal-700 text-gray hover:bg-teal-900'
+                        onClick={() => setOpenHandleExpiredChallenges(true)}
+                    >
+                        <Edit className='h-4 w-4' />
+                        Handle Expired Challenges
+                    </Button>
+                    <p className='text-gray-400 text-sm'>Handles expired challenges manually, updates the status of the challenges and participants.</p>
+                </div>
+
                 <h2 className='text-2xl font-bold mb-4'>Tasks</h2>
                 <div className='flex items-center justify-between mb-4'>
                     <Button
@@ -156,17 +170,52 @@ const DataRefreshModerate = () => {
                     <p className='text-gray-400 text-sm'>Automatically pause tasks that have been running too long.</p>
                 </div>
 
-                <h2 className='text-2xl font-bold mb-4'>Challenges</h2>
+                <h2 className='text-2xl font-bold mb-4'>User Trees</h2>
                 <div className='flex items-center justify-between mb-4'>
-                    <Button
-                        className='bg-teal-700 text-gray hover:bg-teal-900'
-                        onClick={() => setOpenHandleExpiredChallenges(true)}
-                    >
-                        <Edit className='h-4 w-4' />
-                        Handle Expired Challenges
-                    </Button>
-                    <p className='text-gray-400 text-sm'>Handles expired challenges manually, updates the status of the challenges and participants.</p>
+                    <p/>
+                    <p className='text-gray-400 text-sm'>Updates the health of a specific tree (based on User Tree ID).</p>
                 </div>
+                <UserTreesTable />
+
+                <Dialog open={openHandleExpiredChallenges} onOpenChange={setOpenHandleExpiredChallenges}>
+                    <DialogContent className='dialog-overlay bg-gray-800 text-white'>
+                        <DialogHeader>
+                            <DialogTitle>Handle Expired Challenges</DialogTitle>
+                        </DialogHeader>
+
+                        <Tabs className='w-[462px]'>
+                            <TabsContent className='p-4'>
+                                <Card className='bg-gray-800 text-white'>
+                                    <CardHeader>
+                                        <CardDescription className='text-gray-400'>
+                                            Handles expired challenges manually, updates the status of the challenges and participants.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className='space-y-2 bg-gray-800'>
+                                        <div className='space-y-1'>
+                                            <Label>Do you want to handle expired challenges?</Label>
+                                        </div>
+                                    </CardContent>
+                                    <CardFooter>
+                                        <Button
+                                            className='bg-[#83aa6c] text-white'
+                                            onClick={handleHandleExpiredChallenges}
+                                            disabled={isLoading}
+                                        >
+                                            Handle
+                                        </Button>
+                                        <Button
+                                            className='bg-red-400 text-white ml-2'
+                                            onClick={() => setOpenHandleExpiredChallenges(false)}
+                                        >
+                                            Exit
+                                        </Button>
+                                    </CardFooter>
+                                </Card>
+                            </TabsContent>
+                        </Tabs>
+                    </DialogContent>
+                </Dialog>
 
                 <Dialog open={openUpdateOverdue} onOpenChange={setOpenUpdateOverdue}>
                     <DialogContent className='dialog-overlay bg-gray-800 text-white'>
@@ -237,7 +286,7 @@ const DataRefreshModerate = () => {
                                         </Button>
                                         <Button
                                             className='bg-red-400 text-white ml-2'
-                                            onClick={() => setResetWeeklyPriorities(false)}
+                                            onClick={() => setOpenResetWeeklyPriorities(false)}
                                         >
                                             Exit
                                         </Button>
@@ -327,46 +376,7 @@ const DataRefreshModerate = () => {
                         </Tabs>
                     </DialogContent>
                 </Dialog>
-
-                <Dialog open={openHandleExpiredChallenges} onOpenChange={setOpenHandleExpiredChallenges}>
-                    <DialogContent className='dialog-overlay bg-gray-800 text-white'>
-                        <DialogHeader>
-                            <DialogTitle>Handle Expired Challenges</DialogTitle>
-                        </DialogHeader>
-
-                        <Tabs className='w-[462px]'>
-                            <TabsContent className='p-4'>
-                                <Card className='bg-gray-800 text-white'>
-                                    <CardHeader>
-                                        <CardDescription className='text-gray-400'>
-                                            Handles expired challenges manually, updates the status of the challenges and participants.
-                                        </CardDescription>
-                                    </CardHeader>
-                                    <CardContent className='space-y-2 bg-gray-800'>
-                                        <div className='space-y-1'>
-                                            <Label>Do you want to handle expired challenges?</Label>
-                                        </div>
-                                    </CardContent>
-                                    <CardFooter>
-                                        <Button
-                                            className='bg-[#83aa6c] text-white'
-                                            onClick={handleHandleExpiredChallenges}
-                                            disabled={isLoading}
-                                        >
-                                            Handle
-                                        </Button>
-                                        <Button
-                                            className='bg-red-400 text-white ml-2'
-                                            onClick={() => setOpenHandleExpiredChallenges(false)}
-                                        >
-                                            Exit
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-                            </TabsContent>
-                        </Tabs>
-                    </DialogContent>
-                </Dialog>
+                
             </main>
         </div>
     )
