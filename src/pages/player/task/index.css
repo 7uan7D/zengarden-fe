@@ -15,6 +15,7 @@
 .react-time-picker__inputGroup input {
   font-size: 0.875rem;
   color: #374151;
+  border: none !important;
 } /* Trang trí chữ trong TimePicker với kích thước và màu chữ tối ưu cho đọc */
 
 /* Tree Header - Giao diện phần đầu hiển thị cây */

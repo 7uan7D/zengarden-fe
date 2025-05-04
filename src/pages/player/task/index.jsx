@@ -32,6 +32,7 @@ import { useTreeExperience } from "@/context/TreeExperienceContext";
 import { GetBagItems } from "@/services/apiServices/itemService";
 import { CircleCheckBig, CircleX } from "lucide-react";
 import "../task/index.css";
+//api task
 import {
   GetTaskByUserTreeId,
   StartTask,
@@ -39,6 +40,7 @@ import {
   CompleteTask,
   CreateTask,
 } from "@/services/apiServices/taskService";
+// thư viện kéo thả
 import {
   DndContext,
   closestCenter,
@@ -65,12 +67,13 @@ import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsServ
 import { SortableTask } from "./SortableTask";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
+// Component con để chọn ngày và giờ cho task
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const selectedDate = date ? new Date(date) : undefined;
   const formattedTime = date
-    ? new Date(date).toISOString().split("T")[1].slice(0, 5)
-    : "00:00";
+    ? format(new Date(date), "hh:mm a") // Changed to AM/PM format
+    : "12:00 AM";
 
   const handleDateSelect = useCallback(
     (newDate) => {
@@ -112,6 +115,7 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
           onChange={handleTimeChange}
           value={formattedTime}
           disableClock={true}
+          format="hh:mm a" // Set to AM/PM format
           className="h-10 w-[100px] text-center border-gray-300 rounded-lg focus:border-green-500 focus:ring focus:ring-green-200 transition-all"
           clearIcon={null}
           clockIcon={null}
@@ -121,11 +125,13 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   );
 };
 
+// Hàm chuyển đổi startDate sang định dạng so sánh được (YYYYMMDD)
 const parseDate = (dateStr) => {
   const [day, month, year] = dateStr.split("/").map(Number);
   return year * 10000 + month * 100 + day;
 };
 
+// Hàm lấy ngày hiện tại ở định dạng DD/MM/YYYY
 const getCurrentDateStr = () => {
   const today = new Date();
   const day = String(today.getDate()).padStart(2, "0");
@@ -142,6 +148,8 @@ export default function TaskPage() {
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newTreeName, setNewTreeName] = useState("");
+
+  // Task
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
   const [activeTabs, setActiveTabs] = useState({
@@ -747,10 +755,18 @@ export default function TaskPage() {
 
   const handleTimeChange = useCallback((field, time) => {
     if (!time) return;
+    // Convert AM/PM time to 24-hour format for storage
+    const [timePart, period] = time.split(" ");
+    let [hours, minutes] = timePart.split(":").map(Number);
+    if (period === "PM" && hours !== 12) hours += 12;
+    if (period === "AM" && hours === 12) hours = 0;
+    const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:00.000Z`;
     setTaskCreateData((prev) => ({
       ...prev,
       [field]: prev[field]
-        ? prev[field].split("T")[0] + "T" + time + ":00.000Z"
+        ? prev[field].split("T")[0] + "T" + formattedTime
         : null,
     }));
   }, []);
@@ -940,7 +956,7 @@ export default function TaskPage() {
                                     : "low"
                                 } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
                                 onClick={(e) => {
-                                  e.stopPropagation();
+                                  e.stopPropagation(); // Prevent triggering parent click
                                   setSelectedTask(task);
                                   setIsTaskInfoDialogOpen(true);
                                 }}
@@ -1061,7 +1077,8 @@ export default function TaskPage() {
                                     currentTaskStatus !== 0
                                   ) && (
                                     <Button
-                                      onClick={() =>
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Prevent triggering card click
                                         handleTaskAction(
                                           columnKey,
                                           index,
@@ -1070,8 +1087,8 @@ export default function TaskPage() {
                                             : currentTaskStatus === 1
                                             ? "pause"
                                             : "resume"
-                                        )
-                                      }
+                                        );
+                                      }}
                                       className={
                                         currentTaskStatus === 1
                                           ? "bg-yellow-500 hover:bg-yellow-600"
@@ -1120,13 +1137,14 @@ export default function TaskPage() {
                                     remainingTime >= 0 &&
                                     currentTaskStatus !== 0 && (
                                       <Button
-                                        onClick={() =>
+                                        onClick={(e) => {
+                                          e.stopPropagation(); // Prevent triggering card click
                                           handleTaskAction(
                                             columnKey,
                                             index,
                                             "finish"
-                                          )
-                                        }
+                                          );
+                                        }}
                                         className="bg-orange-500 hover:bg-orange-600"
                                       >
                                         Finish
@@ -1574,11 +1592,11 @@ export default function TaskPage() {
                   </p>
                   <p>
                     <strong>Start Date:</strong>{" "}
-                    {format(new Date(taskCreateData.startDate), "PPP HH:mm")}
+                    {format(new Date(taskCreateData.startDate), "PPP hh:mm a")}
                   </p>
                   <p>
                     <strong>End Date:</strong>{" "}
-                    {format(new Date(taskCreateData.endDate), "PPP HH:mm")}
+                    {format(new Date(taskCreateData.endDate), "PPP hh:mm a")}
                   </p>
                   <p>
                     <strong>Focus Method:</strong>{" "}
