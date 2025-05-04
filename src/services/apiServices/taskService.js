@@ -71,3 +71,23 @@ export async function ChangePriority(userTreeId, reorderedTasks) {
   );
   return response.data;
 }
+
+export async function UpdateOverdueTasks() {
+  const response = await axios.post(`/Task/update-overdue`);
+  return response.data;
+}
+
+export async function ResetWeeklyPriorities() {
+  const response = await axios.post(`/Task/reset-weekly-priorities`);
+  return response.data;
+}
+
+export async function ResetDailyStatus() {
+  const response = await axios.post(`/Task/reset-daily-status`);
+  return response.data;
+}
+
+export async function AutoPauseTasks() {
+  const response = await axios.post(`/Task/auto-pause`);
+  return response.data;
+}

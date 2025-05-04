@@ -19,3 +19,15 @@ export async function GetUserTreeByOwnerId(ownerId) {
   );
   return response.data;
 }
+
+export async function UpdateTreeHealth(userTreeId) {
+  const response = await axios.post(
+    `/UserTrees/test/update-tree-health/${userTreeId}`
+  );
+  return response.data;
+}
+
+export async function GetAllUserTrees() {
+  const response = await axios.get(`/UserTrees`);
+  return response.data;
+}

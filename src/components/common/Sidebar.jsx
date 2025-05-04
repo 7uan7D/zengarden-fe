@@ -19,6 +19,7 @@ const SIDEBAR_ITEMS = [
     { name: 'Challenges Moderate', icon: Trophy, color: '#F59E0B', href: '/challenges-moderate' },
     { name: 'Items Moderate', icon: ShoppingBag, color: '#8B5CF6', href: '/items-moderate' },
     { name: 'Packages Moderate', icon: PackageOpen, color: '#2FE123', href: '/packages-moderate' },
+    { name: 'Data Refresh Moderate', icon: CalendarCheck, color: '#3B82F6', href: '/data-refresh-moderate' },
     // { name: 'Sales', icon: DollarSign, color: '#10B981', href: '/sales' },
     // { name: 'Analytics', icon: TrendingUp, color: '#3B82F6', href: '/analytics' },
     { name: 'Settings', icon: Settings, color: '#6366F1', href: '/settings' },
