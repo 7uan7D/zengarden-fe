@@ -18,7 +18,7 @@ import { toast } from "sonner"
 import AdminHeader from "@/components/common/AdminHeader"
 import { AutoPauseTasks, ResetDailyStatus, ResetWeeklyPriorities, UpdateOverdueTasks } from "@/services/apiServices/taskService"
 import { HandleExpiredChallenges } from "@/services/apiServices/challengeService"
-import UserTreesTable from "@/components/userTrees/userTreesTable"
+import UserTreesTable from "@/components/userTrees/UserTreesTable"
 
 const DataRefreshModerate = () => {
     const [isLoading, setIsLoading] = useState(false)
