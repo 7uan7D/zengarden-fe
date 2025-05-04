@@ -1,6 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
@@ -33,7 +32,6 @@ import { useTreeExperience } from "@/context/TreeExperienceContext";
 import { GetBagItems } from "@/services/apiServices/itemService";
 import { CircleCheckBig, CircleX } from "lucide-react";
 import "../task/index.css";
-//api task
 import {
   GetTaskByUserTreeId,
   StartTask,
@@ -41,7 +39,6 @@ import {
   CompleteTask,
   CreateTask,
 } from "@/services/apiServices/taskService";
-// thư viện kéo thả
 import {
   DndContext,
   closestCenter,
@@ -51,12 +48,8 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  arrayMove,
-  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { useDndMonitor } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 import { ChangePriority } from "@/services/apiServices/taskService";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -70,8 +63,8 @@ import "react-time-picker/dist/TimePicker.css";
 import "react-clock/dist/Clock.css";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
 import { SortableTask } from "./SortableTask";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 
-// Component con để chọn ngày và giờ cho task
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const selectedDate = date ? new Date(date) : undefined;
@@ -128,13 +121,11 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   );
 };
 
-// Hàm chuyển đổi startDate sang định dạng so sánh được (YYYYMMDD)
 const parseDate = (dateStr) => {
   const [day, month, year] = dateStr.split("/").map(Number);
   return year * 10000 + month * 100 + day;
 };
 
-// Hàm lấy ngày hiện tại ở định dạng DD/MM/YYYY
 const getCurrentDateStr = () => {
   const today = new Date();
   const day = String(today.getDate()).padStart(2, "0");
@@ -144,7 +135,6 @@ const getCurrentDateStr = () => {
 };
 
 export default function TaskPage() {
-  // Khai báo các state cần thiết
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
   const [currentTree, setCurrentTree] = useState(0);
   const [userTrees, setUserTrees] = useState([]);
@@ -152,8 +142,6 @@ export default function TaskPage() {
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newTreeName, setNewTreeName] = useState("");
-
-  // Task
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
   const [activeTabs, setActiveTabs] = useState({
@@ -162,73 +150,120 @@ export default function TaskPage() {
     complex: "all",
     challenge: "all",
   });
-
   const [taskData, setTaskData] = useState({
     daily: [],
     simple: [],
     complex: [],
     challenge: [],
   });
+  const [tempTaskData, setTempTaskData] = useState({
+    daily: [],
+    simple: [],
+    complex: [],
+    challenge: [],
+  });
+  const [isSwapDialogOpen, setIsSwapDialogOpen] = useState(false);
+  const [swapTasks, setSwapTasks] = useState({ active: null, over: null });
+  const [timers, setTimers] = useState({});
+  const [activeTaskKey, setActiveTaskKey] = useState(null);
+  const intervalRefs = useRef({});
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
 
-  const [timers, setTimers] = useState({}); // state quản lý thời gian cho các task
-  const [activeTaskKey, setActiveTaskKey] = useState(null); // key của task đang hoạt động
-  const intervalRefs = useRef({}); // tham chiếu đến các interval để dọn dẹp sau này
-
-  //dnd
-
-  const sensors = useSensors(useSensor(PointerSensor));
+  const handleDragStart = (event, columnKey) => {
+    setTempTaskData(taskData);
+    console.log("Drag started:", event.active.id);
+  };
 
   const handleDragEnd = async (event, columnKey) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id) {
+      console.log("Drag cancelled: No over task or same task");
+      return;
+    }
 
-    const currentTasks = sortedTasksByColumn[columnKey] || [];
-    const oldIndex = currentTasks.findIndex(
-      (task) => task.taskId === active.id
-    );
-    const newIndex = currentTasks.findIndex((task) => task.taskId === over.id);
-    const userTreeId = selectedTree?.userTreeId;
+    const currentTasks = taskData[columnKey] || [];
+    const activeTask = currentTasks.find((task) => task.taskId === active.id);
+    const overTask = currentTasks.find((task) => task.taskId === over.id);
 
-    if (oldIndex === -1 || newIndex === -1) return;
+    if (!activeTask || !overTask) {
+      console.log("Drag failed: Active or over task not found");
+      return;
+    }
 
-    // Clone danh sách để tránh mutate
-    const newTasks = [...currentTasks];
+    if (activeTask.status === 1 || activeTask.status === 2 || overTask.status === 1 ||overTask.status === 2) {
+      toast.error("Cannot swap priorities with an active task!");
+      console.log("Drag failed: Active task detected");
+      return;
+    }
 
-    // Hoán đổi vị trí
-    [newTasks[oldIndex], newTasks[newIndex]] = [
-      newTasks[newIndex],
-      newTasks[oldIndex],
+    // Lưu thông tin task và mở dialog xác nhận
+    setSwapTasks({ active: activeTask, over: overTask });
+    setIsSwapDialogOpen(true);
+    console.log("Drag ended: Dialog opened for swap confirmation");
+  };
+
+  const confirmSwap = async (columnKey) => {
+    const { active, over } = swapTasks;
+    const currentTasks = taskData[columnKey] || [];
+    const activeTask = currentTasks.find((task) => task.taskId === active.taskId);
+    const overTask = currentTasks.find((task) => task.taskId === over.taskId);
+
+    if (!activeTask || !overTask) return;
+
+    const activePriority = activeTask.priority;
+    const overPriority = overTask.priority;
+
+    const updatedTasks = currentTasks.map((task) => {
+      if (task.taskId === active.taskId) {
+        return { ...task, priority: overPriority };
+      }
+      if (task.taskId === over.taskId) {
+        return { ...task, priority: activePriority };
+      }
+      return task;
+    });
+
+    updatedTasks.sort((a, b) => a.priority - b.priority);
+
+    const payload = [
+      { taskId: activeTask.taskId, priority: overPriority },
+      { taskId: overTask.taskId, priority: activePriority },
     ];
 
-    // Cập nhật lại priority
-    const reordered = newTasks.map((task, index) => ({
-      ...task,
-      priority: index + 1,
-    }));
-
-    const payload = reordered.map(({ taskId, priority }) => ({
-      taskId,
-      priority,
-    }));
-
     try {
-      await ChangePriority(userTreeId, payload);
-      setSortedTasksByColumn((prev) => ({
+      await ChangePriority(selectedTree?.userTreeId, payload);
+      setTaskData((prev) => ({
         ...prev,
-        [columnKey]: reordered,
+        [columnKey]: updatedTasks,
       }));
+      toast.success(
+        `Task "${activeTask.taskName}" (priority ${activePriority}) swapped with Task "${overTask.taskName}" (priority ${overPriority})`
+      );
+      console.log(
+        "Swap confirmed: Swapped",
+        activeTask.taskName,
+        "to priority",
+        overPriority,
+        "and",
+        overTask.taskName,
+        "to priority",
+        activePriority
+      );
     } catch (err) {
-      console.error("Failed to reorder", err);
+      console.error("Failed to swap tasks", err);
+      toast.error("Failed to swap tasks");
+    } finally {
+      setIsSwapDialogOpen(false);
+      setSwapTasks({ active: null, over: null });
     }
   };
 
-  //dnd
-  const [sortedTasksByColumn, setSortedTasksByColumn] = useState({});
-
-  const [activeId, setActiveId] = useState(null);
-  const [overId, setOverId] = useState(null);
-
-  // Tree
   const { refreshXp } = useUserExperience();
   const { treeExp, refreshTreeExp } = useTreeExperience();
 
@@ -243,7 +278,6 @@ export default function TaskPage() {
       ? `/images/lv${treeLevel}.png`
       : selectedFinalTree?.imageUrl || "/images/default.png";
 
-  // Fetch trees và user data
   useEffect(() => {
     const fetchTrees = async () => {
       try {
@@ -320,16 +354,12 @@ export default function TaskPage() {
     }
   };
 
-  // Task từ đây xuống dưới
-
-  // usertreeid cho task
   useEffect(() => {
     if (selectedTree?.userTreeId) {
       fetchTasks(selectedTree.userTreeId);
     }
   }, [selectedTree]);
 
-  // lấy dữ liệu task
   const fetchTasks = async (userTreeId) => {
     try {
       const data = await GetTaskByUserTreeId(userTreeId);
@@ -365,18 +395,17 @@ export default function TaskPage() {
         }
       });
 
-      // Sắp xếp theo priority
       for (const type in groupedTasks) {
         groupedTasks[type].sort((a, b) => a.priority - b.priority);
       }
 
       setTaskData(groupedTasks);
+      setTempTaskData(groupedTasks);
     } catch (error) {
       console.error("Lỗi lấy task:", error);
     }
   };
 
-  // Helper chuyển thời gian kiểu "00:30:00" thành phút
   const convertToMinutes = (timeString) => {
     const [hours, minutes, seconds] = timeString.split(":").map(Number);
     return hours * 60 + minutes + seconds / 60;
@@ -390,7 +419,6 @@ export default function TaskPage() {
     };
   }, []);
 
-  // Hàm định dạng thời gian từ giây sang phút:giây
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -399,7 +427,6 @@ export default function TaskPage() {
       .padStart(2, "0")}`;
   };
 
-  // Handle Start/Pause/Resume/Finish actions
   const handleTaskAction = async (columnKey, index, action) => {
     const taskKey = `${columnKey}-${index}`;
     const task = taskData[columnKey][index];
@@ -408,7 +435,6 @@ export default function TaskPage() {
       setLoadingTaskKey(taskKey);
 
       if (action === "start" || action === "resume") {
-        // Gọi API StartTask (cả khi start và resume đều gọi cùng API này)
         await StartTask(task.taskId);
 
         setActiveTaskKey(taskKey);
@@ -513,7 +539,6 @@ export default function TaskPage() {
             };
           });
         }, 1000);
-        //task overlay
         localStorage.setItem(
           "currentTask",
           JSON.stringify({
@@ -521,7 +546,7 @@ export default function TaskPage() {
             taskName: task.taskName,
             title: task.title,
             remainingTime: task.remainingTime,
-            status: 1, // running
+            status: 1,
             columnKey,
             index,
             taskKey,
@@ -551,14 +576,13 @@ export default function TaskPage() {
           clearInterval(intervalRefs.current[taskKey]);
           delete intervalRefs.current[taskKey];
         }
-        //task overlay
         localStorage.setItem(
           "currentTask",
           JSON.stringify({
             taskId: task.taskId,
             title: task.title,
             remainingTime: Math.round(currentTimer?.remainingTime || 0),
-            status: 2, // paused
+            status: 2,
             columnKey,
             index,
             taskKey,
@@ -595,7 +619,6 @@ export default function TaskPage() {
       taskData[columnKey].forEach((task, index) => {
         const taskKey = `${columnKey}-${index}`;
         if (task.status === 1) {
-          // đang chạy
           newTimers[taskKey] = {
             isWorkPhase: true,
             currentWorkTime: task.workDuration * 60,
@@ -607,7 +630,6 @@ export default function TaskPage() {
             totalBreakCompleted: 0,
           };
         } else if (task.status === 2) {
-          // bị pause
           newTimers[taskKey] = {
             isWorkPhase: true,
             currentWorkTime: task.workDuration * 60,
@@ -625,7 +647,6 @@ export default function TaskPage() {
     setTimers(newTimers);
   }, [taskData]);
 
-  // State và logic cho Dialog tạo task
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [taskType, setTaskType] = useState("");
   const [taskCreateData, setTaskCreateData] = useState({
@@ -658,6 +679,7 @@ export default function TaskPage() {
       userTreeId: selectedTree?.userTreeId || null,
     }));
     setIsTaskDialogOpen(true);
+    setStep(1);
   };
 
   const handleNext = async () => {
@@ -674,6 +696,7 @@ export default function TaskPage() {
         setStep(2);
       } catch (error) {
         console.error("Error fetching suggestions", error);
+        toast.error("Failed to fetch focus method suggestions");
       }
     } else {
       setStep(3);
@@ -702,9 +725,12 @@ export default function TaskPage() {
         workDuration: "",
         breakTime: "",
       });
+      setFocusSuggestion(null);
       fetchTasks(selectedTree?.userTreeId);
+      toast.success("Task created successfully!");
     } catch (error) {
       console.error("Error creating task:", error);
+      toast.error("Failed to create task");
     }
   };
 
@@ -729,7 +755,6 @@ export default function TaskPage() {
     }));
   }, []);
 
-  //dnd
   const renderTaskColumn = (title, taskList, columnKey) => {
     const filteredTasks =
       activeTabs[columnKey] === "all"
@@ -738,49 +763,20 @@ export default function TaskPage() {
         ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
         : taskList.filter((task) => task.status === 3);
 
-    // Sắp xếp theo priority
     const sortedTasks = [...filteredTasks].sort(
       (a, b) => a.priority - b.priority
     );
 
-    // Nếu chưa lưu, set ngay vào state để đồng bộ
-    useEffect(() => {
-      if (!sortedTasksByColumn[columnKey]) {
-        setSortedTasksByColumn((prev) => ({
-          ...prev,
-          [columnKey]: sortedTasks,
-        }));
-      }
-    }, [filteredTasks]);
-
-    const InnerSortableTasks = ({
-      sortedTasks,
-      columnKey,
-      timers,
-      overId,
-      setOverId,
-      setActiveId,
-      // các props khác...
-    }) => {
-      // ✅ Hook này nằm trong cây của DndContext nên OK
-      useDndMonitor({
-        onDragStart: ({ active }) => setActiveId(active.id),
-        onDragOver: ({ over }) => setOverId(over?.id || null),
-        onDragEnd: () => {
-          setActiveId(null);
-          setOverId(null);
-        },
-      });
-
-      return (
-        <SortableContext
-          items={sortedTasks.map((task) => task.taskId)}
-          strategy={verticalListSortingStrategy}
-        >
-          {/* render ScrollArea và tasks ở đây */}
-        </SortableContext>
-      );
-    };
+    // Tính chiều cao động: 100px/task + 12px gap giữa các task + 16px padding top/bottom
+    const taskHeight = 100; // Chiều cao mỗi task (px)
+    const gap = 12; // Khoảng cách giữa các task (px)
+    const padding = 16 * 2; // Padding top + bottom (px)
+    const calculatedHeight =
+      sortedTasks.length > 0
+        ? sortedTasks.length * taskHeight +
+          (sortedTasks.length - 1) * gap +
+          padding
+        : 150; // Chiều cao tối thiểu nếu không có task
 
     return (
       <div className="task-column-container">
@@ -824,120 +820,114 @@ export default function TaskPage() {
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
+            onDragStart={(event) => handleDragStart(event, columnKey)}
             onDragEnd={(event) => handleDragEnd(event, columnKey)}
+            modifiers={[restrictToVerticalAxis]}
           >
-            <InnerSortableTasks
-              sortedTasks={sortedTasks}
-              columnKey={columnKey}
-              timers={timers}
-              overId={overId}
-              setOverId={setOverId}
-              setActiveId={setActiveId}
-            />
             <SortableContext
               items={sortedTasks.map((task) => task.taskId)}
               strategy={verticalListSortingStrategy}
             >
-              <ScrollArea className="h-[400px] overflow-y-auto">
-                <div className="grid gap-3">
-                  {sortedTasks.map((task, index) => {
-                    const remainingTime = task.remainingTime || 0;
-                    const overdueTime = remainingTime < 0 ? -remainingTime : 0;
-                    const taskKey = `${columnKey}-${index}`;
-                    const timer = timers[taskKey] || {};
-                    const { totalWorkCompleted = 0, totalBreakCompleted = 0 } =
-                      timer;
+              <div
+                className="grid gap-3"
+                style={{ minHeight: `${calculatedHeight}px` }}
+              >
+                {sortedTasks.map((task, index) => {
+                  const remainingTime = task.remainingTime || 0;
+                  const overdueTime = remainingTime < 0 ? -remainingTime : 0;
+                  const taskKey = `${columnKey}-${index}`;
+                  const timer = timers[taskKey] || {};
+                  const { totalWorkCompleted = 0, totalBreakCompleted = 0 } =
+                    timer;
 
-                    const totalDurationSeconds = task.totalDuration * 60;
-                    const remainTime = task.remainingTime;
-                    const elapsedTime = totalDurationSeconds - remainTime;
-                    const cycleDuration =
-                      (task.workDuration + task.breakTime) * 60;
-                    const completedCycles = Math.floor(
-                      elapsedTime / cycleDuration
-                    );
-                    const timeInCurrentCycle = elapsedTime % cycleDuration;
+                  const totalDurationSeconds = task.totalDuration * 60;
+                  const remainTime = task.remainingTime;
+                  const elapsedTime = totalDurationSeconds - remainTime;
+                  const cycleDuration =
+                    (task.workDuration + task.breakTime) * 60;
+                  const completedCycles = Math.floor(
+                    elapsedTime / cycleDuration
+                  );
+                  const timeInCurrentCycle = elapsedTime % cycleDuration;
 
-                    let isWorkPhase = true;
-                    let currentWorkTime = task.workDuration * 60;
-                    let currentBreakTime = task.breakTime * 60;
+                  let isWorkPhase = true;
+                  let currentWorkTime = task.workDuration * 60;
+                  let currentBreakTime = task.breakTime * 60;
 
-                    if (timeInCurrentCycle < task.workDuration * 60) {
-                      isWorkPhase = true;
-                      currentWorkTime =
-                        task.workDuration * 60 - timeInCurrentCycle;
-                    } else {
-                      isWorkPhase = false;
-                      const timeIntoBreak =
-                        timeInCurrentCycle - task.workDuration * 60;
-                      currentBreakTime = task.breakTime * 60 - timeIntoBreak;
+                  if (timeInCurrentCycle < task.workDuration * 60) {
+                    isWorkPhase = true;
+                    currentWorkTime =
+                      task.workDuration * 60 - timeInCurrentCycle;
+                  } else {
+                    isWorkPhase = false;
+                    const timeIntoBreak =
+                      timeInCurrentCycle - task.workDuration * 60;
+                    currentBreakTime = task.breakTime * 60 - timeIntoBreak;
+                  }
+
+                  const phases = [];
+                  for (let i = 0; i < completedCycles; i++) {
+                    phases.push({
+                      type: "work",
+                      duration: task.workDuration * 60,
+                    });
+                    phases.push({
+                      type: "break",
+                      duration: task.breakTime * 60,
+                    });
+                  }
+
+                  if (timeInCurrentCycle < task.workDuration * 60) {
+                    phases.push({
+                      type: "work",
+                      duration: timeInCurrentCycle,
+                    });
+                  } else {
+                    phases.push({
+                      type: "work",
+                      duration: task.workDuration * 60,
+                    });
+                    phases.push({
+                      type: "break",
+                      duration: timeInCurrentCycle - task.workDuration * 60,
+                    });
+                  }
+
+                  const currentTaskStatus =
+                    task.status === 1 ? 1 : task.status === 2 ? 2 : 0;
+
+                  const getPriorityLabel = (priority) => {
+                    switch (priority) {
+                      case 1:
+                        return "1st";
+                      case 2:
+                        return "2nd";
+                      case 3:
+                        return "3rd";
+                      case 4:
+                        return "4th";
+                      default:
+                        return `${priority}th`;
                     }
+                  };
 
-                    // Tạo mảng các phase để render thanh tiến độ xen kẽ
-                    const phases = [];
-
-                    for (let i = 0; i < completedCycles; i++) {
-                      phases.push({
-                        type: "work",
-                        duration: task.workDuration * 60,
-                      });
-                      phases.push({
-                        type: "break",
-                        duration: task.breakTime * 60,
-                      });
-                    }
-
-                    // current phase
-                    if (timeInCurrentCycle < task.workDuration * 60) {
-                      phases.push({
-                        type: "work",
-                        duration: timeInCurrentCycle,
-                      });
-                    } else {
-                      phases.push({
-                        type: "work",
-                        duration: task.workDuration * 60,
-                      });
-                      phases.push({
-                        type: "break",
-                        duration: timeInCurrentCycle - task.workDuration * 60,
-                      });
-                    }
-
-                    const currentTaskStatus =
-                      task.status === 1 ? 1 : task.status === 2 ? 2 : 0;
-                    // Hàm chuyển priority thành nhãn (1st, 2nd, 3rd,...)
-                    const getPriorityLabel = (priority) => {
-                      switch (priority) {
-                        case 1:
-                          return "1st";
-                        case 2:
-                          return "2nd";
-                        case 3:
-                          return "3rd";
-                        case 4:
-                          return "4th";
-                        default:
-                          return `${priority}th`;
-                      }
-                    };
-
-                    return (
-                      <motion.div
-                        key={`${task.taskName}-${task.priority}`}
-                        initial={{ y: 10, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                  return (
+                    <motion.div
+                      key={`${task.taskName}-${task.priority}`}
+                      initial={{ y: 10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      <SortableTask
+                        key={task.taskId}
+                        task={task}
+                        columnKey={columnKey}
+                        index={index}
+                        setSelectedTask={setSelectedTask}
+                        setIsTaskInfoDialogOpen={setIsTaskInfoDialogOpen}
                       >
-                        <SortableTask
-                          key={task.taskId}
-                          task={task}
-                          columnKey={columnKey}
-                          index={index}
-                          overId={overId}
-                        >
-                          <Card className="task-item relative">
-                            {/* Thêm nhãn priority, chỉ áp dụng cho Simple, Complex, Challenge */}
+                        {({ dragHandleProps }) => (
+                          <Card className="task-item relative flex">
                             {["simple", "complex", "challenge"].includes(
                               columnKey
                             ) && (
@@ -948,19 +938,36 @@ export default function TaskPage() {
                                     : task.priority <= 4
                                     ? "medium"
                                     : "low"
-                                } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom`}
-                              >
-                                {getPriorityLabel(task.priority)}
-                              </div>
-                            )}
-                            <div className="flex-1 flex flex-col justify-between text-left">
-                              <div
-                                className="cursor-pointer"
-                                onClick={() => {
+                                } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setSelectedTask(task);
                                   setIsTaskInfoDialogOpen(true);
                                 }}
                               >
+                                {getPriorityLabel(task.priority)}
+                              </div>
+                            )}
+                            <div
+                              className="drag-handle w-8 bg-gray-100 flex items-center justify-center"
+                              {...dragHandleProps}
+                            >
+                              <svg
+                                className="w-5 h-5 text-gray-500"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M8 9h8M8 13h8M8 17h8"
+                                />
+                              </svg>
+                            </div>
+                            <div className="flex-1 flex flex-col justify-between text-left p-4">
+                              <div>
                                 <span className="text-gray-700 font-medium">
                                   {task.taskName}
                                 </span>
@@ -1030,7 +1037,7 @@ export default function TaskPage() {
                                   )}
                               </div>
                             </div>
-                            <div className="flex flex-col items-end gap-2">
+                            <div className="flex flex-col items-end gap-2 p-4">
                               {task.status === 3 ? (
                                 <span
                                   className="flex items-center gap-1 text-sm"
@@ -1076,7 +1083,7 @@ export default function TaskPage() {
                                         (currentTaskStatus === 0 &&
                                           activeTaskKey !== null &&
                                           activeTaskKey !== taskKey) ||
-                                        loadingTaskKey === taskKey // 🔒 Disable khi đang loading
+                                        loadingTaskKey === taskKey
                                       }
                                     >
                                       {loadingTaskKey === taskKey ? (
@@ -1129,12 +1136,12 @@ export default function TaskPage() {
                               )}
                             </div>
                           </Card>
-                        </SortableTask>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
+                        )}
+                      </SortableTask>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </SortableContext>
           </DndContext>
         </motion.div>
@@ -1142,7 +1149,6 @@ export default function TaskPage() {
     );
   };
 
-  // Task từ đây lên trên
   const progress = treeExp
     ? (treeExp.totalXp / (treeExp.totalXp + treeExp.xpToNextLevel)) * 100
     : 0;
@@ -1169,7 +1175,6 @@ export default function TaskPage() {
     fetchEquippedItems();
   }, []);
 
-  // Giao diện chính của TaskPage
   return (
     <motion.div
       className="p-6 max-w-full mx-auto w-full min-h-screen flex flex-col"
@@ -1318,56 +1323,62 @@ export default function TaskPage() {
           >
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{selectedTask?.taskName}</DialogTitle>
+                <DialogTitle>{selectedTask?.taskName || "Task Details"}</DialogTitle>
                 <DialogDescription>
-                  {selectedTask?.taskDescription}
+                  {selectedTask?.taskDescription || "No description available"}
                 </DialogDescription>
               </DialogHeader>
-              <div className="mt-4 space-y-2">
-                <p>
-                  <strong>Start Date:</strong> {selectedTask?.startDate}
-                </p>
-                <p>
-                  <strong>End Date:</strong> {selectedTask?.endDate}
-                </p>
-                <p>
-                  <strong>Status:</strong>{" "}
-                  {selectedTask?.status === 3
-                    ? "Completed"
-                    : selectedTask?.status === 4
-                    ? "Expired"
-                    : "In Progress"}
-                </p>
-                <p>
-                  <strong>Focus Method:</strong> {selectedTask?.focusMethodName}
-                </p>
-                <p>
-                  <strong>Total Duration:</strong> {selectedTask?.totalDuration}{" "}
-                  minutes
-                </p>
-                <p>
-                  <strong>Work Duration:</strong> {selectedTask?.workDuration}{" "}
-                  minutes
-                </p>
-                <p>
-                  <strong>Break Time:</strong> {selectedTask?.breakTime} minutes
-                </p>
-                <p>
-                  <strong>Tree:</strong> {selectedTask?.userTreeName}
-                </p>
-                <p>
-                  <strong>Task Type:</strong> {selectedTask?.taskTypeName}
-                </p>
-                <p>
-                  <strong>Priority:</strong> {selectedTask?.priority}
-                </p>
-                {selectedTask?.remainingTime !== null && (
+              {selectedTask && (
+                <div className="mt-4 space-y-2">
                   <p>
-                    <strong>Remaining Time:</strong>{" "}
-                    {formatTime(selectedTask?.remainingTime)}
+                    <strong>Start Date:</strong> {selectedTask.startDate}
                   </p>
-                )}
-              </div>
+                  <p>
+                    <strong>End Date:</strong> {selectedTask.endDate}
+                  </p>
+                  <p>
+                    <strong>Status:</strong>{" "}
+                    {selectedTask.status === 3
+                      ? "Completed"
+                      : selectedTask.status === 4
+                      ? "Expired"
+                      : selectedTask.status === 1
+                      ? "In Progress"
+                      : selectedTask.status === 2
+                      ? "Paused"
+                      : "Not Started"}
+                  </p>
+                  <p>
+                    <strong>Focus Method:</strong> {selectedTask.focusMethodName}
+                  </p>
+                  <p>
+                    <strong>Total Duration:</strong> {selectedTask.totalDuration}{" "}
+                    minutes
+                  </p>
+                  <p>
+                    <strong>Work Duration:</strong> {selectedTask.workDuration}{" "}
+                    minutes
+                  </p>
+                  <p>
+                    <strong>Break Time:</strong> {selectedTask.breakTime} minutes
+                  </p>
+                  <p>
+                    <strong>Tree:</strong> {selectedTask.userTreeName}
+                  </p>
+                  <p>
+                    <strong>Task Type:</strong> {selectedTask.taskTypeName}
+                  </p>
+                  <p>
+                    <strong>Priority:</strong> {selectedTask.priority}
+                  </p>
+                  {selectedTask.remainingTime !== null && (
+                    <p>
+                      <strong>Remaining Time:</strong>{" "}
+                      {formatTime(selectedTask.remainingTime)}
+                    </p>
+                  )}
+                </div>
+              )}
               <DialogFooter>
                 <Button onClick={() => setIsTaskInfoDialogOpen(false)}>
                   Close
@@ -1376,7 +1387,43 @@ export default function TaskPage() {
             </DialogContent>
           </Dialog>
 
-          {/* Dialog tạo task */}
+          <Dialog open={isSwapDialogOpen} onOpenChange={setIsSwapDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm Task Swap</DialogTitle>
+                <DialogDescription>
+                  Do you want to swap the positions of these tasks?
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4 space-y-2">
+                <p>
+                  <strong>Task 1:</strong> {swapTasks.active?.taskName} (Priority:{" "}
+                  {swapTasks.active?.priority})
+                </p>
+                <p>
+                  <strong>Task 2:</strong> {swapTasks.over?.taskName} (Priority:{" "}
+                  {swapTasks.over?.priority})
+                </p>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsSwapDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-green-600 text-white hover:bg-green-700"
+                  onClick={() =>
+                    confirmSwap(swapTasks.active?.taskTypeName?.toLowerCase())
+                  }
+                >
+                  Confirm
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
             <DialogContent className="max-w-lg bg-white rounded-xl shadow-2xl p-6 task-dialog">
               <DialogHeader className="relative bg-gradient-to-r from-green-500 to-teal-500 p-4 rounded-t-xl shadow-md">
@@ -1527,11 +1574,11 @@ export default function TaskPage() {
                   </p>
                   <p>
                     <strong>Start Date:</strong>{" "}
-                    {taskCreateData.startDate.toString()}
+                    {format(new Date(taskCreateData.startDate), "PPP HH:mm")}
                   </p>
                   <p>
                     <strong>End Date:</strong>{" "}
-                    {taskCreateData.endDate.toString()}
+                    {format(new Date(taskCreateData.endDate), "PPP HH:mm")}
                   </p>
                   <p>
                     <strong>Focus Method:</strong>{" "}
@@ -1569,7 +1616,7 @@ export default function TaskPage() {
                 {step === 3 && (
                   <Button
                     className="bg-green-600 text-white hover:bg-green-700"
-                    onClick={() => handleCreateTask(taskCreateData)}
+                    onClick={handleCreateTask}
                   >
                     Create
                   </Button>
@@ -1608,7 +1655,7 @@ export default function TaskPage() {
                   </span>
                   {equippedItems.map((item) => {
                     const { bagItemId, item: itemData } = item;
-                    const { name, type, itemDetail } = itemData || {};
+                    const { name, type, VERIFY: itemDetail } = itemData || {};
                     const mediaUrl = itemDetail?.mediaUrl;
 
                     return (

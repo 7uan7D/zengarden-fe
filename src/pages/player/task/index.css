@@ -239,3 +239,50 @@
   border-top-right-radius: 0.3rem;
   border-top-left-radius: 0;
 }
+
+.task-column-container {
+  position: relative;
+}
+
+.task-column {
+  position: relative;
+  overflow: visible !important; /* Ngăn task bị cắt khi kéo */
+}
+
+.task-item {
+  transition: border 0.2s ease;
+  position: relative;
+}
+
+.task-item:hover {
+  border: 2px solid #22c55e;
+}
+
+.drag-handle {
+  cursor: grab;
+  pointer-events: auto; /* Đảm bảo nhận sự kiện kéo */
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.priority-label {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  pointer-events: auto; /* Đảm bảo nhấp được */
+  z-index: 10; /* Đưa lên trên các phần tử khác */
+}
+
+.priority-label:hover {
+  filter: brightness(1.1);
+}
+
+.task-column .scroll-area {
+  scroll-behavior: smooth; /* Cuộn mượt khi kéo task */
+}
+
+.task-item.dragging {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Hiệu ứng nổi bật khi kéo */
+  transform: scale(1.02); /* Phóng to nhẹ khi kéo */
+}
