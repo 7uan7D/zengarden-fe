@@ -48,6 +48,7 @@ import parseJwt from "@/services/parseJwt";
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
 import { toast } from "sonner";
 import { GetAllTaskTypes } from "@/services/apiServices/taskTypeService";
+import { GetUserConfigByUserId } from "@/services/apiServices/userConfigService";
 
 export default function ChallengeDetails(props) {
   const propId = props.id;
@@ -61,6 +62,7 @@ export default function ChallengeDetails(props) {
   const [error, setError] = useState(null);
 
   const token = localStorage.getItem("token");
+
   // const [userChallengesData, setUserChallengesData] = useState([]);
   const [userChallenge, setUserChallenge] = useState(null);
   useEffect(() => {
@@ -212,10 +214,7 @@ export default function ChallengeDetails(props) {
 
       try {
         const data = await GetRankingByChallengeId(id);
-        const rankingDataWithoutUserId = data.map(
-          ({ userId, ...rest }) => rest
-        );
-        setRankingData(rankingDataWithoutUserId);
+        setRankingData(data);
       } catch (error) {
         console.error("Error fetching ranking:", error);
       }
@@ -223,6 +222,30 @@ export default function ChallengeDetails(props) {
 
     fetchRanking();
   }, [id]);
+
+  //user avatar leaderboard
+  const [avatarMap, setAvatarMap] = useState({});
+  useEffect(() => {
+    const fetchAvatars = async () => {
+      const newAvatarMap = {};
+
+      for (const user of rankingData) {
+        try {
+          const config = await GetUserConfigByUserId(user.userId);
+          newAvatarMap[user.userId] = config.imageUrl;
+        } catch (error) {
+          console.error("Failed to fetch avatar for user:", user.userId, error);
+        }
+      }
+
+      setAvatarMap(newAvatarMap);
+      console.log("Avatars:", newAvatarMap);
+    };
+
+    if (rankingData.length > 0) {
+      fetchAvatars();
+    }
+  }, [rankingData]);
 
   const [userChallengeProgress, setUserChallengeProgress] = useState(null);
   useEffect(() => {
@@ -246,7 +269,7 @@ export default function ChallengeDetails(props) {
   };
 
   const [newTaskData, setNewTaskData] = useState({
-    taskTypeId: 0,
+    taskTypeId: 4,
     taskName: "",
     taskDescription: "",
     totalDuration: 0,
@@ -413,16 +436,16 @@ export default function ChallengeDetails(props) {
                       </Card>
                     ))
                   ) : (
-                    <>
-                      <p>No tasks available for this challenge.</p>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleCreateTaskClick()}
-                        className="mt-4"
-                      >
-                        <Plus className="mr-2 h-4 w-4" /> Create Task
-                      </Button>
-                    </>
+                    <p>No tasks available for this challenge.</p>
+                  )}
+                  {challenge.status === 0 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => handleCreateTaskClick()}
+                      className="mt-4"
+                    >
+                      <Plus className="mr-2 h-4 w-4" /> Create Task
+                    </Button>
                   )}
                 </CardContent>
               </Card>
@@ -598,8 +621,15 @@ export default function ChallengeDetails(props) {
                                         : index === 2
                                         ? "text-fuchsia-500"
                                         : "text-gray-500"
-                                    }`}
+                                    } flex items-center justify-center gap-2`}
                                   >
+                                    {avatarMap[user.userId] && (
+                                      <img
+                                        src={avatarMap[user.userId]}
+                                        alt="avatar"
+                                        className="w-6 h-6 rounded-full object-cover"
+                                      />
+                                    )}
                                     {user.userName}
                                   </td>
 
@@ -668,34 +698,55 @@ export default function ChallengeDetails(props) {
                     />
                   </div>
                   <div className="space-y-1 mb-3">
-                    <Label htmlFor="taskTypeId">Task Type:</Label>
-                    <select
-                      id="taskTypeId"
-                      value={newTaskData.taskTypeId}
-                      onChange={handleChange}
-                      className="w-full p-2 border border-gray-300 rounded-md bg-white text-sm"
+                    <Label
+                      htmlFor="totalDuration"
+                      className="flex items-center gap-1"
                     >
-                      <option value="" disabled>
-                        Select Task Type
-                      </option>
-                      {taskTypes.map((type) => (
-                        <option key={type.taskTypeId} value={type.taskTypeId}>
-                          {type.taskTypeName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1 mb-3">
-                    <Label htmlFor="totalDuration">
-                      Total Duration ({">"}30 min):
+                      Total Duration (<span className="text-red-500">≥ 30</span>{" "}
+                      min):
                     </Label>
+
+                    {/* Các mốc thời gian nhanh */}
+                    <div className="flex gap-2 flex-wrap mb-2">
+                      {[30, 45, 60, 90, 120].map((value) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            setNewTaskData({
+                              ...newTaskData,
+                              totalDuration: value,
+                            })
+                          }
+                          className={`px-3 py-1 rounded border ${
+                            newTaskData.totalDuration === value
+                              ? "bg-blue-500 text-white"
+                              : "bg-white hover:bg-blue-100"
+                          }`}
+                        >
+                          {value} min
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Ô nhập thời lượng thủ công */}
                     <Input
                       id="totalDuration"
                       type="number"
+                      min={30}
                       value={newTaskData.totalDuration}
-                      onChange={handleChange}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        if (val >= 30) {
+                          setNewTaskData({
+                            ...newTaskData,
+                            totalDuration: val,
+                          });
+                        }
+                      }}
                     />
                   </div>
+
                   <div className="space-y-1 mb-3">
                     <Label htmlFor="startDate">Start Date:</Label>
                     <Input

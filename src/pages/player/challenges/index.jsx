@@ -823,11 +823,55 @@ export default function Challenges({ challenges }) {
                 </div>
 
                 <div className="space-y-1 mb-3">
-                  <Label htmlFor="reward">Reward (coins): </Label>
+                  <Label htmlFor="reward" className="flex items-center gap-1">
+                    Reward
+                    <img
+                      src="/images/coin.png"
+                      alt="coin"
+                      className="w-5 h-5 inline"
+                    />
+                    :
+                  </Label>
+
+                  {/* Nút chọn nhanh */}
+                  <div className="flex gap-2 flex-wrap mb-2">
+                    {[10, 20, 50, 100, 200].map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() =>
+                          setNewChallengeData({
+                            ...newChallengeData,
+                            reward: value,
+                          })
+                        }
+                        className={`px-3 py-1 rounded border ${
+                          newChallengeData.reward == value
+                            ? "bg-yellow-400 text-white"
+                            : "bg-white hover:bg-yellow-100"
+                        }`}
+                      >
+                        {value}
+                        <img
+                          src="/images/coin.png"
+                          alt="coin"
+                          className="w-4 h-4 inline ml-1"
+                        />
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Ô nhập thủ công */}
                   <Input
                     id="reward"
+                    type="number"
                     value={newChallengeData.reward}
-                    onChange={handleChange}
+                    onChange={(e) =>
+                      setNewChallengeData({
+                        ...newChallengeData,
+                        reward: Number(e.target.value),
+                      })
+                    }
                   />
                 </div>
 
