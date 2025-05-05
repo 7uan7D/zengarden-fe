@@ -39,6 +39,7 @@ import { useTreeExperience } from "@/context/TreeExperienceContext";
 import { GetBagItems } from "@/services/apiServices/itemService";
 import { CircleCheckBig, CircleX } from "lucide-react";
 import "../task/index.css";
+//api task
 import {
   GetTaskByUserTreeId,
   StartTask,
@@ -46,6 +47,7 @@ import {
   CompleteTask,
   CreateTask,
 } from "@/services/apiServices/taskService";
+// thư viện kéo thả
 import {
   DndContext,
   closestCenter,
@@ -73,11 +75,12 @@ import { SortableTask } from "./SortableTask";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { ChangeTaskType } from "@/services/apiServices/taskService";
 
+// Component con để chọn ngày và giờ cho task
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const selectedDate = date ? new Date(date) : undefined;
   const formattedTime = date
-    ? format(new Date(date), "hh:mm a")
+    ? format(new Date(date), "hh:mm a")   // Chuyển đổi định dạng thời gian
     : "12:00 AM";
 
   const handleDateSelect = useCallback(
@@ -120,7 +123,7 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
           onChange={handleTimeChange}
           value={formattedTime}
           disableClock={true}
-          format="hh:mm a"
+          format="hh:mm a" // Định dạng thời gian 12 giờ
           className="h-10 w-[100px] text-center border-gray-300 rounded-lg focus:border-green-500 focus:ring focus:ring-green-200 transition-all"
           clearIcon={null}
           clockIcon={null}
@@ -136,6 +139,7 @@ const parseDate = (dateStr) => {
   return year * 10000 + month * 100 + day;
 };
 
+// Hàm lấy ngày hiện tại ở định dạng DD/MM/YYYY
 const getCurrentDateStr = () => {
   const today = new Date();
   const day = String(today.getDate()).padStart(2, "0");
@@ -152,7 +156,7 @@ export default function TaskPage() {
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newTreeName, setNewTreeName] = useState("");
-
+  // Task
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
   const [activeTabs, setActiveTabs] = useState({
@@ -825,6 +829,7 @@ export default function TaskPage() {
 
   const handleTimeChange = useCallback((field, time) => {
     if (!time) return;
+    // Chuyển đổi thời gian từ định dạng 12 giờ sang định dạng 24 giờ
     const [timePart, period] = time.split(" ");
     let [hours, minutes] = timePart.split(":").map(Number);
     if (period === "PM" && hours !== 12) hours += 12;
@@ -999,15 +1004,16 @@ export default function TaskPage() {
       (a, b) => a.priority - b.priority
     );
 
-    const taskHeight = 100;
-    const gap = 12;
-    const padding = 16 * 2;
+    // Tính chiều cao động: 100px/task + 12px gap giữa các task + 16px padding top/bottom
+    const taskHeight = 100; // Chiều cao mỗi task (px)
+    const gap = 12; // Khoảng cách giữa các task (px)
+    const padding = 16 * 2; // Padding top + bottom (px)
     const calculatedHeight =
       sortedTasks.length > 0
         ? sortedTasks.length * taskHeight +
           (sortedTasks.length - 1) * gap +
           padding
-        : 150;
+        : 150; // Chiều cao tối thiểu nếu không có task nào
 
     return (
       <div className="task-column-container">
@@ -1171,7 +1177,7 @@ export default function TaskPage() {
                                     : "low"
                                 } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
                                 onClick={(e) => {
-                                  e.stopPropagation();
+                                  e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
                                   setSelectedTask(task);
                                   setIsTaskInfoDialogOpen(true);
                                 }}
@@ -1293,7 +1299,7 @@ export default function TaskPage() {
                                   ) && (
                                     <Button
                                       onClick={(e) => {
-                                        e.stopPropagation();
+                                        e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
                                         handleTaskAction(
                                           columnKey,
                                           index,
@@ -1353,7 +1359,7 @@ export default function TaskPage() {
                                     currentTaskStatus !== 0 && (
                                       <Button
                                         onClick={(e) => {
-                                          e.stopPropagation();
+                                          e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
                                           handleTaskAction(
                                             columnKey,
                                             index,
