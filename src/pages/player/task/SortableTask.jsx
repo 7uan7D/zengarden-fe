@@ -24,9 +24,7 @@ export function SortableTask({
 
   const style = {
     transform: isDragging ? CSS.Transform.toString(transform) : "none",
-    transition: isDragging
-      ? "transform 0.1s ease, opacity 0.2s ease"
-      : "none",
+    transition: isDragging ? "transform 0.1s ease, opacity 0.2s ease" : "none",
     opacity: isDragging ? 0.7 : 1,
     cursor: isDragging ? "grabbing" : "default",
     zIndex: isDragging ? 10000 : 1,
@@ -41,9 +39,7 @@ export function SortableTask({
       ref={setNodeRef}
       style={style}
       animate={{
-        boxShadow: isDragging
-          ? "0px 8px 16px rgba(0, 0, 0, 0.2)"
-          : "none",
+        boxShadow: isDragging ? "0px 8px 16px rgba(0, 0, 0, 0.2)" : "none",
       }}
       transition={{ duration: 0.15 }}
       onClick={(e) => {

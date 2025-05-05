@@ -66,6 +66,7 @@ import "react-clock/dist/Clock.css";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
 import { SortableTask } from "./SortableTask";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { ChangeTaskType } from "@/services/apiServices/taskService";
 
 // Component con để chọn ngày và giờ cho task
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
@@ -188,38 +189,85 @@ export default function TaskPage() {
     console.log("Drag started:", event.active.id);
   };
 
-  const handleDragEnd = async (event, columnKey) => {
+  function getTaskTypeIdFromColumnKey(key) {
+    const mapping = {
+      simple: 2,
+      complex: 3,
+    };
+    return mapping[key];
+  }
+
+  const handleDragEnd = async (event, targetColumnKey) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) {
-      console.log("Drag cancelled: No over task or same task");
+    if (!over || active.id === over.id) return;
+
+    // Tìm source column chứa active task
+    const sourceColumnKey = Object.keys(taskData).find((key) =>
+      taskData[key]?.some((task) => task.taskId === active.id)
+    );
+
+    if (!sourceColumnKey) {
+      console.error("Source column not found");
       return;
     }
 
-    const currentTasks = taskData[columnKey] || [];
-    const activeTask = currentTasks.find((task) => task.taskId === active.id);
-    const overTask = currentTasks.find((task) => task.taskId === over.id);
+    const activeTask = taskData[sourceColumnKey]?.find(
+      (task) => task.taskId === active.id
+    );
+    const overTask = taskData[targetColumnKey]?.find(
+      (task) => task.taskId === over.id
+    );
 
-    if (!activeTask || !overTask) {
-      console.log("Drag failed: Active or over task not found");
+    if (!activeTask) return;
+
+    if (
+      activeTask.status === 1 ||
+      activeTask.status === 2 ||
+      (overTask && (overTask.status === 1 || overTask.status === 2))
+    ) {
+      toast.error("Cannot drag active tasks");
       return;
     }
 
-    if (activeTask.status === 1 || activeTask.status === 2 || overTask.status === 1 ||overTask.status === 2) {
-      toast.error("Cannot swap priorities with an active task!");
-      console.log("Drag failed: Active task detected");
-      return;
-    }
+    // Nếu kéo sang cột khác: đổi type
+    if (sourceColumnKey !== targetColumnKey) {
+      try {
+        const newTaskTypeId = getTaskTypeIdFromColumnKey(targetColumnKey); // map column key to type id
+        await ChangeTaskType(activeTask.taskId, newTaskTypeId);
 
-    // Lưu thông tin task và mở dialog xác nhận
-    setSwapTasks({ active: activeTask, over: overTask });
-    setIsSwapDialogOpen(true);
-    console.log("Drag ended: Dialog opened for swap confirmation");
+        // Cập nhật lại UI: chuyển task sang cột mới
+        const updatedSource = taskData[sourceColumnKey].filter(
+          (task) => task.taskId !== activeTask.taskId
+        );
+        const updatedTarget = [
+          ...taskData[targetColumnKey],
+          { ...activeTask, taskTypeId: newTaskTypeId },
+        ];
+
+        setTaskData((prev) => ({
+          ...prev,
+          [sourceColumnKey]: updatedSource,
+          [targetColumnKey]: updatedTarget,
+        }));
+
+        toast.success("Task type changed successfully!");
+      } catch (error) {
+        console.error("ChangeTaskType failed", error);
+        toast.error("Failed to change task type");
+      }
+    } else {
+      // Nếu cùng cột thì mở dialog đổi priority
+      setSwapTasks({ active: activeTask, over: overTask });
+      setIsSwapDialogOpen(true);
+    }
   };
 
   const confirmSwap = async (columnKey) => {
     const { active, over } = swapTasks;
     const currentTasks = taskData[columnKey] || [];
-    const activeTask = currentTasks.find((task) => task.taskId === active.taskId);
+    const activeTask = currentTasks.find(
+      (task) => task.taskId === active.taskId
+    );
     const overTask = currentTasks.find((task) => task.taskId === over.taskId);
 
     if (!activeTask || !overTask) return;
@@ -1341,7 +1389,9 @@ export default function TaskPage() {
           >
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{selectedTask?.taskName || "Task Details"}</DialogTitle>
+                <DialogTitle>
+                  {selectedTask?.taskName || "Task Details"}
+                </DialogTitle>
                 <DialogDescription>
                   {selectedTask?.taskDescription || "No description available"}
                 </DialogDescription>
@@ -1367,18 +1417,20 @@ export default function TaskPage() {
                       : "Not Started"}
                   </p>
                   <p>
-                    <strong>Focus Method:</strong> {selectedTask.focusMethodName}
+                    <strong>Focus Method:</strong>{" "}
+                    {selectedTask.focusMethodName}
                   </p>
                   <p>
-                    <strong>Total Duration:</strong> {selectedTask.totalDuration}{" "}
-                    minutes
+                    <strong>Total Duration:</strong>{" "}
+                    {selectedTask.totalDuration} minutes
                   </p>
                   <p>
                     <strong>Work Duration:</strong> {selectedTask.workDuration}{" "}
                     minutes
                   </p>
                   <p>
-                    <strong>Break Time:</strong> {selectedTask.breakTime} minutes
+                    <strong>Break Time:</strong> {selectedTask.breakTime}{" "}
+                    minutes
                   </p>
                   <p>
                     <strong>Tree:</strong> {selectedTask.userTreeName}
@@ -1415,8 +1467,8 @@ export default function TaskPage() {
               </DialogHeader>
               <div className="mt-4 space-y-2">
                 <p>
-                  <strong>Task 1:</strong> {swapTasks.active?.taskName} (Priority:{" "}
-                  {swapTasks.active?.priority})
+                  <strong>Task 1:</strong> {swapTasks.active?.taskName}{" "}
+                  (Priority: {swapTasks.active?.priority})
                 </p>
                 <p>
                   <strong>Task 2:</strong> {swapTasks.over?.taskName} (Priority:{" "}

@@ -72,6 +72,23 @@ export async function ChangePriority(userTreeId, reorderedTasks) {
   return response.data;
 }
 
+export async function ChangeTaskType(taskId, newTaskTypeId) {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.put(
+    `/Task/${taskId}/task-type`,
+    { newTaskTypeId: newTaskTypeId },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+}
+
 export async function UpdateOverdueTasks() {
   const response = await axios.post(`/Task/update-overdue`);
   return response.data;
