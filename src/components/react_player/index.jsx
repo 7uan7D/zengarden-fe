@@ -8,7 +8,7 @@ import "../react_player/index.css";
 const initialVideoList = [
   { id: 1, title: "Rick Astley - Never Gonna Give You Up", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
   { id: 2, title: "Stephen Sanchez - High", url: "https://www.youtube.com/watch?v=XbAFmBIY6DQ" },
-  { id: 3, title: "vistas ~ eighteen", url: "https://www.youtube.com/watch?v=_JHs3acwCKA" },
+  { id: 3, title: "Malik Mason - A Nigha", url: "https://www.youtube.com/watch?v=ikn0PvZ8j1o" },
 ];
 
 const VideoPlayer = () => {
