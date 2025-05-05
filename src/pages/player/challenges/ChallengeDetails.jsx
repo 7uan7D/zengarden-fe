@@ -451,15 +451,7 @@ export default function ChallengeDetails(props) {
               </Card>
               <Card className="w-[30%]">
                 <CardHeader>
-                  <div className="mt-6">
-                    <Button
-                      className="mr-2 mb-3"
-                      variant="outline"
-                      onClick={() => navigate(-1)}
-                    >
-                      <ArrowBigLeft className="mr-2 h-4 w-4" /> Back
-                    </Button>
-
+                  <div>
                     {userChallenge.find(
                       (challenge) =>
                         challenge.challengeId === parseInt(id) &&

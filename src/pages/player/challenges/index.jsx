@@ -593,10 +593,16 @@ export default function Challenges({ challenges }) {
                     ))}
                   {/* Dialog đặt ngoài map */}
                   <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-                    <DialogContent className="max-w-4xl">
-                      <DialogTitle>Challenge Details</DialogTitle>
+                    <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto p-6">
+                      <DialogTitle className="text-2xl font-bold mb-4 text-center">
+                        Challenge Details
+                      </DialogTitle>
                       {selectedChallengeId && (
-                        <ChallengeDetails id={selectedChallengeId} />
+                        <div className="flex flex-col lg:flex-row gap-6">
+                          <div className="flex-1 overflow-auto">
+                            <ChallengeDetails id={selectedChallengeId} />
+                          </div>
+                        </div>
                       )}
                     </DialogContent>
                   </Dialog>
