@@ -80,7 +80,7 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const selectedDate = date ? new Date(date) : undefined;
   const formattedTime = date
-    ? format(new Date(date), "hh:mm a")   // Chuyển đổi định dạng thời gian
+    ? format(new Date(date), "hh:mm a") // Chuyển đổi định dạng thời gian
     : "12:00 AM";
 
   const handleDateSelect = useCallback(
@@ -1165,9 +1165,7 @@ export default function TaskPage() {
                       >
                         {({ dragHandleProps }) => (
                           <Card className="task-item relative flex">
-                            {["simple", "complex", "challenge"].includes(
-                              columnKey
-                            ) && (
+                            {["simple", "complex"].includes(columnKey) && (
                               <div
                                 className={`priority-label priority-${
                                   task.priority <= 2
@@ -1185,24 +1183,27 @@ export default function TaskPage() {
                                 {getPriorityLabel(task.priority)}
                               </div>
                             )}
-                            <div
-                              className="drag-handle w-8 bg-gray-100 flex items-center justify-center"
-                              {...dragHandleProps}
-                            >
-                              <svg
-                                className="w-5 h-5 text-gray-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                            {(task.taskTypeName === "Simple" ||
+                              task.taskTypeName === "Complex") && (
+                              <div
+                                className="drag-handle w-8 bg-gray-100 flex items-center justify-center"
+                                {...dragHandleProps}
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M8 9h8M8 13h8M8 17h8"
-                                />
-                              </svg>
-                            </div>
+                                <svg
+                                  className="w-5 h-5 text-gray-500"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M8 9h8M8 13h8M8 17h8"
+                                  />
+                                </svg>
+                              </div>
+                            )}
                             <div className="flex-1 flex flex-col justify-between text-left p-4">
                               <div>
                                 <span className="text-gray-700 font-medium">
@@ -1718,7 +1719,9 @@ export default function TaskPage() {
                           type="number"
                           placeholder="Enter duration"
                           value={taskCreateData.totalDuration}
-                          onChange={(e) => handleTotalDurationInput(e.target.value)}
+                          onChange={(e) =>
+                            handleTotalDurationInput(e.target.value)
+                          }
                           className={durationError ? "invalid-input" : ""}
                         />
                       </div>
@@ -1752,7 +1755,9 @@ export default function TaskPage() {
                       </Select>
                     </div>
                     {durationError && (
-                      <p className="text-red-500 text-sm validate_mess">{durationError}</p>
+                      <p className="text-red-500 text-sm validate_mess">
+                        {durationError}
+                      </p>
                     )}
                   </div>
                   <div className="flex flex-col gap-4">
@@ -1803,7 +1808,9 @@ export default function TaskPage() {
                           min={focusSuggestion.minDuration}
                           max={focusSuggestion.maxDuration}
                           value={taskCreateData.workDuration}
-                          onChange={(e) => handleWorkDurationInput(e.target.value)}
+                          onChange={(e) =>
+                            handleWorkDurationInput(e.target.value)
+                          }
                           className={workDurationError ? "invalid-input" : ""}
                         />
                       </div>
@@ -1841,7 +1848,9 @@ export default function TaskPage() {
                       </Select>
                     </div>
                     {workDurationError && (
-                      <p className="text-red-500 text-sm validate_mess">{workDurationError}</p>
+                      <p className="text-red-500 text-sm validate_mess">
+                        {workDurationError}
+                      </p>
                     )}
                     <p className="text-sm text-gray-500">
                       Recommended: {focusSuggestion.defaultDuration} mins
@@ -1894,7 +1903,9 @@ export default function TaskPage() {
                       </Select>
                     </div>
                     {breakTimeError && (
-                      <p className="text-red-500 text-sm validate_mess">{breakTimeError}</p>
+                      <p className="text-red-500 text-sm validate_mess">
+                        {breakTimeError}
+                      </p>
                     )}
                     <p className="text-sm text-gray-500">
                       Recommended: {focusSuggestion.defaultBreak} mins
