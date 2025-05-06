@@ -22,6 +22,13 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
 import { GetAllTrees } from "@/services/apiServices/treesService";
 import { CreateUserTree } from "@/services/apiServices/userTreesService";
@@ -73,7 +80,7 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const selectedDate = date ? new Date(date) : undefined;
   const formattedTime = date
-    ? format(new Date(date), "hh:mm a") // Changed to AM/PM format
+    ? format(new Date(date), "hh:mm a")   // Chuyển đổi định dạng thời gian
     : "12:00 AM";
 
   const handleDateSelect = useCallback(
@@ -116,7 +123,7 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
           onChange={handleTimeChange}
           value={formattedTime}
           disableClock={true}
-          format="hh:mm a" // Set to AM/PM format
+          format="hh:mm a" // Định dạng thời gian 12 giờ
           className="h-10 w-[100px] text-center border-gray-300 rounded-lg focus:border-green-500 focus:ring focus:ring-green-200 transition-all"
           clearIcon={null}
           clockIcon={null}
@@ -149,7 +156,6 @@ export default function TaskPage() {
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newTreeName, setNewTreeName] = useState("");
-
   // Task
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
@@ -201,7 +207,6 @@ export default function TaskPage() {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    // Tìm source column chứa active task
     const sourceColumnKey = Object.keys(taskData).find((key) =>
       taskData[key]?.some((task) => task.taskId === active.id)
     );
@@ -229,13 +234,11 @@ export default function TaskPage() {
       return;
     }
 
-    // Nếu kéo sang cột khác: đổi type
     if (sourceColumnKey !== targetColumnKey) {
       try {
-        const newTaskTypeId = getTaskTypeIdFromColumnKey(targetColumnKey); // map column key to type id
+        const newTaskTypeId = getTaskTypeIdFromColumnKey(targetColumnKey);
         await ChangeTaskType(activeTask.taskId, newTaskTypeId);
 
-        // Cập nhật lại UI: chuyển task sang cột mới
         const updatedSource = taskData[sourceColumnKey].filter(
           (task) => task.taskId !== activeTask.taskId
         );
@@ -256,7 +259,6 @@ export default function TaskPage() {
         toast.error("Failed to change task type");
       }
     } else {
-      // Nếu cùng cột thì mở dialog đổi priority
       setSwapTasks({ active: activeTask, over: overTask });
       setIsSwapDialogOpen(true);
     }
@@ -719,6 +721,13 @@ export default function TaskPage() {
   });
   const [step, setStep] = useState(1);
   const [focusSuggestion, setFocusSuggestion] = useState(null);
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
+  const [selectedDurationOption, setSelectedDurationOption] = useState("");
+  const [selectedWorkOption, setSelectedWorkOption] = useState("");
+  const [selectedBreakOption, setSelectedBreakOption] = useState("");
+  const [durationError, setDurationError] = useState("");
+  const [workDurationError, setWorkDurationError] = useState("");
+  const [breakTimeError, setBreakTimeError] = useState("");
 
   useEffect(() => {
     setTaskCreateData((prev) => ({
@@ -736,6 +745,12 @@ export default function TaskPage() {
     }));
     setIsTaskDialogOpen(true);
     setStep(1);
+    setSelectedDurationOption("");
+    setSelectedWorkOption("");
+    setSelectedBreakOption("");
+    setDurationError("");
+    setWorkDurationError("");
+    setBreakTimeError("");
   };
 
   const handleNext = async () => {
@@ -749,6 +764,8 @@ export default function TaskPage() {
           workDuration: response.defaultDuration,
           breakTime: response.defaultBreak,
         }));
+        setSelectedWorkOption(response.defaultDuration.toString());
+        setSelectedBreakOption(response.defaultBreak.toString());
         setStep(2);
       } catch (error) {
         console.error("Error fetching suggestions", error);
@@ -765,6 +782,7 @@ export default function TaskPage() {
 
   const handleCreateTask = async () => {
     try {
+      setIsCreatingTask(true);
       const response = await CreateTask(taskCreateData);
       console.log("Task created successfully:", response);
       setIsTaskDialogOpen(false);
@@ -782,11 +800,19 @@ export default function TaskPage() {
         breakTime: "",
       });
       setFocusSuggestion(null);
+      setSelectedDurationOption("");
+      setSelectedWorkOption("");
+      setSelectedBreakOption("");
+      setDurationError("");
+      setWorkDurationError("");
+      setBreakTimeError("");
       fetchTasks(selectedTree?.userTreeId);
       toast.success("Task created successfully!");
     } catch (error) {
       console.error("Error creating task:", error);
       toast.error("Failed to create task");
+    } finally {
+      setIsCreatingTask(false);
     }
   };
 
@@ -803,7 +829,7 @@ export default function TaskPage() {
 
   const handleTimeChange = useCallback((field, time) => {
     if (!time) return;
-    // Convert AM/PM time to 24-hour format for storage
+    // Chuyển đổi thời gian từ định dạng 12 giờ sang định dạng 24 giờ
     const [timePart, period] = time.split(" ");
     let [hours, minutes] = timePart.split(":").map(Number);
     if (period === "PM" && hours !== 12) hours += 12;
@@ -818,6 +844,153 @@ export default function TaskPage() {
         : null,
     }));
   }, []);
+
+  // Updated durations for Simple and Complex tasks
+  const simpleDurations = [30, 45, 60, 75, 90];
+  const complexDurations = [30, 60, 90, 120, 150, 180];
+
+  // Generate duration options based on task type
+  const durationOptions = taskType.includes("Simple")
+    ? simpleDurations
+    : taskType.includes("Complex")
+    ? complexDurations
+    : [];
+
+  // Generate time options for work and break durations
+  const generateTimeOptions = (min, max, step) => {
+    const options = [];
+    for (let i = min; i <= max; i += step) {
+      options.push(i);
+    }
+    return options;
+  };
+
+  // Validate totalDuration
+  const validateDuration = (value) => {
+    const numValue = Number(value);
+    if (isNaN(numValue)) {
+      return "Please enter a valid number";
+    }
+    const isSimple = taskType.includes("Simple");
+    const minDuration = 30;
+    const maxDuration = isSimple ? 90 : 180;
+
+    if (numValue < minDuration) {
+      return `Duration must be at least ${minDuration} minutes`;
+    }
+    if (numValue > maxDuration) {
+      return `Duration must not exceed ${maxDuration} minutes`;
+    }
+    return "";
+  };
+
+  // Validate workDuration
+  const validateWorkDuration = (value) => {
+    const numValue = Number(value);
+    if (isNaN(numValue)) {
+      return "Please enter a valid number";
+    }
+    if (!focusSuggestion) return "";
+    if (numValue < focusSuggestion.minDuration) {
+      return `Work duration must be at least ${focusSuggestion.minDuration} minutes`;
+    }
+    if (numValue > focusSuggestion.maxDuration) {
+      return `Work duration must not exceed ${focusSuggestion.maxDuration} minutes`;
+    }
+    return "";
+  };
+
+  // Validate breakTime
+  const validateBreakTime = (value) => {
+    const numValue = Number(value);
+    if (isNaN(numValue)) {
+      return "Please enter a valid number";
+    }
+    if (!focusSuggestion) return "";
+    if (numValue < focusSuggestion.minBreak) {
+      return `Break time must be at least ${focusSuggestion.minBreak} minutes`;
+    }
+    if (numValue > focusSuggestion.maxBreak) {
+      return `Break time must not exceed ${focusSuggestion.maxBreak} minutes`;
+    }
+    return "";
+  };
+
+  // Handle manual input for totalDuration
+  const handleTotalDurationInput = (value) => {
+    const numValue = Number(value);
+    setTaskCreateData((prev) => ({
+      ...prev,
+      totalDuration: value,
+    }));
+    const error = validateDuration(value);
+    setDurationError(error);
+    if (!durationOptions.includes(numValue) && !error) {
+      setSelectedDurationOption("custom");
+    } else if (durationOptions.includes(numValue)) {
+      setSelectedDurationOption(numValue.toString());
+    }
+  };
+
+  // Handle manual input for workDuration
+  const handleWorkDurationInput = (value) => {
+    const numValue = Number(value);
+    setTaskCreateData((prev) => ({
+      ...prev,
+      workDuration: numValue,
+    }));
+    const error = validateWorkDuration(numValue);
+    setWorkDurationError(error);
+    const workOptions = generateTimeOptions(
+      focusSuggestion.minDuration,
+      focusSuggestion.maxDuration,
+      taskType.includes("Complex") ? 15 : 10
+    );
+    if (!workOptions.includes(numValue)) {
+      setSelectedWorkOption("custom");
+    }
+  };
+
+  // Handle manual input for breakTime
+  const handleBreakTimeInput = (value) => {
+    const numValue = Number(value);
+    setTaskCreateData((prev) => ({
+      ...prev,
+      breakTime: numValue,
+    }));
+    const error = validateBreakTime(numValue);
+    setBreakTimeError(error);
+    const breakOptions = generateTimeOptions(
+      focusSuggestion.minBreak,
+      focusSuggestion.maxBreak,
+      5
+    );
+    if (!breakOptions.includes(numValue)) {
+      setSelectedBreakOption("custom");
+    }
+  };
+
+  // Check if Next button should be disabled
+  const isNextDisabled = () => {
+    if (step === 1) {
+      return (
+        !taskCreateData.taskName ||
+        !taskCreateData.taskDescription ||
+        !taskCreateData.totalDuration ||
+        durationError ||
+        !taskCreateData.startDate ||
+        !taskCreateData.endDate
+      );
+    } else if (step === 2) {
+      return (
+        !taskCreateData.workDuration ||
+        !taskCreateData.breakTime ||
+        workDurationError ||
+        breakTimeError
+      );
+    }
+    return false;
+  };
 
   const renderTaskColumn = (title, taskList, columnKey) => {
     const filteredTasks =
@@ -840,7 +1013,7 @@ export default function TaskPage() {
         ? sortedTasks.length * taskHeight +
           (sortedTasks.length - 1) * gap +
           padding
-        : 150; // Chiều cao tối thiểu nếu không có task
+        : 150; // Chiều cao tối thiểu nếu không có task nào
 
     return (
       <div className="task-column-container">
@@ -1004,7 +1177,7 @@ export default function TaskPage() {
                                     : "low"
                                 } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
                                 onClick={(e) => {
-                                  e.stopPropagation(); // Prevent triggering parent click
+                                  e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
                                   setSelectedTask(task);
                                   setIsTaskInfoDialogOpen(true);
                                 }}
@@ -1126,7 +1299,7 @@ export default function TaskPage() {
                                   ) && (
                                     <Button
                                       onClick={(e) => {
-                                        e.stopPropagation(); // Prevent triggering card click
+                                        e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
                                         handleTaskAction(
                                           columnKey,
                                           index,
@@ -1186,7 +1359,7 @@ export default function TaskPage() {
                                     currentTaskStatus !== 0 && (
                                       <Button
                                         onClick={(e) => {
-                                          e.stopPropagation(); // Prevent triggering card click
+                                          e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
                                           handleTaskAction(
                                             columnKey,
                                             index,
@@ -1301,7 +1474,7 @@ export default function TaskPage() {
                   return (
                     <div
                       key={tree.userTreeId}
-                      className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
+                      className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 superb"
                       onClick={() => {
                         setCurrentTree(tree.userTreeId);
                         localStorage.setItem("selectedTreeId", tree.userTreeId);
@@ -1336,7 +1509,7 @@ export default function TaskPage() {
                   tree.treeStatus === 0
               ).length < 2 && (
                 <div
-                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105 flex flex-col items-center justify-center"
+                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
                   onClick={() => {
                     setIsTreeDialogOpen(false);
                     setIsCreateTreeDialogOpen(true);
@@ -1539,17 +1712,48 @@ export default function TaskPage() {
                   </div>
                   <div>
                     <Label>Duration (minutes)</Label>
-                    <Input
-                      type="number"
-                      placeholder="Task duration"
-                      value={taskCreateData.totalDuration}
-                      onChange={(e) =>
-                        setTaskCreateData({
-                          ...taskCreateData,
-                          totalDuration: Number(e.target.value),
-                        })
-                      }
-                    />
+                    <div className="flex gap-2">
+                      <div className="w-1/2">
+                        <Input
+                          type="number"
+                          placeholder="Enter duration"
+                          value={taskCreateData.totalDuration}
+                          onChange={(e) => handleTotalDurationInput(e.target.value)}
+                          className={durationError ? "invalid-input" : ""}
+                        />
+                      </div>
+                      <Select
+                        onValueChange={(value) => {
+                          setSelectedDurationOption(value);
+                          if (value !== "custom") {
+                            setTaskCreateData({
+                              ...taskCreateData,
+                              totalDuration: Number(value),
+                            });
+                            setDurationError("");
+                          }
+                        }}
+                        value={selectedDurationOption}
+                      >
+                        <SelectTrigger className="w-1/2">
+                          <SelectValue placeholder="Select duration" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {durationOptions.map((duration) => (
+                            <SelectItem
+                              key={duration}
+                              value={duration.toString()}
+                            >
+                              {duration} minutes
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="custom">Your custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {durationError && (
+                      <p className="text-red-500 text-sm validate_mess">{durationError}</p>
+                    )}
                   </div>
                   <div className="flex flex-col gap-4">
                     <DateTimePicker
@@ -1592,36 +1796,106 @@ export default function TaskPage() {
                   </div>
                   <div>
                     <Label>Work Duration (minutes)</Label>
-                    <Input
-                      type="number"
-                      min={focusSuggestion.minDuration}
-                      max={focusSuggestion.maxDuration}
-                      value={taskCreateData.workDuration}
-                      onChange={(e) =>
-                        setTaskCreateData({
-                          ...taskCreateData,
-                          workDuration: Number(e.target.value),
-                        })
-                      }
-                    />
+                    <div className="flex gap-2">
+                      <div className="w-1/2">
+                        <Input
+                          type="number"
+                          min={focusSuggestion.minDuration}
+                          max={focusSuggestion.maxDuration}
+                          value={taskCreateData.workDuration}
+                          onChange={(e) => handleWorkDurationInput(e.target.value)}
+                          className={workDurationError ? "invalid-input" : ""}
+                        />
+                      </div>
+                      <Select
+                        onValueChange={(value) => {
+                          setSelectedWorkOption(value);
+                          if (value !== "custom") {
+                            setTaskCreateData({
+                              ...taskCreateData,
+                              workDuration: Number(value),
+                            });
+                            setWorkDurationError("");
+                          }
+                        }}
+                        value={selectedWorkOption}
+                      >
+                        <SelectTrigger className="w-1/2">
+                          <SelectValue placeholder="Select work duration" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {generateTimeOptions(
+                            focusSuggestion.minDuration,
+                            focusSuggestion.maxDuration,
+                            taskType.includes("Complex") ? 15 : 10
+                          ).map((duration) => (
+                            <SelectItem
+                              key={duration}
+                              value={duration.toString()}
+                            >
+                              {duration} minutes
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="custom">Your custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {workDurationError && (
+                      <p className="text-red-500 text-sm validate_mess">{workDurationError}</p>
+                    )}
                     <p className="text-sm text-gray-500">
                       Recommended: {focusSuggestion.defaultDuration} mins
                     </p>
                   </div>
                   <div>
                     <Label>Break Time (minutes)</Label>
-                    <Input
-                      type="number"
-                      min={focusSuggestion.minBreak}
-                      max={focusSuggestion.maxBreak}
-                      value={taskCreateData.breakTime}
-                      onChange={(e) =>
-                        setTaskCreateData({
-                          ...taskCreateData,
-                          breakTime: Number(e.target.value),
-                        })
-                      }
-                    />
+                    <div className="flex gap-2">
+                      <div className="w-1/2">
+                        <Input
+                          type="number"
+                          min={focusSuggestion.minBreak}
+                          max={focusSuggestion.maxBreak}
+                          value={taskCreateData.breakTime}
+                          onChange={(e) => handleBreakTimeInput(e.target.value)}
+                          className={breakTimeError ? "invalid-input" : ""}
+                        />
+                      </div>
+                      <Select
+                        onValueChange={(value) => {
+                          setSelectedBreakOption(value);
+                          if (value !== "custom") {
+                            setTaskCreateData({
+                              ...taskCreateData,
+                              breakTime: Number(value),
+                            });
+                            setBreakTimeError("");
+                          }
+                        }}
+                        value={selectedBreakOption}
+                      >
+                        <SelectTrigger className="w-1/2">
+                          <SelectValue placeholder="Select break time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {generateTimeOptions(
+                            focusSuggestion.minBreak,
+                            focusSuggestion.maxBreak,
+                            5
+                          ).map((duration) => (
+                            <SelectItem
+                              key={duration}
+                              value={duration.toString()}
+                            >
+                              {duration} minutes
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="custom">Your custom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {breakTimeError && (
+                      <p className="text-red-500 text-sm validate_mess">{breakTimeError}</p>
+                    )}
                     <p className="text-sm text-gray-500">
                       Recommended: {focusSuggestion.defaultBreak} mins
                     </p>
@@ -1679,6 +1953,7 @@ export default function TaskPage() {
                   <Button
                     className="bg-green-600 text-white hover:bg-green-700"
                     onClick={handleNext}
+                    disabled={isNextDisabled()}
                   >
                     Next
                   </Button>
@@ -1687,8 +1962,32 @@ export default function TaskPage() {
                   <Button
                     className="bg-green-600 text-white hover:bg-green-700"
                     onClick={handleCreateTask}
+                    disabled={isCreatingTask}
                   >
-                    Create
+                    {isCreatingTask ? (
+                      <svg
+                        className="animate-spin h-5 w-5 text-white mx-auto"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        />
+                      </svg>
+                    ) : (
+                      "Create"
+                    )}
                   </Button>
                 )}
               </DialogFooter>

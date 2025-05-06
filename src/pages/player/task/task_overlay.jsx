@@ -246,7 +246,7 @@ export default function TaskOverlay({
       className={`flex flex-col gap-2 bg-white rounded-lg shadow-md border border-gray-200 ${
         isCollapsed ? "p-1" : "p-3"
       } ${positionClass}`}
-      style={{ width: isCollapsed ? "40px" : "400px" }}
+      style={{ width: isCollapsed ? "32px" : "400px" }} // Đặt chiều rộng cho nút thu gọn overlay
     >
       {/* Nội dung chính */}
       {!isCollapsed && (

@@ -287,3 +287,7 @@
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Hiệu ứng nổi bật khi kéo */
   transform: scale(1.02); /* Phóng to nhẹ khi kéo */
 }
+
+.validate_mess {
+  margin-top: 3px !important;
+}
