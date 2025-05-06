@@ -312,15 +312,15 @@ export default function Challenges({ challenges }) {
     }
   };
 
-  if (!token) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
-        <h1 className="text-2xl font-bold">
-          Please log in to view your challenges
-        </h1>
-      </div>
-    );
-  }
+  // if (!token) {
+  //   return (
+  //     <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
+  //       <h1 className="text-2xl font-bold">
+  //         Please log in to view your challenges
+  //       </h1>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen flex flex-col">
