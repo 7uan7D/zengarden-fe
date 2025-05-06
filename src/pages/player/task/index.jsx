@@ -67,9 +67,8 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import TimePicker from "react-time-picker";
-import "react-time-picker/dist/TimePicker.css";
-import "react-clock/dist/Clock.css";
+import { TimePicker } from "antd";
+import moment from "moment";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
 import { SortableTask } from "./SortableTask";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
@@ -80,20 +79,39 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const selectedDate = date ? new Date(date) : undefined;
   const formattedTime = date
-    ? format(new Date(date), "hh:mm a") // Chuyển đổi định dạng thời gian
-    : "12:00 AM";
+    ? moment(new Date(date)).format("HH:mm") // Định dạng 24 giờ
+    : moment().format("HH:mm"); // Giá trị mặc định là thời gian hiện tại
 
   const handleDateSelect = useCallback(
     (newDate) => {
-      onDateChange(newDate);
+      if (newDate) {
+        const updatedDate = new Date(newDate);
+        // Giữ nguyên giờ và phút từ selectedDate nếu có
+        updatedDate.setHours(
+          selectedDate ? selectedDate.getHours() : 0,
+          selectedDate ? selectedDate.getMinutes() : 0,
+          0,
+          0
+        );
+        onDateChange(updatedDate);
+      }
       setIsPopoverOpen(false);
     },
-    [onDateChange]
+    [onDateChange, selectedDate]
   );
 
   const handleTimeChange = useCallback(
-    (time) => {
-      onTimeChange(time);
+    (time, timeString) => {
+      if (!timeString) return;
+
+      // Kiểm tra định dạng thời gian hợp lệ (HH:mm)
+      const timeRegex = /^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(timeString)) return;
+
+      // Định dạng thời gian thành HH:mm:ss.000Z
+      const formattedTime = `${timeString}:00.000Z`;
+
+      onTimeChange(formattedTime);
     },
     [onTimeChange]
   );
@@ -121,12 +139,11 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
         </Popover>
         <TimePicker
           onChange={handleTimeChange}
-          value={formattedTime}
-          disableClock={true}
-          format="hh:mm a" // Định dạng thời gian 12 giờ
-          className="h-10 w-[100px] text-center border-gray-300 rounded-lg focus:border-green-500 focus:ring focus:ring-green-200 transition-all"
-          clearIcon={null}
-          clockIcon={null}
+          value={moment(formattedTime, "HH:mm")}
+          format="HH:mm" // Định dạng 24 giờ
+          className="h-10 w-[120px] text-center rounded-lg"
+          showNow={false}
+          allowClear={false}
         />
       </div>
     </div>
@@ -615,7 +632,7 @@ export default function TaskPage() {
 
         const currentTimer = timers[taskKey];
 
-        setTimers((prev) => ({
+        setTimer((prev) => ({
           ...prev,
           [taskKey]: { ...prev[taskKey], isRunning: false },
         }));
@@ -829,19 +846,12 @@ export default function TaskPage() {
 
   const handleTimeChange = useCallback((field, time) => {
     if (!time) return;
-    // Chuyển đổi thời gian từ định dạng 12 giờ sang định dạng 24 giờ
-    const [timePart, period] = time.split(" ");
-    let [hours, minutes] = timePart.split(":").map(Number);
-    if (period === "PM" && hours !== 12) hours += 12;
-    if (period === "AM" && hours === 12) hours = 0;
-    const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:00.000Z`;
+
     setTaskCreateData((prev) => ({
       ...prev,
       [field]: prev[field]
-        ? prev[field].split("T")[0] + "T" + formattedTime
-        : null,
+        ? prev[field].split("T")[0] + "T" + time
+        : new Date().toISOString().split("T")[0] + "T" + time,
     }));
   }, []);
 
@@ -1929,11 +1939,11 @@ export default function TaskPage() {
                   </p>
                   <p>
                     <strong>Start Date:</strong>{" "}
-                    {format(new Date(taskCreateData.startDate), "PPP hh:mm a")}
+                    {format(new Date(taskCreateData.startDate), "PPP HH:mm")} {/* Hiển thị định dạng 24 giờ */}
                   </p>
                   <p>
                     <strong>End Date:</strong>{" "}
-                    {format(new Date(taskCreateData.endDate), "PPP hh:mm a")}
+                    {format(new Date(taskCreateData.endDate), "PPP HH:mm")} {/* Hiển thị định dạng 24 giờ */}
                   </p>
                   <p>
                     <strong>Focus Method:</strong>{" "}
