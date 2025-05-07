@@ -39,7 +39,6 @@ import { useTreeExperience } from "@/context/TreeExperienceContext";
 import { GetBagItems } from "@/services/apiServices/itemService";
 import { CircleCheckBig, CircleX } from "lucide-react";
 import "../task/index.css";
-//api task
 import {
   GetTaskByUserTreeId,
   StartTask,
@@ -47,7 +46,6 @@ import {
   CompleteTask,
   CreateTask,
 } from "@/services/apiServices/taskService";
-// thư viện kéo thả
 import {
   DndContext,
   closestCenter,
@@ -110,7 +108,6 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
 
       // Định dạng thời gian thành HH:mm:ss.000Z
       const formattedTime = `${timeString}:00.000Z`;
-
       onTimeChange(formattedTime);
     },
     [onTimeChange]
@@ -199,6 +196,7 @@ export default function TaskPage() {
   const [timers, setTimers] = useState({});
   const [activeTaskKey, setActiveTaskKey] = useState(null);
   const intervalRefs = useRef({});
+  const [loadingTaskKey, setLoadingTaskKey] = useState(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -462,6 +460,7 @@ export default function TaskPage() {
           taskTypeName: task.taskTypeName,
           remainingTime: convertToMinutes(task.remainingTime) * 60,
           priority: task.priority,
+          /* overdueTime: task.overdueTime || 0, // Bỏ thuộc tính overdueTime khỏi formattedTask vì không còn cần hiển thị thời gian overdue. */
         };
 
         const type = task.taskTypeName?.toLowerCase();
@@ -476,6 +475,38 @@ export default function TaskPage() {
 
       setTaskData(groupedTasks);
       setTempTaskData(groupedTasks);
+
+      // Khởi tạo timers cho các task đang chạy
+      const newTimers = {};
+      Object.keys(groupedTasks).forEach((columnKey) => {
+        groupedTasks[columnKey].forEach((task, index) => {
+          const taskKey = `${columnKey}-${index}`;
+          if (task.status === 1) {
+            newTimers[taskKey] = {
+              isWorkPhase: true,
+              currentWorkTime: task.workDuration * 60,
+              currentBreakTime: task.breakTime * 60,
+              remainingTime: task.remainingTime,
+              /* overdueTime: task.overdueTime || 0, // Removed overdueTime */
+              isRunning: true,
+              totalWorkCompleted: 0,
+              totalBreakCompleted: 0,
+            };
+          } else if (task.status === 2) {
+            newTimers[taskKey] = {
+              isWorkPhase: true,
+              currentWorkTime: task.workDuration * 60,
+              currentBreakTime: task.breakTime * 60,
+              remainingTime: task.remainingTime,
+              /* overdueTime: task.overdueTime || 0, // Removed overdueTime */
+              isRunning: false,
+              totalWorkCompleted: 0,
+              totalBreakCompleted: 0,
+            };
+          }
+        });
+      });
+      setTimers(newTimers);
     } catch (error) {
       console.error("Lỗi lấy task:", error);
     }
@@ -520,7 +551,7 @@ export default function TaskPage() {
             currentWorkTime: task.workDuration * 60,
             currentBreakTime: task.breakTime * 60,
             remainingTime: task.remainingTime,
-            overdueTime: 0,
+            /* overdueTime: task.overdueTime || 0, // Removed overdueTime */
             isRunning: true,
             totalWorkCompleted: 0,
             totalBreakCompleted: 0,
@@ -533,6 +564,11 @@ export default function TaskPage() {
           return newData;
         });
 
+        // Xóa interval cũ nếu tồn tại
+        if (intervalRefs.current[taskKey]) {
+          clearInterval(intervalRefs.current[taskKey]);
+        }
+
         intervalRefs.current[taskKey] = setInterval(() => {
           setTimers((prev) => {
             const timer = prev[taskKey];
@@ -543,22 +579,32 @@ export default function TaskPage() {
               currentWorkTime,
               currentBreakTime,
               remainingTime,
-              overdueTime,
+              /* overdueTime, // Removed overdueTime */
               totalWorkCompleted,
               totalBreakCompleted,
             } = timer;
 
+            console.log(`Timer tick for ${taskKey}:`, {
+              remainingTime,
+              /* overdueTime, // Removed overdueTime */
+              isWorkPhase,
+              currentWorkTime,
+              currentBreakTime,
+            });
+
             const currentDate = parseDate(getCurrentDateStr());
             const endDate = parseDate(task.endDate);
+
+            // Kiểm tra nếu đã vượt quá endDate
             if (currentDate > endDate) {
               clearInterval(intervalRefs.current[taskKey]);
-
               setTaskData((prevData) => {
                 const newData = { ...prevData };
                 newData[columnKey][index] = {
                   ...task,
                   status: 4,
                   remainingTime: 0,
+                  /* overdueTime, // Removed overdueTime */
                 };
                 return newData;
               });
@@ -569,6 +615,7 @@ export default function TaskPage() {
               };
             }
 
+            // Logic khi task đang chạy
             if (remainingTime > 0) {
               if (isWorkPhase) {
                 currentWorkTime -= 1;
@@ -589,10 +636,11 @@ export default function TaskPage() {
                   currentBreakTime = task.breakTime * 60;
                 }
               }
-            } else {
-              overdueTime += 1;
-            }
+            } /* else {
+              overdueTime += 1; // Removed overdueTime increment
+            } */
 
+            // Cập nhật lại taskData với remainingTime /* và overdueTime */
             setTaskData((prevData) => {
               const newData = { ...prevData };
               newData[columnKey][index] = { ...task, status: 1, remainingTime };
@@ -607,13 +655,14 @@ export default function TaskPage() {
                 currentWorkTime,
                 currentBreakTime,
                 remainingTime,
-                overdueTime,
+                /* overdueTime, // Removed overdueTime */
                 totalWorkCompleted,
                 totalBreakCompleted,
               },
             };
           });
         }, 1000);
+
         localStorage.setItem(
           "currentTask",
           JSON.stringify({
@@ -621,6 +670,7 @@ export default function TaskPage() {
             taskName: task.taskName,
             title: task.title,
             remainingTime: task.remainingTime,
+            /* overdueTime: task.overdueTime || 0, // Removed overdueTime */
             status: 1,
             columnKey,
             index,
@@ -643,6 +693,7 @@ export default function TaskPage() {
             ...task,
             status: 2,
             remainingTime: Math.round(currentTimer?.remainingTime || 0),
+            /* overdueTime: currentTimer?.overdueTime || 0, // Removed overdueTime */
           };
           return newData;
         });
@@ -651,12 +702,14 @@ export default function TaskPage() {
           clearInterval(intervalRefs.current[taskKey]);
           delete intervalRefs.current[taskKey];
         }
+
         localStorage.setItem(
           "currentTask",
           JSON.stringify({
             taskId: task.taskId,
             title: task.title,
             remainingTime: Math.round(currentTimer?.remainingTime || 0),
+            /* overdueTime: currentTimer?.overdueTime || 0, // Removed overdueTime */
             status: 2,
             columnKey,
             index,
@@ -673,7 +726,12 @@ export default function TaskPage() {
         }));
         setTaskData((prevData) => {
           const newData = { ...prevData };
-          newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
+          newData[columnKey][index] = {
+            ...task,
+            status: 4, /* Changed to status 4 for expired/finished overdue tasks */
+            remainingTime: 0,
+            /* overdueTime: timers[taskKey]?.overdueTime || 0, // Removed overdueTime */
+          };
           return newData;
         });
         localStorage.removeItem("currentTask");
@@ -681,46 +739,11 @@ export default function TaskPage() {
       }
     } catch (error) {
       console.error("Task action error:", error);
+      toast.error("Failed to perform task action");
     } finally {
       setLoadingTaskKey(null);
     }
   };
-
-  const [loadingTaskKey, setLoadingTaskKey] = useState(null);
-
-  useEffect(() => {
-    const newTimers = {};
-    Object.keys(taskData).forEach((columnKey) => {
-      taskData[columnKey].forEach((task, index) => {
-        const taskKey = `${columnKey}-${index}`;
-        if (task.status === 1) {
-          newTimers[taskKey] = {
-            isWorkPhase: true,
-            currentWorkTime: task.workDuration * 60,
-            currentBreakTime: task.breakTime * 60,
-            remainingTime: task.remainingTime,
-            overdueTime: 0,
-            isRunning: true,
-            totalWorkCompleted: 0,
-            totalBreakCompleted: 0,
-          };
-        } else if (task.status === 2) {
-          newTimers[taskKey] = {
-            isWorkPhase: true,
-            currentWorkTime: task.workDuration * 60,
-            currentBreakTime: task.breakTime * 60,
-            remainingTime: task.remainingTime,
-            overdueTime: 0,
-            isRunning: false,
-            totalWorkCompleted: 0,
-            totalBreakCompleted: 0,
-          };
-        }
-      });
-    });
-
-    setTimers(newTimers);
-  }, [taskData]);
 
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [taskType, setTaskType] = useState("");
@@ -855,9 +878,8 @@ export default function TaskPage() {
     }));
   }, []);
 
-  // Updated durations for Simple and Complex tasks
-  const simpleDurations = [30, 45, 60, 75, 90];
-  const complexDurations = [30, 60, 90, 120, 150, 180];
+  const simpleDurations = [30, 60, 90, 120, 150, 180];
+  const complexDurations = [180, 195, 210, 225, 240, 255, 270];
 
   // Generate duration options based on task type
   const durationOptions = taskType.includes("Simple")
@@ -1081,7 +1103,7 @@ export default function TaskPage() {
               >
                 {sortedTasks.map((task, index) => {
                   const remainingTime = task.remainingTime || 0;
-                  const overdueTime = remainingTime < 0 ? -remainingTime : 0;
+                  /* const overdueTime = task.overdueTime || 0; // Removed overdueTime */
                   const taskKey = `${columnKey}-${index}`;
                   const timer = timers[taskKey] || {};
                   const { totalWorkCompleted = 0, totalBreakCompleted = 0 } =
@@ -1177,13 +1199,12 @@ export default function TaskPage() {
                           <Card className="task-item relative flex">
                             {["simple", "complex"].includes(columnKey) && (
                               <div
-                                className={`priority-label priority-${
-                                  task.priority <= 2
-                                    ? "high"
-                                    : task.priority <= 4
-                                    ? "medium"
-                                    : "low"
-                                } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
+                                className={`priority-label priority-${task.priority <= 2
+                                  ? "high"
+                                  : task.priority <= 4
+                                  ? "medium"
+                                  : "low"
+                                  } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
                                 onClick={(e) => {
                                   e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
                                   setSelectedTask(task);
@@ -1222,8 +1243,7 @@ export default function TaskPage() {
                               </div>
                               <div className="flex flex-col gap-1 text-left">
                                 <span
-                                  className={`text-sm ${
-                                    task.status === 4 ||
+                                  className={`text-sm ${task.status === 4 ||
                                     (remainingTime <= 0 &&
                                       currentTaskStatus !== 0)
                                       ? "text-red-600"
@@ -1231,14 +1251,16 @@ export default function TaskPage() {
                                   }`}
                                 >
                                   {task.status !== 3 &&
-                                    (task.status === 4
-                                      ? `Overdue: ${formatTime(overdueTime)}`
-                                      : remainingTime <= 0 &&
-                                        currentTaskStatus !== 0
-                                      ? `Overdue: ${formatTime(overdueTime)}`
-                                      : `Remaining: ${formatTime(
-                                          remainingTime
-                                        )}`)}
+                                    (task.status === 4 ? (
+                                      /* Changed display for expired tasks */
+                                      ""
+                                    ) : remainingTime <= 0 &&
+                                      currentTaskStatus !== 0 ? (
+                                      /* Display "Currently Overdue" instead of overdue time */
+                                      "Currently Overdue"
+                                    ) : (
+                                      `Remaining: ${formatTime(remainingTime)}`
+                                    ))}
                                 </span>
                                 <div className="progress-bar-container">
                                   <div className="progress-bar flex h-2 rounded overflow-hidden">
@@ -1251,9 +1273,8 @@ export default function TaskPage() {
                                             : "bg-yellow-500"
                                         }
                                         style={{
-                                          width: `${
-                                            (phase.duration /
-                                              totalDurationSeconds) *
+                                          width: `${(phase.duration /
+                                            totalDurationSeconds) *
                                             100
                                           }%`,
                                         }}
@@ -1264,8 +1285,7 @@ export default function TaskPage() {
                                 {task.status !== 4 &&
                                   task.status !== 3 &&
                                   !(
-                                    remainingTime <= 0 &&
-                                    currentTaskStatus !== 0
+                                    remainingTime <= 0 && currentTaskStatus !== 0
                                   ) && (
                                     <div className="text-xs text-gray-500 mt-1">
                                       {currentTaskStatus === 0 ? (
@@ -1449,11 +1469,10 @@ export default function TaskPage() {
             <div className="w-32 h-32 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
               <img
                 src={userTrees.length > 0 ? treeImageSrc : addIcon}
-                className={`object-contain ${
-                  userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
-                    ? "w-10 h-10"
-                    : "w-30 h-30"
-                }`}
+                className={`object-contain ${userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
+                  ? "w-10 h-10"
+                  : "w-30 h-30"
+                  }`}
               />
             </div>
           </div>
@@ -1631,6 +1650,7 @@ export default function TaskPage() {
                       {formatTime(selectedTask.remainingTime)}
                     </p>
                   )}
+                  {/* Removed overdueTime display */}
                 </div>
               )}
               <DialogFooter>
@@ -1921,7 +1941,7 @@ export default function TaskPage() {
                       <p className="text-red-500 text-sm">{breakTimeError}</p>
                     )}
                     <p className="text-xs text-blue-600 italic">
-                      🔹 Recommended: {focusSuggestion.defaultBreak} mins{" "}
+                      🔹 Recommended: {focusSuggestion.defaultBreak} mins
                     </p>
                   </div>
                 </div>
@@ -1942,13 +1962,11 @@ export default function TaskPage() {
                   </p>
                   <p>
                     <strong>Start Date:</strong>{" "}
-                    {format(new Date(taskCreateData.startDate), "PPP HH:mm")}{" "}
-                    {/* Hiển thị định dạng 24 giờ */}
+                    {format(new Date(taskCreateData.startDate), "PPP HH:mm")}
                   </p>
                   <p>
                     <strong>End Date:</strong>{" "}
-                    {format(new Date(taskCreateData.endDate), "PPP HH:mm")}{" "}
-                    {/* Hiển thị định dạng 24 giờ */}
+                    {format(new Date(taskCreateData.endDate), "PPP HH:mm")}
                   </p>
                   <p>
                     <strong>Focus Method:</strong>{" "}
@@ -2038,8 +2056,7 @@ export default function TaskPage() {
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
                       {selectedTree.levelId === 4
                         ? "Level Max"
-                        : `${treeExp.totalXp} / ${
-                            treeExp.totalXp + treeExp.xpToNextLevel
+                        : `${treeExp.totalXp} / ${treeExp.totalXp + treeExp.xpToNextLevel
                           } XP`}
                     </span>
                   </div>
