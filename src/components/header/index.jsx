@@ -53,7 +53,7 @@ const Header = () => {
       }
     }
 
-    if (role === "player") {
+    if (role === "Player") {
       setNavItems([
         { path: "/home", label: "Home", hasUpdate: false },
         { path: "/task", label: "Tasks", hasUpdate: false },
