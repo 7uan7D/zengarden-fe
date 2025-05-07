@@ -175,6 +175,7 @@ function AdminLayout() {
             </ProtectedRoute>
           }
         />
+        {/* admin */}
         <Route path="/items" element={<Items />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/challenges-admin" element={<Challenge />} />
@@ -182,18 +183,19 @@ function AdminLayout() {
         <Route path="/packages" element={<Packages />} />
         <Route path="/trade-history" element={<TradeHistory />} />
         <Route path="/transactions" element={<Transactions />} />
-        <Route path="/userXPLog" element={<UserXPLog />} />
         <Route path="/treeXPLog" element={<TreeXPLog />} />
+        <Route path="/settings" element={<Settings />} />
+
+        {/* moderator */}
         <Route path="/challenges-moderate" element={<ChallengesModerate />} />
         <Route path="/items-moderate" element={<ItemsModerate />} />
         <Route path="/packages-moderate" element={<PackagesModerate />} />
-        <Route
-          path="/data-refresh-moderate"
-          element={<DataRefreshModerate />}
-        />
+        <Route path="/data-refresh-moderate" element={<DataRefreshModerate />} />
+        
+        {/* test */}
+        {/* <Route path="/userXPLog" element={<UserXPLog />} /> 
         <Route path="/sales" element={<Sales />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/analytics" element={<Analytics />} /> */}
       </Routes>
     </div>
   );
