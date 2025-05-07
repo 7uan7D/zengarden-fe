@@ -6,6 +6,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
@@ -54,6 +55,8 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { GetUserChallengeTask } from "@/services/apiServices/challengeService";
+import { SelectChallengeWinner } from "@/services/apiServices/challengeService";
 
 export default function ChallengeDetails(props) {
   const propId = props.id;
@@ -250,6 +253,22 @@ export default function ChallengeDetails(props) {
     }
   }, [rankingData]);
 
+  //select winner
+  const [selectedUserTasks, setSelectedUserTasks] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const handleSelectWinner = async (userId) => {
+    try {
+      const tasks = await GetUserChallengeTask(userId, id); // `id` là challengeId
+      setSelectedUserTasks(tasks);
+      setSelectedUser(userId);
+      setDialogOpen(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not fetch user tasks");
+    }
+  };
+
   const [userChallengeProgress, setUserChallengeProgress] = useState(null);
   useEffect(() => {
     const fetchProgress = async () => {
@@ -320,6 +339,13 @@ export default function ChallengeDetails(props) {
 
     fetchTaskTypes();
   }, []);
+
+  const isChallengeCreator = userChallenge?.find(
+    (challenge) =>
+      challenge.challengeId === parseInt(id) &&
+      challenge.status !== 4 &&
+      challenge.challengeRole === 0
+  );
 
   if (isLoading) {
     return <div></div>;
@@ -442,7 +468,7 @@ export default function ChallengeDetails(props) {
                     <p>No tasks available for this challenge.</p>
                   )}
                   {challenge.status === 0 &&
-                    userChallenge.find(
+                    userChallenge?.find(
                       (c) =>
                         c.challengeId === parseInt(id) &&
                         c.status !== 4 &&
@@ -585,6 +611,11 @@ export default function ChallengeDetails(props) {
                               <th className="py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Progress
                               </th>
+                              {isChallengeCreator && (
+                                <th className="py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  Select Winner
+                                </th>
+                              )}
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
@@ -684,6 +715,19 @@ export default function ChallengeDetails(props) {
                                   >
                                     {user.progress}%
                                   </td>
+
+                                  {isChallengeCreator && (
+                                    <td className="py-4 whitespace-nowrap text-sm text-center">
+                                      <button
+                                        className="px-2 py-1 text-xs text-white bg-green-500 rounded hover:bg-green-600"
+                                        onClick={() =>
+                                          handleSelectWinner(user.userId)
+                                        }
+                                      >
+                                        Select
+                                      </button>
+                                    </td>
+                                  )}
                                 </tr>
                               ))
                             ) : (
@@ -705,6 +749,67 @@ export default function ChallengeDetails(props) {
               </Card>
             </div>
           </div>
+
+          {dialogOpen && (
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogContent className="p-6 space-y-4">
+                <DialogHeader>
+                  <DialogTitle>Review Tasks of User {selectedUser}</DialogTitle>
+                </DialogHeader>
+
+                {selectedUserTasks.length > 0 ? (
+                  selectedUserTasks.map((task, idx) => (
+                    <div key={idx} className="border p-3 rounded-md bg-gray-50">
+                      <div>
+                        <strong>Note:</strong> {task.taskNote}
+                      </div>
+                      <div>
+                        <strong>Result:</strong> {task.taskResult}
+                      </div>
+                      {task.fileUrl && (
+                        <div>
+                          <strong>File:</strong>{" "}
+                          <a
+                            href={task.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 underline"
+                          >
+                            View File
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div>No tasks found for this user.</div>
+                )}
+
+                <DialogFooter>
+                  <Button
+                    onClick={async () => {
+                      try {
+                        await SelectChallengeWinner(id, [
+                          {
+                            userId: selectedUser,
+                            reason: "Great work and results.",
+                          },
+                        ]);
+                        toast.success("Winner selected!");
+                        setDialogOpen(false);
+                      } catch (err) {
+                        toast.error("Failed to select winner.");
+                        console.error(err);
+                      }
+                    }}
+                  >
+                    Confirm Winner
+                  </Button>
+                  <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
 
           <Dialog open={openCreateTask} onOpenChange={setOpenCreateTask}>
             <DialogContent className="dialog-overlay">
