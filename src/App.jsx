@@ -40,6 +40,8 @@ import ChallengesModerate from "./pages/ChallengesModerate";
 import ItemsModerate from "./pages/ItemsModerate";
 import PackagesModerate from "./pages/PackagesModerate";
 import DataRefreshModerate from "./pages/DataRefreshModerate";
+import parseJwt from "./services/parseJwt";
+import { Navigate } from "react-router-dom";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -47,19 +49,28 @@ const pageVariants = {
   exit: { opacity: 0, transition: { duration: 0.2 } },
 };
 
-/** Mảng các path không hiển thị MusicPlayerController và TaskOverlay */
 const excludedPaths = ["/", "/faq", "/policy", "/workspace"];
 const excludedPathsHeader = ["/workspace"];
-const excludedPathsTasks = ["/","/home" , "/faq", "/policy", "/task"];
+const excludedPathsTasks = ["/", "/home", "/faq", "/policy", "/task"];
+
+function ProtectedRoute({ children, roleRequired }) {
+  const role = getUserRole();
+  if (role !== roleRequired) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
 
 function AnimatedRoutes() {
   const location = useLocation();
-  const [isPlaying, setIsPlaying] = useState(false); // Trạng thái phát nhạc
-  const [currentIndex, setCurrentIndex] = useState(0); // Chỉ số bài hát
 
-  // Xác định positionClass cho TaskOverlay dựa trên pathname
-  const rightPositionPaths = ["/workspace", "/marketplace"]; //Path để hiển thị vị trí cho TaskOverlay
-  const taskOverlayPositionClass = rightPositionPaths.includes(location.pathname)
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const rightPositionPaths = ["/workspace", "/marketplace"];
+  const taskOverlayPositionClass = rightPositionPaths.includes(
+    location.pathname
+  )
     ? "fixed top-12 right-4 z-50 mt-20"
     : "fixed top-6 left-4 z-50 mt-20";
 
@@ -68,12 +79,7 @@ function AnimatedRoutes() {
       <TreeExperienceProvider>
         <>
           <TimerProvider>
-            {!excludedPathsHeader.includes(location.pathname) && (
-              <div>
-                <Header />
-              </div>
-            )}
-            {/* Hiển thị MusicPlayerController */}
+            {!excludedPathsHeader.includes(location.pathname) && <Header />}
             {!excludedPaths.includes(location.pathname) && (
               <div className="fixed bottom-4 right-4 z-50">
                 <MusicPlayerController
@@ -83,7 +89,6 @@ function AnimatedRoutes() {
                 />
               </div>
             )}
-            {/* Hiển thị TaskOverlay */}
             {!excludedPathsTasks.includes(location.pathname) && (
               <div className={taskOverlayPositionClass}>
                 <TaskOverlay positionClass={taskOverlayPositionClass} />
@@ -103,9 +108,23 @@ function AnimatedRoutes() {
                   <Route path="/tree" element={<Tree />} />
                   <Route path="/workspace" element={<Workspace />} />
                   <Route path="/calendar" element={<Calendar />} />
-                  <Route path="/home" element={<PlayerHome />} />
+                  <Route
+                    path="/home"
+                    element={
+                      <ProtectedRoute roleRequired="Player">
+                        <PlayerHome />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/task"
+                    element={
+                      <ProtectedRoute roleRequired="Player">
+                        <TaskPage />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="/marketplace" element={<Marketplace />} />
-                  <Route path="/task" element={<TaskPage />} />
                   <Route path="/challenges" element={<Challenges />} />
                   <Route
                     path="/challenges/:id"
@@ -115,11 +134,7 @@ function AnimatedRoutes() {
                 </Routes>
               </motion.div>
             </AnimatePresence>
-            {!excludedPathsHeader.includes(location.pathname) && (
-              <div>
-                <Footer />
-              </div>
-            )}
+            {!excludedPathsHeader.includes(location.pathname) && <Footer />}
           </TimerProvider>
         </>
       </TreeExperienceProvider>
@@ -136,8 +151,30 @@ function AdminLayout() {
       </div>
       <Sidebar />
       <Routes>
-        <Route path="/overview" element={<Overview />} />
-        <Route path="/users" element={<Users />} />
+        <Route
+          path="/overview"
+          element={
+            <ProtectedRoute roleRequired="Admin">
+              <Overview />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute roleRequired="Admin">
+              <Users />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute roleRequired="Admin">
+              <Users />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/items" element={<Items />} />
         <Route path="/tasks" element={<Tasks />} />
         <Route path="/challenges-admin" element={<Challenge />} />
@@ -150,7 +187,10 @@ function AdminLayout() {
         <Route path="/challenges-moderate" element={<ChallengesModerate />} />
         <Route path="/items-moderate" element={<ItemsModerate />} />
         <Route path="/packages-moderate" element={<PackagesModerate />} />
-        <Route path="/data-refresh-moderate" element={<DataRefreshModerate />} />
+        <Route
+          path="/data-refresh-moderate"
+          element={<DataRefreshModerate />}
+        />
         <Route path="/sales" element={<Sales />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/settings" element={<Settings />} />
@@ -159,10 +199,23 @@ function AdminLayout() {
   );
 }
 
+function getUserRole() {
+  const token = localStorage.getItem("token"); // hoặc nơi bạn lưu token
+  if (!token) return null;
+  try {
+    const decoded = parseJwt(token);
+    return decoded.role || null;
+  } catch (error) {
+    console.error("Invalid token", error);
+    return null;
+  }
+}
+
 function ConditionalRoutes() {
   const location = useLocation();
+  const role = getUserRole();
+
   const isAdminRoute =
-    // location.pathname.startsWith("/overview") ||
     location.pathname.startsWith("/users") ||
     location.pathname.startsWith("/items") ||
     location.pathname.startsWith("/tasks") ||
@@ -177,9 +230,16 @@ function ConditionalRoutes() {
     location.pathname.startsWith("/items-moderate") ||
     location.pathname.startsWith("/packages-moderate") ||
     location.pathname.startsWith("/data-refresh-moderate") ||
-    // location.pathname.startsWith("/sales") ||
-    // location.pathname.startsWith("/analytics") ||
     location.pathname.startsWith("/settings");
+
+  const isModeratorRoute =
+    location.pathname.startsWith("/challenges-moderate") ||
+    location.pathname.startsWith("/items-moderate");
+
+  if (role === "Admin" && isAdminRoute) return <AdminLayout />;
+  if (role === "Moderator" && isModeratorRoute) return <AdminLayout />;
+  if (role === "Player" && !isAdminRoute && !isModeratorRoute)
+    return <AnimatedRoutes />;
 
   return isAdminRoute ? <AdminLayout /> : <AnimatedRoutes />;
 }
