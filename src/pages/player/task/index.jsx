@@ -1385,10 +1385,10 @@ export default function TaskPage() {
                                         ) : currentTaskStatus === 1 ? (
                                           "Pause"
                                         ) : currentTaskStatus === 2 ? ( // Loading của nút Resume nhưng chưa check
-                                          "Resume" )
-                                          :(
-                                          "Finish"
-                                        )}
+                                          "Resume")
+                                          : (
+                                            "Finish"
+                                          )}
                                       </Button>
                                     )}
                                   {remainingTime <= 120 &&
@@ -1741,6 +1741,56 @@ export default function TaskPage() {
                 </DialogDescription>
               </DialogHeader>
 
+              {/* Step Indicator */}
+              <div className="flex justify-between items-center my-2 mb-0">
+                {[1, 2, 3].map((s) => (
+                  <div key={s} className="flex flex-col items-center">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${s < step
+                          ? "bg-green-500 text-white"
+                          : s === step
+                            ? "bg-green-600 text-white"
+                            : "bg-gray-200 text-gray-500"
+                        }`}
+                    >
+                      {s < step ? (
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      ) : (
+                        s
+                      )}
+                    </div>
+                    <span
+                      className={`text-xs mt-1 ${s === step ? "text-green-600 font-medium" : "text-gray-500"
+                        }`}
+                    >
+                      {s === 1 && "Task Details"}
+                      {s === 2 && "Focus Method"}
+                      {s === 3 && "Confirm"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {/* Đường nối giữa các bước */}
+              <div className="absolute top-[140px] left-0 right-0 h-1 bg-gray-200 -mt-4">
+                <div
+                  className="h-full bg-green-500 transition-all duration-300"
+                  style={{ width: step === 1 ? "33%" : step === 2 ? "66%" : "100%" }}
+                ></div>
+              </div>
+
               {step === 1 && (
                 <div className="space-y-4">
                   <div>
@@ -1844,9 +1894,9 @@ export default function TaskPage() {
               )}
 
               {step === 2 && focusSuggestion && (
-                <div className="space-y-6">
+                <div className="space-y-2">
                   {/* Thông tin Focus Suggestion */}
-                  <div className="border rounded-xl p-4 bg-gray-50 space-y-2 shadow-sm">
+                  <div className="border rounded-xl p-3 bg-gray-50 space-y-2 shadow-sm">
                     <h2 className="text-xl font-bold text-primary">
                       Focus Method: {focusSuggestion.focusMethodName}
                     </h2>
