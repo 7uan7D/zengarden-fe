@@ -170,6 +170,7 @@ export default function TaskPage() {
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newTreeName, setNewTreeName] = useState("");
+  const [isLoadingNext, setIsLoadingNext] = useState(false); // Trạng thái loading cho nút Next
   // Task
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
@@ -728,7 +729,7 @@ export default function TaskPage() {
           const newData = { ...prevData };
           newData[columnKey][index] = {
             ...task,
-            status: 4, /* Changed to status 4 for expired/finished overdue tasks */
+            status: 3, /* Changed to status 3 for finished overdue tasks */
             remainingTime: 0,
             /* overdueTime: timers[taskKey]?.overdueTime || 0, // Removed overdueTime */
           };
@@ -794,8 +795,9 @@ export default function TaskPage() {
   };
 
   const handleNext = async () => {
-    if (step === 1) {
-      try {
+    setIsLoadingNext(true); // Bắt đầu loading
+    try {
+      if (step === 1) {
         const response = await SuggestTaskFocusMethods(taskCreateData);
         setFocusSuggestion(response);
         setTaskCreateData((prev) => ({
@@ -807,12 +809,14 @@ export default function TaskPage() {
         setSelectedWorkOption(response.defaultDuration.toString());
         setSelectedBreakOption(response.defaultBreak.toString());
         setStep(2);
-      } catch (error) {
-        console.error("Error fetching suggestions", error);
-        toast.error("Failed to fetch focus method suggestions");
+      } else {
+        setStep(3);
       }
-    } else {
-      setStep(3);
+    } catch (error) {
+      console.error("Error fetching suggestions", error);
+      toast.error("Failed to fetch focus method suggestions");
+    } finally {
+      setIsLoadingNext(false); // Kết thúc loading
     }
   };
 
@@ -861,8 +865,8 @@ export default function TaskPage() {
       ...prev,
       [field]: date
         ? date.toISOString().split("T")[0] +
-          "T" +
-          (prev[field]?.split("T")[1] || "00:00:00.000Z")
+        "T" +
+        (prev[field]?.split("T")[1] || "00:00:00.000Z")
         : null,
     }));
   }, []);
@@ -885,8 +889,8 @@ export default function TaskPage() {
   const durationOptions = taskType.includes("Simple")
     ? simpleDurations
     : taskType.includes("Complex")
-    ? complexDurations
-    : [];
+      ? complexDurations
+      : [];
 
   // Generate time options for work and break durations
   const generateTimeOptions = (min, max, step) => {
@@ -904,8 +908,8 @@ export default function TaskPage() {
       return "Please enter a valid number";
     }
     const isSimple = taskType.includes("Simple");
-    const minDuration = 30;
-    const maxDuration = isSimple ? 90 : 180;
+    const minDuration = isSimple ? 30 : 180;
+    const maxDuration = isSimple ? 180 : 360;
 
     if (numValue < minDuration) {
       return `Duration must be at least ${minDuration} minutes`;
@@ -1029,8 +1033,8 @@ export default function TaskPage() {
       activeTabs[columnKey] === "all"
         ? taskList
         : activeTabs[columnKey] === "current"
-        ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
-        : taskList.filter((task) => task.status === 3);
+          ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
+          : taskList.filter((task) => task.status === 3);
 
     const sortedTasks = [...filteredTasks].sort(
       (a, b) => a.priority - b.priority
@@ -1043,8 +1047,8 @@ export default function TaskPage() {
     const calculatedHeight =
       sortedTasks.length > 0
         ? sortedTasks.length * taskHeight +
-          (sortedTasks.length - 1) * gap +
-          padding
+        (sortedTasks.length - 1) * gap +
+        padding
         : 150; // Chiều cao tối thiểu nếu không có task nào
 
     return (
@@ -1202,8 +1206,8 @@ export default function TaskPage() {
                                 className={`priority-label priority-${task.priority <= 2
                                   ? "high"
                                   : task.priority <= 4
-                                  ? "medium"
-                                  : "low"
+                                    ? "medium"
+                                    : "low"
                                   } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
                                 onClick={(e) => {
                                   e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
@@ -1216,25 +1220,25 @@ export default function TaskPage() {
                             )}
                             {(task.taskTypeName === "Simple" ||
                               task.taskTypeName === "Complex") && (
-                              <div
-                                className="drag-handle w-8 bg-gray-100 flex items-center justify-center"
-                                {...dragHandleProps}
-                              >
-                                <svg
-                                  className="w-5 h-5 text-gray-500"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
+                                <div
+                                  className="drag-handle w-8 bg-gray-100 flex items-center justify-center"
+                                  {...dragHandleProps}
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M8 9h8M8 13h8M8 17h8"
-                                  />
-                                </svg>
-                              </div>
-                            )}
+                                  <svg
+                                    className="w-5 h-5 text-gray-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M8 9h8M8 13h8M8 17h8"
+                                    />
+                                  </svg>
+                                </div>
+                              )}
                             <div className="flex-1 flex flex-col justify-between text-left p-4">
                               <div>
                                 <span className="text-gray-700 font-medium">
@@ -1246,9 +1250,9 @@ export default function TaskPage() {
                                   className={`text-sm ${task.status === 4 ||
                                     (remainingTime <= 0 &&
                                       currentTaskStatus !== 0)
-                                      ? "text-red-600"
-                                      : "text-gray-600"
-                                  }`}
+                                    ? "text-red-600"
+                                    : "text-gray-600"
+                                    }`}
                                 >
                                   {task.status !== 3 &&
                                     (task.status === 4 ? (
@@ -1276,7 +1280,7 @@ export default function TaskPage() {
                                           width: `${(phase.duration /
                                             totalDurationSeconds) *
                                             100
-                                          }%`,
+                                            }%`,
                                         }}
                                       />
                                     ))}
@@ -1328,63 +1332,65 @@ export default function TaskPage() {
                                     remainingTime <= 0 &&
                                     currentTaskStatus !== 0
                                   ) && (
-                                    <Button
-                                      onClick={(e) => {
-                                        e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
-                                        handleTaskAction(
-                                          columnKey,
-                                          index,
-                                          currentTaskStatus === 0
-                                            ? "start"
-                                            : currentTaskStatus === 1
-                                            ? "pause"
-                                            : "resume"
-                                        );
-                                      }}
-                                      className={
-                                        currentTaskStatus === 1
-                                          ? "bg-yellow-500 hover:bg-yellow-600"
-                                          : currentTaskStatus === 2
-                                          ? "bg-blue-500 hover:bg-blue-600"
-                                          : "bg-green-500 hover:bg-green-600"
-                                      }
-                                      disabled={
-                                        (currentTaskStatus === 0 &&
-                                          activeTaskKey !== null &&
-                                          activeTaskKey !== taskKey) ||
-                                        loadingTaskKey === taskKey
-                                      }
-                                    >
-                                      {loadingTaskKey === taskKey ? (
-                                        <svg
-                                          className="animate-spin h-5 w-5 text-white mx-auto"
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          fill="none"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <circle
-                                            className="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            strokeWidth="4"
-                                          />
-                                          <path
-                                            className="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                          />
-                                        </svg>
-                                      ) : currentTaskStatus === 0 ? (
-                                        "Start"
-                                      ) : currentTaskStatus === 1 ? (
-                                        "Pause"
-                                      ) : (
-                                        "Resume"
-                                      )}
-                                    </Button>
-                                  )}
+                                      <Button
+                                        onClick={(e) => {
+                                          e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
+                                          handleTaskAction(
+                                            columnKey,
+                                            index,
+                                            currentTaskStatus === 0
+                                              ? "start"
+                                              : currentTaskStatus === 1
+                                                ? "pause"
+                                                : "resume"
+                                          );
+                                        }}
+                                        className={
+                                          currentTaskStatus === 1
+                                            ? "bg-yellow-500 hover:bg-yellow-600"
+                                            : currentTaskStatus === 2
+                                              ? "bg-blue-500 hover:bg-blue-600"
+                                              : "bg-green-500 hover:bg-green-600"
+                                        }
+                                        disabled={
+                                          (currentTaskStatus === 0 &&
+                                            activeTaskKey !== null &&
+                                            activeTaskKey !== taskKey) ||
+                                          loadingTaskKey === taskKey
+                                        }
+                                      >
+                                        {loadingTaskKey === taskKey ? (
+                                          <svg
+                                            className="animate-spin h-5 w-5 text-white mx-auto"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <circle
+                                              className="opacity-25"
+                                              cx="12"
+                                              cy="12"
+                                              r="10"
+                                              stroke="currentColor"
+                                              strokeWidth="4"
+                                            />
+                                            <path
+                                              className="opacity-75"
+                                              fill="currentColor"
+                                              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                            />
+                                          </svg>
+                                        ) : currentTaskStatus === 0 ? (
+                                          "Start"
+                                        ) : currentTaskStatus === 1 ? (
+                                          "Pause"
+                                        ) : currentTaskStatus === 2 ? ( // Loading của nút Resume nhưng chưa check
+                                          "Resume" )
+                                          :(
+                                          "Finish"
+                                        )}
+                                      </Button>
+                                    )}
                                   {remainingTime <= 120 &&
                                     remainingTime >= 0 &&
                                     currentTaskStatus !== 0 && (
@@ -1398,8 +1404,32 @@ export default function TaskPage() {
                                           );
                                         }}
                                         className="bg-orange-500 hover:bg-orange-600"
+                                        disabled={loadingTaskKey === taskKey} // Vô hiệu hóa nút khi đang loading
                                       >
-                                        Finish
+                                        {loadingTaskKey === taskKey ? (
+                                          <svg
+                                            className="animate-spin h-5 w-5 text-white mx-auto"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <circle
+                                              className="opacity-25"
+                                              cx="12"
+                                              cy="12"
+                                              r="10"
+                                              stroke="currentColor"
+                                              strokeWidth="4"
+                                            />
+                                            <path
+                                              className="opacity-75"
+                                              fill="currentColor"
+                                              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                            />
+                                          </svg>
+                                        ) : (
+                                          "Finish"
+                                        )}
                                       </Button>
                                     )}
                                 </div>
@@ -1538,23 +1568,23 @@ export default function TaskPage() {
                   tree.treeStatus === 2 ||
                   tree.treeStatus === 0
               ).length < 2 && (
-                <div
-                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
-                  onClick={() => {
-                    setIsTreeDialogOpen(false);
-                    setIsCreateTreeDialogOpen(true);
-                  }}
-                >
-                  <img
-                    src={addIcon}
-                    alt="Add New Tree"
-                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
-                  />
-                  <h3 className="font-bold mt-2 text-green-600">
-                    Create New Tree
-                  </h3>
-                </div>
-              )}
+                  <div
+                    className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
+                    onClick={() => {
+                      setIsTreeDialogOpen(false);
+                      setIsCreateTreeDialogOpen(true);
+                    }}
+                  >
+                    <img
+                      src={addIcon}
+                      alt="Add New Tree"
+                      className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+                    />
+                    <h3 className="font-bold mt-2 text-green-600">
+                      Create New Tree
+                    </h3>
+                  </div>
+                )}
             </DialogContent>
           </Dialog>
 
@@ -1612,12 +1642,12 @@ export default function TaskPage() {
                     {selectedTask.status === 3
                       ? "Completed"
                       : selectedTask.status === 4
-                      ? "Expired"
-                      : selectedTask.status === 1
-                      ? "In Progress"
-                      : selectedTask.status === 2
-                      ? "Paused"
-                      : "Not Started"}
+                        ? "Expired"
+                        : selectedTask.status === 1
+                          ? "In Progress"
+                          : selectedTask.status === 2
+                            ? "Paused"
+                            : "Not Started"}
                   </p>
                   <p>
                     <strong>Focus Method:</strong>{" "}
@@ -1989,6 +2019,7 @@ export default function TaskPage() {
                     variant="ghost"
                     className="bg-white border-black"
                     onClick={handleBack}
+                    disabled={isLoadingNext} // Vô hiệu hóa nút Back khi Next đang loading
                   >
                     Back
                   </Button>
@@ -1997,9 +2028,32 @@ export default function TaskPage() {
                   <Button
                     className="bg-green-600 text-white hover:bg-green-700"
                     onClick={handleNext}
-                    disabled={isNextDisabled()}
+                    disabled={isNextDisabled() || isLoadingNext} // Vô hiệu hóa khi đang loading hoặc dữ liệu không hợp lệ
                   >
-                    Next
+                    {isLoadingNext ? (
+                      <svg
+                        className="animate-spin h-5 w-5 text-white mx-auto"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        />
+                      </svg>
+                    ) : (
+                      "Next"
+                    )}
                   </Button>
                 )}
                 {step === 3 && (
@@ -2057,7 +2111,7 @@ export default function TaskPage() {
                       {selectedTree.levelId === 4
                         ? "Level Max"
                         : `${treeExp.totalXp} / ${treeExp.totalXp + treeExp.xpToNextLevel
-                          } XP`}
+                        } XP`}
                     </span>
                   </div>
                 )}
