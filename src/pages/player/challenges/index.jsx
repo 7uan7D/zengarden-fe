@@ -276,7 +276,7 @@ export default function Challenges({ challenges }) {
   };
 
   const [newChallengeData, setNewChallengeData] = useState({
-    challengeTypeId: 0,
+    challengeTypeId: 1,
     challengeName: "",
     description: "",
     reward: 0,

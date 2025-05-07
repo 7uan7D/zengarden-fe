@@ -67,9 +67,8 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import TimePicker from "react-time-picker";
-import "react-time-picker/dist/TimePicker.css";
-import "react-clock/dist/Clock.css";
+import { TimePicker } from "antd";
+import moment from "moment";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
 import { SortableTask } from "./SortableTask";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
@@ -80,20 +79,39 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const selectedDate = date ? new Date(date) : undefined;
   const formattedTime = date
-    ? format(new Date(date), "hh:mm a")   // Chuyển đổi định dạng thời gian
-    : "12:00 AM";
+    ? moment(new Date(date)).format("HH:mm") // Định dạng 24 giờ
+    : moment().format("HH:mm"); // Giá trị mặc định là thời gian hiện tại
 
   const handleDateSelect = useCallback(
     (newDate) => {
-      onDateChange(newDate);
+      if (newDate) {
+        const updatedDate = new Date(newDate);
+        // Giữ nguyên giờ và phút từ selectedDate nếu có
+        updatedDate.setHours(
+          selectedDate ? selectedDate.getHours() : 0,
+          selectedDate ? selectedDate.getMinutes() : 0,
+          0,
+          0
+        );
+        onDateChange(updatedDate);
+      }
       setIsPopoverOpen(false);
     },
-    [onDateChange]
+    [onDateChange, selectedDate]
   );
 
   const handleTimeChange = useCallback(
-    (time) => {
-      onTimeChange(time);
+    (time, timeString) => {
+      if (!timeString) return;
+
+      // Kiểm tra định dạng thời gian hợp lệ (HH:mm)
+      const timeRegex = /^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(timeString)) return;
+
+      // Định dạng thời gian thành HH:mm:ss.000Z
+      const formattedTime = `${timeString}:00.000Z`;
+
+      onTimeChange(formattedTime);
     },
     [onTimeChange]
   );
@@ -121,12 +139,11 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
         </Popover>
         <TimePicker
           onChange={handleTimeChange}
-          value={formattedTime}
-          disableClock={true}
-          format="hh:mm a" // Định dạng thời gian 12 giờ
-          className="h-10 w-[100px] text-center border-gray-300 rounded-lg focus:border-green-500 focus:ring focus:ring-green-200 transition-all"
-          clearIcon={null}
-          clockIcon={null}
+          value={moment(formattedTime, "HH:mm")}
+          format="HH:mm" // Định dạng 24 giờ
+          className="h-10 w-[120px] text-center rounded-lg"
+          showNow={false}
+          allowClear={false}
         />
       </div>
     </div>
@@ -615,7 +632,7 @@ export default function TaskPage() {
 
         const currentTimer = timers[taskKey];
 
-        setTimers((prev) => ({
+        setTimer((prev) => ({
           ...prev,
           [taskKey]: { ...prev[taskKey], isRunning: false },
         }));
@@ -829,19 +846,12 @@ export default function TaskPage() {
 
   const handleTimeChange = useCallback((field, time) => {
     if (!time) return;
-    // Chuyển đổi thời gian từ định dạng 12 giờ sang định dạng 24 giờ
-    const [timePart, period] = time.split(" ");
-    let [hours, minutes] = timePart.split(":").map(Number);
-    if (period === "PM" && hours !== 12) hours += 12;
-    if (period === "AM" && hours === 12) hours = 0;
-    const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:00.000Z`;
+
     setTaskCreateData((prev) => ({
       ...prev,
       [field]: prev[field]
-        ? prev[field].split("T")[0] + "T" + formattedTime
-        : null,
+        ? prev[field].split("T")[0] + "T" + time
+        : new Date().toISOString().split("T")[0] + "T" + time,
     }));
   }, []);
 
@@ -1165,9 +1175,7 @@ export default function TaskPage() {
                       >
                         {({ dragHandleProps }) => (
                           <Card className="task-item relative flex">
-                            {["simple", "complex", "challenge"].includes(
-                              columnKey
-                            ) && (
+                            {["simple", "complex"].includes(columnKey) && (
                               <div
                                 className={`priority-label priority-${
                                   task.priority <= 2
@@ -1185,24 +1193,27 @@ export default function TaskPage() {
                                 {getPriorityLabel(task.priority)}
                               </div>
                             )}
-                            <div
-                              className="drag-handle w-8 bg-gray-100 flex items-center justify-center"
-                              {...dragHandleProps}
-                            >
-                              <svg
-                                className="w-5 h-5 text-gray-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                            {(task.taskTypeName === "Simple" ||
+                              task.taskTypeName === "Complex") && (
+                              <div
+                                className="drag-handle w-8 bg-gray-100 flex items-center justify-center"
+                                {...dragHandleProps}
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth="2"
-                                  d="M8 9h8M8 13h8M8 17h8"
-                                />
-                              </svg>
-                            </div>
+                                <svg
+                                  className="w-5 h-5 text-gray-500"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M8 9h8M8 13h8M8 17h8"
+                                  />
+                                </svg>
+                              </div>
+                            )}
                             <div className="flex-1 flex flex-col justify-between text-left p-4">
                               <div>
                                 <span className="text-gray-700 font-medium">
@@ -1718,7 +1729,9 @@ export default function TaskPage() {
                           type="number"
                           placeholder="Enter duration"
                           value={taskCreateData.totalDuration}
-                          onChange={(e) => handleTotalDurationInput(e.target.value)}
+                          onChange={(e) =>
+                            handleTotalDurationInput(e.target.value)
+                          }
                           className={durationError ? "invalid-input" : ""}
                         />
                       </div>
@@ -1752,7 +1765,9 @@ export default function TaskPage() {
                       </Select>
                     </div>
                     {durationError && (
-                      <p className="text-red-500 text-sm validate_mess">{durationError}</p>
+                      <p className="text-red-500 text-sm validate_mess">
+                        {durationError}
+                      </p>
                     )}
                   </div>
                   <div className="flex flex-col gap-4">
@@ -1779,35 +1794,43 @@ export default function TaskPage() {
               )}
 
               {step === 2 && focusSuggestion && (
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-lg font-semibold">
-                      {focusSuggestion.focusMethodName}
+                <div className="space-y-6">
+                  {/* Thông tin Focus Suggestion */}
+                  <div className="border rounded-xl p-4 bg-gray-50 space-y-2 shadow-sm">
+                    <h2 className="text-xl font-bold text-primary">
+                      Focus Method: {focusSuggestion.focusMethodName}
+                    </h2>
+                    <p className="text-sm text-gray-700">
+                      {focusSuggestion.reason}
                     </p>
-                    <p>XP Multiplier: {focusSuggestion.xpMultiplier}</p>
-                    <p className="text-sm text-gray-500">
-                      Min Duration: {focusSuggestion.minDuration} mins, Max
-                      Duration: {focusSuggestion.maxDuration} mins
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Min Break: {focusSuggestion.minBreak} mins, Max Break:{" "}
-                      {focusSuggestion.maxBreak} mins
-                    </p>
+                    <div className="text-sm text-gray-500 space-y-1">
+                      <p>
+                        ⏱️ Work Duration: {focusSuggestion.minDuration} –{" "}
+                        {focusSuggestion.maxDuration} mins
+                      </p>
+                      <p>
+                        ☕ Break Time: {focusSuggestion.minBreak} –{" "}
+                        {focusSuggestion.maxBreak} mins
+                      </p>
+                    </div>
                   </div>
-                  <div>
+
+                  {/* Work Duration */}
+                  <div className="space-y-2">
                     <Label>Work Duration (minutes)</Label>
-                    <div className="flex gap-2">
-                      <div className="w-1/2">
-                        <Input
-                          type="number"
-                          min={focusSuggestion.minDuration}
-                          max={focusSuggestion.maxDuration}
-                          value={taskCreateData.workDuration}
-                          onChange={(e) => handleWorkDurationInput(e.target.value)}
-                          className={workDurationError ? "invalid-input" : ""}
-                        />
-                      </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="number"
+                        min={focusSuggestion.minDuration}
+                        max={focusSuggestion.maxDuration}
+                        value={taskCreateData.workDuration}
+                        onChange={(e) =>
+                          handleWorkDurationInput(e.target.value)
+                        }
+                        className={workDurationError ? "invalid-input" : ""}
+                      />
                       <Select
+                        value={selectedWorkOption}
                         onValueChange={(value) => {
                           setSelectedWorkOption(value);
                           if (value !== "custom") {
@@ -1818,9 +1841,8 @@ export default function TaskPage() {
                             setWorkDurationError("");
                           }
                         }}
-                        value={selectedWorkOption}
                       >
-                        <SelectTrigger className="w-1/2">
+                        <SelectTrigger>
                           <SelectValue placeholder="Select work duration" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1841,26 +1863,29 @@ export default function TaskPage() {
                       </Select>
                     </div>
                     {workDurationError && (
-                      <p className="text-red-500 text-sm validate_mess">{workDurationError}</p>
+                      <p className="text-red-500 text-sm">
+                        {workDurationError}
+                      </p>
                     )}
-                    <p className="text-sm text-gray-500">
-                      Recommended: {focusSuggestion.defaultDuration} mins
+                    <p className="text-xs text-blue-600 italic">
+                      🔹 Recommended: {focusSuggestion.defaultDuration} mins
                     </p>
                   </div>
-                  <div>
+
+                  {/* Break Time */}
+                  <div className="space-y-2">
                     <Label>Break Time (minutes)</Label>
-                    <div className="flex gap-2">
-                      <div className="w-1/2">
-                        <Input
-                          type="number"
-                          min={focusSuggestion.minBreak}
-                          max={focusSuggestion.maxBreak}
-                          value={taskCreateData.breakTime}
-                          onChange={(e) => handleBreakTimeInput(e.target.value)}
-                          className={breakTimeError ? "invalid-input" : ""}
-                        />
-                      </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="number"
+                        min={focusSuggestion.minBreak}
+                        max={focusSuggestion.maxBreak}
+                        value={taskCreateData.breakTime}
+                        onChange={(e) => handleBreakTimeInput(e.target.value)}
+                        className={breakTimeError ? "invalid-input" : ""}
+                      />
                       <Select
+                        value={selectedBreakOption}
                         onValueChange={(value) => {
                           setSelectedBreakOption(value);
                           if (value !== "custom") {
@@ -1871,9 +1896,8 @@ export default function TaskPage() {
                             setBreakTimeError("");
                           }
                         }}
-                        value={selectedBreakOption}
                       >
-                        <SelectTrigger className="w-1/2">
+                        <SelectTrigger>
                           <SelectValue placeholder="Select break time" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1894,10 +1918,10 @@ export default function TaskPage() {
                       </Select>
                     </div>
                     {breakTimeError && (
-                      <p className="text-red-500 text-sm validate_mess">{breakTimeError}</p>
+                      <p className="text-red-500 text-sm">{breakTimeError}</p>
                     )}
-                    <p className="text-sm text-gray-500">
-                      Recommended: {focusSuggestion.defaultBreak} mins
+                    <p className="text-xs text-blue-600 italic">
+                      🔹 Recommended: {focusSuggestion.defaultBreak} mins{" "}
                     </p>
                   </div>
                 </div>
@@ -1918,11 +1942,13 @@ export default function TaskPage() {
                   </p>
                   <p>
                     <strong>Start Date:</strong>{" "}
-                    {format(new Date(taskCreateData.startDate), "PPP hh:mm a")}
+                    {format(new Date(taskCreateData.startDate), "PPP HH:mm")}{" "}
+                    {/* Hiển thị định dạng 24 giờ */}
                   </p>
                   <p>
                     <strong>End Date:</strong>{" "}
-                    {format(new Date(taskCreateData.endDate), "PPP hh:mm a")}
+                    {format(new Date(taskCreateData.endDate), "PPP HH:mm")}{" "}
+                    {/* Hiển thị định dạng 24 giờ */}
                   </p>
                   <p>
                     <strong>Focus Method:</strong>{" "}
@@ -2058,12 +2084,28 @@ export default function TaskPage() {
                 Create Task
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleOpen("Simple Task", 2)}>
-                Simple Task
+            <DropdownMenuContent
+              align="end"
+              className="w-64 rounded-lg border shadow-lg bg-white"
+            >
+              <DropdownMenuItem
+                onClick={() => handleOpen("Simple Task", 2)}
+                className="flex flex-col items-start gap-1 px-4 py-2 hover:bg-gray-100 rounded-md transition"
+              >
+                <span className="text-sm font-medium text-gray-900">
+                  Simple Task
+                </span>
+                <span className="text-xs text-gray-500">30 - 180 minutes</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleOpen("Complex Task", 3)}>
-                Complex Task
+
+              <DropdownMenuItem
+                onClick={() => handleOpen("Complex Task", 3)}
+                className="flex flex-col items-start gap-1 px-4 py-2 hover:bg-gray-100 rounded-md transition"
+              >
+                <span className="text-sm font-medium text-gray-900">
+                  Complex Task
+                </span>
+                <span className="text-xs text-gray-500">Above 180 minutes</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

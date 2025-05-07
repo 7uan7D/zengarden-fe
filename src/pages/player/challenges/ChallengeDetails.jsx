@@ -49,6 +49,11 @@ import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
 import { toast } from "sonner";
 import { GetAllTaskTypes } from "@/services/apiServices/taskTypeService";
 import { GetUserConfigByUserId } from "@/services/apiServices/userConfigService";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 export default function ChallengeDetails(props) {
   const propId = props.id;
@@ -224,26 +229,24 @@ export default function ChallengeDetails(props) {
   }, [id]);
 
   //user avatar leaderboard
-  const [avatarMap, setAvatarMap] = useState({});
-  useEffect(() => {
-    const fetchAvatars = async () => {
-      const newAvatarMap = {};
+  const [userConfigMap, setUserConfigMap] = useState({});
 
+  useEffect(() => {
+    const fetchConfigs = async () => {
+      const newMap = {};
       for (const user of rankingData) {
         try {
           const config = await GetUserConfigByUserId(user.userId);
-          newAvatarMap[user.userId] = config.imageUrl;
+          newMap[user.userId] = config;
         } catch (error) {
-          console.error("Failed to fetch avatar for user:", user.userId, error);
+          console.error("Failed to fetch config for user:", user.userId, error);
         }
       }
-
-      setAvatarMap(newAvatarMap);
-      console.log("Avatars:", newAvatarMap);
+      setUserConfigMap(newMap);
     };
 
     if (rankingData.length > 0) {
-      fetchAvatars();
+      fetchConfigs();
     }
   }, [rankingData]);
 
@@ -438,15 +441,21 @@ export default function ChallengeDetails(props) {
                   ) : (
                     <p>No tasks available for this challenge.</p>
                   )}
-                  {challenge.status === 0 && (
-                    <Button
-                      variant="outline"
-                      onClick={() => handleCreateTaskClick()}
-                      className="mt-4"
-                    >
-                      <Plus className="mr-2 h-4 w-4" /> Create Task
-                    </Button>
-                  )}
+                  {challenge.status === 0 &&
+                    userChallenge.find(
+                      (c) =>
+                        c.challengeId === parseInt(id) &&
+                        c.status !== 4 &&
+                        c.challengeRole === 0
+                    ) && (
+                      <Button
+                        variant="outline"
+                        onClick={() => handleCreateTaskClick()}
+                        className="mt-4"
+                      >
+                        <Plus className="mr-2 h-4 w-4" /> Create Task
+                      </Button>
+                    )}
                 </CardContent>
               </Card>
               <Card className="w-[30%]">
@@ -615,14 +624,51 @@ export default function ChallengeDetails(props) {
                                         : "text-gray-500"
                                     } flex items-center justify-center gap-2`}
                                   >
-                                    {avatarMap[user.userId] && (
-                                      <img
-                                        src={avatarMap[user.userId]}
-                                        alt="avatar"
-                                        className="w-6 h-6 rounded-full object-cover"
-                                      />
-                                    )}
-                                    {user.userName}
+                                    <HoverCard openDelay={50} closeDelay={50}>
+                                      <HoverCardTrigger asChild>
+                                        <div className="flex items-center gap-2 cursor-pointer">
+                                          {userConfigMap[user.userId]
+                                            ?.imageUrl && (
+                                            <img
+                                              src={
+                                                userConfigMap[user.userId]
+                                                  .imageUrl
+                                              }
+                                              alt="avatar"
+                                              className="w-6 h-6 rounded-full object-cover"
+                                            />
+                                          )}
+                                          <span>{user.userName}</span>
+                                        </div>
+                                      </HoverCardTrigger>
+                                      <HoverCardContent className="w-64 p-4">
+                                        {userConfigMap[user.userId] && (
+                                          <div
+                                            className="rounded-lg p-4 text-white"
+                                            style={{
+                                              backgroundImage: `url(${
+                                                userConfigMap[user.userId]
+                                                  .backgroundConfig
+                                              })`,
+                                              backgroundSize: "cover",
+                                              backgroundPosition: "center",
+                                            }}
+                                          >
+                                            <img
+                                              src={
+                                                userConfigMap[user.userId]
+                                                  .imageUrl
+                                              }
+                                              alt="avatar"
+                                              className="w-12 h-12 rounded-full object-cover border-2 border-white mb-2"
+                                            />
+                                            <div className="font-semibold">
+                                              {user.userName}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </HoverCardContent>
+                                    </HoverCard>
                                   </td>
 
                                   <td
