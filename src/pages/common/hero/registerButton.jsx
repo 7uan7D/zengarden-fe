@@ -61,17 +61,21 @@ const RegisterButton = ({ isOpen, setIsOpen }) => {
 
   return (
     <>
-      <div className="mt-4 text-right text-sm text-gray-500">
-        Don’t have a Zengarden account?{" "}
-        <span
-          className="text-green-600 cursor-pointer hover:underline"
-          onClick={() => setIsOpen(true)}
-        >
-          Sign up
-        </span>
-        .
-      </div>
+      {/* Dòng chữ chỉ hiển thị khi isOpen là false */}
+      {!isOpen && (
+        <div className="mt-4 text-right text-sm text-gray-500">
+          Don’t have a Zengarden account?{" "}
+          <span
+            className="text-green-600 cursor-pointer hover:underline"
+            onClick={() => setIsOpen(true)} // Mở Drawer khi click
+          >
+            Sign up
+          </span>
+          .
+        </div>
+      )}
 
+      {/* Drawer mở khi isOpen là true */}
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerContent>
           <div className="mx-auto w-full max-w-sm p-4">

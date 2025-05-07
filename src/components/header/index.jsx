@@ -21,6 +21,7 @@ import ProfileDialog from "./profileDialog";
 import InventoryDialog from "./inventoryDialog";
 import "@/components/header/index.css";
 import { toast } from "sonner";
+import RegisterButton from "@/pages/common/hero/registerButton";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -35,15 +36,40 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { totalXp, levelId, xpToNextLevel, refreshXp } = useUserExperience();
+  const [navItems, setNavItems] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const [navItems, setNavItems] = useState([
-    { path: "/task", label: "Tasks", hasUpdate: false },
-    { path: "/workspace", label: "Workspace", hasUpdate: false },
-    { path: "/tree", label: "Trees", hasUpdate: false },
-    { path: "/calendar", label: "Calendar", hasUpdate: false },
-    { path: "/marketplace", label: "Marketplace", hasUpdate: false },
-    { path: "/challenges", label: "Challenges", hasUpdate: false },
-  ]);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    let role = null;
+
+    if (token) {
+      try {
+        // Sử dụng parseJwt để giải mã token
+        const decoded = parseJwt(token);
+        role = decoded?.role; // Lấy role từ payload
+      } catch (error) {
+        console.error("Token decode error:", error);
+      }
+    }
+
+    if (role === "player") {
+      setNavItems([
+        { path: "/home", label: "Home", hasUpdate: false },
+        { path: "/task", label: "Tasks", hasUpdate: false },
+        { path: "/workspace", label: "Workspace", hasUpdate: false },
+        { path: "/tree", label: "Trees", hasUpdate: false },
+        { path: "/calendar", label: "Calendar", hasUpdate: false },
+        { path: "/marketplace", label: "Marketplace", hasUpdate: false },
+        { path: "/challenges", label: "Challenges", hasUpdate: false },
+      ]);
+    } else {
+      setNavItems([
+        { path: "#", label: "Get Started", onClick: () => setIsOpen(true) },
+        { path: "/faq", label: "FAQ" },
+      ]);
+    }
+  }, []);
 
   useEffect(() => {
     const calendarHasUpdate =
@@ -135,7 +161,7 @@ const Header = () => {
       <nav className="flex items-center justify-between w-full p-6 py-2 custom-nav">
         {/* Logo và Nav Items */}
         <div className="flex items-center">
-          <a href="/home" className="p-1.5">
+          <a href="/" className="p-1.5">
             <span className="sr-only">Your Company</span>
             <img
               className="h-12 w-auto"
@@ -147,7 +173,13 @@ const Header = () => {
             {navItems.map((item) => (
               <div
                 key={item.path}
-                onClick={() => navigate(item.path)}
+                onClick={() => {
+                  if (item.path === "#") {
+                    setIsOpen(true); // Nếu là "Get Started", mở RegisterButton
+                  } else {
+                    navigate(item.path); // Điều hướng nếu không phải "Get Started"
+                  }
+                }}
                 className={`relative text-sm font-semibold cursor-pointer transition-colors duration-200 ${
                   location.pathname === item.path
                     ? "text-green-600 font-bold"
@@ -163,6 +195,7 @@ const Header = () => {
               </div>
             ))}
           </div>
+          {isOpen && <RegisterButton isOpen={isOpen} setIsOpen={setIsOpen} />}
         </div>
 
         {/* Mobile Menu Button */}
