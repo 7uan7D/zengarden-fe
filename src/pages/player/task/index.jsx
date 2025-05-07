@@ -39,6 +39,7 @@ import { useTreeExperience } from "@/context/TreeExperienceContext";
 import { GetBagItems } from "@/services/apiServices/itemService";
 import { CircleCheckBig, CircleX } from "lucide-react";
 import "../task/index.css";
+//api task
 import {
   GetTaskByUserTreeId,
   StartTask,
@@ -46,6 +47,7 @@ import {
   CompleteTask,
   CreateTask,
 } from "@/services/apiServices/taskService";
+// thư viện kéo thả
 import {
   DndContext,
   closestCenter,
@@ -72,17 +74,19 @@ import { SortableTask } from "./SortableTask";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { ChangeTaskType } from "@/services/apiServices/taskService";
 
+// Component con để chọn ngày và giờ cho task
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const selectedDate = date ? new Date(date) : undefined;
   const formattedTime = date
-    ? moment(new Date(date)).format("HH:mm")
-    : moment().format("HH:mm");
+    ? moment(new Date(date)).format("HH:mm") // Định dạng 24 giờ
+    : moment().format("HH:mm"); // Giá trị mặc định là thời gian hiện tại
 
   const handleDateSelect = useCallback(
     (newDate) => {
       if (newDate) {
         const updatedDate = new Date(newDate);
+        // Giữ nguyên giờ và phút từ selectedDate nếu có
         updatedDate.setHours(
           selectedDate ? selectedDate.getHours() : 0,
           selectedDate ? selectedDate.getMinutes() : 0,
@@ -100,10 +104,13 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
     (time, timeString) => {
       if (!timeString) return;
 
+      // Kiểm tra định dạng thời gian hợp lệ (HH:mm)
       const timeRegex = /^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/;
       if (!timeRegex.test(timeString)) return;
 
+      // Định dạng thời gian thành HH:mm:ss.000Z
       const formattedTime = `${timeString}:00.000Z`;
+
       onTimeChange(formattedTime);
     },
     [onTimeChange]
@@ -133,7 +140,7 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
         <TimePicker
           onChange={handleTimeChange}
           value={moment(formattedTime, "HH:mm")}
-          format="HH:mm"
+          format="HH:mm" // Định dạng 24 giờ
           className="h-10 w-[120px] text-center rounded-lg"
           showNow={false}
           allowClear={false}
@@ -143,11 +150,13 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   );
 };
 
+// Hàm chuyển đổi startDate sang định dạng so sánh được (YYYYMMDD)
 const parseDate = (dateStr) => {
   const [day, month, year] = dateStr.split("/").map(Number);
   return year * 10000 + month * 100 + day;
 };
 
+// Hàm lấy ngày hiện tại ở định dạng DD/MM/YYYY
 const getCurrentDateStr = () => {
   const today = new Date();
   const day = String(today.getDate()).padStart(2, "0");
@@ -164,6 +173,7 @@ export default function TaskPage() {
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newTreeName, setNewTreeName] = useState("");
+  // Task
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
   const [activeTabs, setActiveTabs] = useState({
@@ -189,7 +199,6 @@ export default function TaskPage() {
   const [timers, setTimers] = useState({});
   const [activeTaskKey, setActiveTaskKey] = useState(null);
   const intervalRefs = useRef({});
-  const [loadingTaskKey, setLoadingTaskKey] = useState(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -453,7 +462,6 @@ export default function TaskPage() {
           taskTypeName: task.taskTypeName,
           remainingTime: convertToMinutes(task.remainingTime) * 60,
           priority: task.priority,
-          overdueTime: task.overdueTime || 0, // Thêm overdueTime từ backend
         };
 
         const type = task.taskTypeName?.toLowerCase();
@@ -468,38 +476,6 @@ export default function TaskPage() {
 
       setTaskData(groupedTasks);
       setTempTaskData(groupedTasks);
-
-      // Khởi tạo timers cho các task đang chạy
-      const newTimers = {};
-      Object.keys(groupedTasks).forEach((columnKey) => {
-        groupedTasks[columnKey].forEach((task, index) => {
-          const taskKey = `${columnKey}-${index}`;
-          if (task.status === 1) {
-            newTimers[taskKey] = {
-              isWorkPhase: true,
-              currentWorkTime: task.workDuration * 60,
-              currentBreakTime: task.breakTime * 60,
-              remainingTime: task.remainingTime,
-              overdueTime: task.overdueTime || 0,
-              isRunning: true,
-              totalWorkCompleted: 0,
-              totalBreakCompleted: 0,
-            };
-          } else if (task.status === 2) {
-            newTimers[taskKey] = {
-              isWorkPhase: true,
-              currentWorkTime: task.workDuration * 60,
-              currentBreakTime: task.breakTime * 60,
-              remainingTime: task.remainingTime,
-              overdueTime: task.overdueTime || 0,
-              isRunning: false,
-              totalWorkCompleted: 0,
-              totalBreakCompleted: 0,
-            };
-          }
-        });
-      });
-      setTimers(newTimers);
     } catch (error) {
       console.error("Lỗi lấy task:", error);
     }
@@ -544,7 +520,7 @@ export default function TaskPage() {
             currentWorkTime: task.workDuration * 60,
             currentBreakTime: task.breakTime * 60,
             remainingTime: task.remainingTime,
-            overdueTime: task.overdueTime || 0,
+            overdueTime: 0,
             isRunning: true,
             totalWorkCompleted: 0,
             totalBreakCompleted: 0,
@@ -557,18 +533,10 @@ export default function TaskPage() {
           return newData;
         });
 
-        // Xóa interval cũ nếu tồn tại
-        if (intervalRefs.current[taskKey]) {
-          clearInterval(intervalRefs.current[taskKey]);
-        }
-
         intervalRefs.current[taskKey] = setInterval(() => {
           setTimers((prev) => {
             const timer = prev[taskKey];
-            if (!timer || !timer.isRunning) {
-              console.log(`Timer stopped for ${taskKey}:`, timer);
-              return prev;
-            }
+            if (!timer || !timer.isRunning) return prev;
 
             let {
               isWorkPhase,
@@ -580,41 +548,27 @@ export default function TaskPage() {
               totalBreakCompleted,
             } = timer;
 
-            console.log(`Timer tick for ${taskKey}:`, {
-              remainingTime,
-              overdueTime,
-              isWorkPhase,
-              currentWorkTime,
-              currentBreakTime,
-            });
-
             const currentDate = parseDate(getCurrentDateStr());
             const endDate = parseDate(task.endDate);
-
-            // Kiểm tra nếu đã vượt quá endDate
             if (currentDate > endDate) {
               clearInterval(intervalRefs.current[taskKey]);
+
               setTaskData((prevData) => {
                 const newData = { ...prevData };
                 newData[columnKey][index] = {
                   ...task,
                   status: 4,
                   remainingTime: 0,
-                  overdueTime,
                 };
                 return newData;
               });
               setActiveTaskKey(null);
               return {
                 ...prev,
-                [taskKey]: {
-                  ...timer,
-                  isRunning: false,
-                },
+                [taskKey]: { ...timer, isRunning: false },
               };
             }
 
-            // Logic khi task đang chạy
             if (remainingTime > 0) {
               if (isWorkPhase) {
                 currentWorkTime -= 1;
@@ -639,15 +593,9 @@ export default function TaskPage() {
               overdueTime += 1;
             }
 
-            // Cập nhật taskData
             setTaskData((prevData) => {
               const newData = { ...prevData };
-              newData[columnKey][index] = {
-                ...task,
-                status: remainingTime <= 0 ? 1 : task.status,
-                remainingTime,
-                overdueTime,
-              };
+              newData[columnKey][index] = { ...task, status: 1, remainingTime };
               return newData;
             });
 
@@ -666,7 +614,6 @@ export default function TaskPage() {
             };
           });
         }, 1000);
-
         localStorage.setItem(
           "currentTask",
           JSON.stringify({
@@ -674,7 +621,6 @@ export default function TaskPage() {
             taskName: task.taskName,
             title: task.title,
             remainingTime: task.remainingTime,
-            overdueTime: task.overdueTime || 0,
             status: 1,
             columnKey,
             index,
@@ -697,7 +643,6 @@ export default function TaskPage() {
             ...task,
             status: 2,
             remainingTime: Math.round(currentTimer?.remainingTime || 0),
-            overdueTime: currentTimer?.overdueTime || 0,
           };
           return newData;
         });
@@ -706,14 +651,12 @@ export default function TaskPage() {
           clearInterval(intervalRefs.current[taskKey]);
           delete intervalRefs.current[taskKey];
         }
-
         localStorage.setItem(
           "currentTask",
           JSON.stringify({
             taskId: task.taskId,
             title: task.title,
             remainingTime: Math.round(currentTimer?.remainingTime || 0),
-            overdueTime: currentTimer?.overdueTime || 0,
             status: 2,
             columnKey,
             index,
@@ -730,12 +673,7 @@ export default function TaskPage() {
         }));
         setTaskData((prevData) => {
           const newData = { ...prevData };
-          newData[columnKey][index] = {
-            ...task,
-            status: 3,
-            remainingTime: 0,
-            overdueTime: timers[taskKey]?.overdueTime || 0,
-          };
+          newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
           return newData;
         });
         localStorage.removeItem("currentTask");
@@ -743,11 +681,46 @@ export default function TaskPage() {
       }
     } catch (error) {
       console.error("Task action error:", error);
-      toast.error("Failed to perform task action");
     } finally {
       setLoadingTaskKey(null);
     }
   };
+
+  const [loadingTaskKey, setLoadingTaskKey] = useState(null);
+
+  useEffect(() => {
+    const newTimers = {};
+    Object.keys(taskData).forEach((columnKey) => {
+      taskData[columnKey].forEach((task, index) => {
+        const taskKey = `${columnKey}-${index}`;
+        if (task.status === 1) {
+          newTimers[taskKey] = {
+            isWorkPhase: true,
+            currentWorkTime: task.workDuration * 60,
+            currentBreakTime: task.breakTime * 60,
+            remainingTime: task.remainingTime,
+            overdueTime: 0,
+            isRunning: true,
+            totalWorkCompleted: 0,
+            totalBreakCompleted: 0,
+          };
+        } else if (task.status === 2) {
+          newTimers[taskKey] = {
+            isWorkPhase: true,
+            currentWorkTime: task.workDuration * 60,
+            currentBreakTime: task.breakTime * 60,
+            remainingTime: task.remainingTime,
+            overdueTime: 0,
+            isRunning: false,
+            totalWorkCompleted: 0,
+            totalBreakCompleted: 0,
+          };
+        }
+      });
+    });
+
+    setTimers(newTimers);
+  }, [taskData]);
 
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [taskType, setTaskType] = useState("");
@@ -882,15 +855,18 @@ export default function TaskPage() {
     }));
   }, []);
 
-  const simpleDurations = [30, 60, 90, 120, 150, 180];
-  const complexDurations = [180, 195, 210, 225, 240, 255, 270];
+  // Updated durations for Simple and Complex tasks
+  const simpleDurations = [30, 45, 60, 75, 90];
+  const complexDurations = [30, 60, 90, 120, 150, 180];
 
+  // Generate duration options based on task type
   const durationOptions = taskType.includes("Simple")
     ? simpleDurations
     : taskType.includes("Complex")
     ? complexDurations
     : [];
 
+  // Generate time options for work and break durations
   const generateTimeOptions = (min, max, step) => {
     const options = [];
     for (let i = min; i <= max; i += step) {
@@ -899,6 +875,7 @@ export default function TaskPage() {
     return options;
   };
 
+  // Validate totalDuration
   const validateDuration = (value) => {
     const numValue = Number(value);
     if (isNaN(numValue)) {
@@ -917,6 +894,7 @@ export default function TaskPage() {
     return "";
   };
 
+  // Validate workDuration
   const validateWorkDuration = (value) => {
     const numValue = Number(value);
     if (isNaN(numValue)) {
@@ -924,7 +902,7 @@ export default function TaskPage() {
     }
     if (!focusSuggestion) return "";
     if (numValue < focusSuggestion.minDuration) {
-      return `Work  duration must be at least ${focusSuggestion.minDuration} minutes`;
+      return `Work duration must be at least ${focusSuggestion.minDuration} minutes`;
     }
     if (numValue > focusSuggestion.maxDuration) {
       return `Work duration must not exceed ${focusSuggestion.maxDuration} minutes`;
@@ -932,6 +910,7 @@ export default function TaskPage() {
     return "";
   };
 
+  // Validate breakTime
   const validateBreakTime = (value) => {
     const numValue = Number(value);
     if (isNaN(numValue)) {
@@ -947,6 +926,7 @@ export default function TaskPage() {
     return "";
   };
 
+  // Handle manual input for totalDuration
   const handleTotalDurationInput = (value) => {
     const numValue = Number(value);
     setTaskCreateData((prev) => ({
@@ -962,6 +942,7 @@ export default function TaskPage() {
     }
   };
 
+  // Handle manual input for workDuration
   const handleWorkDurationInput = (value) => {
     const numValue = Number(value);
     setTaskCreateData((prev) => ({
@@ -980,6 +961,7 @@ export default function TaskPage() {
     }
   };
 
+  // Handle manual input for breakTime
   const handleBreakTimeInput = (value) => {
     const numValue = Number(value);
     setTaskCreateData((prev) => ({
@@ -998,6 +980,7 @@ export default function TaskPage() {
     }
   };
 
+  // Check if Next button should be disabled
   const isNextDisabled = () => {
     if (step === 1) {
       return (
@@ -1031,15 +1014,16 @@ export default function TaskPage() {
       (a, b) => a.priority - b.priority
     );
 
-    const taskHeight = 100;
-    const gap = 12;
-    const padding = 16 * 2;
+    // Tính chiều cao động: 100px/task + 12px gap giữa các task + 16px padding top/bottom
+    const taskHeight = 100; // Chiều cao mỗi task (px)
+    const gap = 12; // Khoảng cách giữa các task (px)
+    const padding = 16 * 2; // Padding top + bottom (px)
     const calculatedHeight =
       sortedTasks.length > 0
         ? sortedTasks.length * taskHeight +
           (sortedTasks.length - 1) * gap +
           padding
-        : 150;
+        : 150; // Chiều cao tối thiểu nếu không có task nào
 
     return (
       <div className="task-column-container">
@@ -1097,7 +1081,7 @@ export default function TaskPage() {
               >
                 {sortedTasks.map((task, index) => {
                   const remainingTime = task.remainingTime || 0;
-                  const overdueTime = task.overdueTime || 0;
+                  const overdueTime = remainingTime < 0 ? -remainingTime : 0;
                   const taskKey = `${columnKey}-${index}`;
                   const timer = timers[taskKey] || {};
                   const { totalWorkCompleted = 0, totalBreakCompleted = 0 } =
@@ -1193,14 +1177,15 @@ export default function TaskPage() {
                           <Card className="task-item relative flex">
                             {["simple", "complex"].includes(columnKey) && (
                               <div
-                                className={`priority-label priority-${task.priority <= 2
-                                  ? "high"
-                                  : task.priority <= 4
-                                  ? "medium"
-                                  : "low"
-                                  } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
+                                className={`priority-label priority-${
+                                  task.priority <= 2
+                                    ? "high"
+                                    : task.priority <= 4
+                                    ? "medium"
+                                    : "low"
+                                } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
                                 onClick={(e) => {
-                                  e.stopPropagation();
+                                  e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
                                   setSelectedTask(task);
                                   setIsTaskInfoDialogOpen(true);
                                 }}
@@ -1237,22 +1222,23 @@ export default function TaskPage() {
                               </div>
                               <div className="flex flex-col gap-1 text-left">
                                 <span
-                                  className={`text-sm ${task.status === 4 ||
+                                  className={`text-sm ${
+                                    task.status === 4 ||
                                     (remainingTime <= 0 &&
                                       currentTaskStatus !== 0)
-                                    ? "text-red-600"
-                                    : "text-gray-600"
-                                    }`}
+                                      ? "text-red-600"
+                                      : "text-gray-600"
+                                  }`}
                                 >
                                   {task.status !== 3 &&
-                                    (task.status === 4 ? (
-                                      `Overdue: ${formatTime(overdueTime)}`
-                                    ) : remainingTime <= 0 &&
-                                      currentTaskStatus !== 0 ? (
-                                      `Overdue: ${formatTime(overdueTime)}`
-                                    ) : (
-                                      `Remaining: ${formatTime(remainingTime)}`
-                                    ))}
+                                    (task.status === 4
+                                      ? `Overdue: ${formatTime(overdueTime)}`
+                                      : remainingTime <= 0 &&
+                                        currentTaskStatus !== 0
+                                      ? `Overdue: ${formatTime(overdueTime)}`
+                                      : `Remaining: ${formatTime(
+                                          remainingTime
+                                        )}`)}
                                 </span>
                                 <div className="progress-bar-container">
                                   <div className="progress-bar flex h-2 rounded overflow-hidden">
@@ -1265,10 +1251,11 @@ export default function TaskPage() {
                                             : "bg-yellow-500"
                                         }
                                         style={{
-                                          width: `${(phase.duration /
-                                            totalDurationSeconds) *
+                                          width: `${
+                                            (phase.duration /
+                                              totalDurationSeconds) *
                                             100
-                                            }%`,
+                                          }%`,
                                         }}
                                       />
                                     ))}
@@ -1277,7 +1264,8 @@ export default function TaskPage() {
                                 {task.status !== 4 &&
                                   task.status !== 3 &&
                                   !(
-                                    remainingTime <= 0 && currentTaskStatus !== 0
+                                    remainingTime <= 0 &&
+                                    currentTaskStatus !== 0
                                   ) && (
                                     <div className="text-xs text-gray-500 mt-1">
                                       {currentTaskStatus === 0 ? (
@@ -1322,7 +1310,7 @@ export default function TaskPage() {
                                   ) && (
                                     <Button
                                       onClick={(e) => {
-                                        e.stopPropagation();
+                                        e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
                                         handleTaskAction(
                                           columnKey,
                                           index,
@@ -1382,7 +1370,7 @@ export default function TaskPage() {
                                     currentTaskStatus !== 0 && (
                                       <Button
                                         onClick={(e) => {
-                                          e.stopPropagation();
+                                          e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
                                           handleTaskAction(
                                             columnKey,
                                             index,
@@ -1461,10 +1449,11 @@ export default function TaskPage() {
             <div className="w-32 h-32 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
               <img
                 src={userTrees.length > 0 ? treeImageSrc : addIcon}
-                className={`object-contain ${userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
-                  ? "w-10 h-10"
-                  : "w-30 h-30"
-                  }`}
+                className={`object-contain ${
+                  userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
+                    ? "w-10 h-10"
+                    : "w-30 h-30"
+                }`}
               />
             </div>
           </div>
@@ -1642,12 +1631,6 @@ export default function TaskPage() {
                       {formatTime(selectedTask.remainingTime)}
                     </p>
                   )}
-                  {selectedTask.overdueTime !== null && (
-                    <p>
-                      <strong>Overdue Time:</strong>{" "}
-                      {formatTime(selectedTask.overdueTime)}
-                    </p>
-                  )}
                 </div>
               )}
               <DialogFooter>
@@ -1812,6 +1795,7 @@ export default function TaskPage() {
 
               {step === 2 && focusSuggestion && (
                 <div className="space-y-6">
+                  {/* Thông tin Focus Suggestion */}
                   <div className="border rounded-xl p-4 bg-gray-50 space-y-2 shadow-sm">
                     <h2 className="text-xl font-bold text-primary">
                       Focus Method: {focusSuggestion.focusMethodName}
@@ -1831,6 +1815,7 @@ export default function TaskPage() {
                     </div>
                   </div>
 
+                  {/* Work Duration */}
                   <div className="space-y-2">
                     <Label>Work Duration (minutes)</Label>
                     <div className="grid grid-cols-2 gap-2">
@@ -1887,6 +1872,7 @@ export default function TaskPage() {
                     </p>
                   </div>
 
+                  {/* Break Time */}
                   <div className="space-y-2">
                     <Label>Break Time (minutes)</Label>
                     <div className="grid grid-cols-2 gap-2">
@@ -1935,7 +1921,7 @@ export default function TaskPage() {
                       <p className="text-red-500 text-sm">{breakTimeError}</p>
                     )}
                     <p className="text-xs text-blue-600 italic">
-                      🔹 Recommended: {focusSuggestion.defaultBreak} mins
+                      🔹 Recommended: {focusSuggestion.defaultBreak} mins{" "}
                     </p>
                   </div>
                 </div>
@@ -1956,11 +1942,13 @@ export default function TaskPage() {
                   </p>
                   <p>
                     <strong>Start Date:</strong>{" "}
-                    {format(new Date(taskCreateData.startDate), "PPP HH:mm")}
+                    {format(new Date(taskCreateData.startDate), "PPP HH:mm")}{" "}
+                    {/* Hiển thị định dạng 24 giờ */}
                   </p>
                   <p>
                     <strong>End Date:</strong>{" "}
-                    {format(new Date(taskCreateData.endDate), "PPP HH:mm")}
+                    {format(new Date(taskCreateData.endDate), "PPP HH:mm")}{" "}
+                    {/* Hiển thị định dạng 24 giờ */}
                   </p>
                   <p>
                     <strong>Focus Method:</strong>{" "}
@@ -2050,7 +2038,8 @@ export default function TaskPage() {
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
                       {selectedTree.levelId === 4
                         ? "Level Max"
-                        : `${treeExp.totalXp} / ${treeExp.totalXp + treeExp.xpToNextLevel
+                        : `${treeExp.totalXp} / ${
+                            treeExp.totalXp + treeExp.xpToNextLevel
                           } XP`}
                     </span>
                   </div>
