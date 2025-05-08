@@ -1,15 +1,30 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
+import {
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import RegisterButton from "@/pages/common/hero/registerButton";
-import { LoginService, ForgotPassword, ResetPassword } from "@/services/apiServices/authService";
+import {
+  LoginService,
+  ForgotPassword,
+  ResetPassword,
+} from "@/services/apiServices/authService";
+import parseJwt from "@/services/parseJwt";
 
 const LoginForm = ({ setIsLoggedIn, setIsSheetOpen }) => {
   const [credentials, setCredentials] = useState({
@@ -57,14 +72,33 @@ const LoginForm = ({ setIsLoggedIn, setIsSheetOpen }) => {
       const payload = { password: credentials.password };
       if (usePhone) payload.phone = credentials.phone;
       else payload.email = credentials.email;
+
       const data = await LoginService(payload);
-      localStorage.setItem("token", data.token);
+      const token = data.token;
+
+      localStorage.setItem("token", token);
       localStorage.setItem("refreshToken", data.refreshToken);
       setIsLoggedIn(true);
+
+      // Decode token để lấy role
+      const decoded = parseJwt(token);
+      const role = decoded?.role;
+
       toast.success("Login Successfully!");
       setIsSheetOpen(false);
-      navigate("/home");
-      window.location.reload();
+
+      // Điều hướng theo role
+      if (role === "Admin") {
+        navigate("/users");
+      } else if (role === "Moderator") {
+        navigate("/challenges-moderate");
+      } else if (role === "Player") {
+        navigate("/home");
+      } else {
+        navigate("/home"); // fallback
+      }
+
+      window.location.reload(); // reload lại để cập nhật state
     } catch (err) {
       setError("Please check the information again!");
       toast.error("Login failed!");

@@ -104,10 +104,36 @@ function AnimatedRoutes() {
               >
                 <Routes location={location}>
                   <Route path="/" element={<HeroPage />} />
+
                   <Route path="/faq" element={<FAQ />} />
-                  <Route path="/tree" element={<Tree />} />
-                  <Route path="/workspace" element={<Workspace />} />
-                  <Route path="/calendar" element={<Calendar />} />
+
+                  <Route
+                    path="/tree"
+                    element={
+                      <ProtectedRoute roleRequired="Player">
+                        <Tree />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/workspace"
+                    element={
+                      <ProtectedRoute roleRequired="Player">
+                        <Workspace />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/calendar"
+                    element={
+                      <ProtectedRoute roleRequired="Player">
+                        <Calendar />
+                      </ProtectedRoute>
+                    }
+                  />
+
                   <Route
                     path="/home"
                     element={
@@ -116,6 +142,7 @@ function AnimatedRoutes() {
                       </ProtectedRoute>
                     }
                   />
+
                   <Route
                     path="/task"
                     element={
@@ -124,8 +151,25 @@ function AnimatedRoutes() {
                       </ProtectedRoute>
                     }
                   />
-                  <Route path="/marketplace" element={<Marketplace />} />
-                  <Route path="/challenges" element={<Challenges />} />
+
+                  <Route
+                    path="/marketplace"
+                    element={
+                      <ProtectedRoute roleRequired="Player">
+                        <Marketplace />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/challenges"
+                    element={
+                      <ProtectedRoute roleRequired="Player">
+                        <Challenges />
+                      </ProtectedRoute>
+                    }
+                  />
+
                   <Route
                     path="/challenges/:id"
                     element={<ChallengeDetails />}
@@ -176,22 +220,124 @@ function AdminLayout() {
           }
         />
         {/* admin */}
-        <Route path="/items" element={<Items />} />
-        <Route path="/tasks" element={<Tasks />} />
-        <Route path="/challenges-admin" element={<Challenge />} />
-        <Route path="/trees" element={<Trees />} />
-        <Route path="/packages" element={<Packages />} />
-        <Route path="/trade-history" element={<TradeHistory />} />
-        <Route path="/transactions" element={<Transactions />} />
-        <Route path="/treeXPLog" element={<TreeXPLog />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route
+          path="/items"
+          element={
+            <ProtectedRoute roleRequired="Admin">
+              <Items />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tasks"
+          element={
+            <ProtectedRoute roleRequired="Admin">
+              <Tasks />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/challenges-admin"
+          element={
+            <ProtectedRoute roleRequired="Admin">
+              <Challenge />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/trees"
+          element={
+            <ProtectedRoute roleRequired="Admin">
+              <Trees />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/packages"
+          element={
+            <ProtectedRoute roleRequired="Admin">
+              <Packages />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/trade-history"
+          element={
+            <ProtectedRoute roleRequired="Admin">
+              <TradeHistory />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute roleRequired="Admin">
+              <Transactions />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/treeXPLog"
+          element={
+            <ProtectedRoute roleRequired="Admin">
+              <TreeXPLog />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute roleRequired="Admin">
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
 
         {/* moderator */}
-        <Route path="/challenges-moderate" element={<ChallengesModerate />} />
-        <Route path="/items-moderate" element={<ItemsModerate />} />
-        <Route path="/packages-moderate" element={<PackagesModerate />} />
-        <Route path="/data-refresh-moderate" element={<DataRefreshModerate />} />
-        
+
+        <Route
+          path="/challenges-moderate"
+          element={
+            <ProtectedRoute roleRequired="Moderator">
+              <ChallengesModerate />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/items-moderate"
+          element={
+            <ProtectedRoute roleRequired="Moderator">
+              <ItemsModerate />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/packages-moderate"
+          element={
+            <ProtectedRoute roleRequired="Moderator">
+              <PackagesModerate />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/data-refresh-moderate"
+          element={
+            <ProtectedRoute roleRequired="Moderator">
+              <DataRefreshModerate />
+            </ProtectedRoute>
+          }
+        />
         {/* test */}
         {/* <Route path="/userXPLog" element={<UserXPLog />} /> 
         <Route path="/sales" element={<Sales />} />
@@ -242,6 +388,14 @@ function ConditionalRoutes() {
   if (role === "Moderator" && isModeratorRoute) return <AdminLayout />;
   if (role === "Player" && !isAdminRoute && !isModeratorRoute)
     return <AnimatedRoutes />;
+
+  // ✅ Redirect từ "/" hoặc route không hợp lệ dựa vào role
+  if (location.pathname === "/") {
+    if (role === "Admin") return <Navigate to="/users" replace />;
+    if (role === "Moderator")
+      return <Navigate to="/challenges-moderate" replace />;
+    if (role === "Player") return <Navigate to="/home" replace />;
+  }
 
   return isAdminRoute ? <AdminLayout /> : <AnimatedRoutes />;
 }
