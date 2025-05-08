@@ -29,6 +29,8 @@ import {
   LocaleMarkupEditor,
 } from "@pqina/pintura/locale/en_GB";
 
+import { SubmitTaskResult } from "@/services/apiServices/taskService";
+
 setPlugins(plugin_crop, plugin_finetune, plugin_filter, plugin_annotate);
 
 const editorDefaults = {
@@ -83,11 +85,42 @@ export default function Pintura() {
     setTimeout(() => setMessage(""), 3000);
   };
 
-  const handleDownload = () => {
-    const link = document.createElement("a");
-    link.href = result;
-    link.download = "edited-image.jpg";
-    link.click();
+  const handleDownload = async () => {
+    try {
+      // 1. Tải ảnh về client (nếu result là URL)
+      const response = await fetch(result);
+      const blob = await response.blob();
+      const file = new File([blob], "edited-image.jpg", { type: "image/jpeg" });
+
+      // 2. Tải xuống ảnh cho người dùng
+      const downloadLink = document.createElement("a");
+      downloadLink.href = URL.createObjectURL(file);
+      downloadLink.download = "edited-image.jpg";
+      downloadLink.click();
+
+      // 3. Gửi file lên server qua API submit task
+      const currentTaskString = localStorage.getItem("currentTask");
+      if (!currentTaskString) {
+        console.error("Không tìm thấy currentTask.");
+        return;
+      }
+
+      const currentTask = JSON.parse(currentTaskString);
+      const taskId = currentTask?.taskId;
+      if (!taskId) {
+        console.error("Không có taskId hợp lệ.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("TaskNote", "User downloaded edited image.");
+      formData.append("TaskFile", file);
+
+      await SubmitTaskResult(taskId, formData);
+      console.log("Đã gửi ảnh vào task thành công!");
+    } catch (error) {
+      console.error("Lỗi khi xử lý download và submit:", error);
+    }
   };
 
   const triggerFileInput = () => {
@@ -96,7 +129,9 @@ export default function Pintura() {
 
   const handleUseUnwatermark = () => {
     window.open("https://unwatermark.ai/", "_blank");
-    setMessage("Please upload your image to Unwatermark.ai, then re-upload the result here.");
+    setMessage(
+      "Please upload your image to Unwatermark.ai, then re-upload the result here."
+    );
     setTimeout(() => setMessage(""), 5000);
   };
 

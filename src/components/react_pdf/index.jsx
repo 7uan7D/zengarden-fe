@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; // Thêm Input để tải file
 import PDF_File from "../../assets/test_function/file-example_PDF_500_kB.pdf"; // File PDF mẫu
 import "../react_pdf/index.css"; // Thêm CSS cho PDF Editor
+import { SubmitTaskResult } from "@/services/apiServices/taskService";
 
 // Cấu hình workerSrc cho pdfjs
-pdfjs.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.worker.min.mjs";
+pdfjs.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.worker.min.mjs";
 
 export default function PDFEditor() {
   const [numPages, setNumPages] = useState(null); // Tổng số trang của PDF
@@ -47,13 +49,41 @@ export default function PDFEditor() {
   };
 
   // Xử lý khi người dùng tải file PDF
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files[0];
+
     if (file && file.type === "application/pdf") {
-      const fileUrl = URL.createObjectURL(file); // Tạo URL tạm thời cho file
+      // Hiển thị PDF
+      const fileUrl = URL.createObjectURL(file);
       setPdfFile(fileUrl);
-      setPageNumber(1); // Reset về trang đầu
-      setNumPages(null); // Reset số trang để tải lại
+      setPageNumber(1);
+      setNumPages(null);
+
+      // 👉 Gửi API để lưu file vào TaskResult
+      try {
+        const currentTaskString = localStorage.getItem("currentTask");
+        if (!currentTaskString) {
+          console.error("Không tìm thấy currentTask.");
+          return;
+        }
+
+        const currentTask = JSON.parse(currentTaskString);
+        const taskId = currentTask?.taskId;
+        if (!taskId) {
+          console.error("Không có taskId hợp lệ.");
+          return;
+        }
+
+        // Tạo FormData để gửi file
+        const formData = new FormData();
+        formData.append("TaskNote", "User uploaded a PDF file.");
+        formData.append("TaskFile", file); // 👈 Gửi file gốc, không phải URL
+
+        await SubmitTaskResult(taskId, formData);
+        console.log("Đã gửi file PDF vào task result thành công!");
+      } catch (error) {
+        console.error("Lỗi khi gửi file:", error);
+      }
     } else {
       console.error("Please upload a valid PDF file.");
     }
@@ -79,7 +109,9 @@ export default function PDFEditor() {
             <Document
               file={pdfFile}
               onLoadSuccess={onDocumentLoadSuccess}
-              onLoadError={(error) => console.error("Error loading PDF:", error)}
+              onLoadError={(error) =>
+                console.error("Error loading PDF:", error)
+              }
             >
               <Page pageNumber={pageNumber} scale={scale} />
             </Document>

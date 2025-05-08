@@ -88,6 +88,15 @@ export async function CompleteTask(taskId, formData) {
   return response.data;
 }
 
+export async function SubmitTaskResult(taskId, formData) {
+  const response = await axios.put(`/Task/${taskId}/result`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+}
+
 export async function ChangePriority(userTreeId, reorderedTasks) {
   const response = await axios.post(
     `/Task/reorder/${userTreeId}`,
