@@ -71,7 +71,7 @@ import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsServ
 import { SortableTask } from "./SortableTask";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { ChangeTaskType } from "@/services/apiServices/taskService";
-import { UpdateTaskById } from "@/services/apiServices/taskService";
+import { UpdateTaskById2 } from "@/services/apiServices/taskService";
 import { DeleteTaskById } from "@/services/apiServices/taskService";
 
 // Component con để chọn ngày và giờ cho task
@@ -536,6 +536,10 @@ export default function TaskPage() {
       .padStart(2, "0")}`;
   };
 
+  const [openDialog, setOpenDialog] = useState(false);
+  const [taskNote, setTaskNote] = useState("");
+  const [taskFile, setTaskFile] = useState(null);
+
   const handleTaskAction = async (columnKey, index, action) => {
     const taskKey = `${columnKey}-${index}`;
     const task = taskData[columnKey][index];
@@ -720,7 +724,12 @@ export default function TaskPage() {
           })
         );
       } else if (action === "finish") {
-        await CompleteTask(task.taskId, selectedTree.userTreeId);
+        const formData = new FormData();
+        formData.append("UserTreeId", selectedTree?.userTreeId);
+        formData.append("TaskNote", taskNote || "");
+        formData.append("TaskFile", taskFile);
+
+        await CompleteTask(task.taskId, formData);
 
         clearInterval(intervalRefs.current[taskKey]);
         setTimers((prev) => ({
@@ -1332,6 +1341,14 @@ export default function TaskPage() {
                                   <CircleX className="w-4 h-4" />
                                   Expired
                                 </span>
+                              ) : task.status === 5 ? (
+                                <span
+                                  className="flex items-center gap-1 text-sm"
+                                  style={{ color: "#ef4444" }}
+                                >
+                                  <CircleX className="w-4 h-4" />
+                                  Canceled
+                                </span>
                               ) : (
                                 <div className="flex gap-2">
                                   {!(
@@ -1402,15 +1419,12 @@ export default function TaskPage() {
                                     currentTaskStatus !== 0 && (
                                       <Button
                                         onClick={(e) => {
-                                          e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
-                                          handleTaskAction(
-                                            columnKey,
-                                            index,
-                                            "finish"
-                                          );
+                                          e.stopPropagation();
+                                          setSelectedTask({ columnKey, index }); // Lưu task để xử lý
+                                          setOpenDialog(true); // Mở dialog
                                         }}
                                         className="bg-orange-500 hover:bg-orange-600"
-                                        disabled={loadingTaskKey === taskKey} // Vô hiệu hóa nút khi đang loading
+                                        disabled={loadingTaskKey === taskKey}
                                       >
                                         {loadingTaskKey === taskKey ? (
                                           <svg
@@ -1444,6 +1458,71 @@ export default function TaskPage() {
                           </Card>
                         )}
                       </SortableTask>
+
+                      {openDialog && (
+                        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-6">
+                            <h2 className="text-2xl font-bold text-gray-800">
+                              Finish Task
+                            </h2>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Task Note
+                              </label>
+                              <textarea
+                                className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
+                                placeholder="Write your note here..."
+                                rows={4}
+                                value={taskNote}
+                                onChange={(e) => setTaskNote(e.target.value)}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Task File
+                              </label>
+                              <input
+                                type="file"
+                                className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                                onChange={(e) => setTaskFile(e.target.files[0])}
+                              />
+                            </div>
+
+                            <div className="flex justify-end space-x-3">
+                              <button
+                                className="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+                                onClick={() => setOpenDialog(false)}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                className={`px-4 py-2 rounded-lg text-white font-semibold transition ${
+                                  taskFile
+                                    ? "bg-orange-500 hover:bg-orange-600"
+                                    : "bg-gray-400 cursor-not-allowed"
+                                }`}
+                                onClick={() => {
+                                  if (taskFile) {
+                                    handleTaskAction(
+                                      selectedTask.columnKey,
+                                      selectedTask.index,
+                                      "finish",
+                                      taskNote,
+                                      taskFile
+                                    );
+                                    setOpenDialog(false);
+                                  }
+                                }}
+                                disabled={!taskFile}
+                              >
+                                Confirm
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </motion.div>
                   );
                 })}
@@ -1499,8 +1578,6 @@ export default function TaskPage() {
 
   const [editTaskData, setEditTaskData] = useState({
     TotalDuration: selectedTask?.totalDuration || 0,
-    StartDate: selectedTask?.startDate || "",
-    EndDate: selectedTask?.endDate || "",
     TaskType: selectedTask?.taskTypeName || "Simple",
     TaskTypeId: taskTypeIdMap[selectedTask?.taskTypeName] || 2,
   });
@@ -1509,8 +1586,6 @@ export default function TaskPage() {
     if (selectedTask) {
       setEditTaskData({
         TotalDuration: selectedTask.totalDuration || 0,
-        StartDate: selectedTask.startDate || "",
-        EndDate: selectedTask.endDate || "",
         TaskType: selectedTask.taskTypeName || "Simple",
         TaskTypeId: taskTypeIdMap[selectedTask.taskTypeName] || 2,
       });
@@ -1686,36 +1761,20 @@ export default function TaskPage() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700">
                           Start Date
                         </label>
-                        <input
-                          type="datetime-local"
-                          value={toInputDateTime(editTaskData.StartDate)}
-                          onChange={(e) =>
-                            setEditTaskData({
-                              ...editTaskData,
-                              StartDate: e.target.value,
-                            })
-                          }
-                          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                        />
+                        <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                          {selectedTask.startDate}
+                        </div>
                       </div>
                       <div>
-                        <label className="block font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700">
                           End Date
                         </label>
-                        <input
-                          type="datetime-local"
-                          value={toInputDateTime(editTaskData.EndDate)}
-                          onChange={(e) =>
-                            setEditTaskData({
-                              ...editTaskData,
-                              EndDate: e.target.value,
-                            })
-                          }
-                          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                        />
+                        <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                          {selectedTask.endDate}
+                        </div>
                       </div>
                     </div>
 
@@ -1731,6 +1790,10 @@ export default function TaskPage() {
                             ...editTaskData,
                             TotalDuration: parseInt(e.target.value),
                           })
+                        }
+                        disabled={
+                          editTaskData.TaskTypeId !== 2 &&
+                          editTaskData.TaskTypeId !== 3
                         }
                         className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
                       />
@@ -1875,6 +1938,7 @@ export default function TaskPage() {
                             2: "Paused",
                             3: "Completed",
                             4: "Expired",
+                            5: "Canceled",
                           }[selectedTask.status]
                         }
                       </div>
@@ -1944,12 +2008,10 @@ export default function TaskPage() {
                     try {
                       const payload = {
                         TotalDuration: editTaskData.TotalDuration,
-                        StartDate: editTaskData.StartDate,
-                        EndDate: editTaskData.EndDate,
                         TaskTypeId: taskTypeIdMap[editTaskData.TaskType],
                       };
 
-                      await UpdateTaskById(selectedTask.taskId, payload);
+                      await UpdateTaskById2(selectedTask.taskId, payload);
                       toast.success("Task updated!");
                       setIsTaskInfoDialogOpen(false);
                     } catch (err) {

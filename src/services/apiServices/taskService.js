@@ -25,17 +25,28 @@ export async function GetTaskByUserTreeId(userTreeId) {
   return response.data;
 }
 
+export async function UpdateTaskById2(taskId, taskData) {
+  const formData = new FormData();
+
+  formData.append("TotalDuration", taskData.TotalDuration?.toString() || "0");
+  formData.append("TaskTypeId", taskData.TaskTypeId?.toString() || "1");
+  const response = await axios.patch(`/Task/Update-Task/${taskId}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+}
+
 export async function UpdateTaskById(taskId, taskData) {
   const formData = new FormData();
 
-  // Lưu ý phải dùng đúng key với API (ví dụ: 'TaskName', không phải 'taskName')
-  formData.append("TotalDuration", taskData.TotalDuration?.toString() || "0");
-  formData.append("StartDate", taskData.StartDate);
-  formData.append("EndDate", taskData.EndDate);
-  formData.append("TaskTypeId", taskData.TaskTypeId?.toString() || "1");
-
-  // Nếu bạn có file:
-  // formData.append('TaskFile', taskData.TaskFile);
+  formData.append("TaskName", taskData.taskName);
+  formData.append("TaskDescription", taskData.taskDescription || "");
+  formData.append("TaskNote", taskData.taskNote || "");
+  formData.append("StartDate", taskData.startDate);
+  formData.append("EndDate", taskData.endDate);
 
   const response = await axios.patch(`/Task/Update-Task/${taskId}`, formData, {
     headers: {
@@ -68,9 +79,11 @@ export async function PauseTask(taskId) {
   return response.data;
 }
 
-export async function CompleteTask(taskId, userTreeId) {
-  const response = await axios.post(`/Task/complete-task/${taskId}`, {
-    userTreeId: userTreeId, // hoặc userTreeId nếu bạn có sẵn giá trị
+export async function CompleteTask(taskId, formData) {
+  const response = await axios.post(`/Task/complete-task/${taskId}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
   return response.data;
 }
