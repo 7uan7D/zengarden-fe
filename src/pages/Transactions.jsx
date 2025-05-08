@@ -6,6 +6,7 @@ import AdminHeader from "@/components/common/AdminHeader"
 import StatCard from "@/components/common/StatCard"
 import TransactionsTable from "@/components/transactions/TransactionsTable"
 import useTransactionData from "@/hooks/useTransactionData"
+import DailyTransactions from "@/components/transactions/DailyTransactions"
 
 const Transactions = () => {
     const { transactionData, isLoading, error } = useTransactionData()
@@ -52,6 +53,10 @@ const Transactions = () => {
                 </motion.div>
 
                 <TransactionsTable />
+
+                <div className='grid grid-cols-1 lg:grid-cols-1 gap-8 mt-8'>
+                    <DailyTransactions />
+                </div>
             </main>
         </div>
     )
