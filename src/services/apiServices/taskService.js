@@ -29,14 +29,14 @@ export async function UpdateTaskById(taskId, taskData) {
   const formData = new FormData();
 
   // Lưu ý phải dùng đúng key với API (ví dụ: 'TaskName', không phải 'taskName')
-  formData.append("TaskName", taskData.TaskName);
-  formData.append("TaskDescription", taskData.TaskDescription || "");
-  formData.append("TaskNote", taskData.TaskNote || "");
-  formData.append("TotalDuration", taskData.TotalDuration?.toString() || "0");
-  formData.append("WorkDuration", taskData.WorkDuration?.toString() || "0");
-  formData.append("BreakTime", taskData.BreakTime?.toString() || "0");
-  formData.append("StartDate", taskData.StartDate);
-  formData.append("EndDate", taskData.EndDate);
+  formData.append("TaskName", taskData.taskName);
+  formData.append("TaskDescription", taskData.taskDescription || "");
+  formData.append("TaskNote", taskData.taskNote || "");
+  // formData.append("TotalDuration", taskData.totalDuration?.toString() || "0");
+  // formData.append("WorkDuration", taskData.workDuration?.toString() || "0");
+  // formData.append("BreakTime", taskData.breakTime?.toString() || "0");
+  formData.append("StartDate", taskData.startDate);
+  formData.append("EndDate", taskData.endDate);
 
   // Nếu bạn có file:
   // formData.append('TaskFile', taskData.TaskFile);

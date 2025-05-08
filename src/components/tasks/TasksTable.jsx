@@ -127,6 +127,7 @@ const TasksTable = () => {
 
   const handleSaveChanges = async () => {
     if (selectedTaskId) {
+      console.log("Saving changes for task:", editTask);
       setIsLoading(true);
       try {
         await UpdateTaskById(selectedTaskId, editTask);
@@ -443,6 +444,7 @@ const TasksTable = () => {
                             placeholder="≥ Work + Break Time"
                             value={editTask.totalDuration}
                             onChange={handleChange}
+                            disabled
                           />
                         </div>
                         <div className="space-y-1">
