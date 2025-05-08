@@ -17,6 +17,7 @@ const SIDEBAR_ITEMS = [
     { name: 'Tree Experience Log', icon: ScrollText, color: '#9621B6', href: '/treeXPLog' },
     <hr key="separator" className="my-2 border-t border-gray-700" />,
     { name: 'Challenges Moderate', icon: Trophy, color: '#F59E0B', href: '/challenges-moderate' },
+    { name: 'Tasks Moderate', icon: CalendarCheck, color: '#3B82F6', href: '/tasks-moderate' },
     { name: 'Items Moderate', icon: ShoppingBag, color: '#8B5CF6', href: '/items-moderate' },
     { name: 'Packages Moderate', icon: PackageOpen, color: '#2FE123', href: '/packages-moderate' },
     { name: 'Data Refresh Moderate', icon: CalendarCheck, color: '#3B82F6', href: '/data-refresh-moderate' },

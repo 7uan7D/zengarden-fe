@@ -124,3 +124,10 @@ export async function AutoPauseTasks() {
   const response = await axios.post(`/Task/auto-pause`);
   return response.data;
 }
+
+export async function UpdateTaskDurationById(taskId, totalDuration) {
+  const response = await axios.patch(`/Task/${taskId}/duration`, {
+    totalDuration: totalDuration,
+  });
+  return response.data;
+}
