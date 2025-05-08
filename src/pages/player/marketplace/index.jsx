@@ -298,18 +298,25 @@ export default function Marketplace() {
     }
 
     const userId = parseInt(decoded.sub);
-    const   Id = userId;
+    const userInfo = await GetUserInfo(userId);
+    const walletId = userInfo.wallet.walletId; // ✅ Thêm dòng này
+
+    console.log("Buying package:", packageId);
+    console.log("UserID:", userId);
+    console.log("WalletID:", walletId);
 
     try {
       const result = await PayPackage(userId, walletId, packageId);
+      console.log("API result:", result);
 
       const checkoutUrl = result?.clientSecret?.checkoutUrl;
       if (checkoutUrl) {
-        window.location.href = checkoutUrl; // 🔁 Redirect tới Stripe
+        window.location.href = checkoutUrl;
       } else {
         toast.error("Không lấy được đường dẫn thanh toán.");
       }
     } catch (error) {
+      console.error("Lỗi khi gọi API:", error);
       toast.error("Lỗi khi thanh toán.");
     }
   };
