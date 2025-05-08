@@ -71,6 +71,8 @@ import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsServ
 import { SortableTask } from "./SortableTask";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { ChangeTaskType } from "@/services/apiServices/taskService";
+import { UpdateTaskById } from "@/services/apiServices/taskService";
+import { DeleteTaskById } from "@/services/apiServices/taskService";
 
 // Component con để chọn ngày và giờ cho task
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
@@ -729,7 +731,7 @@ export default function TaskPage() {
           const newData = { ...prevData };
           newData[columnKey][index] = {
             ...task,
-            status: 3, /* Changed to status 3 for finished overdue tasks */
+            status: 3 /* Changed to status 3 for finished overdue tasks */,
             remainingTime: 0,
             /* overdueTime: timers[taskKey]?.overdueTime || 0, // Removed overdueTime */
           };
@@ -865,8 +867,8 @@ export default function TaskPage() {
       ...prev,
       [field]: date
         ? date.toISOString().split("T")[0] +
-        "T" +
-        (prev[field]?.split("T")[1] || "00:00:00.000Z")
+          "T" +
+          (prev[field]?.split("T")[1] || "00:00:00.000Z")
         : null,
     }));
   }, []);
@@ -889,8 +891,8 @@ export default function TaskPage() {
   const durationOptions = taskType.includes("Simple")
     ? simpleDurations
     : taskType.includes("Complex")
-      ? complexDurations
-      : [];
+    ? complexDurations
+    : [];
 
   // Generate time options for work and break durations
   const generateTimeOptions = (min, max, step) => {
@@ -1033,8 +1035,8 @@ export default function TaskPage() {
       activeTabs[columnKey] === "all"
         ? taskList
         : activeTabs[columnKey] === "current"
-          ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
-          : taskList.filter((task) => task.status === 3);
+        ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
+        : taskList.filter((task) => task.status === 3);
 
     const sortedTasks = [...filteredTasks].sort(
       (a, b) => a.priority - b.priority
@@ -1047,8 +1049,8 @@ export default function TaskPage() {
     const calculatedHeight =
       sortedTasks.length > 0
         ? sortedTasks.length * taskHeight +
-        (sortedTasks.length - 1) * gap +
-        padding
+          (sortedTasks.length - 1) * gap +
+          padding
         : 150; // Chiều cao tối thiểu nếu không có task nào
 
     return (
@@ -1203,12 +1205,13 @@ export default function TaskPage() {
                           <Card className="task-item relative flex">
                             {["simple", "complex"].includes(columnKey) && (
                               <div
-                                className={`priority-label priority-${task.priority <= 2
-                                  ? "high"
-                                  : task.priority <= 4
+                                className={`priority-label priority-${
+                                  task.priority <= 2
+                                    ? "high"
+                                    : task.priority <= 4
                                     ? "medium"
                                     : "low"
-                                  } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
+                                } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
                                 onClick={(e) => {
                                   e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
                                   setSelectedTask(task);
@@ -1220,25 +1223,25 @@ export default function TaskPage() {
                             )}
                             {(task.taskTypeName === "Simple" ||
                               task.taskTypeName === "Complex") && (
-                                <div
-                                  className="drag-handle w-8 bg-gray-100 flex items-center justify-center"
-                                  {...dragHandleProps}
+                              <div
+                                className="drag-handle w-8 bg-gray-100 flex items-center justify-center"
+                                {...dragHandleProps}
+                              >
+                                <svg
+                                  className="w-5 h-5 text-gray-500"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
                                 >
-                                  <svg
-                                    className="w-5 h-5 text-gray-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth="2"
-                                      d="M8 9h8M8 13h8M8 17h8"
-                                    />
-                                  </svg>
-                                </div>
-                              )}
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M8 9h8M8 13h8M8 17h8"
+                                  />
+                                </svg>
+                              </div>
+                            )}
                             <div className="flex-1 flex flex-col justify-between text-left p-4">
                               <div>
                                 <span className="text-gray-700 font-medium">
@@ -1247,24 +1250,25 @@ export default function TaskPage() {
                               </div>
                               <div className="flex flex-col gap-1 text-left">
                                 <span
-                                  className={`text-sm ${task.status === 4 ||
+                                  className={`text-sm ${
+                                    task.status === 4 ||
                                     (remainingTime <= 0 &&
                                       currentTaskStatus !== 0)
-                                    ? "text-red-600"
-                                    : "text-gray-600"
-                                    }`}
+                                      ? "text-red-600"
+                                      : "text-gray-600"
+                                  }`}
                                 >
                                   {task.status !== 3 &&
-                                    (task.status === 4 ? (
-                                      /* Changed display for expired tasks */
-                                      ""
-                                    ) : remainingTime <= 0 &&
-                                      currentTaskStatus !== 0 ? (
-                                      /* Display "Currently Overdue" instead of overdue time */
-                                      "Currently Overdue"
-                                    ) : (
-                                      `Remaining: ${formatTime(remainingTime)}`
-                                    ))}
+                                    (task.status === 4
+                                      ? /* Changed display for expired tasks */
+                                        ""
+                                      : remainingTime <= 0 &&
+                                        currentTaskStatus !== 0
+                                      ? /* Display "Currently Overdue" instead of overdue time */
+                                        "Currently Overdue"
+                                      : `Remaining: ${formatTime(
+                                          remainingTime
+                                        )}`)}
                                 </span>
                                 <div className="progress-bar-container">
                                   <div className="progress-bar flex h-2 rounded overflow-hidden">
@@ -1277,10 +1281,11 @@ export default function TaskPage() {
                                             : "bg-yellow-500"
                                         }
                                         style={{
-                                          width: `${(phase.duration /
-                                            totalDurationSeconds) *
+                                          width: `${
+                                            (phase.duration /
+                                              totalDurationSeconds) *
                                             100
-                                            }%`,
+                                          }%`,
                                         }}
                                       />
                                     ))}
@@ -1289,7 +1294,8 @@ export default function TaskPage() {
                                 {task.status !== 4 &&
                                   task.status !== 3 &&
                                   !(
-                                    remainingTime <= 0 && currentTaskStatus !== 0
+                                    remainingTime <= 0 &&
+                                    currentTaskStatus !== 0
                                   ) && (
                                     <div className="text-xs text-gray-500 mt-1">
                                       {currentTaskStatus === 0 ? (
@@ -1332,65 +1338,65 @@ export default function TaskPage() {
                                     remainingTime <= 0 &&
                                     currentTaskStatus !== 0
                                   ) && (
-                                      <Button
-                                        onClick={(e) => {
-                                          e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
-                                          handleTaskAction(
-                                            columnKey,
-                                            index,
-                                            currentTaskStatus === 0
-                                              ? "start"
-                                              : currentTaskStatus === 1
-                                                ? "pause"
-                                                : "resume"
-                                          );
-                                        }}
-                                        className={
-                                          currentTaskStatus === 1
-                                            ? "bg-yellow-500 hover:bg-yellow-600"
-                                            : currentTaskStatus === 2
-                                              ? "bg-blue-500 hover:bg-blue-600"
-                                              : "bg-green-500 hover:bg-green-600"
-                                        }
-                                        disabled={
-                                          (currentTaskStatus === 0 &&
-                                            activeTaskKey !== null &&
-                                            activeTaskKey !== taskKey) ||
-                                          loadingTaskKey === taskKey
-                                        }
-                                      >
-                                        {loadingTaskKey === taskKey ? (
-                                          <svg
-                                            className="animate-spin h-5 w-5 text-white mx-auto"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <circle
-                                              className="opacity-25"
-                                              cx="12"
-                                              cy="12"
-                                              r="10"
-                                              stroke="currentColor"
-                                              strokeWidth="4"
-                                            />
-                                            <path
-                                              className="opacity-75"
-                                              fill="currentColor"
-                                              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                            />
-                                          </svg>
-                                        ) : currentTaskStatus === 0 ? (
-                                          "Start"
-                                        ) : currentTaskStatus === 1 ? (
-                                          "Pause"
-                                        ) : currentTaskStatus === 2 ? ( // Loading của nút Resume nhưng chưa check
-                                          "Resume")
-                                          : (
-                                            "Finish"
-                                          )}
-                                      </Button>
-                                    )}
+                                    <Button
+                                      onClick={(e) => {
+                                        e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
+                                        handleTaskAction(
+                                          columnKey,
+                                          index,
+                                          currentTaskStatus === 0
+                                            ? "start"
+                                            : currentTaskStatus === 1
+                                            ? "pause"
+                                            : "resume"
+                                        );
+                                      }}
+                                      className={
+                                        currentTaskStatus === 1
+                                          ? "bg-yellow-500 hover:bg-yellow-600"
+                                          : currentTaskStatus === 2
+                                          ? "bg-blue-500 hover:bg-blue-600"
+                                          : "bg-green-500 hover:bg-green-600"
+                                      }
+                                      disabled={
+                                        (currentTaskStatus === 0 &&
+                                          activeTaskKey !== null &&
+                                          activeTaskKey !== taskKey) ||
+                                        loadingTaskKey === taskKey
+                                      }
+                                    >
+                                      {loadingTaskKey === taskKey ? (
+                                        <svg
+                                          className="animate-spin h-5 w-5 text-white mx-auto"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <circle
+                                            className="opacity-25"
+                                            cx="12"
+                                            cy="12"
+                                            r="10"
+                                            stroke="currentColor"
+                                            strokeWidth="4"
+                                          />
+                                          <path
+                                            className="opacity-75"
+                                            fill="currentColor"
+                                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                          />
+                                        </svg>
+                                      ) : currentTaskStatus === 0 ? (
+                                        "Start"
+                                      ) : currentTaskStatus === 1 ? (
+                                        "Pause"
+                                      ) : currentTaskStatus === 2 ? ( // Loading của nút Resume nhưng chưa check
+                                        "Resume"
+                                      ) : (
+                                        "Finish"
+                                      )}
+                                    </Button>
+                                  )}
                                   {remainingTime <= 120 &&
                                     remainingTime >= 0 &&
                                     currentTaskStatus !== 0 && (
@@ -1475,6 +1481,49 @@ export default function TaskPage() {
     fetchEquippedItems();
   }, []);
 
+  //update task
+
+  const taskTypeMap = {
+    1: "Daily",
+    2: "Simple",
+    3: "Complex",
+    4: "Challenge",
+  };
+
+  const taskTypeIdMap = {
+    Daily: 1,
+    Simple: 2,
+    Complex: 3,
+    Challenge: 4,
+  };
+
+  const [editTaskData, setEditTaskData] = useState({
+    TotalDuration: selectedTask?.totalDuration || 0,
+    StartDate: selectedTask?.startDate || "",
+    EndDate: selectedTask?.endDate || "",
+    TaskType: selectedTask?.taskTypeName || "Simple",
+    TaskTypeId: taskTypeIdMap[selectedTask?.taskTypeName] || 2,
+  });
+
+  useEffect(() => {
+    if (selectedTask) {
+      setEditTaskData({
+        TotalDuration: selectedTask.totalDuration || 0,
+        StartDate: selectedTask.startDate || "",
+        EndDate: selectedTask.endDate || "",
+        TaskType: selectedTask.taskTypeName || "Simple",
+        TaskTypeId: taskTypeIdMap[selectedTask.taskTypeName] || 2,
+      });
+    }
+  }, [selectedTask]);
+
+  const toInputDateTime = (isoString) => {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    const tzOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - tzOffset).toISOString().slice(0, 16);
+  };
+
   return (
     <motion.div
       className="p-6 max-w-full mx-auto w-full min-h-screen flex flex-col"
@@ -1499,10 +1548,11 @@ export default function TaskPage() {
             <div className="w-32 h-32 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
               <img
                 src={userTrees.length > 0 ? treeImageSrc : addIcon}
-                className={`object-contain ${userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
-                  ? "w-10 h-10"
-                  : "w-30 h-30"
-                  }`}
+                className={`object-contain ${
+                  userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
+                    ? "w-10 h-10"
+                    : "w-30 h-30"
+                }`}
               />
             </div>
           </div>
@@ -1568,23 +1618,23 @@ export default function TaskPage() {
                   tree.treeStatus === 2 ||
                   tree.treeStatus === 0
               ).length < 2 && (
-                  <div
-                    className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
-                    onClick={() => {
-                      setIsTreeDialogOpen(false);
-                      setIsCreateTreeDialogOpen(true);
-                    }}
-                  >
-                    <img
-                      src={addIcon}
-                      alt="Add New Tree"
-                      className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
-                    />
-                    <h3 className="font-bold mt-2 text-green-600">
-                      Create New Tree
-                    </h3>
-                  </div>
-                )}
+                <div
+                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
+                  onClick={() => {
+                    setIsTreeDialogOpen(false);
+                    setIsCreateTreeDialogOpen(true);
+                  }}
+                >
+                  <img
+                    src={addIcon}
+                    alt="Add New Tree"
+                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+                  />
+                  <h3 className="font-bold mt-2 text-green-600">
+                    Create New Tree
+                  </h3>
+                </div>
+              )}
             </DialogContent>
           </Dialog>
 
@@ -1620,7 +1670,7 @@ export default function TaskPage() {
             open={isTaskInfoDialogOpen}
             onOpenChange={setIsTaskInfoDialogOpen}
           >
-            <DialogContent>
+            <DialogContent className="max-w-4xl">
               <DialogHeader>
                 <DialogTitle>
                   {selectedTask?.taskName || "Task Details"}
@@ -1629,61 +1679,292 @@ export default function TaskPage() {
                   {selectedTask?.taskDescription || "No description available"}
                 </DialogDescription>
               </DialogHeader>
+
               {selectedTask && (
-                <div className="mt-4 space-y-2">
-                  <p>
-                    <strong>Start Date:</strong> {selectedTask.startDate}
-                  </p>
-                  <p>
-                    <strong>End Date:</strong> {selectedTask.endDate}
-                  </p>
-                  <p>
-                    <strong>Status:</strong>{" "}
-                    {selectedTask.status === 3
-                      ? "Completed"
-                      : selectedTask.status === 4
-                        ? "Expired"
-                        : selectedTask.status === 1
-                          ? "In Progress"
-                          : selectedTask.status === 2
-                            ? "Paused"
-                            : "Not Started"}
-                  </p>
-                  <p>
-                    <strong>Focus Method:</strong>{" "}
-                    {selectedTask.focusMethodName}
-                  </p>
-                  <p>
-                    <strong>Total Duration:</strong>{" "}
-                    {selectedTask.totalDuration} minutes
-                  </p>
-                  <p>
-                    <strong>Work Duration:</strong> {selectedTask.workDuration}{" "}
-                    minutes
-                  </p>
-                  <p>
-                    <strong>Break Time:</strong> {selectedTask.breakTime}{" "}
-                    minutes
-                  </p>
-                  <p>
-                    <strong>Tree:</strong> {selectedTask.userTreeName}
-                  </p>
-                  <p>
-                    <strong>Task Type:</strong> {selectedTask.taskTypeName}
-                  </p>
-                  <p>
-                    <strong>Priority:</strong> {selectedTask.priority}
-                  </p>
-                  {selectedTask.remainingTime !== null && (
-                    <p>
-                      <strong>Remaining Time:</strong>{" "}
-                      {formatTime(selectedTask.remainingTime)}
-                    </p>
-                  )}
-                  {/* Removed overdueTime display */}
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-800">
+                  {/* Editable Fields */}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block font-medium text-gray-700">
+                          Start Date
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={toInputDateTime(editTaskData.StartDate)}
+                          onChange={(e) =>
+                            setEditTaskData({
+                              ...editTaskData,
+                              StartDate: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-medium text-gray-700">
+                          End Date
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={toInputDateTime(editTaskData.EndDate)}
+                          onChange={(e) =>
+                            setEditTaskData({
+                              ...editTaskData,
+                              EndDate: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-medium text-gray-700">
+                        Total Duration (minutes)
+                      </label>
+                      <input
+                        type="number"
+                        value={editTaskData.TotalDuration}
+                        onChange={(e) =>
+                          setEditTaskData({
+                            ...editTaskData,
+                            TotalDuration: parseInt(e.target.value),
+                          })
+                        }
+                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-medium text-gray-700">
+                        Task Type
+                      </label>
+                      <select
+                        value={editTaskData.TaskType}
+                        onChange={(e) => {
+                          const selectedType = e.target.value;
+                          const currentDuration = editTaskData.TotalDuration;
+
+                          const isValidDuration =
+                            (selectedType === "Simple" &&
+                              currentDuration >= 30 &&
+                              currentDuration < 180) ||
+                            (selectedType === "Complex" &&
+                              currentDuration >= 180);
+
+                          if (!isValidDuration) {
+                            const newDuration =
+                              selectedType === "Simple" ? 30 : 180;
+                            toast.info(
+                              `Invalid duration for type '${selectedType}'. Updated to ${newDuration} minutes.`
+                            );
+                            setEditTaskData({
+                              ...editTaskData,
+                              TaskType: selectedType,
+                              TaskTypeId: taskTypeIdMap[selectedType],
+                              TotalDuration: newDuration,
+                            });
+                          } else {
+                            setEditTaskData({
+                              ...editTaskData,
+                              TaskType: selectedType,
+                              TaskTypeId: taskTypeIdMap[selectedType],
+                            });
+                          }
+                        }}
+                        disabled={
+                          editTaskData.TaskTypeId !== 2 &&
+                          editTaskData.TaskTypeId !== 3
+                        }
+                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <option value="Simple">
+                          Simple (30 - 180 minutes)
+                        </option>
+                        <option value="Complex">
+                          Complex (Above 180 minutes)
+                        </option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Note
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {selectedTask.taskNote ? (
+                          selectedTask.taskNote
+                        ) : (
+                          <span className="text-gray-400 italic">
+                            There are no notes
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Result
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {selectedTask.taskResult ? (
+                          isValidUrl(selectedTask.taskResult) ? (
+                            <div className="space-y-2">
+                              <a
+                                href={selectedTask.taskResult}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline"
+                              >
+                                {selectedTask.taskResult}
+                              </a>
+
+                              {/* Nếu là ảnh thì preview */}
+                              {selectedTask.taskResult.match(
+                                /\.(jpeg|jpg|png|gif)$/i
+                              ) && (
+                                <img
+                                  src={selectedTask.taskResult}
+                                  alt="Task Result Preview"
+                                  className="max-w-full h-auto rounded"
+                                />
+                              )}
+
+                              {/* Nếu là PDF thì preview bằng iframe */}
+                              {selectedTask.taskResult.match(/\.pdf$/i) && (
+                                <iframe
+                                  src={selectedTask.taskResult}
+                                  title="Task Result PDF"
+                                  className="w-full h-64 border rounded"
+                                ></iframe>
+                              )}
+                            </div>
+                          ) : (
+                            <span>{selectedTask.taskResult}</span>
+                          )
+                        ) : (
+                          <span className="text-gray-400 italic">
+                            No result available
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Read-Only Fields */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Tree
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {selectedTask.userTreeName}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Status
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {
+                          {
+                            0: "Not Started",
+                            1: "In Progress",
+                            2: "Paused",
+                            3: "Completed",
+                            4: "Expired",
+                          }[selectedTask.status]
+                        }
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Focus Method
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {selectedTask.focusMethodName}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Work Duration
+                        </label>
+                        <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                          {selectedTask.workDuration} minutes
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Break Time
+                        </label>
+                        <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                          {selectedTask.breakTime} minutes
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedTask.remainingTime !== null && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Remaining Time
+                        </label>
+                        <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                          {formatTime(selectedTask.remainingTime)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
+
               <DialogFooter>
+                <Button
+                  onClick={async () => {
+                    try {
+                      await DeleteTaskById(selectedTask.taskId);
+                      toast.success("Task deleted!");
+
+                      setIsTaskInfoDialogOpen(false);
+                    } catch (err) {
+                      console.error("Delete failed:", err);
+                      toast.error("Failed to delete task.");
+                    }
+                  }}
+                  className="bg-red-500 text-white hover:bg-red-700"
+                >
+                  Delete
+                </Button>
+                <Button
+                  onClick={async () => {
+                    try {
+                      const payload = {
+                        TotalDuration: editTaskData.TotalDuration,
+                        StartDate: editTaskData.StartDate,
+                        EndDate: editTaskData.EndDate,
+                        TaskTypeId: taskTypeIdMap[editTaskData.TaskType],
+                      };
+
+                      await UpdateTaskById(selectedTask.taskId, payload);
+                      toast.success("Task updated!");
+                      setIsTaskInfoDialogOpen(false);
+                    } catch (err) {
+                      console.error("Update failed:", err);
+                      toast.error("Failed to update task.");
+                    }
+                  }}
+                  disabled={
+                    selectedTask?.status !== 0 && selectedTask?.status !== 3
+                  }
+                  className="disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Update
+                </Button>
+
                 <Button onClick={() => setIsTaskInfoDialogOpen(false)}>
                   Close
                 </Button>
@@ -1746,12 +2027,13 @@ export default function TaskPage() {
                 {[1, 2, 3].map((s) => (
                   <div key={s} className="flex flex-col items-center">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${s < step
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        s < step
                           ? "bg-green-500 text-white"
                           : s === step
-                            ? "bg-green-600 text-white"
-                            : "bg-gray-200 text-gray-500"
-                        }`}
+                          ? "bg-green-600 text-white"
+                          : "bg-gray-200 text-gray-500"
+                      }`}
                     >
                       {s < step ? (
                         <svg
@@ -1773,8 +2055,11 @@ export default function TaskPage() {
                       )}
                     </div>
                     <span
-                      className={`text-xs mt-1 ${s === step ? "text-green-600 font-medium" : "text-gray-500"
-                        }`}
+                      className={`text-xs mt-1 ${
+                        s === step
+                          ? "text-green-600 font-medium"
+                          : "text-gray-500"
+                      }`}
                     >
                       {s === 1 && "Task Details"}
                       {s === 2 && "Focus Method"}
@@ -1787,7 +2072,9 @@ export default function TaskPage() {
               <div className="absolute top-[140px] left-0 right-0 h-1 bg-gray-200 -mt-4">
                 <div
                   className="h-full bg-green-500 transition-all duration-300"
-                  style={{ width: step === 1 ? "33%" : step === 2 ? "66%" : "100%" }}
+                  style={{
+                    width: step === 1 ? "33%" : step === 2 ? "66%" : "100%",
+                  }}
                 ></div>
               </div>
 
@@ -2160,8 +2447,9 @@ export default function TaskPage() {
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
                       {selectedTree.levelId === 4
                         ? "Level Max"
-                        : `${treeExp.totalXp} / ${treeExp.totalXp + treeExp.xpToNextLevel
-                        } XP`}
+                        : `${treeExp.totalXp} / ${
+                            treeExp.totalXp + treeExp.xpToNextLevel
+                          } XP`}
                     </span>
                   </div>
                 )}
@@ -2241,4 +2529,13 @@ export default function TaskPage() {
       </div>
     </motion.div>
   );
+}
+
+function isValidUrl(str) {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
 }
