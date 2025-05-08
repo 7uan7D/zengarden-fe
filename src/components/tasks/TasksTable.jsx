@@ -222,16 +222,16 @@ const TasksTable = () => {
                                                 {task.taskTypeName}
                                             </td>
                                             <td className='px-5 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {task.userTreeName}
+                                                {task.userTreeName ? task.userTreeName : 'None'}
                                             </td>
                                             <td className='px-2 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {task.totalDuration}
+                                                {task.totalDuration ? task.totalDuration : '...'}
                                             </td>
                                             <td className='px-2 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {task.workDuration}
+                                                {task.workDuration ? task.workDuration : '...'}
                                             </td>
                                             <td className='px-2 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
-                                                {task.breakTime}
+                                                {task.breakTime ? task.breakTime : '...'}
                                             </td>
                                             <td className='px-2 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span
@@ -281,15 +281,15 @@ const TasksTable = () => {
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Focus method:</p>
-                                        {task.focusMethodName === '' ? 'none' : task.focusMethodName === null ? 'none' : task.focusMethodName}
+                                        {task.focusMethodName === '' ? 'None' : task.focusMethodName === null ? 'None' : task.focusMethodName}
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Task note:</p>
-                                        {task.taskNote === '' ? 'none' : task.taskNote === null ? 'none' : task.taskNote}
+                                        {task.taskNote === '' ? 'None' : task.taskNote === null ? 'None' : task.taskNote}
                                     </p>
-                                    <p className='text-gray-400 text-left text-sm'>
+                                    <p className='text-gray-400 text-left text-sm overflow-hidden'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Result:</p>
-                                        {task.taskResult === '' ? 'none' : task.taskResult === null ? 'none' : task.taskResult}
+                                        {task.taskResult === '' ? 'None' : task.taskResult === null ? 'None' : task.taskResult}
                                     </p>
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Start Date: </p>
