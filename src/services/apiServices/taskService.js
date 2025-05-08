@@ -23,10 +23,26 @@ export async function GetTaskByUserId(userId) {
 export async function GetTaskByUserTreeId(userTreeId) {
   const response = await axios.get(`/Task/by-user-tree/${userTreeId}`);
   return response.data;
-} 
+}
 
 export async function UpdateTaskById(taskId, taskData) {
-  const response = await axios.patch(`/Task/Update-Task/${taskId}`, taskData);
+  const formData = new FormData();
+
+  // Lưu ý phải dùng đúng key với API (ví dụ: 'TaskName', không phải 'taskName')
+  formData.append("TotalDuration", taskData.TotalDuration?.toString() || "0");
+  formData.append("StartDate", taskData.StartDate);
+  formData.append("EndDate", taskData.EndDate);
+  formData.append("TaskTypeId", taskData.TaskTypeId?.toString() || "1");
+
+  // Nếu bạn có file:
+  // formData.append('TaskFile', taskData.TaskFile);
+
+  const response = await axios.patch(`/Task/Update-Task/${taskId}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
   return response.data;
 }
 
@@ -106,5 +122,12 @@ export async function ResetDailyStatus() {
 
 export async function AutoPauseTasks() {
   const response = await axios.post(`/Task/auto-pause`);
+  return response.data;
+}
+
+export async function UpdateTaskDurationById(taskId, totalDuration) {
+  const response = await axios.patch(`/Task/${taskId}/duration`, {
+    totalDuration: totalDuration,
+  });
   return response.data;
 }

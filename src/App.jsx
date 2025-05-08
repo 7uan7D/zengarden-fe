@@ -42,6 +42,7 @@ import PackagesModerate from "./pages/PackagesModerate";
 import DataRefreshModerate from "./pages/DataRefreshModerate";
 import parseJwt from "./services/parseJwt";
 import { Navigate } from "react-router-dom";
+import TasksDurationModerate from "./pages/TasksDurationModerate";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -296,19 +297,27 @@ function AdminLayout() {
         <Route
           path="/settings"
           element={
-            <ProtectedRoute roleRequired="Admin">
+            // <ProtectedRoute roleRequired="Admin">
               <Settings />
-            </ProtectedRoute>
+            // </ProtectedRoute>
           }
         />
 
         {/* moderator */}
-
         <Route
           path="/challenges-moderate"
           element={
             <ProtectedRoute roleRequired="Moderator">
               <ChallengesModerate />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tasks-moderate"
+          element={
+            <ProtectedRoute roleRequired="Moderator">
+              <TasksDurationModerate />
             </ProtectedRoute>
           }
         />
@@ -377,6 +386,7 @@ function ConditionalRoutes() {
     location.pathname.startsWith("/userXPLog") ||
     location.pathname.startsWith("/treeXPLog") ||
     location.pathname.startsWith("/challenges-moderate") ||
+    location.pathname.startsWith("/tasks-moderate") ||
     location.pathname.startsWith("/items-moderate") ||
     location.pathname.startsWith("/packages-moderate") ||
     location.pathname.startsWith("/data-refresh-moderate") ||

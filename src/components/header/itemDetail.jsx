@@ -1,7 +1,16 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { CancelUseItem } from "@/services/apiServices/itemService";
+import { useEffect, useState } from "react";
 
-const ItemDetail = ({ selectedItem, inventoryItems, handleUseItem }) => {
+const ItemDetail = ({
+  selectedItem,
+  inventoryItems,
+  handleUseItem,
+  fetchInventoryData,
+  setSelectedItem,
+  setInventoryItems,
+}) => {
   if (!selectedItem) {
     return (
       <div className="flex-1 flex items-center justify-center h-full">
@@ -17,17 +26,6 @@ const ItemDetail = ({ selectedItem, inventoryItems, handleUseItem }) => {
     selectedItem?.itemType === "music" ||
     selectedItem?.itemType === "items";
   const isItemType = selectedItem?.itemType === "items";
-
-  const isAnotherItemEquipped = isItemType
-    ? inventoryItems.some(
-        (item) =>
-          item.itemType === "items" &&
-          item.isEquipped &&
-          item.bagItemId !== selectedItem.bagItemId
-      )
-    : false;
-
-  const disableEquip = isItemType && isAnotherItemEquipped;
 
   return (
     <motion.div
@@ -55,13 +53,31 @@ const ItemDetail = ({ selectedItem, inventoryItems, handleUseItem }) => {
       </div>
 
       {isOwned ? (
-        <Button
-          className="mt-4 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
-          onClick={() => handleUseItem(selectedItem.bagItemId)}
-          disabled={disableEquip}
-        >
-          {isEquippable ? "Equip" : "Use"}
-        </Button>
+        selectedItem.isEquipped ? (
+          <Button
+            className="mt-4 bg-red-600 hover:bg-red-700 text-white"
+            onClick={async () => {
+              try {
+                await CancelUseItem(selectedItem.bagItemId);
+                const updatedItems = await fetchInventoryData();
+                setInventoryItems(updatedItems);
+                setSelectedItem({ ...selectedItem, isEquipped: false });
+                console.log("Item unequipped successfully");
+              } catch (error) {
+                console.error("Unequip failed:", error);
+              }
+            }}
+          >
+            Unequip
+          </Button>
+        ) : (
+          <Button
+            className="mt-4 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+            onClick={() => handleUseItem(selectedItem.bagItemId)}
+          >
+            {isEquippable ? "Equip" : "Use"}
+          </Button>
+        )
       ) : (
         <Button
           variant="outline"
