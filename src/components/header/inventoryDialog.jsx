@@ -94,6 +94,7 @@ const InventoryDialog = ({ open, setOpen, user }) => {
     try {
       /* Gọi API để sử dụng item */
       const result = await UseItem(bagItemId);
+      setSelectedItem({ ...selectedItem, isEquipped: true });
       console.log("Use item result:", result);
       /* Cập nhật lại danh sách inventory sau khi sử dụng */
       const updatedItems = await fetchInventoryData();
@@ -202,6 +203,9 @@ const InventoryDialog = ({ open, setOpen, user }) => {
               selectedItem={selectedItem}
               inventoryItems={inventoryItems}
               handleUseItem={handleUseItem}
+              fetchInventoryData={fetchInventoryData}
+              setSelectedItem={setSelectedItem}
+              setInventoryItems={setInventoryItems}
             />
           </div>
         </Tabs>
