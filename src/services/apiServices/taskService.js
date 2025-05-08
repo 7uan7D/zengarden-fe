@@ -23,10 +23,10 @@ export async function GetTaskByUserId(userId) {
 export async function GetTaskByUserTreeId(userTreeId) {
   const response = await axios.get(`/Task/by-user-tree/${userTreeId}`);
   return response.data;
-}
+} 
 
 export async function UpdateTaskById(taskId, taskData) {
-  const response = await axios.put(`/Task/Update-Task/${taskId}`, taskData);
+  const response = await axios.patch(`/Task/Update-Task/${taskId}`, taskData);
   return response.data;
 }
 
