@@ -39,7 +39,6 @@ import { useTreeExperience } from "@/context/TreeExperienceContext";
 import { GetBagItems } from "@/services/apiServices/itemService";
 import { CircleCheckBig, CircleX } from "lucide-react";
 import "../task/index.css";
-//api task
 import {
   GetTaskByUserTreeId,
   StartTask,
@@ -47,7 +46,6 @@ import {
   CompleteTask,
   CreateTask,
 } from "@/services/apiServices/taskService";
-// thư viện kéo thả
 import {
   DndContext,
   closestCenter,
@@ -110,7 +108,6 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
 
       // Định dạng thời gian thành HH:mm:ss.000Z
       const formattedTime = `${timeString}:00.000Z`;
-
       onTimeChange(formattedTime);
     },
     [onTimeChange]
@@ -173,6 +170,7 @@ export default function TaskPage() {
   const [isCreateTreeDialogOpen, setIsCreateTreeDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newTreeName, setNewTreeName] = useState("");
+  const [isLoadingNext, setIsLoadingNext] = useState(false); // Trạng thái loading cho nút Next
   // Task
   const [selectedTask, setSelectedTask] = useState(null);
   const [isTaskInfoDialogOpen, setIsTaskInfoDialogOpen] = useState(false);
@@ -199,6 +197,7 @@ export default function TaskPage() {
   const [timers, setTimers] = useState({});
   const [activeTaskKey, setActiveTaskKey] = useState(null);
   const intervalRefs = useRef({});
+  const [loadingTaskKey, setLoadingTaskKey] = useState(null);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -462,6 +461,7 @@ export default function TaskPage() {
           taskTypeName: task.taskTypeName,
           remainingTime: convertToMinutes(task.remainingTime) * 60,
           priority: task.priority,
+          /* overdueTime: task.overdueTime || 0, // Bỏ thuộc tính overdueTime khỏi formattedTask vì không còn cần hiển thị thời gian overdue. */
         };
 
         const type = task.taskTypeName?.toLowerCase();
@@ -476,6 +476,38 @@ export default function TaskPage() {
 
       setTaskData(groupedTasks);
       setTempTaskData(groupedTasks);
+
+      // Khởi tạo timers cho các task đang chạy
+      const newTimers = {};
+      Object.keys(groupedTasks).forEach((columnKey) => {
+        groupedTasks[columnKey].forEach((task, index) => {
+          const taskKey = `${columnKey}-${index}`;
+          if (task.status === 1) {
+            newTimers[taskKey] = {
+              isWorkPhase: true,
+              currentWorkTime: task.workDuration * 60,
+              currentBreakTime: task.breakTime * 60,
+              remainingTime: task.remainingTime,
+              /* overdueTime: task.overdueTime || 0, // Removed overdueTime */
+              isRunning: true,
+              totalWorkCompleted: 0,
+              totalBreakCompleted: 0,
+            };
+          } else if (task.status === 2) {
+            newTimers[taskKey] = {
+              isWorkPhase: true,
+              currentWorkTime: task.workDuration * 60,
+              currentBreakTime: task.breakTime * 60,
+              remainingTime: task.remainingTime,
+              /* overdueTime: task.overdueTime || 0, // Removed overdueTime */
+              isRunning: false,
+              totalWorkCompleted: 0,
+              totalBreakCompleted: 0,
+            };
+          }
+        });
+      });
+      setTimers(newTimers);
     } catch (error) {
       console.error("Lỗi lấy task:", error);
     }
@@ -520,7 +552,7 @@ export default function TaskPage() {
             currentWorkTime: task.workDuration * 60,
             currentBreakTime: task.breakTime * 60,
             remainingTime: task.remainingTime,
-            overdueTime: 0,
+            /* overdueTime: task.overdueTime || 0, // Removed overdueTime */
             isRunning: true,
             totalWorkCompleted: 0,
             totalBreakCompleted: 0,
@@ -533,6 +565,11 @@ export default function TaskPage() {
           return newData;
         });
 
+        // Xóa interval cũ nếu tồn tại
+        if (intervalRefs.current[taskKey]) {
+          clearInterval(intervalRefs.current[taskKey]);
+        }
+
         intervalRefs.current[taskKey] = setInterval(() => {
           setTimers((prev) => {
             const timer = prev[taskKey];
@@ -543,22 +580,32 @@ export default function TaskPage() {
               currentWorkTime,
               currentBreakTime,
               remainingTime,
-              overdueTime,
+              /* overdueTime, // Removed overdueTime */
               totalWorkCompleted,
               totalBreakCompleted,
             } = timer;
 
+            console.log(`Timer tick for ${taskKey}:`, {
+              remainingTime,
+              /* overdueTime, // Removed overdueTime */
+              isWorkPhase,
+              currentWorkTime,
+              currentBreakTime,
+            });
+
             const currentDate = parseDate(getCurrentDateStr());
             const endDate = parseDate(task.endDate);
+
+            // Kiểm tra nếu đã vượt quá endDate
             if (currentDate > endDate) {
               clearInterval(intervalRefs.current[taskKey]);
-
               setTaskData((prevData) => {
                 const newData = { ...prevData };
                 newData[columnKey][index] = {
                   ...task,
                   status: 4,
                   remainingTime: 0,
+                  /* overdueTime, // Removed overdueTime */
                 };
                 return newData;
               });
@@ -569,6 +616,7 @@ export default function TaskPage() {
               };
             }
 
+            // Logic khi task đang chạy
             if (remainingTime > 0) {
               if (isWorkPhase) {
                 currentWorkTime -= 1;
@@ -589,10 +637,11 @@ export default function TaskPage() {
                   currentBreakTime = task.breakTime * 60;
                 }
               }
-            } else {
-              overdueTime += 1;
-            }
+            } /* else {
+              overdueTime += 1; // Removed overdueTime increment
+            } */
 
+            // Cập nhật lại taskData với remainingTime /* và overdueTime */
             setTaskData((prevData) => {
               const newData = { ...prevData };
               newData[columnKey][index] = { ...task, status: 1, remainingTime };
@@ -607,13 +656,14 @@ export default function TaskPage() {
                 currentWorkTime,
                 currentBreakTime,
                 remainingTime,
-                overdueTime,
+                /* overdueTime, // Removed overdueTime */
                 totalWorkCompleted,
                 totalBreakCompleted,
               },
             };
           });
         }, 1000);
+
         localStorage.setItem(
           "currentTask",
           JSON.stringify({
@@ -621,6 +671,7 @@ export default function TaskPage() {
             taskName: task.taskName,
             title: task.title,
             remainingTime: task.remainingTime,
+            /* overdueTime: task.overdueTime || 0, // Removed overdueTime */
             status: 1,
             columnKey,
             index,
@@ -643,6 +694,7 @@ export default function TaskPage() {
             ...task,
             status: 2,
             remainingTime: Math.round(currentTimer?.remainingTime || 0),
+            /* overdueTime: currentTimer?.overdueTime || 0, // Removed overdueTime */
           };
           return newData;
         });
@@ -651,12 +703,14 @@ export default function TaskPage() {
           clearInterval(intervalRefs.current[taskKey]);
           delete intervalRefs.current[taskKey];
         }
+
         localStorage.setItem(
           "currentTask",
           JSON.stringify({
             taskId: task.taskId,
             title: task.title,
             remainingTime: Math.round(currentTimer?.remainingTime || 0),
+            /* overdueTime: currentTimer?.overdueTime || 0, // Removed overdueTime */
             status: 2,
             columnKey,
             index,
@@ -673,7 +727,12 @@ export default function TaskPage() {
         }));
         setTaskData((prevData) => {
           const newData = { ...prevData };
-          newData[columnKey][index] = { ...task, status: 3, remainingTime: 0 };
+          newData[columnKey][index] = {
+            ...task,
+            status: 3, /* Changed to status 3 for finished overdue tasks */
+            remainingTime: 0,
+            /* overdueTime: timers[taskKey]?.overdueTime || 0, // Removed overdueTime */
+          };
           return newData;
         });
         localStorage.removeItem("currentTask");
@@ -681,46 +740,11 @@ export default function TaskPage() {
       }
     } catch (error) {
       console.error("Task action error:", error);
+      toast.error("Failed to perform task action");
     } finally {
       setLoadingTaskKey(null);
     }
   };
-
-  const [loadingTaskKey, setLoadingTaskKey] = useState(null);
-
-  useEffect(() => {
-    const newTimers = {};
-    Object.keys(taskData).forEach((columnKey) => {
-      taskData[columnKey].forEach((task, index) => {
-        const taskKey = `${columnKey}-${index}`;
-        if (task.status === 1) {
-          newTimers[taskKey] = {
-            isWorkPhase: true,
-            currentWorkTime: task.workDuration * 60,
-            currentBreakTime: task.breakTime * 60,
-            remainingTime: task.remainingTime,
-            overdueTime: 0,
-            isRunning: true,
-            totalWorkCompleted: 0,
-            totalBreakCompleted: 0,
-          };
-        } else if (task.status === 2) {
-          newTimers[taskKey] = {
-            isWorkPhase: true,
-            currentWorkTime: task.workDuration * 60,
-            currentBreakTime: task.breakTime * 60,
-            remainingTime: task.remainingTime,
-            overdueTime: 0,
-            isRunning: false,
-            totalWorkCompleted: 0,
-            totalBreakCompleted: 0,
-          };
-        }
-      });
-    });
-
-    setTimers(newTimers);
-  }, [taskData]);
 
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [taskType, setTaskType] = useState("");
@@ -771,8 +795,9 @@ export default function TaskPage() {
   };
 
   const handleNext = async () => {
-    if (step === 1) {
-      try {
+    setIsLoadingNext(true); // Bắt đầu loading
+    try {
+      if (step === 1) {
         const response = await SuggestTaskFocusMethods(taskCreateData);
         setFocusSuggestion(response);
         setTaskCreateData((prev) => ({
@@ -784,12 +809,14 @@ export default function TaskPage() {
         setSelectedWorkOption(response.defaultDuration.toString());
         setSelectedBreakOption(response.defaultBreak.toString());
         setStep(2);
-      } catch (error) {
-        console.error("Error fetching suggestions", error);
-        toast.error("Failed to fetch focus method suggestions");
+      } else {
+        setStep(3);
       }
-    } else {
-      setStep(3);
+    } catch (error) {
+      console.error("Error fetching suggestions", error);
+      toast.error("Failed to fetch focus method suggestions");
+    } finally {
+      setIsLoadingNext(false); // Kết thúc loading
     }
   };
 
@@ -838,8 +865,8 @@ export default function TaskPage() {
       ...prev,
       [field]: date
         ? date.toISOString().split("T")[0] +
-          "T" +
-          (prev[field]?.split("T")[1] || "00:00:00.000Z")
+        "T" +
+        (prev[field]?.split("T")[1] || "00:00:00.000Z")
         : null,
     }));
   }, []);
@@ -855,16 +882,15 @@ export default function TaskPage() {
     }));
   }, []);
 
-  // Updated durations for Simple and Complex tasks
-  const simpleDurations = [30, 45, 60, 75, 90];
-  const complexDurations = [30, 60, 90, 120, 150, 180];
+  const simpleDurations = [30, 60, 90, 120, 150, 180];
+  const complexDurations = [180, 195, 210, 225, 240, 255, 270];
 
   // Generate duration options based on task type
   const durationOptions = taskType.includes("Simple")
     ? simpleDurations
     : taskType.includes("Complex")
-    ? complexDurations
-    : [];
+      ? complexDurations
+      : [];
 
   // Generate time options for work and break durations
   const generateTimeOptions = (min, max, step) => {
@@ -882,8 +908,8 @@ export default function TaskPage() {
       return "Please enter a valid number";
     }
     const isSimple = taskType.includes("Simple");
-    const minDuration = 30;
-    const maxDuration = isSimple ? 90 : 180;
+    const minDuration = isSimple ? 30 : 180;
+    const maxDuration = isSimple ? 180 : 360;
 
     if (numValue < minDuration) {
       return `Duration must be at least ${minDuration} minutes`;
@@ -1007,8 +1033,8 @@ export default function TaskPage() {
       activeTabs[columnKey] === "all"
         ? taskList
         : activeTabs[columnKey] === "current"
-        ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
-        : taskList.filter((task) => task.status === 3);
+          ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
+          : taskList.filter((task) => task.status === 3);
 
     const sortedTasks = [...filteredTasks].sort(
       (a, b) => a.priority - b.priority
@@ -1021,8 +1047,8 @@ export default function TaskPage() {
     const calculatedHeight =
       sortedTasks.length > 0
         ? sortedTasks.length * taskHeight +
-          (sortedTasks.length - 1) * gap +
-          padding
+        (sortedTasks.length - 1) * gap +
+        padding
         : 150; // Chiều cao tối thiểu nếu không có task nào
 
     return (
@@ -1081,7 +1107,7 @@ export default function TaskPage() {
               >
                 {sortedTasks.map((task, index) => {
                   const remainingTime = task.remainingTime || 0;
-                  const overdueTime = remainingTime < 0 ? -remainingTime : 0;
+                  /* const overdueTime = task.overdueTime || 0; // Removed overdueTime */
                   const taskKey = `${columnKey}-${index}`;
                   const timer = timers[taskKey] || {};
                   const { totalWorkCompleted = 0, totalBreakCompleted = 0 } =
@@ -1177,13 +1203,12 @@ export default function TaskPage() {
                           <Card className="task-item relative flex">
                             {["simple", "complex"].includes(columnKey) && (
                               <div
-                                className={`priority-label priority-${
-                                  task.priority <= 2
-                                    ? "high"
-                                    : task.priority <= 4
+                                className={`priority-label priority-${task.priority <= 2
+                                  ? "high"
+                                  : task.priority <= 4
                                     ? "medium"
                                     : "low"
-                                } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
+                                  } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
                                 onClick={(e) => {
                                   e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
                                   setSelectedTask(task);
@@ -1195,25 +1220,25 @@ export default function TaskPage() {
                             )}
                             {(task.taskTypeName === "Simple" ||
                               task.taskTypeName === "Complex") && (
-                              <div
-                                className="drag-handle w-8 bg-gray-100 flex items-center justify-center"
-                                {...dragHandleProps}
-                              >
-                                <svg
-                                  className="w-5 h-5 text-gray-500"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
+                                <div
+                                  className="drag-handle w-8 bg-gray-100 flex items-center justify-center"
+                                  {...dragHandleProps}
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M8 9h8M8 13h8M8 17h8"
-                                  />
-                                </svg>
-                              </div>
-                            )}
+                                  <svg
+                                    className="w-5 h-5 text-gray-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M8 9h8M8 13h8M8 17h8"
+                                    />
+                                  </svg>
+                                </div>
+                              )}
                             <div className="flex-1 flex flex-col justify-between text-left p-4">
                               <div>
                                 <span className="text-gray-700 font-medium">
@@ -1222,23 +1247,24 @@ export default function TaskPage() {
                               </div>
                               <div className="flex flex-col gap-1 text-left">
                                 <span
-                                  className={`text-sm ${
-                                    task.status === 4 ||
+                                  className={`text-sm ${task.status === 4 ||
                                     (remainingTime <= 0 &&
                                       currentTaskStatus !== 0)
-                                      ? "text-red-600"
-                                      : "text-gray-600"
-                                  }`}
+                                    ? "text-red-600"
+                                    : "text-gray-600"
+                                    }`}
                                 >
                                   {task.status !== 3 &&
-                                    (task.status === 4
-                                      ? `Overdue: ${formatTime(overdueTime)}`
-                                      : remainingTime <= 0 &&
-                                        currentTaskStatus !== 0
-                                      ? `Overdue: ${formatTime(overdueTime)}`
-                                      : `Remaining: ${formatTime(
-                                          remainingTime
-                                        )}`)}
+                                    (task.status === 4 ? (
+                                      /* Changed display for expired tasks */
+                                      ""
+                                    ) : remainingTime <= 0 &&
+                                      currentTaskStatus !== 0 ? (
+                                      /* Display "Currently Overdue" instead of overdue time */
+                                      "Currently Overdue"
+                                    ) : (
+                                      `Remaining: ${formatTime(remainingTime)}`
+                                    ))}
                                 </span>
                                 <div className="progress-bar-container">
                                   <div className="progress-bar flex h-2 rounded overflow-hidden">
@@ -1251,11 +1277,10 @@ export default function TaskPage() {
                                             : "bg-yellow-500"
                                         }
                                         style={{
-                                          width: `${
-                                            (phase.duration /
-                                              totalDurationSeconds) *
+                                          width: `${(phase.duration /
+                                            totalDurationSeconds) *
                                             100
-                                          }%`,
+                                            }%`,
                                         }}
                                       />
                                     ))}
@@ -1264,8 +1289,7 @@ export default function TaskPage() {
                                 {task.status !== 4 &&
                                   task.status !== 3 &&
                                   !(
-                                    remainingTime <= 0 &&
-                                    currentTaskStatus !== 0
+                                    remainingTime <= 0 && currentTaskStatus !== 0
                                   ) && (
                                     <div className="text-xs text-gray-500 mt-1">
                                       {currentTaskStatus === 0 ? (
@@ -1308,63 +1332,65 @@ export default function TaskPage() {
                                     remainingTime <= 0 &&
                                     currentTaskStatus !== 0
                                   ) && (
-                                    <Button
-                                      onClick={(e) => {
-                                        e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
-                                        handleTaskAction(
-                                          columnKey,
-                                          index,
-                                          currentTaskStatus === 0
-                                            ? "start"
-                                            : currentTaskStatus === 1
-                                            ? "pause"
-                                            : "resume"
-                                        );
-                                      }}
-                                      className={
-                                        currentTaskStatus === 1
-                                          ? "bg-yellow-500 hover:bg-yellow-600"
-                                          : currentTaskStatus === 2
-                                          ? "bg-blue-500 hover:bg-blue-600"
-                                          : "bg-green-500 hover:bg-green-600"
-                                      }
-                                      disabled={
-                                        (currentTaskStatus === 0 &&
-                                          activeTaskKey !== null &&
-                                          activeTaskKey !== taskKey) ||
-                                        loadingTaskKey === taskKey
-                                      }
-                                    >
-                                      {loadingTaskKey === taskKey ? (
-                                        <svg
-                                          className="animate-spin h-5 w-5 text-white mx-auto"
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          fill="none"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <circle
-                                            className="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            strokeWidth="4"
-                                          />
-                                          <path
-                                            className="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                          />
-                                        </svg>
-                                      ) : currentTaskStatus === 0 ? (
-                                        "Start"
-                                      ) : currentTaskStatus === 1 ? (
-                                        "Pause"
-                                      ) : (
-                                        "Resume"
-                                      )}
-                                    </Button>
-                                  )}
+                                      <Button
+                                        onClick={(e) => {
+                                          e.stopPropagation(); // Ngăn chặn sự kiện click lan truyền lên task item
+                                          handleTaskAction(
+                                            columnKey,
+                                            index,
+                                            currentTaskStatus === 0
+                                              ? "start"
+                                              : currentTaskStatus === 1
+                                                ? "pause"
+                                                : "resume"
+                                          );
+                                        }}
+                                        className={
+                                          currentTaskStatus === 1
+                                            ? "bg-yellow-500 hover:bg-yellow-600"
+                                            : currentTaskStatus === 2
+                                              ? "bg-blue-500 hover:bg-blue-600"
+                                              : "bg-green-500 hover:bg-green-600"
+                                        }
+                                        disabled={
+                                          (currentTaskStatus === 0 &&
+                                            activeTaskKey !== null &&
+                                            activeTaskKey !== taskKey) ||
+                                          loadingTaskKey === taskKey
+                                        }
+                                      >
+                                        {loadingTaskKey === taskKey ? (
+                                          <svg
+                                            className="animate-spin h-5 w-5 text-white mx-auto"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <circle
+                                              className="opacity-25"
+                                              cx="12"
+                                              cy="12"
+                                              r="10"
+                                              stroke="currentColor"
+                                              strokeWidth="4"
+                                            />
+                                            <path
+                                              className="opacity-75"
+                                              fill="currentColor"
+                                              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                            />
+                                          </svg>
+                                        ) : currentTaskStatus === 0 ? (
+                                          "Start"
+                                        ) : currentTaskStatus === 1 ? (
+                                          "Pause"
+                                        ) : currentTaskStatus === 2 ? ( // Loading của nút Resume nhưng chưa check
+                                          "Resume")
+                                          : (
+                                            "Finish"
+                                          )}
+                                      </Button>
+                                    )}
                                   {remainingTime <= 120 &&
                                     remainingTime >= 0 &&
                                     currentTaskStatus !== 0 && (
@@ -1378,8 +1404,32 @@ export default function TaskPage() {
                                           );
                                         }}
                                         className="bg-orange-500 hover:bg-orange-600"
+                                        disabled={loadingTaskKey === taskKey} // Vô hiệu hóa nút khi đang loading
                                       >
-                                        Finish
+                                        {loadingTaskKey === taskKey ? (
+                                          <svg
+                                            className="animate-spin h-5 w-5 text-white mx-auto"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <circle
+                                              className="opacity-25"
+                                              cx="12"
+                                              cy="12"
+                                              r="10"
+                                              stroke="currentColor"
+                                              strokeWidth="4"
+                                            />
+                                            <path
+                                              className="opacity-75"
+                                              fill="currentColor"
+                                              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                            />
+                                          </svg>
+                                        ) : (
+                                          "Finish"
+                                        )}
                                       </Button>
                                     )}
                                 </div>
@@ -1449,11 +1499,10 @@ export default function TaskPage() {
             <div className="w-32 h-32 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
               <img
                 src={userTrees.length > 0 ? treeImageSrc : addIcon}
-                className={`object-contain ${
-                  userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
-                    ? "w-10 h-10"
-                    : "w-30 h-30"
-                }`}
+                className={`object-contain ${userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
+                  ? "w-10 h-10"
+                  : "w-30 h-30"
+                  }`}
               />
             </div>
           </div>
@@ -1519,23 +1568,23 @@ export default function TaskPage() {
                   tree.treeStatus === 2 ||
                   tree.treeStatus === 0
               ).length < 2 && (
-                <div
-                  className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
-                  onClick={() => {
-                    setIsTreeDialogOpen(false);
-                    setIsCreateTreeDialogOpen(true);
-                  }}
-                >
-                  <img
-                    src={addIcon}
-                    alt="Add New Tree"
-                    className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
-                  />
-                  <h3 className="font-bold mt-2 text-green-600">
-                    Create New Tree
-                  </h3>
-                </div>
-              )}
+                  <div
+                    className="p-4 bg-white rounded-lg shadow-lg w-48 text-center cursor-pointer transition-transform hover:scale-105"
+                    onClick={() => {
+                      setIsTreeDialogOpen(false);
+                      setIsCreateTreeDialogOpen(true);
+                    }}
+                  >
+                    <img
+                      src={addIcon}
+                      alt="Add New Tree"
+                      className="w-20 h-20 mx-auto opacity-80 hover:opacity-100"
+                    />
+                    <h3 className="font-bold mt-2 text-green-600">
+                      Create New Tree
+                    </h3>
+                  </div>
+                )}
             </DialogContent>
           </Dialog>
 
@@ -1593,12 +1642,12 @@ export default function TaskPage() {
                     {selectedTask.status === 3
                       ? "Completed"
                       : selectedTask.status === 4
-                      ? "Expired"
-                      : selectedTask.status === 1
-                      ? "In Progress"
-                      : selectedTask.status === 2
-                      ? "Paused"
-                      : "Not Started"}
+                        ? "Expired"
+                        : selectedTask.status === 1
+                          ? "In Progress"
+                          : selectedTask.status === 2
+                            ? "Paused"
+                            : "Not Started"}
                   </p>
                   <p>
                     <strong>Focus Method:</strong>{" "}
@@ -1631,6 +1680,7 @@ export default function TaskPage() {
                       {formatTime(selectedTask.remainingTime)}
                     </p>
                   )}
+                  {/* Removed overdueTime display */}
                 </div>
               )}
               <DialogFooter>
@@ -1690,6 +1740,56 @@ export default function TaskPage() {
                   {step === 3 && "Review and confirm your task details."}
                 </DialogDescription>
               </DialogHeader>
+
+              {/* Step Indicator */}
+              <div className="flex justify-between items-center my-2 mb-0">
+                {[1, 2, 3].map((s) => (
+                  <div key={s} className="flex flex-col items-center">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${s < step
+                          ? "bg-green-500 text-white"
+                          : s === step
+                            ? "bg-green-600 text-white"
+                            : "bg-gray-200 text-gray-500"
+                        }`}
+                    >
+                      {s < step ? (
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      ) : (
+                        s
+                      )}
+                    </div>
+                    <span
+                      className={`text-xs mt-1 ${s === step ? "text-green-600 font-medium" : "text-gray-500"
+                        }`}
+                    >
+                      {s === 1 && "Task Details"}
+                      {s === 2 && "Focus Method"}
+                      {s === 3 && "Confirm"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {/* Đường nối giữa các bước */}
+              <div className="absolute top-[140px] left-0 right-0 h-1 bg-gray-200 -mt-4">
+                <div
+                  className="h-full bg-green-500 transition-all duration-300"
+                  style={{ width: step === 1 ? "33%" : step === 2 ? "66%" : "100%" }}
+                ></div>
+              </div>
 
               {step === 1 && (
                 <div className="space-y-4">
@@ -1794,9 +1894,9 @@ export default function TaskPage() {
               )}
 
               {step === 2 && focusSuggestion && (
-                <div className="space-y-6">
+                <div className="space-y-2">
                   {/* Thông tin Focus Suggestion */}
-                  <div className="border rounded-xl p-4 bg-gray-50 space-y-2 shadow-sm">
+                  <div className="border rounded-xl p-3 bg-gray-50 space-y-2 shadow-sm">
                     <h2 className="text-xl font-bold text-primary">
                       Focus Method: {focusSuggestion.focusMethodName}
                     </h2>
@@ -1921,7 +2021,7 @@ export default function TaskPage() {
                       <p className="text-red-500 text-sm">{breakTimeError}</p>
                     )}
                     <p className="text-xs text-blue-600 italic">
-                      🔹 Recommended: {focusSuggestion.defaultBreak} mins{" "}
+                      🔹 Recommended: {focusSuggestion.defaultBreak} mins
                     </p>
                   </div>
                 </div>
@@ -1942,13 +2042,11 @@ export default function TaskPage() {
                   </p>
                   <p>
                     <strong>Start Date:</strong>{" "}
-                    {format(new Date(taskCreateData.startDate), "PPP HH:mm")}{" "}
-                    {/* Hiển thị định dạng 24 giờ */}
+                    {format(new Date(taskCreateData.startDate), "PPP HH:mm")}
                   </p>
                   <p>
                     <strong>End Date:</strong>{" "}
-                    {format(new Date(taskCreateData.endDate), "PPP HH:mm")}{" "}
-                    {/* Hiển thị định dạng 24 giờ */}
+                    {format(new Date(taskCreateData.endDate), "PPP HH:mm")}
                   </p>
                   <p>
                     <strong>Focus Method:</strong>{" "}
@@ -1971,6 +2069,7 @@ export default function TaskPage() {
                     variant="ghost"
                     className="bg-white border-black"
                     onClick={handleBack}
+                    disabled={isLoadingNext} // Vô hiệu hóa nút Back khi Next đang loading
                   >
                     Back
                   </Button>
@@ -1979,9 +2078,32 @@ export default function TaskPage() {
                   <Button
                     className="bg-green-600 text-white hover:bg-green-700"
                     onClick={handleNext}
-                    disabled={isNextDisabled()}
+                    disabled={isNextDisabled() || isLoadingNext} // Vô hiệu hóa khi đang loading hoặc dữ liệu không hợp lệ
                   >
-                    Next
+                    {isLoadingNext ? (
+                      <svg
+                        className="animate-spin h-5 w-5 text-white mx-auto"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        />
+                      </svg>
+                    ) : (
+                      "Next"
+                    )}
                   </Button>
                 )}
                 {step === 3 && (
@@ -2038,9 +2160,8 @@ export default function TaskPage() {
                     <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
                       {selectedTree.levelId === 4
                         ? "Level Max"
-                        : `${treeExp.totalXp} / ${
-                            treeExp.totalXp + treeExp.xpToNextLevel
-                          } XP`}
+                        : `${treeExp.totalXp} / ${treeExp.totalXp + treeExp.xpToNextLevel
+                        } XP`}
                     </span>
                   </div>
                 )}

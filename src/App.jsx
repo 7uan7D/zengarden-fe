@@ -219,6 +219,7 @@ function AdminLayout() {
             </ProtectedRoute>
           }
         />
+
         {/* admin */}
         <Route
           path="/items"
@@ -340,6 +341,7 @@ function AdminLayout() {
         />
         {/* test */}
         {/* <Route path="/userXPLog" element={<UserXPLog />} /> 
+
         <Route path="/sales" element={<Sales />} />
         <Route path="/analytics" element={<Analytics />} /> */}
       </Routes>
