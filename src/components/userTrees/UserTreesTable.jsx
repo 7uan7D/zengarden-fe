@@ -102,6 +102,7 @@ const UserTreesTable = () => {
                             <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Tree Owner ID</th>
                             <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Tree Name</th>
                             <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Max Level</th>
+                            {/* <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Tree Status</th> */}
                             <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Final Tree ID</th>
                             <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Final Tree Name</th>
                             <th className='px-3 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Final Tree Rarity</th>
@@ -136,6 +137,21 @@ const UserTreesTable = () => {
                                                     {userTree.isMaxLevel === true ? 'Max Level' : 'Not Max Level'}
                                                 </span>
                                             </td>
+                                            {/* <td className='px-3 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                                <span
+                                                    className={`px-3 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                    ${userTree.treeStatus === 0 ? 'bg-yellow-200 text-yellow-800'
+                                                        : userTree.treeStatus === 1 ? 'bg-green-200 text-green-800'
+                                                            : userTree.treeStatus === 2 ? 'bg-gray-200 text-gray-800'
+                                                            : 'bg-blue-200 text-blue-800'
+                                                    }`}
+                                                >
+                                                    {userTree.treeStatus === 0 ? 'Seed'
+                                                        : userTree.treeStatus === 1 ? 'Growing'
+                                                            : userTree.treeStatus === 2 ? 'Withered'
+                                                                : 'Max Level'}
+                                                </span>
+                                            </td> */}
                                             <td className='px-3 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>{userTree.finalTreeId ? userTree.finalTreeId : '...'}</td>
                                             <td className='px-3 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>{userTree.finalTreeName ? userTree.finalTreeName : '...'}</td>
                                             <td className='px-3 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
@@ -155,19 +171,6 @@ const UserTreesTable = () => {
                                                                     : '...'}
                                                 </span>
                                             </td>
-                                            {/* <td className='px-3 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
-                                                <span
-                                                    className={`px-3 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    ${userTree.status === 1 ? 'bg-gray-200 text-gray-800'
-                                                        : userTree.status === 2 ? 'bg-green-200 text-green-800'
-                                                            : 'bg-red-200 text-red-800'
-                                                    }`}
-                                                >
-                                                    {userTree.status === 1 ? 'Pending'
-                                                        : userTree.status === 2 ? 'Success'
-                                                            : 'Cancelled'}
-                                                </span>
-                                            </td> */}
                                             <td className='px-3 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <button
                                                     className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'

@@ -20,6 +20,13 @@ export async function CreateChallenge(challenge) {
   return response.data;
 }
 
+export async function GetUserChallengeTask(userId, challengeId) {
+  const response = await axios.get(
+    `/Task/user/${userId}/challenge/${challengeId}/cloned-tasks`
+  );
+  return response.data;
+}
+
 export async function CreateTaskByChallengeId(challengeId, task) {
   const token = localStorage.getItem("token");
   const response = await axios.post(`/Challenges/tasks/${challengeId}`, task, {
@@ -141,6 +148,20 @@ export async function HandleExpiredChallenges() {
   const response = await axios.post(
     `/Challenges/handle-expired`,
     {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return response.data;
+}
+
+export async function SelectChallengeWinner(challengeId, winners) {
+  const token = localStorage.getItem("token");
+  const response = await axios.post(
+    `/Challenges/select-winner/${challengeId}`,
+    { winners }, // body
     {
       headers: {
         Authorization: `Bearer ${token}`,

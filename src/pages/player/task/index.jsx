@@ -632,7 +632,7 @@ export default function TaskPage() {
 
         const currentTimer = timers[taskKey];
 
-        setTimer((prev) => ({
+        setTimers((prev) => ({
           ...prev,
           [taskKey]: { ...prev[taskKey], isRunning: false },
         }));

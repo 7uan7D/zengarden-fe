@@ -312,15 +312,15 @@ export default function Challenges({ challenges }) {
     }
   };
 
-  if (!token) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
-        <h1 className="text-2xl font-bold">
-          Please log in to view your challenges
-        </h1>
-      </div>
-    );
-  }
+  // if (!token) {
+  //   return (
+  //     <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-900">
+  //       <h1 className="text-2xl font-bold">
+  //         Please log in to view your challenges
+  //       </h1>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -593,7 +593,7 @@ export default function Challenges({ challenges }) {
                     ))}
                   {/* Dialog đặt ngoài map */}
                   <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-                    <DialogContent className="max-w-6xl max-h-[85vh] overflow-y-auto p-6">
+                    <DialogContent className="max-w-8xl max-h-[85vh] overflow-y-auto p-6">
                       <DialogTitle className="text-2xl font-bold mb-4 text-center">
                         Challenge Details
                       </DialogTitle>
@@ -798,7 +798,9 @@ export default function Challenges({ challenges }) {
                 </div>
 
                 <div className="space-y-1 mb-3">
-                  <Label htmlFor="description">Description:</Label>
+                  <Label htmlFor="description">
+                    Require (Conditions to be winner):
+                  </Label>
                   <Input
                     id="description"
                     value={newChallengeData.description}
