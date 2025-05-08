@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { SubmitTaskResult } from "@/services/apiServices/taskService";
 
 function QuillEditor() {
   const [editorHtml, setEditorHtml] = useState("");
@@ -22,18 +23,42 @@ function QuillEditor() {
 
   const handleChange = (html) => {
     setEditorHtml(html);
-    // Debug: Kiểm tra nội dung HTML khi thay đổi
     console.log("Editor HTML:", html);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     try {
       localStorage.setItem("richTextContent", editorHtml);
       setSavedMessage("Content saved to localStorage successfully!");
-      setTimeout(() => setSavedMessage(""), 3000);
+
+      const blob = new Blob([editorHtml], { type: "text/html" });
+      const file = new File([blob], "task-result.html", { type: "text/html" });
+
+      const formData = new FormData();
+      formData.append("TaskNote", "Automated content from Quill");
+      formData.append("TaskFile", file);
+
+      const currentTaskString = localStorage.getItem("currentTask");
+      if (!currentTaskString) {
+        console.error("Không tìm thấy currenttask trong localStorage.");
+        return;
+      }
+
+      const currentTask = JSON.parse(currentTaskString);
+      const taskId = currentTask ? currentTask.taskId : null;
+
+      console.log("taskId từ localStorage:", taskId);
+
+      if (taskId) {
+        await SubmitTaskResult(taskId, formData);
+        console.log("Đã gửi nội dung lên server thành công!");
+      } else {
+        console.error("Không tìm thấy taskId trong currenttask.");
+      }
     } catch (error) {
-      console.error("Error saving to localStorage:", error);
+      console.error("Lỗi khi lưu nội dung:", error);
       setSavedMessage("Failed to save content.");
+    } finally {
       setTimeout(() => setSavedMessage(""), 3000);
     }
   };
@@ -82,7 +107,9 @@ function QuillEditor() {
         {savedMessage && (
           <p
             className={`mt-2 ${
-              savedMessage.includes("Failed") ? "text-red-600" : "text-green-600"
+              savedMessage.includes("Failed")
+                ? "text-red-600"
+                : "text-green-600"
             }`}
           >
             {savedMessage}

@@ -461,6 +461,8 @@ export default function TaskPage() {
           breakTime: task.breakTime,
           userTreeName: task.userTreeName,
           taskTypeName: task.taskTypeName,
+          taskNote: task.taskNote,
+          taskResult: task.taskResult,
           remainingTime: convertToMinutes(task.remainingTime) * 60,
           priority: task.priority,
           /* overdueTime: task.overdueTime || 0, // Bỏ thuộc tính overdueTime khỏi formattedTask vì không còn cần hiển thị thời gian overdue. */
@@ -675,7 +677,6 @@ export default function TaskPage() {
           JSON.stringify({
             taskId: task.taskId,
             taskName: task.taskName,
-            title: task.title,
             remainingTime: task.remainingTime,
             /* overdueTime: task.overdueTime || 0, // Removed overdueTime */
             status: 1,
@@ -714,7 +715,7 @@ export default function TaskPage() {
           "currentTask",
           JSON.stringify({
             taskId: task.taskId,
-            title: task.title,
+            taskName: task.taskName,
             remainingTime: Math.round(currentTimer?.remainingTime || 0),
             /* overdueTime: currentTimer?.overdueTime || 0, // Removed overdueTime */
             status: 2,
@@ -1471,8 +1472,7 @@ export default function TaskPage() {
                                 Task Note
                               </label>
                               <textarea
-                                className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
-                                placeholder="Write your note here..."
+                                className="w-full border border-gray-300 rounded-lg p-3 text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 resize-none"
                                 rows={4}
                                 value={taskNote}
                                 onChange={(e) => setTaskNote(e.target.value)}
@@ -1492,7 +1492,7 @@ export default function TaskPage() {
 
                             <div className="flex justify-end space-x-3">
                               <button
-                                className="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+                                className="px-4 py-2 text-gray-500 hover:text-white bg-white hover:bg-gray-400 rounded-lg border border-gray-300 transition"
                                 onClick={() => setOpenDialog(false)}
                               >
                                 Cancel
