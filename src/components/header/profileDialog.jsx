@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { UpdateUserInfo } from "@/services/apiServices/userService";
 import { ChangePassword } from "@/services/apiServices/authService";
+import parseJwt from "@/services/parseJwt";
 
 const ProfileDialog = ({ open, setOpen, user, setUser }) => {
   const [editUser, setEditUser] = useState({
