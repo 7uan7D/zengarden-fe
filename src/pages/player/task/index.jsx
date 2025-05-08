@@ -2172,7 +2172,7 @@ export default function TaskPage() {
                   {equippedItems.map((item) => {
                     const { bagItemId, item: itemData } = item;
                     const { name, type, VERIFY: itemDetail } = itemData || {};
-                    const mediaUrl = itemDetail?.mediaUrl;
+                    const mediaUrl = itemData.itemDetail?.mediaUrl;
 
                     return (
                       <span
