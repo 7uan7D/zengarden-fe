@@ -245,7 +245,7 @@ export default function HeroPage() {
             transition={{ duration: 0.8, delay: 0.4 }}
             viewport={{ once: true }}
           >
-            <img src="/images/grow_plants.png" alt="Grow Plants" />
+            <img src="/images/growth_plants.png" alt="Grow Plants" />
             <h3>Nurture Your Garden</h3>
             <p>Watch your virtual plants thrive as you complete tasks.</p>
           </motion.div>
