@@ -25,8 +25,35 @@ export async function GetTaskByUserTreeId(userTreeId) {
   return response.data;
 }
 
+export async function UpdateTaskById2(taskId, taskData) {
+  const formData = new FormData();
+
+  formData.append("TotalDuration", taskData.TotalDuration?.toString() || "0");
+  formData.append("TaskTypeId", taskData.TaskTypeId?.toString() || "1");
+  const response = await axios.patch(`/Task/Update-Task/${taskId}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+}
+
 export async function UpdateTaskById(taskId, taskData) {
-  const response = await axios.put(`/Task/Update-Task/${taskId}`, taskData);
+  const formData = new FormData();
+
+  formData.append("TaskName", taskData.taskName);
+  formData.append("TaskDescription", taskData.taskDescription || "");
+  formData.append("TaskNote", taskData.taskNote || "");
+  formData.append("StartDate", taskData.startDate);
+  formData.append("EndDate", taskData.endDate);
+
+  const response = await axios.patch(`/Task/Update-Task/${taskId}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
   return response.data;
 }
 
@@ -52,9 +79,20 @@ export async function PauseTask(taskId) {
   return response.data;
 }
 
-export async function CompleteTask(taskId, userTreeId) {
-  const response = await axios.post(`/Task/complete-task/${taskId}`, {
-    userTreeId: userTreeId, // hoặc userTreeId nếu bạn có sẵn giá trị
+export async function CompleteTask(taskId, formData) {
+  const response = await axios.post(`/Task/complete-task/${taskId}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+}
+
+export async function SubmitTaskResult(taskId, formData) {
+  const response = await axios.put(`/Task/${taskId}/result`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
   return response.data;
 }
@@ -106,5 +144,12 @@ export async function ResetDailyStatus() {
 
 export async function AutoPauseTasks() {
   const response = await axios.post(`/Task/auto-pause`);
+  return response.data;
+}
+
+export async function UpdateTaskDurationById(taskId, totalDuration) {
+  const response = await axios.patch(`/Task/${taskId}/duration`, {
+    totalDuration: totalDuration,
+  });
   return response.data;
 }

@@ -3,12 +3,25 @@ import Player from "react-player";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import "../react_player/index.css";
+import { SubmitTaskResult } from "@/services/apiServices/taskService";
 
 // Danh sách video mẫu ban đầu
 const initialVideoList = [
-  { id: 1, title: "Rick Astley - Never Gonna Give You Up", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
-  { id: 2, title: "Stephen Sanchez - High", url: "https://www.youtube.com/watch?v=XbAFmBIY6DQ" },
-  { id: 3, title: "Malik Mason - A Nigha", url: "https://www.youtube.com/watch?v=ikn0PvZ8j1o" },
+  {
+    id: 1,
+    title: "Rick Astley - Never Gonna Give You Up",
+    url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+  },
+  {
+    id: 2,
+    title: "Stephen Sanchez - High",
+    url: "https://www.youtube.com/watch?v=XbAFmBIY6DQ",
+  },
+  {
+    id: 3,
+    title: "Malik Mason - A Nigha",
+    url: "https://www.youtube.com/watch?v=ikn0PvZ8j1o",
+  },
 ];
 
 const VideoPlayer = () => {
@@ -41,12 +54,15 @@ const VideoPlayer = () => {
   };
 
   // Hàm thêm video mới
-  const handleAddVideo = () => {
+  const handleAddVideo = async () => {
     if (newVideoUrl.trim() === "") return;
 
-    // Chuẩn hóa URL: Thêm https:// nếu người dùng nhập thiếu giao thức
+    // Chuẩn hóa URL
     let normalizedUrl = newVideoUrl.trim();
-    if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+    if (
+      !normalizedUrl.startsWith("http://") &&
+      !normalizedUrl.startsWith("https://")
+    ) {
       normalizedUrl = "https://" + normalizedUrl;
     }
 
@@ -56,11 +72,37 @@ const VideoPlayer = () => {
       url: normalizedUrl,
     };
 
-    // Cập nhật danh sách video bằng cách thêm video mới
+    // Cập nhật UI
     setVideoList((prevList) => [...prevList, newVideo]);
     setNewVideoUrl("");
     setSelectedVideo(newVideo.url);
     setPlaying(true);
+
+    // 👉 Gọi API lưu vào Task Result
+    try {
+      const currentTaskString = localStorage.getItem("currentTask");
+      if (!currentTaskString) {
+        console.error("Không tìm thấy currentTask.");
+        return;
+      }
+
+      const currentTask = JSON.parse(currentTaskString);
+      const taskId = currentTask?.taskId;
+
+      if (!taskId) {
+        console.error("Không có taskId hợp lệ.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("TaskNote", "Automated content from React Player");
+      formData.append("TaskResult", normalizedUrl);
+
+      await SubmitTaskResult(taskId, formData); // gọi API
+      console.log("Đã lưu video URL vào task result thành công.");
+    } catch (error) {
+      console.error("Lỗi khi lưu video vào task result:", error);
+    }
   };
 
   // Hàm xóa video
@@ -83,7 +125,9 @@ const VideoPlayer = () => {
 
   // Hàm xử lý khi video kết thúc
   const handleVideoEnd = () => {
-    const currentIndex = videoList.findIndex((video) => video.url === selectedVideo);
+    const currentIndex = videoList.findIndex(
+      (video) => video.url === selectedVideo
+    );
     const nextIndex = currentIndex + 1;
 
     // Nếu còn video tiếp theo trong danh sách
@@ -141,7 +185,9 @@ const VideoPlayer = () => {
           {videoList.map((video) => (
             <li
               key={video.id}
-              className={`video-item ${selectedVideo === video.url ? "active" : ""}`}
+              className={`video-item ${
+                selectedVideo === video.url ? "active" : ""
+              }`}
               onClick={() => handleVideoSelect(video.url)}
             >
               <span>{video.title}</span>

@@ -26,6 +26,22 @@ export async function BuyItem(itemId) {
   return response.data;
 }
 
+export async function CancelUseItem(itemBagId) {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.post(
+    `UseItem/cancel?itemBagId=${itemBagId}`,
+    null,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}
+
 export async function GetBagItems(bagId) {
   const response = await axios.get(`/BagItems/${bagId}`);
   return response.data;
