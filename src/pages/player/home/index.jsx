@@ -15,6 +15,8 @@ import parseJwt from "@/services/parseJwt";
 import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import { GetAllChallenges } from "@/services/apiServices/challengeService";
+import { GetAllUserChallenges } from "@/services/apiServices/userChallengeService";
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -26,6 +28,7 @@ const HomePage = () => {
     daily: [],
     simple: [],
     complex: [],
+    challenge: [],
   });
   const [weeklyTasks, setWeeklyTasks] = useState([]);
   const [currentTask, setCurrentTask] = useState(null);
@@ -34,6 +37,9 @@ const HomePage = () => {
   const [allTrees, setAllTrees] = useState([]);
   const [marketplaceItems, setMarketplaceItems] = useState([]);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [challengesData, setChallengesData] = useState([]);
+  const [userChallengeInfo, setUserChallengeInfo] = useState([]);
+  const [selectedChallenge, setSelectedChallenge] = useState(null);
 
   // Lấy danh sách task theo cây
   const fetchTasks = async (userTreeId) => {
@@ -51,6 +57,7 @@ const HomePage = () => {
         daily: taskData.filter((task) => task.taskTypeName === "Daily"),
         simple: taskData.filter((task) => task.taskTypeName === "Simple"),
         complex: taskData.filter((task) => task.taskTypeName === "Complex"),
+        challenge: taskData.filter((task) => task.taskTypeName === "Challenge"),
       };
 
       setTasks(categorizedTasks);
@@ -66,10 +73,15 @@ const HomePage = () => {
         GetUserTreeByOwnerId(ownerId),
         GetAllTrees(),
       ]);
-      setUserTrees(ownedTrees || []);
+      // Lọc các cây hợp lệ
+      const validTrees = Array.isArray(ownedTrees)
+        ? ownedTrees.filter(tree => tree && tree.finalTreeId && tree.isActive !== false)
+        : [];
+      setUserTrees(validTrees);
       setAllTrees(allTrees || []);
     } catch (error) {
       console.error("Failed to fetch trees", error);
+      setUserTrees([]);
     }
   };
 
@@ -98,8 +110,8 @@ const HomePage = () => {
     try {
       const tasks = await GetTaskByUserId(userId);
       const today = dayjs();
-      const startOfWeek = today.startOf("week"); // Thứ Hai
-      const endOfWeek = today.endOf("week"); // Chủ Nhật
+      const startOfWeek = today.startOf("week");
+      const endOfWeek = today.endOf("week");
 
       const weeklyTasks = tasks
         .filter((task) => {
@@ -113,10 +125,40 @@ const HomePage = () => {
           );
         })
         .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
-        .slice(0, 5); // Giới hạn tối đa 5 task
+        .slice(0, 5);
       setWeeklyTasks(weeklyTasks);
     } catch (error) {
       console.error("Failed to fetch weekly tasks", error);
+    }
+  };
+
+  // Lấy danh sách challenges
+  const fetchChallenges = async () => {
+    try {
+      const data = await GetAllChallenges();
+      const filteredChallengesStatus = data.filter(
+        (item) => item && item.status === 1
+      );
+      setChallengesData(filteredChallengesStatus);
+    } catch (error) {
+      console.error("Error fetching challenges:", error);
+    }
+  };
+
+  // Lấy danh sách user challenges
+  const fetchUserChallenges = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const data = await GetAllUserChallenges();
+      const userId = parseJwt(token).sub;
+      const loggedUserChallenges = data.filter(
+        (challenge) => challenge.userId === parseInt(userId)
+      );
+      setUserChallengeInfo(loggedUserChallenges);
+    } catch (error) {
+      console.error("Error fetching user challenges:", error);
     }
   };
 
@@ -130,6 +172,8 @@ const HomePage = () => {
       fetchUserTrees(userId);
       fetchMarketplaceItems();
       fetchWeeklyTasks(userId);
+      fetchChallenges();
+      fetchUserChallenges();
 
       const savedTreeId = localStorage.getItem("selectedTreeId");
       if (savedTreeId) {
@@ -148,6 +192,30 @@ const HomePage = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, [marketplaceItems.length]);
+
+  // Chọn challenge để hiển thị
+  useEffect(() => {
+    if (challengesData.length > 0 && userChallengeInfo) {
+      // Lọc các challenge chưa tham gia
+      const availableChallenges = challengesData.filter((challenge) => {
+        return !userChallengeInfo.some(
+          (userChallenge) =>
+            userChallenge.challengeId === challenge.challengeId &&
+            userChallenge.status !== 4
+        );
+      });
+
+      // Chọn challenge đầu tiên từ danh sách chưa tham gia, nếu không có thì lấy challenge đầu tiên từ tất cả
+      const challengeToShow =
+        availableChallenges.length > 0
+          ? availableChallenges[0]
+          : challengesData.length > 1
+          ? challengesData[1]
+          : challengesData[0];
+
+      setSelectedChallenge(challengeToShow);
+    }
+  }, [challengesData, userChallengeInfo]);
 
   // Hàm điều hướng carousel
   const goToPrevious = () => {
@@ -292,20 +360,22 @@ const HomePage = () => {
             <h2 className="text-2xl font-semibold text-gray-800">Your Tasks</h2>
           </div>
           <div className="space-y-2">
-            {["daily", "simple", "complex"].map((type) => (
-              tasks[type].length > 0 && (
-                <div key={type} className="flex items-center">
-                  <span
-                    className={`inline-block w-24 text-center py-2 font-medium text-sm rounded-tl-lg rounded-bl-lg ${
-                      type === "daily"
-                        ? "bg-cyan-100 text-cyan-700"
-                        : type === "simple"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-purple-100 text-purple-700"
-                    }`}
-                  >
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </span>
+            {["daily", "simple", "complex", "challenge"].map((type) => (
+              <div key={type} className="flex items-center">
+                <span
+                  className={`inline-block w-24 text-center py-2 font-medium text-sm rounded-tl-lg rounded-bl-lg ${
+                    type === "daily"
+                      ? "bg-cyan-100 text-cyan-700"
+                      : type === "simple"
+                      ? "bg-green-100 text-green-700"
+                      : type === "complex"
+                      ? "bg-purple-100 text-purple-700"
+                      : "bg-yellow-100 text-yellow-700"
+                  }`}
+                >
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </span>
+                {tasks[type].length > 0 ? (
                   <Card className="flex-1 p-4 bg-gray-50 rounded-tr-lg rounded-br-lg border-t-2 border-b-2 border-l-0">
                     <div className="flex flex-col gap-2">
                       <div className="flex justify-between items-center">
@@ -358,8 +428,14 @@ const HomePage = () => {
                       )}
                     </div>
                   </Card>
-                </div>
-              )
+                ) : (
+                  <Card className="flex-1 p-4 bg-gray-50 rounded-tr-lg rounded-br-lg border-t-2 border-b-2 border-l-0 text-center">
+                    <span className="text-gray-500 text-sm">
+                      No tasks available at the moment
+                    </span>
+                  </Card>
+                )}
+              </div>
             ))}
           </div>
           <Button
@@ -404,8 +480,32 @@ const HomePage = () => {
             <h2 className="text-2xl font-semibold text-gray-800">Challenges</h2>
           </div>
           <div className="text-center">
-            <p className="font-semibold text-gray-800">Stay Hydrated</p>
-            <p className="text-sm text-gray-500">Reward: 71 EXP</p>
+            {selectedChallenge ? (
+              <>
+                <p className="font-semibold text-gray-800">
+                  {selectedChallenge.challengeName}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Reward: {selectedChallenge.reward} coins
+                </p>
+                <p className="text-sm text-gray-500">
+                  Start: {new Date(selectedChallenge.startDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
+                <p className="text-sm text-gray-500">
+                  End: {new Date(selectedChallenge.endDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">No challenges available</p>
+            )}
             <div className="h-16 w-16 bg-yellow-100 rounded-full mx-auto mt-4 flex items-center justify-center">
               <Trophy className="w-8 h-8 text-yellow-600" />
             </div>
@@ -501,8 +601,8 @@ const HomePage = () => {
                             {item.rarity}
                           </p>
                           <p className="font-semibold text-gray-800">{item.name}</p>
-                          <p className="text-sm text-gray- suite 208 Huntington Beach, CA 92647 gray-500 flex items-center justify-center">
-                            <img src="public/images/coin.png" alt="Coin" className="w-5 h-5 mr-1" />
+                          <p className="text-sm text-gray-500 flex items-center justify-center">
+                            <img src="/images/coin.png" alt="Coin" className="w-5 h-5 mr-1" />
                             {item.cost}
                           </p>
                         </>
