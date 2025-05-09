@@ -22,6 +22,8 @@ import InventoryDialog from "./inventoryDialog";
 import "@/components/header/index.css";
 import { toast } from "sonner";
 import RegisterButton from "@/pages/common/hero/registerButton";
+import TreeXPLogDialog from "./TreeXPLogDialog";
+import UserXPLogDialog from "./UserXPLogDialog";
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -151,6 +153,9 @@ const Header = () => {
     navigate("/");
     window.location.reload();
   };
+
+  const [isTreeXPLogOpen, setIsTreeXPLogOpen] = useState(false);
+  const [isUserXPLogOpen, setIsUserXPLogOpen] = useState(false);
 
   return (
     <header
@@ -290,6 +295,37 @@ const Header = () => {
                       >
                         Inventory
                       </Button>
+
+                      <>
+                        <Button
+                          variant="ghost"
+                          className="justify-start border-none hover:bg-gray-100 focus:border-none focus:ring-0 bg-white"
+                          onClick={() => setIsUserXPLogOpen(true)}
+                        >
+                          User XP Log
+                        </Button>
+
+                        <UserXPLogDialog
+                          open={isUserXPLogOpen}
+                          onOpenChange={setIsUserXPLogOpen}
+                        />
+                      </>
+
+                      <>
+                        <Button
+                          variant="ghost"
+                          className="justify-start border-none hover:bg-gray-100 focus:border-none focus:ring-0 bg-white"
+                          onClick={() => setIsTreeXPLogOpen(true)}
+                        >
+                          Tree XP Log
+                        </Button>
+
+                        <TreeXPLogDialog
+                          open={isTreeXPLogOpen}
+                          onOpenChange={setIsTreeXPLogOpen}
+                        />
+                      </>
+
                       <Button
                         variant="ghost"
                         className="justify-start border-none hover:bg-gray-100 focus:border-none focus:ring-0 text-red-500 bg-white"
@@ -393,6 +429,22 @@ const Header = () => {
                         >
                           Inventory
                         </Button>
+
+                        <>
+                          <Button
+                            variant="ghost"
+                            className="justify-start"
+                            onClick={() => setIsTreeXPLogOpen(true)}
+                          >
+                            Tree XP Log
+                          </Button>
+
+                          <TreeXPLogDialog
+                            open={isTreeXPLogOpen}
+                            onOpenChange={setIsTreeXPLogOpen}
+                          />
+                        </>
+
                         <Button
                           variant="ghost"
                           className="justify-start"
