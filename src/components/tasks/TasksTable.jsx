@@ -130,7 +130,16 @@ const TasksTable = () => {
       console.log('Saving changes for task:', editTask)
       setIsLoading(true)
       try {
-        await UpdateTaskById(selectedTaskId, editTask)
+        const startDateUTC = editTask.startDate ? new Date(editTask.startDate).toISOString() : null;
+        const endDateUTC = editTask.endDate ? new Date(editTask.endDate).toISOString() : null;
+
+        const taskToUpdate = {
+            ...editTask,
+            startDate: startDateUTC,
+            endDate: endDateUTC,
+        };
+
+        await UpdateTaskById(selectedTaskId, taskToUpdate);
         toast.success('The information has been updated successfully!')
 
         setTimeout(() => {
