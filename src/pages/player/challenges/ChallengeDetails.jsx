@@ -716,18 +716,40 @@ export default function ChallengeDetails(props) {
                                     {user.progress}%
                                   </td>
 
-                                  {isChallengeCreator && (
-                                    <td className="py-4 whitespace-nowrap text-sm text-center">
-                                      <button
-                                        className="px-2 py-1 text-xs text-white bg-green-500 rounded hover:bg-green-600"
-                                        onClick={() =>
-                                          handleSelectWinner(user.userId)
-                                        }
+                                  <td className="py-4 whitespace-nowrap text-sm text-center">
+                                    {isChallengeCreator ? (
+                                      user.isWinner ? (
+                                        <span className="px-2 py-1 text-xs text-white bg-blue-500 rounded">
+                                          Winner
+                                        </span>
+                                      ) : rankingData.some(
+                                          (u) => u.isWinner
+                                        ) ? (
+                                        <span className="px-2 py-1 text-xs text-white bg-gray-400 rounded">
+                                          Pending
+                                        </span>
+                                      ) : (
+                                        <button
+                                          className="px-2 py-1 text-xs text-white bg-green-500 rounded hover:bg-green-600"
+                                          onClick={() =>
+                                            handleSelectWinner(user.userId)
+                                          }
+                                        >
+                                          Select
+                                        </button>
+                                      )
+                                    ) : (
+                                      <span
+                                        className={`px-2 py-1 text-xs text-white rounded ${
+                                          user.isWinner
+                                            ? "bg-blue-500"
+                                            : "bg-gray-400"
+                                        }`}
                                       >
-                                        Select
-                                      </button>
-                                    </td>
-                                  )}
+                                        {user.isWinner ? "Winner" : "Pending"}
+                                      </span>
+                                    )}
+                                  </td>
                                 </tr>
                               ))
                             ) : (

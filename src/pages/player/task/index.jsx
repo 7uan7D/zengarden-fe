@@ -1785,12 +1785,31 @@ export default function TaskPage() {
                       <input
                         type="number"
                         value={editTaskData.TotalDuration}
-                        onChange={(e) =>
-                          setEditTaskData({
-                            ...editTaskData,
-                            TotalDuration: parseInt(e.target.value),
-                          })
+                        min={editTaskData.TaskType === "Simple" ? 30 : 180}
+                        max={
+                          editTaskData.TaskType === "Simple" ? 179 : undefined
                         }
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          const taskType = editTaskData.TaskType;
+
+                          // Xác định phạm vi hợp lệ
+                          const min = taskType === "Simple" ? 30 : 180;
+                          const max = taskType === "Simple" ? 179 : Infinity;
+
+                          if (value >= min && value <= max) {
+                            setEditTaskData({
+                              ...editTaskData,
+                              TotalDuration: value,
+                            });
+                          } else {
+                            toast.error(
+                              `Total Duration for '${taskType}' must be between ${min} and ${
+                                max === Infinity ? "∞" : max
+                              } minutes.`
+                            );
+                          }
+                        }}
                         disabled={
                           editTaskData.TaskTypeId !== 2 &&
                           editTaskData.TaskTypeId !== 3
