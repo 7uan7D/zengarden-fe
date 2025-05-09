@@ -516,6 +516,9 @@ export default function Marketplace() {
                                     transaction.transactionTime
                                   ).toLocaleString()}
                                 </p>
+                                <p className="text-sm text-gray-800 font-semibold">
+                                  Amount: ${transaction.amount.toFixed(2)}
+                                </p>
                               </div>
                               <div className="flex items-center gap-4">
                                 <span
