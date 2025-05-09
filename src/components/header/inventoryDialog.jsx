@@ -13,6 +13,7 @@ import {
   GetItemDetailByItemId,
   UseItem,
 } from "@/services/apiServices/itemService";
+import { Description } from "@radix-ui/react-dialog";
 
 const InventoryDialog = ({ open, setOpen, user }) => {
   const [inventoryItems, setInventoryItems] = useState([]);
@@ -57,6 +58,7 @@ const InventoryDialog = ({ open, setOpen, user }) => {
           bagItemId: bagItem.bagItemId,
           itemId: item.itemId || bagItem.itemId,
           name: item.name || "Unknown",
+          description: item.itemDetail.description,
           image: itemDetail.mediaUrl || "/images/fallback.png",
           itemType: getTypeTextFromTypeId(item.type),
           quantity: bagItem.quantity || 0,

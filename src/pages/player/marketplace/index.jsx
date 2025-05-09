@@ -557,44 +557,59 @@ export default function Marketplace() {
                 <TabsContent key={cat} value={cat}>
                   {cat === "Package" ? (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                      {packageData.map((pkg, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3, delay: index * 0.1 }}
-                        >
-                          <Card className="relative overflow-hidden">
-                            <CardContent className="flex flex-col items-center p-4">
-                              <div className="flex items-center mb-2">
-                                <span className="text-sm font-semibold">
-                                  {pkg.coins}
-                                </span>
+                      {[...packageData]
+                        .sort((a, b) => a.price - b.price)
+                        .map((pkg, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: index * 0.1 }}
+                          >
+                            <Card className="relative overflow-hidden">
+                              <CardContent className="flex flex-col items-center p-4">
+                                <div className="flex items-center mb-2">
+                                  <span className="text-sm font-semibold">
+                                    {pkg.coins}
+                                  </span>
+                                  <img
+                                    src="/images/coin.png"
+                                    alt="Coin"
+                                    className="w-5 h-5 ml-1"
+                                  />
+                                </div>
+
+                                {/* Chọn hình ảnh phù hợp với amount */}
                                 <img
-                                  src="/images/coin.png"
-                                  alt="Coin"
-                                  className="w-5 h-5 ml-1"
+                                  src={
+                                    pkg.amount < 500
+                                      ? "/images/bunch_coin_1.png"
+                                      : pkg.amount <= 1000
+                                      ? "/images/bunch_coin_2.png"
+                                      : pkg.amount <= 1500
+                                      ? "/images/bunch_coin_3.png"
+                                      : pkg.amount <= 2000
+                                      ? "/images/bag_coin.png"
+                                      : "/images/chest_coin.png"
+                                  }
+                                  alt={`Package ${pkg.price}`}
+                                  className="w-20 h-20 object-cover rounded-lg mb-2"
                                 />
-                              </div>
-                              <img
-                                src={"/images/default-package.png"}
-                                alt={`Package ${pkg.price}`}
-                                className="w-20 h-20 object-cover rounded-lg mb-2"
-                              />
-                              <p className="font-semibold text-lg mb-2">
-                                ${pkg.price}
-                              </p>
-                              <Button
-                                className="mt-2"
-                                variant="outline"
-                                onClick={() => handleBuy(pkg.packageId)}
-                              >
-                                <ShoppingCart className="mr-2 h-4 w-4" /> Buy
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      ))}
+
+                                <p className="font-semibold text-lg mb-2">
+                                  ${pkg.price}
+                                </p>
+                                <Button
+                                  className="mt-2"
+                                  variant="outline"
+                                  onClick={() => handleBuy(pkg.packageId)}
+                                >
+                                  <ShoppingCart className="mr-2 h-4 w-4" /> Buy
+                                </Button>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        ))}
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
