@@ -24,6 +24,23 @@ const UserXPLogDialog = ({ open, onOpenChange }) => {
     }
   }, [open]);
 
+  const getXpSourceLabel = (source) => {
+    switch (source) {
+      case 0:
+        return "Daily Login";
+      case 1:
+        return "Start Task";
+      case 2:
+        return "Streak Bonus";
+      case 3:
+        return "Web Interaction";
+      case 4:
+        return "Item Boost";
+      default:
+        return "Unknown";
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -40,7 +57,9 @@ const UserXPLogDialog = ({ open, onOpenChange }) => {
                 className="border p-4 rounded-lg shadow-sm bg-gray-50"
               >
                 <p className="font-semibold">XP Amount: {log.xpAmount}</p>
-                <p className="text-sm text-gray-700">Source: {log.xpSource}</p>
+                <p className="text-sm text-gray-700">
+                  Source: {getXpSourceLabel(log.xpSource)}
+                </p>
                 <p className="text-sm text-gray-600">
                   Date: {new Date(log.createdAt).toLocaleString()}
                 </p>
