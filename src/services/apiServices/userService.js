@@ -19,3 +19,8 @@ export async function DeleteUser(userId) {
   const response = await axios.delete(`/User/${userId}`);
   return response.data;
 }
+
+export async function GetUserXpLogsByUserId(userId) {
+  const response = await axios.get(`/UserXpLogs/user/${userId}`);
+  return response.data;
+}
