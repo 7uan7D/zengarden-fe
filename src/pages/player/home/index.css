@@ -41,6 +41,13 @@
   background-color: #ffffff;
 }
 
+/* New styles for text-left to ensure even spacing */
+.text-left {
+  line-height: 1.8; /* Consistent line spacing */
+  overflow-wrap: break-word; /* Break long words to prevent overflow */
+  height: 45px;
+}
+
 /* Carousel styles */
 .home-carousel-container {
   position: relative;

@@ -66,6 +66,7 @@ import { TimePicker } from "antd";
 import moment from "moment";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
 import { CreateTask } from "@/services/apiServices/taskService";
+import { h } from "@fullcalendar/core/preact.js";
 
 // Dữ liệu cứng cho thông tin cây
 const sampleTree = {
@@ -220,8 +221,8 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
 // Component hiển thị thông tin cây
 const TreeInfo = ({ tree }) => {
   return (
-    <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
-      <CardContent className="p-6">
+    <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg h-[493px]">
+      <CardContent className="p-6 h-full flex items-center justify-center">
         <motion.div
           className="flex flex-col items-center gap-4"
           initial={{ opacity: 0, x: -20 }}
@@ -656,7 +657,7 @@ const TaskList = ({
             </DropdownMenu>
           </div>
           <div className="task-column-container">
-            <div className="max-h-[350px] overflow-y-auto pr-2">
+            <div className="max-h-[390px] overflow-y-auto pr-2">
               {filteredTasks.length === 0 ? (
                 <p className="text-gray-500">No tasks available</p>
               ) : (
@@ -734,7 +735,7 @@ const TaskList = ({
                             {getPriorityLabel(task.priority || 1)}
                           </div>
                         )}
-                        <div className="w-full flex flex-col gap-4">
+                        <div className="w-full h-[360px] flex flex-col gap-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <ClipboardList className="w-5 h-5 text-green-600" />
@@ -746,7 +747,7 @@ const TaskList = ({
 
                           {(!focusedTask || focusedTask.taskId !== task.taskId) && (
                             <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                              <div className="flex flex-col gap-2">
+                              <div className="flex flex-col text-lg gap-4">
                                 <p className="text-left">
                                   <strong>Description:</strong>{" "}
                                   {task.taskDescription || "No description provided"}
@@ -764,7 +765,7 @@ const TaskList = ({
                                   {task.focusMethodName || "N/A"}
                                 </p>
                               </div>
-                              <div className="flex flex-col gap-2">
+                              <div className="flex flex-col gap-4 text-lg">
                                 <p className="text-left">
                                   <strong>Remaining Time:</strong>{" "}
                                   {formatTime(remainingTime)}
@@ -875,6 +876,10 @@ const TaskList = ({
                               <>
                                 {!(remainingTime <= 0 && currentTaskStatus !== 0) && (
                                   <Button
+                                    style={{ 
+                                      width: "100px",
+                                      height: "45px",
+                                     }}
                                     onClick={() =>
                                       handleTaskAction(
                                         task,
@@ -1779,7 +1784,7 @@ export default function Workspace() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            className="absolute bottom-8 w-[91%] mx-auto"
+            className="absolute bottom-8 w-[91.5%] mx-auto"
           >
             <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
               <CardContent className="p-1">
