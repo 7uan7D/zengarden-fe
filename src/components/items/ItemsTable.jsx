@@ -9,6 +9,8 @@ const ItemsTable = () => {
     const [searchTerm, setSearchTerm] = useState('')
     const [filteredItems, setFilteredItems] = useState(itemData)
     const [openStates, setOpenStates] = useState({})
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 10
 
     useEffect(() => {
         if (itemData) {
@@ -38,6 +40,29 @@ const ItemsTable = () => {
         return <div>{error.message}</div>
     }
 
+    const indexOfLastItem = currentPage * itemsPerPage
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage
+    const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem)
+    const totalPages = Math.ceil(filteredItems.length / itemsPerPage)
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber)
+
+    const renderPageNumbers = () => {
+        const pageNumbers = []
+        for (let i = 1; i <= totalPages; i++) {
+            pageNumbers.push(
+                <button
+                    key={i}
+                    onClick={() => paginate(i)}
+                    className={`mx-1 px-3 py-1 rounded-md ${currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-blue-500'}`}
+                >
+                    {i}
+                </button>
+            )
+        }
+        return pageNumbers
+    }
+
     return (
         <motion.div
             className='bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700 mb-8'
@@ -63,22 +88,22 @@ const ItemsTable = () => {
                 <table className='min-w-full divide-y divide-gray-700'>
                     <thead>
                         <tr>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Item ID</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Name</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Type</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Status</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Rarity</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Image</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Cost</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Unique</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Sold Quantity</th>
-                            <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Monthly Purchase Limit</th>
-                            {/* <th className='px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Actions</th> */}
+                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Item ID</th>
+                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Name</th>
+                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Type</th>
+                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Status</th>
+                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Rarity</th>
+                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Image</th>
+                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Cost</th>
+                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Unique</th>
+                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Sold Quantity</th>
+                            <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Monthly Purchase Limit</th>
+                            {/* <th className='px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider'>Actions</th> */}
                         </tr>
                     </thead>
 
                     <tbody className='divide-y divide-gray-700'>
-                        {filteredItems.map((item) => (
+                        {currentItems.map((item) => (
                             <Popover key={item.itemId} open={openStates[item.itemId]}>
                                 <PopoverTrigger asChild >
                                     <div style={{ display: 'contents' }}>
@@ -89,13 +114,13 @@ const ItemsTable = () => {
                                             animate={{ opacity: 1 }}
                                             transition={{ duration: 0.3 }}
                                         >
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
                                                 {item.itemId}
                                             </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
+                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm font-medium text-gray-100'>
                                                 {item.name}
                                             </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span>
                                                     {item.type === 0 ? 'XP Protect'
                                                         : item.type === 1 ? 'XP Boost Tree'
@@ -104,7 +129,7 @@ const ItemsTable = () => {
                                                                     : 'Music'}
                                                 </span>
                                             </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span
                                                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                                     ${item.status === 0 ? 'bg-green-200 text-green-800'
@@ -115,30 +140,30 @@ const ItemsTable = () => {
                                                         : 'Inactive'}
                                                 </span>
                                             </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span
                                                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    ${item.rarity === "Legendary" ? 'bg-yellow-200 text-yellow-800'
-                                                        : item.rarity === "Epic" ? 'bg-violet-200 text-violet-800'
-                                                            : item.rarity === "Rare" ? 'bg-blue-200 text-blue-800'
+                                                    ${item.rarity === 'Legendary' ? 'bg-yellow-200 text-yellow-800'
+                                                        : item.rarity === 'Epic' ? 'bg-violet-200 text-violet-800'
+                                                            : item.rarity === 'Rare' ? 'bg-blue-200 text-blue-800'
                                                                 : 'bg-gray-200 text-gray-800'
                                                     }`}
                                                 >
-                                                    {item.rarity === "Legendary" ? 'Legendary'
-                                                        : item.rarity === "Epic" ? 'Epic'
-                                                            : item.rarity === "Rare" ? 'Rare'
+                                                    {item.rarity === 'Legendary' ? 'Legendary'
+                                                        : item.rarity === 'Epic' ? 'Epic'
+                                                            : item.rarity === 'Rare' ? 'Rare'
                                                                 : 'Common'}
                                                 </span>
                                             </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <img
                                                     src={item.itemDetail.mediaUrl}
                                                     alt={item.name}
                                                     className='w-14 h-14 rounded-full'
                                                 />
                                             </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.cost} coins</td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>{item.cost} coins</td>
+                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <span
                                                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                                     ${item.itemDetail.isUnique === true ? 'bg-green-200 text-green-800'
@@ -148,13 +173,13 @@ const ItemsTable = () => {
                                                     {item.itemDetail.isUnique === true ? 'Unique' : 'Not Unique'}
                                                 </span>
                                             </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 {item.itemDetail.sold}
                                             </td>
-                                            <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 {item.itemDetail.monthlyPurchaseLimit === null ? 'No limit' : item.itemDetail.monthlyPurchaseLimit }
                                             </td>
-                                            {/* <td className='px-6 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
+                                            {/* <td className='px-4 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                                                 <button className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'>
                                                     <Edit size={18} />
                                                 </button>
@@ -203,6 +228,24 @@ const ItemsTable = () => {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            <div className='flex justify-center items-center mt-6'>
+                <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className='mx-1 px-4 py-2 rounded-md bg-gray-700 text-gray-300 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                    Previous
+                </button>
+                {renderPageNumbers()}
+                <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className='mx-1 px-4 py-2 rounded-md bg-gray-700 text-gray-300 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                    Next
+                </button>
             </div>
         </motion.div>
     )

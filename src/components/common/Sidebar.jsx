@@ -10,7 +10,7 @@ const SIDEBAR_ITEMS = [
     { name: 'Users', icon: Users, color: '#EC4899', href: '/users', role: 'Admin' },
     { name: 'Items', icon: ShoppingBag, color: '#8B5CF6', href: '/items', role: 'Admin' },
     { name: 'Tasks', icon: CalendarCheck, color: '#3B82F6', href: '/tasks', role: 'Admin' },
-    { name: 'Challenges', icon: Trophy, color: '#F59E0B', href: '/challenges-Admin', role: 'Admin' },
+    { name: 'Challenges', icon: Trophy, color: '#F59E0B', href: '/challenges-admin', role: 'Admin' },
     { name: 'Trees', icon: Leaf, color: '#0ECB70', href: '/trees', role: 'Admin' },
     { name: 'Packages', icon: PackageOpen, color: '#2FE123', href: '/packages', role: 'Admin' },
     { name: 'Trade History', icon: BarChart2, color: '#FBBF24', href: '/trade-history', role: 'Admin' },

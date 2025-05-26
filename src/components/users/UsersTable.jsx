@@ -20,6 +20,8 @@ const UsersTable = () => {
     const [selectedUserId, setSelectedUserId] = useState(null)
     const [openDeleteUser, setOpenDeleteUser] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 10
 
     useEffect(() => {
         if (userData) {
@@ -134,6 +136,29 @@ const UsersTable = () => {
         { roleId: 3, roleName: 'Moderator' },
     ]
 
+    const indexOfLastItem = currentPage * itemsPerPage
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage
+    const currentItems = filteredUsers.slice(indexOfFirstItem, indexOfLastItem)
+    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber)
+
+    const renderPageNumbers = () => {
+        const pageNumbers = []
+        for (let i = 1; i <= totalPages; i++) {
+            pageNumbers.push(
+                <button
+                    key={i}
+                    onClick={() => paginate(i)}
+                    className={`mx-1 px-3 py-1 rounded-md ${currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-blue-500'}`}
+                >
+                    {i}
+                </button>
+            )
+        }
+        return pageNumbers
+    }
+
     return (
         <motion.div
             className='bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700'
@@ -184,7 +209,7 @@ const UsersTable = () => {
                     </thead>
 
                     <tbody className='divide-y divide-gray-700'>
-                        {filteredUsers.map((user) => (
+                        {currentItems.map((user) => (
                             <motion.tr
                                 className='hover:bg-gray-700 rounded-lg transition duration-200'
                                 key={user.userId}
@@ -256,6 +281,24 @@ const UsersTable = () => {
                 </table>
             </div>
 
+            <div className='flex justify-center items-center mt-6'>
+                <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className='mx-1 px-4 py-2 rounded-md bg-gray-700 text-gray-300 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                    Previous
+                </button>
+                {renderPageNumbers()}
+                <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className='mx-1 px-4 py-2 rounded-md bg-gray-700 text-gray-300 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                    Next
+                </button>
+            </div>
+
             <Dialog open={openEditUser} onOpenChange={setOpenEditUser}>
                 <DialogContent className='dialog-overlay bg-gray-800 text-white'>
                     <DialogHeader>
@@ -305,7 +348,7 @@ const UsersTable = () => {
                                                         id='roleId'
                                                         value={editUser.roleId}
                                                         onChange={handleChange}
-                                                        className="w-full p-2 border border-gray-300 rounded-md bg-gray-800 text-sm"
+                                                        className='w-full p-2 border border-gray-300 rounded-md bg-gray-800 text-sm'
                                                     >
                                                         <option value='' disabled>Select User Role</option>
                                                         {userRolesData.map((user) => (

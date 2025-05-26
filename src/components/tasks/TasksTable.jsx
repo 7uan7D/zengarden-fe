@@ -41,6 +41,8 @@ const TasksTable = () => {
   const [openDeleteTask, setOpenDeleteTask] = useState(false)
   const [openStates, setOpenStates] = useState({})
   const [isLoading, setIsLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   useEffect(() => {
     if (taskData) {
@@ -134,9 +136,9 @@ const TasksTable = () => {
         const endDateUTC = editTask.endDate ? new Date(editTask.endDate).toISOString() : null;
 
         const taskToUpdate = {
-            ...editTask,
-            startDate: startDateUTC,
-            endDate: endDateUTC,
+          ...editTask,
+          startDate: startDateUTC,
+          endDate: endDateUTC,
         };
 
         await UpdateTaskById(selectedTaskId, taskToUpdate);
@@ -175,6 +177,29 @@ const TasksTable = () => {
         setIsLoading(false)
       }
     }
+  }
+
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentItems = filteredTasks.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredTasks.length / itemsPerPage)
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber)
+
+  const renderPageNumbers = () => {
+    const pageNumbers = []
+    for (let i = 1; i <= totalPages; i++) {
+      pageNumbers.push(
+        <button
+          key={i}
+          onClick={() => paginate(i)}
+          className={`mx-1 px-3 py-1 rounded-md ${currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-blue-500'}`}
+        >
+          {i}
+        </button>
+      )
+    }
+    return pageNumbers
   }
 
   return (
@@ -236,7 +261,7 @@ const TasksTable = () => {
           </thead>
 
           <tbody className='divide-y divide-gray-700'>
-            {filteredTasks.map((task) => (
+            {currentItems.map((task) => (
               <Popover key={task.taskId} open={openStates[task.taskId]}>
                 <PopoverTrigger asChild>
                   <div style={{ display: 'contents' }}>
@@ -271,45 +296,44 @@ const TasksTable = () => {
                       <td className='px-2 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    ${
-                                                      task.status === 0
-                                                        ? 'bg-gray-200 text-gray-800'
-                                                        : task.status === 1
-                                                        ? 'bg-blue-200 text-blue-800'
-                                                        : task.status === 2
-                                                        ? 'bg-yellow-200 text-yellow-800'
-                                                        : task.status === 3
-                                                        ? 'bg-green-200 text-green-800'
-                                                        : task.status === 4
-                                                        ? 'bg-pink-200 text-pink-800'
-                                                        : task.status === 5
-                                                        ? 'bg-purple-200 text-purple-800'
-                                                        : 'bg-red-200 text-red-800'
-                                                    }`}
+                            ${task.status === 0
+                              ? 'bg-gray-200 text-gray-800'
+                              : task.status === 1
+                                ? 'bg-blue-200 text-blue-800'
+                                : task.status === 2
+                                  ? 'bg-yellow-200 text-yellow-800'
+                                  : task.status === 3
+                                    ? 'bg-green-200 text-green-800'
+                                    : task.status === 4
+                                      ? 'bg-pink-200 text-pink-800'
+                                      : task.status === 5
+                                        ? 'bg-purple-200 text-purple-800'
+                                        : 'bg-red-200 text-red-800'
+                            }`}
                         >
                           {task.status === 0
                             ? 'Not Started'
                             : task.status === 1
-                            ? 'In Progress'
-                            : task.status === 2
-                            ? 'Paused'
-                            : task.status === 3
-                            ? 'Completed'
-                            : task.status === 4
-                            ? 'Failed'
-                            : task.status === 5
-                            ? 'Overdue'
-                            : 'Cancelled'}
+                              ? 'In Progress'
+                              : task.status === 2
+                                ? 'Paused'
+                                : task.status === 3
+                                  ? 'Completed'
+                                  : task.status === 4
+                                    ? 'Failed'
+                                    : task.status === 5
+                                      ? 'Overdue'
+                                      : 'Cancelled'}
                         </span>
                       </td>
                       <td className='px-5 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
                         {/* <button 
-                                                    className='text-indigo-400 hover:text-indigo-300 mr-2'
-                                                    onClick={() => handleClick(task.taskId)}
-                                                    onMouseLeave={() => handleMouseLeave(task.taskId)}
-                                                >
-                                                    <Eye size={18}/>
-                                                </button> */}
+                            className='text-indigo-400 hover:text-indigo-300 mr-2'
+                            onClick={() => handleClick(task.taskId)}
+                            onMouseLeave={() => handleMouseLeave(task.taskId)}
+                        >
+                            <Eye size={18}/>
+                        </button> */}
                         <button
                           onClick={() => handleEditClick(task.taskId)}
                           className='text-indigo-400 hover:text-indigo-300 mr-2 bg-transparent'
@@ -344,8 +368,8 @@ const TasksTable = () => {
                     {task.focusMethodName === ''
                       ? 'None'
                       : task.focusMethodName === null
-                      ? 'None'
-                      : task.focusMethodName}
+                        ? 'None'
+                        : task.focusMethodName}
                   </p>
                   <p className='text-gray-400 text-left text-sm'>
                     <p className='text-gray-200 text-sm font-bold mr-1'>
@@ -354,8 +378,8 @@ const TasksTable = () => {
                     {task.taskNote === ''
                       ? 'None'
                       : task.taskNote === null
-                      ? 'None'
-                      : task.taskNote}
+                        ? 'None'
+                        : task.taskNote}
                   </p>
                   <p className='text-gray-400 text-left text-sm overflow-hidden'>
                     <p className='text-gray-200 text-sm font-bold mr-1'>
@@ -364,8 +388,8 @@ const TasksTable = () => {
                     {task.taskResult === ''
                       ? 'None'
                       : task.taskResult === null
-                      ? 'None'
-                      : task.taskResult}
+                        ? 'None'
+                        : task.taskResult}
                   </p>
                   <p className='text-gray-400 text-left text-sm'>
                     <p className='text-gray-200 text-sm font-bold mr-1'>
@@ -398,6 +422,24 @@ const TasksTable = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className='flex justify-center items-center mt-6'>
+        <button
+          onClick={() => paginate(currentPage - 1)}
+          disabled={currentPage === 1}
+          className='mx-1 px-4 py-2 rounded-md bg-gray-700 text-gray-300 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+        >
+          Previous
+        </button>
+        {renderPageNumbers()}
+        <button
+          onClick={() => paginate(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className='mx-1 px-4 py-2 rounded-md bg-gray-700 text-gray-300 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+        >
+          Next
+        </button>
       </div>
 
       <Dialog open={openEditTask} onOpenChange={setOpenEditTask}>
