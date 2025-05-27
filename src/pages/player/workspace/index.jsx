@@ -29,7 +29,12 @@ import {
   CircleCheckBig,
   CircleX,
 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -244,7 +249,9 @@ const TreeInfo = ({ tree }) => {
               <div
                 className="h-full bg-green-500 rounded-full"
                 style={{
-                  width: `${(tree.experiencePoints / tree.maxExperiencePoints) * 100}%`,
+                  width: `${
+                    (tree.experiencePoints / tree.maxExperiencePoints) * 100
+                  }%`,
                 }}
               />
             </div>
@@ -530,25 +537,61 @@ const TaskList = ({
     setStep(step - 1);
   };
 
-  const handleDateChange = (field, date) => {
-    setTaskCreateData((prev) => ({
-      ...prev,
-      [field]: date
-        ? date.toISOString().split("T")[0] +
-          "T" +
-          (prev[field]?.split("T")[1] || "00:00:00.000Z")
-        : null,
-    }));
+  const SimpleDateTimePicker = ({
+    label,
+    value,
+    onDateChange,
+    onTimeChange,
+  }) => {
+    const dateStr = value ? new Date(value).toISOString().split("T")[0] : "";
+    const timeStr = value ? new Date(value).toTimeString().slice(0, 5) : "";
+
+    return (
+      <div className="flex flex-col gap-1">
+        <label className="font-semibold">{label}</label>
+        <input
+          type="date"
+          value={dateStr}
+          onChange={(e) => onDateChange(e.target.value)}
+          className="border px-2 py-1 rounded"
+        />
+        <input
+          type="time"
+          value={timeStr}
+          onChange={(e) => onTimeChange(e.target.value)}
+          className="border px-2 py-1 rounded"
+        />
+      </div>
+    );
   };
 
-  const handleTimeChange = (field, time) => {
-    if (!time) return;
-    setTaskCreateData((prev) => ({
-      ...prev,
-      [field]: prev[field]
-        ? prev[field].split("T")[0] + "T" + time
-        : new Date().toISOString().split("T")[0] + "T" + time,
-    }));
+  const handleDateChange = (field, dateStr) => {
+    const oldDate = taskCreateData[field]
+      ? new Date(taskCreateData[field])
+      : new Date();
+    const [year, month, day] = dateStr.split("-").map(Number);
+
+    const newDate = new Date(oldDate);
+    newDate.setFullYear(year);
+    newDate.setMonth(month - 1);
+    newDate.setDate(day);
+
+    setTaskCreateData((prev) => ({ ...prev, [field]: newDate }));
+  };
+
+  const handleTimeChange = (field, timeStr) => {
+    const oldDate = taskCreateData[field]
+      ? new Date(taskCreateData[field])
+      : new Date();
+    const [hours, minutes] = timeStr.split(":").map(Number);
+
+    const newDate = new Date(oldDate);
+    newDate.setHours(hours);
+    newDate.setMinutes(minutes);
+    newDate.setSeconds(0);
+    newDate.setMilliseconds(0);
+
+    setTaskCreateData((prev) => ({ ...prev, [field]: newDate }));
   };
 
   const handleCreateTask = async () => {
@@ -643,15 +686,13 @@ const TaskList = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56">
-                <DropdownMenuItem
-                  onClick={() => handleOpen("Simple Task", 2)}
-                >
-                  Simple Task <br/>(30-180 minutes)
+                <DropdownMenuItem onClick={() => handleOpen("Simple Task", 2)}>
+                  Simple Task <br />
+                  (30-180 minutes)
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleOpen("Complex Task", 3)}
-                >
-                  Complex Task <br/>(Above 180 minutes)
+                <DropdownMenuItem onClick={() => handleOpen("Complex Task", 3)}>
+                  Complex Task <br />
+                  (Above 180 minutes)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -669,13 +710,17 @@ const TaskList = ({
 
                   const remainingTime = task.remainingTime || 0;
                   const timer = timers[taskKey] || {};
-                  const { totalWorkCompleted = 0, totalBreakCompleted = 0 } = timer;
+                  const { totalWorkCompleted = 0, totalBreakCompleted = 0 } =
+                    timer;
 
                   const totalDurationSeconds = task.totalDuration * 60;
                   const remainTime = task.remainingTime;
                   const elapsedTime = totalDurationSeconds - remainTime;
-                  const cycleDuration = (task.workDuration + task.breakTime) * 60;
-                  const completedCycles = Math.floor(elapsedTime / cycleDuration);
+                  const cycleDuration =
+                    (task.workDuration + task.breakTime) * 60;
+                  const completedCycles = Math.floor(
+                    elapsedTime / cycleDuration
+                  );
                   const timeInCurrentCycle = elapsedTime % cycleDuration;
 
                   let isWorkPhase = true;
@@ -684,10 +729,12 @@ const TaskList = ({
 
                   if (timeInCurrentCycle < task.workDuration * 60) {
                     isWorkPhase = true;
-                    currentWorkTime = task.workDuration * 60 - timeInCurrentCycle;
+                    currentWorkTime =
+                      task.workDuration * 60 - timeInCurrentCycle;
                   } else {
                     isWorkPhase = false;
-                    const timeIntoBreak = timeInCurrentCycle - task.workDuration * 60;
+                    const timeIntoBreak =
+                      timeInCurrentCycle - task.workDuration * 60;
                     currentBreakTime = task.breakTime * 60 - timeIntoBreak;
                   }
 
@@ -695,13 +742,22 @@ const TaskList = ({
                   const workDurationSeconds = task.workDuration * 60;
                   const breakDurationSeconds = task.breakTime * 60;
                   for (let i = 0; i < completedCycles; i++) {
-                    phases.push({ type: "work", duration: workDurationSeconds });
-                    phases.push({ type: "break", duration: breakDurationSeconds });
+                    phases.push({
+                      type: "work",
+                      duration: workDurationSeconds,
+                    });
+                    phases.push({
+                      type: "break",
+                      duration: breakDurationSeconds,
+                    });
                   }
                   if (timeInCurrentCycle < workDurationSeconds) {
                     phases.push({ type: "work", duration: timeInCurrentCycle });
                   } else {
-                    phases.push({ type: "work", duration: workDurationSeconds });
+                    phases.push({
+                      type: "work",
+                      duration: workDurationSeconds,
+                    });
                     phases.push({
                       type: "break",
                       duration: timeInCurrentCycle - workDurationSeconds,
@@ -722,7 +778,9 @@ const TaskList = ({
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
                       <Card className="task-item relative mb-3 p-4">
-                        {["Simple", "Complex", "Challenge"].includes(task.taskTypeName) && (
+                        {["Simple", "Complex", "Challenge"].includes(
+                          task.taskTypeName
+                        ) && (
                           <div
                             className={`priority-label priority-${
                               task.priority <= 2
@@ -745,20 +803,26 @@ const TaskList = ({
                             </div>
                           </div>
 
-                          {(!focusedTask || focusedTask.taskId !== task.taskId) && (
+                          {(!focusedTask ||
+                            focusedTask.taskId !== task.taskId) && (
                             <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                               <div className="flex flex-col text-lg gap-4">
                                 <p className="text-left">
                                   <strong>Description:</strong>{" "}
-                                  {task.taskDescription || "No description provided"}
+                                  {task.taskDescription ||
+                                    "No description provided"}
                                 </p>
                                 <p className="text-left">
                                   <strong>Start Date:</strong>{" "}
-                                  {task.startDate ? formatDate(task.startDate) : "N/A"}
+                                  {task.startDate
+                                    ? formatDate(task.startDate)
+                                    : "N/A"}
                                 </p>
                                 <p className="text-left">
                                   <strong>End Date:</strong>{" "}
-                                  {task.endDate ? formatDate(task.endDate) : "N/A"}
+                                  {task.endDate
+                                    ? formatDate(task.endDate)
+                                    : "N/A"}
                                 </p>
                                 <p className="text-left">
                                   <strong>Focus Method:</strong>{" "}
@@ -771,10 +835,12 @@ const TaskList = ({
                                   {formatTime(remainingTime)}
                                 </p>
                                 <p className="text-left">
-                                  <strong>Tree:</strong> {task.userTreeName || "N/A"}
+                                  <strong>Tree:</strong>{" "}
+                                  {task.userTreeName || "N/A"}
                                 </p>
                                 <p className="text-left">
-                                  <strong>Task Type:</strong> {task.taskTypeName || "N/A"}
+                                  <strong>Task Type:</strong>{" "}
+                                  {task.taskTypeName || "N/A"}
                                 </p>
                                 <p className="text-left">
                                   <strong>Note:</strong>{" "}
@@ -784,10 +850,14 @@ const TaskList = ({
                             </div>
                           )}
 
-                          {(currentTaskStatus === 1 || currentTaskStatus === 2) && (
+                          {(currentTaskStatus === 1 ||
+                            currentTaskStatus === 2) && (
                             <div className="flex justify-center">
                               <div className="relative w-40 h-40">
-                                <svg className="w-full h-full" viewBox="0 0 100 100">
+                                <svg
+                                  className="w-full h-full"
+                                  viewBox="0 0 100 100"
+                                >
                                   <circle
                                     className="text-gray-200"
                                     strokeWidth="8"
@@ -800,8 +870,10 @@ const TaskList = ({
                                   {phases.map((phase, idx) => {
                                     const phaseDuration = phase.duration;
                                     const phasePercentage =
-                                      (phaseDuration / totalDurationSeconds) * 100;
-                                    const dashLength = (phasePercentage / 100) * circumference;
+                                      (phaseDuration / totalDurationSeconds) *
+                                      100;
+                                    const dashLength =
+                                      (phasePercentage / 100) * circumference;
                                     const dashOffset = cumulativeOffset;
                                     cumulativeOffset += dashLength;
 
@@ -832,7 +904,9 @@ const TaskList = ({
                                   </span>
                                   <span
                                     className={`text-sm ${
-                                      isWorkPhase ? "text-blue-500" : "text-yellow-500"
+                                      isWorkPhase
+                                        ? "text-blue-500"
+                                        : "text-yellow-500"
                                     } font-medium`}
                                   >
                                     {isWorkPhase ? "Work" : "Break"}
@@ -874,12 +948,14 @@ const TaskList = ({
                               </span>
                             ) : (
                               <>
-                                {!(remainingTime <= 0 && currentTaskStatus !== 0) && (
+                                {!(
+                                  remainingTime <= 0 && currentTaskStatus !== 0
+                                ) && (
                                   <Button
-                                    style={{ 
+                                    style={{
                                       width: "100px",
                                       height: "45px",
-                                     }}
+                                    }}
                                     onClick={() =>
                                       handleTaskAction(
                                         task,
@@ -1132,23 +1208,25 @@ const TaskList = ({
                     )}
                   </div>
                   <div className="flex flex-col gap-4">
-                    <DateTimePicker
+                    <SimpleDateTimePicker
                       label="Start Date"
-                      date={taskCreateData.startDate}
-                      onDateChange={(newDate) =>
-                        handleDateChange("startDate", newDate)
+                      value={taskCreateData.startDate}
+                      onDateChange={(dateStr) =>
+                        handleDateChange("startDate", dateStr)
                       }
-                      onTimeChange={(time) =>
-                        handleTimeChange("startDate", time)
+                      onTimeChange={(timeStr) =>
+                        handleTimeChange("startDate", timeStr)
                       }
                     />
-                    <DateTimePicker
+                    <SimpleDateTimePicker
                       label="End Date"
-                      date={taskCreateData.endDate}
-                      onDateChange={(newDate) =>
-                        handleDateChange("endDate", newDate)
+                      value={taskCreateData.endDate}
+                      onDateChange={(dateStr) =>
+                        handleDateChange("endDate", dateStr)
                       }
-                      onTimeChange={(time) => handleTimeChange("endDate", time)}
+                      onTimeChange={(timeStr) =>
+                        handleTimeChange("endDate", timeStr)
+                      }
                     />
                   </div>
                 </div>
@@ -1412,7 +1490,9 @@ export default function Workspace() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isPlaying, setIsPlaying] = useState(globalAudioState.isPlaying);
-  const [currentIndex, setCurrentIndex] = useState(globalAudioState.currentIndex);
+  const [currentIndex, setCurrentIndex] = useState(
+    globalAudioState.currentIndex
+  );
   const [activeTab, setActiveTab] = useState("Your Space");
   const [backgroundUrl, setBackgroundUrl] = useState("");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
@@ -1518,9 +1598,7 @@ export default function Workspace() {
         }));
 
         setTasks((prevTasks) =>
-          prevTasks.map((t, i) =>
-            i === index ? { ...t, status: 1 } : t
-          )
+          prevTasks.map((t, i) => (i === index ? { ...t, status: 1 } : t))
         );
 
         if (intervalRefs.current[taskKey]) {
@@ -1686,7 +1764,11 @@ export default function Workspace() {
     { name: "Watch Videos", icon: <Video size={24} /> },
     { name: "PDF Reader", icon: <BookOpen size={24} /> },
     { name: "Image Editor", icon: <Image size={24} /> },
-    { name: "Return to Homepage", icon: <House size={24} />, action: () => navigate("/home") },
+    {
+      name: "Return to Homepage",
+      icon: <House size={24} />,
+      action: () => navigate("/home"),
+    },
   ];
 
   return (
@@ -1704,7 +1786,9 @@ export default function Workspace() {
         transition={{ duration: 0.3 }}
       >
         <div className="flex items-center justify-between p-4">
-          {!isSidebarCollapsed && <h2 className="text-lg font-semibold text-green-700">Workspace</h2>}
+          {!isSidebarCollapsed && (
+            <h2 className="text-lg font-semibold text-green-700">Workspace</h2>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -1722,10 +1806,11 @@ export default function Workspace() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${activeTab === tab.name
+                    className={`flex items-center gap-3 p-3 rounded-lg text-left transition-colors ${
+                      activeTab === tab.name
                         ? "bg-green-600 text-white"
                         : "text-green-700 bg-gray-300 hover:bg-green-100"
-                      }`}
+                    }`}
                     onClick={() => {
                       if (tab.action) {
                         tab.action();
@@ -1735,7 +1820,11 @@ export default function Workspace() {
                     }}
                   >
                     {tab.icon}
-                    {!isSidebarCollapsed && <span className="text-sm font-medium tab_span">{tab.name}</span>}
+                    {!isSidebarCollapsed && (
+                      <span className="text-sm font-medium tab_span">
+                        {tab.name}
+                      </span>
+                    )}
                   </motion.button>
                 </TooltipTrigger>
                 {isSidebarCollapsed && (
@@ -1781,25 +1870,28 @@ export default function Workspace() {
                 />
               </div>
               <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="absolute bottom-8 w-[91.5%] mx-auto"
-          >
-            <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
-              <CardContent className="p-1">
-                <FullMusicPlayer
-                  setPlaying={setIsPlaying}
-                  setCurrentIndex={setCurrentIndex}
-                  onBackgroundChange={handleBackgroundChange}
-                />
-              </CardContent>
-            </Card>
-          </motion.div>
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="absolute bottom-8 w-[91.5%] mx-auto"
+              >
+                <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
+                  <CardContent className="p-1">
+                    <FullMusicPlayer
+                      setPlaying={setIsPlaying}
+                      setCurrentIndex={setCurrentIndex}
+                      onBackgroundChange={handleBackgroundChange}
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
           )}
 
-          <Dialog open={isFinishDialogOpen} onOpenChange={setIsFinishDialogOpen}>
+          <Dialog
+            open={isFinishDialogOpen}
+            onOpenChange={setIsFinishDialogOpen}
+          >
             <DialogContent className="max-w-lg bg-white rounded-2xl shadow-2xl p-6 space-y-6">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bold text-gray-800">
@@ -1848,7 +1940,11 @@ export default function Workspace() {
                   }`}
                   onClick={() => {
                     if (taskFile) {
-                      handleTaskAction(selectedTask.task, selectedTask.index, "finish");
+                      handleTaskAction(
+                        selectedTask.task,
+                        selectedTask.index,
+                        "finish"
+                      );
                     }
                   }}
                   disabled={!taskFile}
