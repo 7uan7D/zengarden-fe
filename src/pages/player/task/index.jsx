@@ -1780,7 +1780,7 @@ export default function TaskPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
-                          Start Date
+                          End Date
                         </label>
                         <div className="mt-1 rounded-md border p-2 bg-gray-50">
                           {new Date(

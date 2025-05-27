@@ -111,18 +111,18 @@ function AnimatedRoutes() {
                   <Route
                     path="/tree"
                     element={
-                      <ProtectedRoute roleRequired="Player">
+                      //<ProtectedRoute roleRequired="Player">
                         <Tree />
-                      </ProtectedRoute>
+                      //</ProtectedRoute>
                     }
                   />
 
                   <Route
                     path="/workspace"
                     element={
-                      <ProtectedRoute roleRequired="Player">
+                      //<ProtectedRoute roleRequired="Player">
                         <Workspace />
-                      </ProtectedRoute>
+                      //</ProtectedRoute>
                     }
                   />
 
@@ -147,9 +147,9 @@ function AnimatedRoutes() {
                   <Route
                     path="/task"
                     element={
-                      <ProtectedRoute roleRequired="Player">
+                      //<ProtectedRoute roleRequired="Player">
                         <TaskPage />
-                      </ProtectedRoute>
+                      //</ProtectedRoute>
                     }
                   />
 
