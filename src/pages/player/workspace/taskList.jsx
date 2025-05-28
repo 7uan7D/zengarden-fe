@@ -329,14 +329,6 @@ const TaskList = ({
   };
 
   const isNextDisabled = () => {
-    console.log("step:", step);
-    console.log("taskCreateData:", taskCreateData);
-    console.log("Errors:", {
-      durationError,
-      workDurationError,
-      breakTimeError,
-    });
-
     if (step === 1) {
       const disabled =
         !taskCreateData.taskName ||
@@ -346,7 +338,6 @@ const TaskList = ({
         !taskCreateData.startDate ||
         !taskCreateData.endDate ||
         !taskCreateData.userTreeId;
-      console.log("Step 1 disabled:", disabled);
       return disabled;
     } else if (step === 2) {
       const disabled =
@@ -354,7 +345,6 @@ const TaskList = ({
         !taskCreateData.breakTime ||
         workDurationError ||
         breakTimeError;
-      console.log("Step 2 disabled:", disabled);
       return disabled;
     }
     return false;
