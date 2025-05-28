@@ -71,9 +71,11 @@ import { TimePicker } from "antd";
 import moment from "moment";
 import { SuggestTaskFocusMethods } from "@/services/apiServices/focusMethodsService";
 import { CreateTask } from "@/services/apiServices/taskService";
-import { h } from "@fullcalendar/core/preact.js";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
-// Dữ liệu cứng cho thông tin cây
+// Sample tree data
 const sampleTree = {
   treeName: "Oak Tree",
   treeLevel: 5,
@@ -82,7 +84,7 @@ const sampleTree = {
   treeImage: "/images/lv5.png",
 };
 
-// Dữ liệu cứng cho danh sách task
+// Sample tasks data
 const sampleTasks = [
   {
     taskId: 1,
@@ -99,67 +101,102 @@ const sampleTasks = [
     taskTypeName: "Simple",
     taskNote: "Focus on useState and useEffect",
     taskResult: null,
-    remainingTime: 60 * 60,
+    remainingTime: 2 * 60,
     priority: 1,
   },
   {
-    taskId: "2",
+    taskId: 2,
     taskName: "Review Codebase",
-    taskTypeName: "Simple",
-    status: 1,
-    priority: 2,
-    remainingTime: 2400,
+    taskDescription: "Analyze and review project codebase for improvements",
+    startDate: "2025-05-21T10:00:00.000Z",
+    endDate: "2025-05-21T12:00:00.000Z",
+    status: 0,
+    focusMethodName: "Pomodoro",
     totalDuration: 60,
     workDuration: 20,
     breakTime: 5,
-  },
-  {
-    taskId: "3",
-    taskName: "Write Documentation",
-    taskTypeName: "Complex",
-    status: 2,
-    priority: 3,
-    remainingTime: 1800,
-    totalDuration: 60,
-    workDuration: 25,
-    breakTime: 5,
-  },
-  {
-    taskId: "4",
-    taskName: "Test API Endpoints",
-    taskTypeName: "Challenge",
-    status: 3,
-    priority: 4,
-    remainingTime: 0,
-    totalDuration: 60,
-    workDuration: 25,
-    breakTime: 5,
-  },
-  {
-    taskId: "5",
-    taskName: "Fix UI Bugs",
+    userTreeName: "Oak Tree",
     taskTypeName: "Simple",
-    status: 4,
-    priority: 5,
-    remainingTime: 0,
-    totalDuration: 60,
-    workDuration: 25,
-    breakTime: 5,
+    taskNote: "Check for code optimization opportunities",
+    taskResult: null,
+    remainingTime: 1 * 60,
+    priority: 2,
   },
   {
-    taskId: "6",
-    taskName: "Plan Sprint",
-    taskTypeName: "Challenge",
-    status: 5,
-    priority: 6,
-    remainingTime: 0,
+    taskId: 3,
+    taskName: "Write Documentation",
+    taskDescription: "Document API endpoints and usage",
+    startDate: "2025-05-22T08:30:00.000Z",
+    endDate: "2025-05-22T11:30:00.000Z",
+    status: 0,
+    focusMethodName: "Pomodoro",
     totalDuration: 60,
     workDuration: 25,
     breakTime: 5,
+    userTreeName: "Oak Tree",
+    taskTypeName: "Complex",
+    taskNote: "Include examples for each endpoint",
+    taskResult: null,
+    remainingTime: 3600,
+    priority: 3,
+  },
+  {
+    taskId: 4,
+    taskName: "Test API Endpoints",
+    taskDescription: "Perform integration tests on API endpoints",
+    startDate: "2025-05-23T09:00:00.000Z",
+    endDate: "2025-05-23T11:00:00.000Z",
+    status: 3,
+    focusMethodName: "Pomodoro",
+    totalDuration: 60,
+    workDuration: 25,
+    breakTime: 5,
+    userTreeName: "Oak Tree",
+    taskTypeName: "Challenge",
+    taskNote: "Ensure all endpoints return correct status codes",
+    taskResult: null,
+    remainingTime: 0,
+    priority: 4,
+  },
+  {
+    taskId: 5,
+    taskName: "Fix UI Bugs",
+    taskDescription: "Resolve UI alignment and responsiveness issues",
+    startDate: "2025-05-24T14:00:00.000Z",
+    endDate: "2025-05-24T16:00:00.000Z",
+    status: 4,
+    focusMethodName: "Pomodoro",
+    totalDuration: 60,
+    workDuration: 25,
+    breakTime: 5,
+    userTreeName: "Oak Tree",
+    taskTypeName: "Simple",
+    taskNote: "Focus on mobile responsiveness",
+    taskResult: null,
+    remainingTime: 0,
+    priority: 5,
+  },
+  {
+    taskId: 6,
+    taskName: "Plan Sprint",
+    taskDescription: "Prepare tasks and goals for the next sprint",
+    startDate: "2025-05-25T11:00:00.000Z",
+    endDate: "2025-05-25T13:00:00.000Z",
+    status: 3,
+    focusMethodName: "Pomodoro",
+    totalDuration: 60,
+    workDuration: 25,
+    breakTime: 5,
+    userTreeName: "Oak Tree",
+    taskTypeName: "Challenge",
+    taskNote: "Coordinate with team for task prioritization",
+    taskResult: null,
+    remainingTime: 0,
+    priority: 6,
   },
 ];
 
-// Component con để chọn ngày và giờ cho task
+// DateTimePicker Component
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const selectedDate = date ? new Date(date) : undefined;
@@ -223,7 +260,7 @@ const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
   );
 };
 
-// Component hiển thị thông tin cây
+// TreeInfo Component
 const TreeInfo = ({ tree }) => {
   return (
     <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg h-[493px]">
@@ -262,7 +299,7 @@ const TreeInfo = ({ tree }) => {
   );
 };
 
-// Component hiển thị danh sách task
+// TaskList Component
 const TaskList = ({
   tasks,
   setTasks,
@@ -335,15 +372,23 @@ const TaskList = ({
     });
   };
 
-  // Filter tasks based on active tab
-  const filteredTasks = tasks.filter((task) => {
-    if (activeTab === "Simple & Complex") {
-      return task.taskTypeName === "Simple" || task.taskTypeName === "Complex";
-    } else if (activeTab === "Challenge") {
-      return task.taskTypeName === "Challenge";
-    }
-    return false;
-  });
+  // Filter and sort tasks to prioritize status 1
+  const filteredTasks = tasks
+    .filter((task) => {
+      if (activeTab === "Simple & Complex") {
+        return (
+          task.taskTypeName === "Simple" || task.taskTypeName === "Complex"
+        );
+      } else if (activeTab === "Challenge") {
+        return task.taskTypeName === "Challenge";
+      }
+      return false;
+    })
+    .sort((a, b) => {
+      if (a.status === 1) return -1;
+      if (b.status === 1) return 1;
+      return a.priority - b.priority;
+    });
 
   // Create Task Logic
   const simpleDurations = [30, 60, 90, 120, 150, 180];
@@ -599,7 +644,7 @@ const TaskList = ({
       setIsCreatingTask(true);
       const response = await CreateTask(taskCreateData);
       const newTask = {
-        taskId: response.taskId || `temp-${Date.now()}`, // Fallback ID if API doesn't return one
+        taskId: response.taskId || `temp-${Date.now()}`,
         taskName: taskCreateData.taskName,
         taskDescription: taskCreateData.taskDescription,
         startDate: taskCreateData.startDate,
@@ -645,6 +690,34 @@ const TaskList = ({
     } finally {
       setIsCreatingTask(false);
     }
+  };
+
+  // Carousel settings
+  const sliderSettings = {
+    dots: true,
+    infinite: focusedTask ? false : filteredTasks.length > 3,
+    speed: 500,
+    slidesToShow: focusedTask ? 1 : Math.min(filteredTasks.length, 1),
+    slidesToScroll: 1,
+    arrows: true,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 1,
+          infinite: filteredTasks.length > 2,
+        },
+      },
+      {
+        breakpoint: 600,
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+          infinite: filteredTasks.length > 1,
+        },
+      },
+    ],
   };
 
   return (
@@ -697,13 +770,13 @@ const TaskList = ({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="task-column-container">
-            <div className="max-h-[390px] overflow-y-auto pr-2">
-              {filteredTasks.length === 0 ? (
-                <p className="text-gray-500">No tasks available</p>
-              ) : (
-                filteredTasks.map((task, index) => {
-                  const taskKey = `simple-${index}`;
+          <div className="task-column-container" style={{ maxHeight: "410px" }}>
+            {filteredTasks.length === 0 ? (
+              <p className="text-gray-500">No tasks available</p>
+            ) : (
+              <Slider {...sliderSettings}>
+                {filteredTasks.map((task, index) => {
+                  const taskKey = `task-${task.taskId}`; // Use taskId instead of index
                   if (focusedTask && focusedTask.taskId !== task.taskId) {
                     return null;
                   }
@@ -793,7 +866,7 @@ const TaskList = ({
                             {getPriorityLabel(task.priority || 1)}
                           </div>
                         )}
-                        <div className="w-full h-[360px] flex flex-col gap-4">
+                        <div className="w-full h-full flex flex-col gap-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <ClipboardList className="w-5 h-5 text-green-600" />
@@ -803,8 +876,8 @@ const TaskList = ({
                             </div>
                           </div>
 
-                          {(!focusedTask ||
-                            focusedTask.taskId !== task.taskId) && (
+                          {currentTaskStatus ===
+                            0 /* chỗ này hiển thị task detail*/ && (
                             <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                               <div className="flex flex-col text-lg gap-4">
                                 <p className="text-left">
@@ -938,48 +1011,111 @@ const TaskList = ({
                                 <CircleX className="w-4 h-4" />
                                 Expired
                               </span>
-                            ) : task.status === 5 ? (
-                              <span
-                                className="flex items-center gap-1 text-sm"
-                                style={{ color: "#ef4444" }}
-                              >
-                                <CircleX className="w-4 h-4" />
-                                Canceled
-                              </span>
+                            ) : task.status === 0 ? (
+                              <>
+                                <Button
+                                  style={{
+                                    width: "100px",
+                                    height: "45px",
+                                  }}
+                                  onClick={() =>
+                                    handleTaskAction(task, index, "start")
+                                  }
+                                  className="bg-green-500 hover:bg-green-600"
+                                  disabled={
+                                    (activeTaskKey !== null &&
+                                      activeTaskKey !== taskKey) ||
+                                    loadingTaskKey === taskKey
+                                  }
+                                >
+                                  {loadingTaskKey === taskKey ? (
+                                    <svg
+                                      className="animate-spin h-5 w-5 text-white mx-auto"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                      />
+                                      <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                      />
+                                    </svg>
+                                  ) : (
+                                    "Start"
+                                  )}
+                                </Button>
+                              </>
                             ) : (
                               <>
-                                {!(
-                                  remainingTime <= 0 && currentTaskStatus !== 0
-                                ) && (
+                                <Button
+                                  style={{
+                                    width: "100px",
+                                    height: "45px",
+                                  }}
+                                  onClick={() =>
+                                    handleTaskAction(
+                                      task,
+                                      index,
+                                      currentTaskStatus === 1
+                                        ? "pause"
+                                        : "resume"
+                                    )
+                                  }
+                                  className={
+                                    currentTaskStatus === 1
+                                      ? "bg-yellow-500 hover:bg-yellow-600"
+                                      : "bg-blue-500 hover:bg-blue-600"
+                                  }
+                                  disabled={loadingTaskKey === taskKey}
+                                >
+                                  {loadingTaskKey === taskKey ? (
+                                    <svg
+                                      className="animate-spin h-5 w-5 text-white mx-auto"
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <circle
+                                        className="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="10"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                      />
+                                      <path
+                                        className="opacity-75"
+                                        fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                      />
+                                    </svg>
+                                  ) : currentTaskStatus === 1 ? (
+                                    "Pause"
+                                  ) : (
+                                    "Resume"
+                                  )}
+                                </Button>
+                                {remainingTime <= 120 && remainingTime >= 0 && (
                                   <Button
                                     style={{
                                       width: "100px",
                                       height: "45px",
                                     }}
-                                    onClick={() =>
-                                      handleTaskAction(
-                                        task,
-                                        index,
-                                        currentTaskStatus === 0
-                                          ? "start"
-                                          : currentTaskStatus === 1
-                                          ? "pause"
-                                          : "resume"
-                                      )
-                                    }
-                                    className={
-                                      currentTaskStatus === 1
-                                        ? "bg-yellow-500 hover:bg-yellow-600"
-                                        : currentTaskStatus === 2
-                                        ? "bg-blue-500 hover:bg-blue-600"
-                                        : "bg-green-500 hover:bg-green-600"
-                                    }
-                                    disabled={
-                                      (currentTaskStatus === 0 &&
-                                        activeTaskKey !== null &&
-                                        activeTaskKey !== taskKey) ||
-                                      loadingTaskKey === taskKey
-                                    }
+                                    onClick={() => {
+                                      setSelectedTask({ task, index });
+                                      setIsFinishDialogOpen(true);
+                                    }}
+                                    className="bg-orange-500 hover:bg-orange-600"
+                                    disabled={loadingTaskKey === taskKey}
                                   >
                                     {loadingTaskKey === taskKey ? (
                                       <svg
@@ -1002,52 +1138,11 @@ const TaskList = ({
                                           d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                                         />
                                       </svg>
-                                    ) : currentTaskStatus === 0 ? (
-                                      "Start"
-                                    ) : currentTaskStatus === 1 ? (
-                                      "Pause"
                                     ) : (
-                                      "Resume"
+                                      "Finish"
                                     )}
                                   </Button>
                                 )}
-                                {remainingTime <= 120 &&
-                                  remainingTime >= 0 &&
-                                  currentTaskStatus !== 0 && (
-                                    <Button
-                                      onClick={() => {
-                                        setSelectedTask({ task, index });
-                                        setIsFinishDialogOpen(true);
-                                      }}
-                                      className="bg-orange-500 hover:bg-orange-600"
-                                      disabled={loadingTaskKey === taskKey}
-                                    >
-                                      {loadingTaskKey === taskKey ? (
-                                        <svg
-                                          className="animate-spin h-5 w-5 text-white mx-auto"
-                                          xmlns="http://www.w3.org/2000/svg"
-                                          fill="none"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <circle
-                                            className="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            strokeWidth="4"
-                                          />
-                                          <path
-                                            className="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                          />
-                                        </svg>
-                                      ) : (
-                                        "Finish"
-                                      )}
-                                    </Button>
-                                  )}
                               </>
                             )}
                           </div>
@@ -1055,9 +1150,9 @@ const TaskList = ({
                       </Card>
                     </motion.div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </Slider>
+            )}
           </div>
 
           {/* Create Task Dialog */}
@@ -1516,10 +1611,142 @@ export default function Workspace() {
   }, [globalAudioState.currentIndex]);
 
   useEffect(() => {
+    // Restore active task from localStorage on page load
+    const savedTask = localStorage.getItem("currentTask");
+    if (savedTask) {
+      const { taskId, index, taskKey, status, remainingTime } =
+        JSON.parse(savedTask);
+      const task = tasks.find((t) => t.taskId === taskId);
+      if (task && index !== undefined && status === 1) {
+        setActiveTaskKey(taskKey);
+        setFocusedTask(task);
+        setTasks((prevTasks) =>
+          prevTasks.map((t, i) =>
+            i === index ? { ...t, status: 1, remainingTime } : t
+          )
+        );
+        setTimers((prev) => ({
+          ...prev,
+          [taskKey]: {
+            isWorkPhase: true,
+            currentWorkTime: task.workDuration * 60,
+            currentBreakTime: task.breakTime * 60,
+            remainingTime: remainingTime,
+            isRunning: true,
+            totalWorkCompleted: 0,
+            totalBreakCompleted: 0,
+          },
+        }));
+
+        // Resume timer
+        intervalRefs.current[taskKey] = setInterval(() => {
+          setTimers((prev) => {
+            const timer = prev[taskKey];
+            if (!timer || !timer.isRunning) return prev;
+
+            let {
+              isWorkPhase,
+              currentWorkTime,
+              currentBreakTime,
+              remainingTime,
+              totalWorkCompleted,
+              totalBreakCompleted,
+            } = timer;
+
+            if (remainingTime > 0) {
+              if (isWorkPhase) {
+                currentWorkTime -= 1;
+                remainingTime -= 1;
+                if (currentWorkTime <= 0) {
+                  totalWorkCompleted += task.workDuration * 60;
+                  isWorkPhase = false;
+                  currentWorkTime = task.workDuration * 60;
+                  currentBreakTime = task.breakTime * 60;
+                }
+              } else {
+                currentBreakTime -= 1;
+                remainingTime -= 1;
+                if (currentBreakTime <= 0) {
+                  totalBreakCompleted += task.breakTime * 60;
+                  isWorkPhase = true;
+                  currentWorkTime = task.workDuration * 60;
+                  currentBreakTime = task.breakTime * 60;
+                }
+              }
+            } else {
+              clearInterval(intervalRefs.current[taskKey]);
+              setTasks((prevTasks) =>
+                prevTasks.map((t, i) =>
+                  i === index ? { ...t, status: 4, remainingTime: 0 } : t
+                )
+              );
+              setActiveTaskKey(null);
+              setFocusedTask(null);
+              localStorage.removeItem("currentTask");
+              return {
+                ...prev,
+                [taskKey]: { ...timer, isRunning: false },
+              };
+            }
+
+            setTasks((prevTasks) =>
+              prevTasks.map((t, i) =>
+                i === index ? { ...t, status: 1, remainingTime } : t
+              )
+            );
+
+            localStorage.setItem(
+              "currentTask",
+              JSON.stringify({
+                taskId: task.taskId,
+                taskName: task.taskName,
+                remainingTime,
+                status: 1,
+                index,
+                taskKey,
+              })
+            );
+
+            return {
+              ...prev,
+              [taskKey]: {
+                ...timer,
+                isWorkPhase,
+                currentWorkTime,
+                currentBreakTime,
+                remainingTime,
+                totalWorkCompleted,
+                totalBreakCompleted,
+              },
+            };
+          });
+        }, 1000);
+      } else if (task && status === 2) {
+        setTimers((prev) => ({
+          ...prev,
+          [taskKey]: {
+            isWorkPhase: true,
+            currentWorkTime: task.workDuration * 60,
+            currentBreakTime: task.breakTime * 60,
+            remainingTime: remainingTime,
+            isRunning: false,
+            totalWorkCompleted: 0,
+            totalBreakCompleted: 0,
+          },
+        }));
+        setTasks((prevTasks) =>
+          prevTasks.map((t, i) =>
+            i === index ? { ...t, status: 2, remainingTime } : t
+          )
+        );
+      }
+    }
+
+    // Initialize timers for tasks with status 1 or 2
     const newTimers = {};
     sampleTasks.forEach((task, index) => {
-      const taskKey = `simple-${index}`;
-      if (task.status === 1) {
+      const taskKey = `task-${task.taskId}`; // Use taskId instead of index
+      if (task.status === 1 && !savedTask) {
         newTimers[taskKey] = {
           isWorkPhase: true,
           currentWorkTime: task.workDuration * 60,
@@ -1542,6 +1769,13 @@ export default function Workspace() {
       }
     });
     setTimers(newTimers);
+
+    // Cleanup intervals on unmount
+    return () => {
+      Object.values(intervalRefs.current).forEach((intervalId) =>
+        clearInterval(intervalId)
+      );
+    };
   }, []);
 
   const handleBackgroundChange = (url) => {
@@ -1577,11 +1811,12 @@ export default function Workspace() {
   };
 
   const handleTaskAction = (task, index, action) => {
-    const taskKey = `simple-${index}`;
+    const taskKey = `task-${task.taskId}`; // Use taskId instead of index
     try {
       setLoadingTaskKey(taskKey);
 
       if (action === "start" || action === "resume") {
+        console.log("Starting task:", task.taskId, "taskKey:", taskKey);
         setActiveTaskKey(taskKey);
         setFocusedTask(task);
         setTimers((prev) => ({
@@ -1591,7 +1826,7 @@ export default function Workspace() {
             currentWorkTime: task.workDuration * 60,
             currentBreakTime: task.breakTime * 60,
             remainingTime: task.remainingTime,
-            isRunning: true,
+            isRunning: action === "start" || action === "resume",
             totalWorkCompleted: 0,
             totalBreakCompleted: 0,
           },
@@ -1648,6 +1883,7 @@ export default function Workspace() {
               );
               setActiveTaskKey(null);
               setFocusedTask(null);
+              localStorage.removeItem("currentTask");
               return {
                 ...prev,
                 [taskKey]: { ...timer, isRunning: false },
@@ -1658,6 +1894,18 @@ export default function Workspace() {
               prevTasks.map((t, i) =>
                 i === index ? { ...t, status: 1, remainingTime } : t
               )
+            );
+
+            localStorage.setItem(
+              "currentTask",
+              JSON.stringify({
+                taskId: task.taskId,
+                taskName: task.taskName,
+                remainingTime,
+                status: 1,
+                index,
+                taskKey,
+              })
             );
 
             return {
@@ -1687,28 +1935,37 @@ export default function Workspace() {
           })
         );
       } else if (action === "pause") {
+        console.log("Pausing task:", task.taskId, "taskKey:", taskKey);
+        console.log("Current timer:", timers[taskKey]);
+        console.log("Interval ref:", intervalRefs.current[taskKey]);
         const currentTimer = timers[taskKey];
 
-        setTimers((prev) => ({
-          ...prev,
-          [taskKey]: { ...prev[taskKey], isRunning: false },
-        }));
+        setTimers((prev) => {
+          console.log("Updating timers for pause:", prev);
+          return {
+            ...prev,
+            [taskKey]: { ...prev[taskKey], isRunning: false },
+          };
+        });
 
-        setTasks((prevTasks) =>
-          prevTasks.map((t, i) =>
-            i === index
+        setTasks((prevTasks) => {
+          const updatedTasks = prevTasks.map((t) =>
+            t.taskId === task.taskId
               ? {
                   ...t,
                   status: 2,
                   remainingTime: Math.round(currentTimer?.remainingTime || 0),
                 }
               : t
-          )
-        );
+          );
+          console.log("Updated tasks after pause:", updatedTasks);
+          return updatedTasks;
+        });
 
         if (intervalRefs.current[taskKey]) {
           clearInterval(intervalRefs.current[taskKey]);
           delete intervalRefs.current[taskKey];
+          console.log("Interval cleared for taskKey:", taskKey);
         }
 
         localStorage.setItem(
