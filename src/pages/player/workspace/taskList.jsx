@@ -43,7 +43,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { ClipboardList, CircleCheckBig, CircleX } from "lucide-react";
 import { useTreeExperience } from "@/context/TreeExperienceContext";
-import "./TaskList.css"; // Import custom CSS
+import "./taskList.css"; // Import custom CSS
 
 // DateTimePicker Component
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
