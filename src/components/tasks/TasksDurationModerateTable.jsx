@@ -40,6 +40,8 @@ const TasksDurationModerateTable = () => {
     const [selectedTaskId, setSelectedTaskId] = useState(null)
     const [openStates, setOpenStates] = useState({})
     const [isLoading, setIsLoading] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 10
 
     useEffect(() => {
         if (taskData) {
@@ -119,6 +121,29 @@ const TasksDurationModerateTable = () => {
             }
         }
     }
+
+    const indexOfLastItem = currentPage * itemsPerPage
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage
+    const currentItems = filteredTasks.slice(indexOfFirstItem, indexOfLastItem)
+    const totalPages = Math.ceil(filteredTasks.length / itemsPerPage)
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber)
+
+    const renderPageNumbers = () => {
+        const pageNumbers = []
+        for (let i = 1; i <= totalPages; i++) {
+            pageNumbers.push(
+                <button
+                    key={i}
+                    onClick={() => paginate(i)}
+                    className={`mx-1 px-3 py-1 rounded-md ${currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-blue-500'}`}
+                >
+                    {i}
+                </button>
+            )
+        }
+        return pageNumbers
+    }
     
     return (
         <motion.div
@@ -179,7 +204,7 @@ const TasksDurationModerateTable = () => {
                     </thead>
 
                     <tbody className='divide-y divide-gray-700'>
-                        {filteredTasks.map((task) => (
+                        {currentItems.map((task) => (
                             <Popover key={task.taskId} open={openStates[task.taskId]}>
                                 <PopoverTrigger asChild>
                                     <div style={{ display: 'contents' }}>
@@ -327,6 +352,24 @@ const TasksDurationModerateTable = () => {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            <div className='flex justify-center items-center mt-6'>
+                <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className='mx-1 px-4 py-2 rounded-md bg-gray-700 text-gray-300 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                    Previous
+                </button>
+                {renderPageNumbers()}
+                <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className='mx-1 px-4 py-2 rounded-md bg-gray-700 text-gray-300 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                    Next
+                </button>
             </div>
 
             <Dialog open={openEditTaskDuration} onOpenChange={setOpenEditTaskDuration}>
