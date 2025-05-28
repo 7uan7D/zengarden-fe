@@ -124,10 +124,11 @@ const TaskList = ({
   const [activeTab, setActiveTab] = useState("Simple & Complex");
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [taskType, setTaskType] = useState("");
+  const userTreeId = localStorage.getItem("selectedTreeId");
   const [taskCreateData, setTaskCreateData] = useState({
     focusMethodId: null,
     taskTypeId: null,
-    userTreeId: null,
+    userTreeId: userTreeId || null,
     taskName: "",
     taskDescription: "",
     totalDuration: "",
@@ -328,23 +329,33 @@ const TaskList = ({
   };
 
   const isNextDisabled = () => {
+    console.log("step:", step);
+    console.log("taskCreateData:", taskCreateData);
+    console.log("Errors:", {
+      durationError,
+      workDurationError,
+      breakTimeError,
+    });
+
     if (step === 1) {
-      return (
+      const disabled =
         !taskCreateData.taskName ||
         !taskCreateData.taskDescription ||
         !taskCreateData.totalDuration ||
         durationError ||
         !taskCreateData.startDate ||
         !taskCreateData.endDate ||
-        !taskCreateData.userTreeId
-      );
+        !taskCreateData.userTreeId;
+      console.log("Step 1 disabled:", disabled);
+      return disabled;
     } else if (step === 2) {
-      return (
+      const disabled =
         !taskCreateData.workDuration ||
         !taskCreateData.breakTime ||
         workDurationError ||
-        breakTimeError
-      );
+        breakTimeError;
+      console.log("Step 2 disabled:", disabled);
+      return disabled;
     }
     return false;
   };
@@ -354,7 +365,7 @@ const TaskList = ({
     setTaskCreateData({
       focusMethodId: null,
       taskTypeId: taskTypeId,
-      userTreeId: currentTree || null,
+      userTreeId: userTreeId || null,
       taskName: "",
       taskDescription: "",
       totalDuration: "",
@@ -414,18 +425,18 @@ const TaskList = ({
 
     return (
       <div className="flex flex-col gap-1">
-        <label className="font-semibold text-sm">{label}</label>
+        <label className="font-semibold">{label}</label>
         <input
           type="date"
           value={dateStr}
           onChange={(e) => onDateChange(e.target.value)}
-          className="border px-2 py-1 rounded bg-white text-black"
+          className="border px-2 py-1 rounded"
         />
         <input
           type="time"
           value={timeStr}
           onChange={(e) => onTimeChange(e.target.value)}
-          className="border px-2 py-1 rounded bg-white text-black"
+          className="border px-2 py-1 rounded"
         />
       </div>
     );
@@ -469,7 +480,7 @@ const TaskList = ({
       setTaskCreateData({
         focusMethodId: null,
         taskTypeId: null,
-        userTreeId: selectedTree?.userTreeId || null,
+        userTreeId: userTreeId || null,
         taskName: "",
         taskDescription: "",
         totalDuration: "",
