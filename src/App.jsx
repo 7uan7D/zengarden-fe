@@ -43,6 +43,8 @@ import DataRefreshModerate from "./pages/DataRefreshModerate";
 import parseJwt from "./services/parseJwt";
 import { Navigate } from "react-router-dom";
 import TasksDurationModerate from "./pages/TasksDurationModerate";
+import Success from "./pages/player/payment/success";
+import Fail from "./pages/player/payment/fail";
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -112,7 +114,7 @@ function AnimatedRoutes() {
                     path="/tree"
                     element={
                       //<ProtectedRoute roleRequired="Player">
-                        <Tree />
+                      <Tree />
                       //</ProtectedRoute>
                     }
                   />
@@ -121,7 +123,7 @@ function AnimatedRoutes() {
                     path="/workspace"
                     element={
                       //<ProtectedRoute roleRequired="Player">
-                        <Workspace />
+                      <Workspace />
                       //</ProtectedRoute>
                     }
                   />
@@ -148,7 +150,7 @@ function AnimatedRoutes() {
                     path="/task"
                     element={
                       //<ProtectedRoute roleRequired="Player">
-                        <TaskPage />
+                      <TaskPage />
                       //</ProtectedRoute>
                     }
                   />
@@ -176,6 +178,8 @@ function AnimatedRoutes() {
                     element={<ChallengeDetails />}
                   />
                   <Route path="/policy" element={<Policy />} />
+                  <Route path="/payment/success" element={<Success />} />
+                  <Route path="/payment/fail" element={<Fail />} />
                 </Routes>
               </motion.div>
             </AnimatePresence>
@@ -298,7 +302,7 @@ function AdminLayout() {
           path="/settings"
           element={
             // <ProtectedRoute roleRequired="Admin">
-              <Settings />
+            <Settings />
             // </ProtectedRoute>
           }
         />
