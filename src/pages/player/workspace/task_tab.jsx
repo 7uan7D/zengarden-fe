@@ -1,201 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import { Circle, CircleCheckBig, CircleX } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import "../task/index.css";
+import { GetAllTasks } from "@/services/apiServices/taskService";
+import { GetTaskByUserId } from "@/services/apiServices/taskService";
+import { UpdateTaskById2 } from "@/services/apiServices/taskService";
+import { DeleteTaskById } from "@/services/apiServices/taskService";
+import parseJwt from "@/services/parseJwt";
 
-// Dữ liệu cứng cho 3 cột task
-const sampleTasks = {
-  simple: [
-    {
-      taskId: 1,
-      taskName: "Learn React Basics",
-      taskDescription: "Study React hooks and components",
-      startDate: "2025-05-20T09:00:00.000Z",
-      endDate: "2025-05-20T12:00:00.000Z",
-      status: 0, // Not Started
-      focusMethodName: "Pomodoro",
-      totalDuration: 60,
-      workDuration: 25,
-      breakTime: 5,
-      userTreeName: "Oak Tree",
-      taskTypeName: "Simple",
-      taskNote: "Focus on useState and useEffect",
-      taskResult: null,
-      remainingTime: 60 * 60, // 60 minutes in seconds
-      priority: 1,
-    },
-    {
-      taskId: 2,
-      taskName: "Write Documentation",
-      taskDescription: "Document project setup process",
-      startDate: "2025-05-20T10:00:00.000Z",
-      endDate: "2025-05-20T14:00:00.000Z",
-      status: 1, // In Progress
-      focusMethodName: "Pomodoro",
-      totalDuration: 90,
-      workDuration: 25,
-      breakTime: 5,
-      userTreeName: "Oak Tree",
-      taskTypeName: "Simple",
-      taskNote: null,
-      taskResult: null,
-      remainingTime: 45 * 60, // 45 minutes in seconds
-      priority: 2,
-    },
-    {
-      taskId: 3,
-      taskName: "Review Code",
-      taskDescription: "Check pull request for bugs",
-      startDate: "2025-05-19T08:00:00.000Z",
-      endDate: "2025-05-19T12:00:00.000Z",
-      status: 3, // Completed
-      focusMethodName: "Pomodoro",
-      totalDuration: 120,
-      workDuration: 25,
-      breakTime: 5,
-      userTreeName: "Oak Tree",
-      taskTypeName: "Simple",
-      taskNote: "Found and fixed 2 bugs",
-      taskResult: "https://example.com/review.pdf",
-      remainingTime: 0,
-      priority: 3,
-    },
-  ],
-  complex: [
-    {
-      taskId: 4,
-      taskName: "Build Backend API",
-      taskDescription: "Develop RESTful API with Node.js",
-      startDate: "2025-05-20T09:00:00.000Z",
-      endDate: "2025-05-22T17:00:00.000Z",
-      status: 0, // Not Started
-      focusMethodName: "Deep Work",
-      totalDuration: 240,
-      workDuration: 90,
-      breakTime: 15,
-      userTreeName: "Pine Tree",
-      taskTypeName: "Complex",
-      taskNote: null,
-      taskResult: null,
-      remainingTime: 240 * 60, // 60 minutes in seconds
-      priority: 1,
-    },
-    {
-      taskId: 5,
-      taskName: "Database Optimization",
-      taskDescription: "Optimize SQL queries for performance",
-      startDate: "2025-05-20T10:00:00.000Z",
-      endDate: "2025-05-23T17:00:00.000Z",
-      status: 2, // Paused
-      focusMethodName: "Deep Work",
-      totalDuration: 300,
-      workDuration: 90,
-      breakTime: 15,
-      userTreeName: "Pine Tree",
-      taskTypeName: "Complex",
-      taskNote: "Reduced query time by 20%",
-      taskResult: null,
-      remainingTime: 150 * 60, // 150 minutes in seconds
-      priority: 2,
-    },
-    {
-      taskId: 6,
-      taskName: "Deploy Application",
-      taskDescription: "Set up CI/CD pipeline",
-      startDate: "2025-05-18T09:00:00.000Z",
-      endDate: "2025-05-20T17:00:00.000Z",
-      status: 4, // Expired
-      focusMethodName: "Deep Work",
-      totalDuration: 180,
-      workDuration: 90,
-      breakTime: 15,
-      userTreeName: "Pine Tree",
-      taskTypeName: "Complex",
-      taskNote: null,
-      taskResult: null,
-      remainingTime: 0,
-      priority: 3,
-    },
-  ],
-  challenge: [
-    {
-      taskId: 7,
-      taskName: "Hackathon Project",
-      taskDescription: "Build a full-stack app in 48 hours",
-      startDate: "2025-05-21T08:00:00.000Z",
-      endDate: "2025-05-23T20:00:00.000Z",
-      status: 0, // Not Started
-      focusMethodName: "Intense Sprint",
-      totalDuration: 480,
-      workDuration: 120,
-      breakTime: 30,
-      userTreeName: "Maple Tree",
-      taskTypeName: "Challenge",
-      taskNote: null,
-      taskResult: null,
-      remainingTime: 480 * 60, // 480 minutes in seconds
-      priority: 1,
-    },
-    {
-      taskId: 8,
-      taskName: "AI Model Training",
-      taskDescription: "Train a machine learning model",
-      startDate: "2025-05-20T09:00:00.000Z",
-      endDate: "2025-05-24T17:00:00.000Z",
-      status: 1, // In Progress
-      focusMethodName: "Intense Sprint",
-      totalDuration: 600,
-      workDuration: 120,
-      breakTime: 30,
-      userTreeName: "Maple Tree",
-      taskTypeName: "Challenge",
-      taskNote: "Using TensorFlow",
-      taskResult: null,
-      remainingTime: 300 * 60, // 300 minutes in seconds
-      priority: 2,
-    },
-    {
-      taskId: 9,
-      taskName: "Research Paper",
-      taskDescription: "Write a paper on AI ethics",
-      startDate: "2025-05-15T09:00:00.000Z",
-      endDate: "2025-05-20T17:00:00.000Z",
-      status: 3, // Completed
-      focusMethodName: "Intense Sprint",
-      totalDuration: 360,
-      workDuration: 120,
-      breakTime: 30,
-      userTreeName: "Maple Tree",
-      taskTypeName: "Challenge",
-      taskNote: "Submitted to journal",
-      taskResult: "https://example.com/paper.pdf",
-      remainingTime: 0,
-      priority: 3,
-    },
-    {
-      taskId: 10,
-      taskName: "Research Paper",
-      taskDescription: "Write a paper on AI ethics",
-      startDate: "2025-05-15T09:00:00.000Z",
-      endDate: "2025-05-20T17:00:00.000Z",
-      status: 3, // Completed
-      focusMethodName: "Intense Sprint",
-      totalDuration: 360,
-      workDuration: 120,
-      breakTime: 30,
-      userTreeName: "Maple Tree",
-      taskTypeName: "Challenge",
-      taskNote: "Submitted to journal",
-      taskResult: "https://example.com/paper.pdf",
-      remainingTime: 0,
-      priority: 3,
-    }
-  ],
+const taskTypeIdMap = {
+  Simple: 2,
+  Complex: 3,
+  Challenge: 4,
 };
 
 export default function TaskTab({ userTreeId }) {
@@ -206,6 +34,64 @@ export default function TaskTab({ userTreeId }) {
   });
   const [selectedTask, setSelectedTask] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [tasks, setTasks] = useState({
+    simple: [],
+    complex: [],
+    challenge: [],
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("No token found");
+
+        const decoded = parseJwt(token);
+        const userId = decoded?.sub;
+        if (!userId) throw new Error("Invalid token: no user ID");
+
+        const allTasks = await GetTaskByUserId(userId);
+
+        const categorizedTasks = {
+          simple: [],
+          complex: [],
+          challenge: [],
+        };
+
+        allTasks.forEach((task) => {
+          const type = task.taskTypeName?.toLowerCase();
+          if (type === "simple") categorizedTasks.simple.push(task);
+          else if (type === "complex") categorizedTasks.complex.push(task);
+          else if (type === "challenge") categorizedTasks.challenge.push(task);
+        });
+
+        setTasks(categorizedTasks);
+      } catch (error) {
+        console.error("Failed to fetch tasks:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, []);
+
+  const [editTaskData, setEditTaskData] = useState({
+    TotalDuration: selectedTask?.totalDuration || 0,
+    TaskType: selectedTask?.taskTypeName || "Simple",
+    TaskTypeId: taskTypeIdMap[selectedTask?.taskTypeName] || 2,
+  });
+
+  useEffect(() => {
+    if (selectedTask) {
+      setEditTaskData({
+        TotalDuration: selectedTask.totalDuration || 0,
+        TaskType: selectedTask.taskTypeName || "Simple",
+        TaskTypeId: taskTypeIdMap[selectedTask.taskTypeName] || 2,
+      });
+    }
+  }, [selectedTask]);
 
   // Hàm định dạng thời gian
   const formatTime = (seconds) => {
@@ -413,7 +299,8 @@ export default function TaskTab({ userTreeId }) {
                                   }
                                   style={{
                                     width: `${
-                                      (phase.duration / totalDurationSeconds) * 100
+                                      (phase.duration / totalDurationSeconds) *
+                                      100
                                     }%`,
                                   }}
                                 />
@@ -436,7 +323,7 @@ export default function TaskTab({ userTreeId }) {
                             <Circle className="w-4 h-4" />
                             Not Started
                           </span>
-                        ) : (task.status === 1 || task.status === 2) ? (
+                        ) : task.status === 1 || task.status === 2 ? (
                           <span
                             className="flex items-center gap-1 text-sm"
                             style={{ color: "#3b82f6" }}
@@ -475,57 +362,348 @@ export default function TaskTab({ userTreeId }) {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {renderTaskColumn("Simple Task", sampleTasks.simple, "simple")}
-        {renderTaskColumn("Complex Task", sampleTasks.complex, "complex")}
-        {renderTaskColumn("Challenge Task", sampleTasks.challenge, "challenge")}
-      </div>
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {renderTaskColumn("Simple Task", tasks.simple, "simple")}
+          {renderTaskColumn("Complex Task", tasks.complex, "complex")}
+          {renderTaskColumn("Challenge Task", tasks.challenge, "challenge")}
+        </div>
+      )}
       {selectedTask && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
-              <DialogTitle>Task Details</DialogTitle>
+              <DialogTitle>
+                {selectedTask?.taskName || "Task Details"}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedTask?.taskDescription || "No description available"}
+              </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div>
-                <strong>Name:</strong> {selectedTask.taskName}
+
+            {selectedTask && (
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-800">
+                {/* Editable Fields */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Start Date
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {new Date(
+                          new Date(selectedTask.startDate).getTime() +
+                            7 * 60 * 60 * 1000
+                        ).toLocaleString("vi-VN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        End Date
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {new Date(
+                          new Date(selectedTask.endDate).getTime() +
+                            7 * 60 * 60 * 1000
+                        ).toLocaleString("vi-VN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-medium text-gray-700">
+                      Total Duration (minutes)
+                    </label>
+                    <input
+                      type="number"
+                      value={editTaskData.TotalDuration}
+                      min={editTaskData.TaskType === "Simple" ? 30 : 180}
+                      max={editTaskData.TaskType === "Simple" ? 179 : undefined}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        const taskType = editTaskData.TaskType;
+
+                        // Xác định phạm vi hợp lệ
+                        const min = taskType === "Simple" ? 30 : 180;
+                        const max = taskType === "Simple" ? 179 : Infinity;
+
+                        if (value >= min && value <= max) {
+                          setEditTaskData({
+                            ...editTaskData,
+                            TotalDuration: value,
+                          });
+                        } else {
+                          toast.error(
+                            `Total Duration for '${taskType}' must be between ${min} and ${
+                              max === Infinity ? "∞" : max
+                            } minutes.`
+                          );
+                        }
+                      }}
+                      disabled={
+                        editTaskData.TaskTypeId !== 2 &&
+                        editTaskData.TaskTypeId !== 3
+                      }
+                      className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-medium text-gray-700">
+                      Task Type
+                    </label>
+                    <select
+                      value={editTaskData.TaskType}
+                      onChange={(e) => {
+                        const selectedType = e.target.value;
+                        const currentDuration = editTaskData.TotalDuration;
+
+                        const isValidDuration =
+                          (selectedType === "Simple" &&
+                            currentDuration >= 30 &&
+                            currentDuration < 180) ||
+                          (selectedType === "Complex" &&
+                            currentDuration >= 180);
+
+                        if (!isValidDuration) {
+                          const newDuration =
+                            selectedType === "Simple" ? 30 : 180;
+                          toast.info(
+                            `Invalid duration for type '${selectedType}'. Updated to ${newDuration} minutes.`
+                          );
+                          setEditTaskData({
+                            ...editTaskData,
+                            TaskType: selectedType,
+                            TaskTypeId: taskTypeIdMap[selectedType],
+                            TotalDuration: newDuration,
+                          });
+                        } else {
+                          setEditTaskData({
+                            ...editTaskData,
+                            TaskType: selectedType,
+                            TaskTypeId: taskTypeIdMap[selectedType],
+                          });
+                        }
+                      }}
+                      disabled={
+                        editTaskData.TaskTypeId !== 2 &&
+                        editTaskData.TaskTypeId !== 3
+                      }
+                      className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="Simple">Simple (30 - 180 minutes)</option>
+                      <option value="Complex">
+                        Complex (Above 180 minutes)
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Note
+                    </label>
+                    <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                      {selectedTask.taskNote ? (
+                        selectedTask.taskNote
+                      ) : (
+                        <span className="text-gray-400 italic">
+                          There are no notes
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Result
+                    </label>
+                    <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                      {selectedTask.taskResult ? (
+                        isValidUrl(selectedTask.taskResult) ? (
+                          <div className="space-y-2">
+                            <a
+                              href={selectedTask.taskResult}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 underline"
+                            >
+                              {selectedTask.taskResult}
+                            </a>
+
+                            {/* Nếu là ảnh thì preview */}
+                            {selectedTask.taskResult.match(
+                              /\.(jpeg|jpg|png|gif)$/i
+                            ) && (
+                              <img
+                                src={selectedTask.taskResult}
+                                alt="Task Result Preview"
+                                className="max-w-full h-auto rounded"
+                              />
+                            )}
+
+                            {/* Nếu là PDF thì preview bằng iframe */}
+                            {selectedTask.taskResult.match(/\.pdf$/i) && (
+                              <iframe
+                                src={selectedTask.taskResult}
+                                title="Task Result PDF"
+                                className="w-full h-64 border rounded"
+                              ></iframe>
+                            )}
+                          </div>
+                        ) : (
+                          <span>{selectedTask.taskResult}</span>
+                        )
+                      ) : (
+                        <span className="text-gray-400 italic">
+                          No result available
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Read-Only Fields */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Tree
+                    </label>
+                    <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                      {selectedTask.userTreeName}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Status
+                    </label>
+                    <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                      {
+                        {
+                          0: "Not Started",
+                          1: "In Progress",
+                          2: "Paused",
+                          3: "Completed",
+                          4: "Expired",
+                          5: "Canceled",
+                        }[selectedTask.status]
+                      }
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Focus Method
+                    </label>
+                    <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                      {selectedTask.focusMethodName}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Work Duration
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {selectedTask.workDuration} minutes
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Break Time
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {selectedTask.breakTime} minutes
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedTask.remainingTime !== null && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Remaining Time
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {formatTime(selectedTask.remainingTime)}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div>
-                <strong>Description:</strong> {selectedTask.taskDescription || "No description"}
-              </div>
-              <div>
-                <strong>Start Date:</strong> {formatDateTime(selectedTask.startDate)}
-              </div>
-              <div>
-                <strong>End Date:</strong> {formatDateTime(selectedTask.endDate)}
-              </div>
-              <div>
-                <strong>Status:</strong> {getStatusLabel(selectedTask.status)}
-              </div>
-              <div>
-                <strong>Focus Method:</strong> {selectedTask.focusMethodName}
-              </div>
-              <div>
-                <strong>Total Duration:</strong> {selectedTask.totalDuration} minutes
-              </div>
-              <div>
-                <strong>Priority:</strong> {getPriorityLabel(selectedTask.priority)}
-              </div>
-              <div>
-                <strong>Note:</strong> {selectedTask.taskNote || "No note"}
-              </div>
-            </div>
+            )}
+
             <DialogFooter>
               <Button
-                onClick={() => setIsDialogOpen(false)}
-                className="bg-gray-500 hover:bg-gray-600"
+                onClick={async () => {
+                  try {
+                    await DeleteTaskById(selectedTask.taskId);
+                    toast.success("Task deleted!");
+
+                    setIsDialogOpen(false);
+                  } catch (err) {
+                    console.error("Delete failed:", err);
+                    toast.error("Failed to delete task.");
+                  }
+                }}
+                className="bg-red-500 text-white hover:bg-red-700"
               >
-                Close
+                Delete
               </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    const payload = {
+                      TotalDuration: editTaskData.TotalDuration,
+                      TaskTypeId: taskTypeIdMap[editTaskData.TaskType],
+                    };
+
+                    await UpdateTaskById2(selectedTask.taskId, payload);
+                    toast.success("Task updated!");
+                    setIsDialogOpen(false);
+                  } catch (err) {
+                    console.error("Update failed:", err);
+                    toast.error("Failed to update task.");
+                  }
+                }}
+                disabled={
+                  selectedTask?.status !== 0 && selectedTask?.status !== 3
+                }
+                className="disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Update
+              </Button>
+
+              <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       )}
     </>
   );
+}
+
+function isValidUrl(str) {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
 }
