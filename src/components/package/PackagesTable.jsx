@@ -9,6 +9,8 @@ const PackagesTable = () => {
     const [searchTerm, setSearchTerm] = useState('')
     const [filteredPackages, setFilteredPackages] = useState(packageData)
     const [openStates, setOpenStates] = useState({})
+    const [currentPage, setCurrentPage] = useState(1)
+    const itemsPerPage = 10
 
     useEffect(() => {
         if (packageData) {
@@ -35,6 +37,29 @@ const PackagesTable = () => {
 
     if (error) {
         return <div>{error.message}</div>
+    }
+
+    const indexOfLastItem = currentPage * itemsPerPage
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage
+    const currentItems = filteredPackages.slice(indexOfFirstItem, indexOfLastItem)
+    const totalPages = Math.ceil(filteredPackages.length / itemsPerPage)
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber)
+
+    const renderPageNumbers = () => {
+        const pageNumbers = []
+        for (let i = 1; i <= totalPages; i++) {
+            pageNumbers.push(
+                <button
+                    key={i}
+                    onClick={() => paginate(i)}
+                    className={`mx-1 px-3 py-1 rounded-md ${currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-blue-500'}`}
+                >
+                    {i}
+                </button>
+            )
+        }
+        return pageNumbers
     }
 
     return (
@@ -74,7 +99,7 @@ const PackagesTable = () => {
                     </thead>
 
                     <tbody className='divide-y divide-gray-700'>
-                        {filteredPackages.map((package_) => (
+                        {currentItems.map((package_) => (
                             <Popover key={package_.packageId} open={openStates[package_.packageId]}>
                                 <PopoverTrigger asChild >
                                     <div style={{ display: 'contents' }}>
@@ -166,6 +191,24 @@ const PackagesTable = () => {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            <div className='flex justify-center items-center mt-6'>
+                <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className='mx-1 px-4 py-2 rounded-md bg-gray-700 text-gray-300 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                    Previous
+                </button>
+                {renderPageNumbers()}
+                <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className='mx-1 px-4 py-2 rounded-md bg-gray-700 text-gray-300 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+                >
+                    Next
+                </button>
             </div>
         </motion.div>
     )

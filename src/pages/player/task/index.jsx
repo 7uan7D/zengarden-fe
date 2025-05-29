@@ -452,8 +452,8 @@ export default function TaskPage() {
           taskId: task.taskId,
           taskName: task.taskName,
           taskDescription: task.taskDescription,
-          startDate: new Date(task.startDate).toLocaleDateString("en-GB"),
-          endDate: new Date(task.endDate).toLocaleDateString("en-GB"),
+          startDate: task.startDate, // Giữ nguyên ISO
+          endDate: task.endDate,
           status: task.status,
           focusMethodName: task.focusMethodName,
           totalDuration: task.totalDuration,
@@ -1765,7 +1765,17 @@ export default function TaskPage() {
                           Start Date
                         </label>
                         <div className="mt-1 rounded-md border p-2 bg-gray-50">
-                          {selectedTask.startDate}
+                          {new Date(
+                            new Date(selectedTask.startDate).getTime() +
+                              7 * 60 * 60 * 1000
+                          ).toLocaleString("vi-VN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
                         </div>
                       </div>
                       <div>
@@ -1773,7 +1783,17 @@ export default function TaskPage() {
                           End Date
                         </label>
                         <div className="mt-1 rounded-md border p-2 bg-gray-50">
-                          {selectedTask.endDate}
+                          {new Date(
+                            new Date(selectedTask.endDate).getTime() +
+                              7 * 60 * 60 * 1000
+                          ).toLocaleString("vi-VN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}
                         </div>
                       </div>
                     </div>
