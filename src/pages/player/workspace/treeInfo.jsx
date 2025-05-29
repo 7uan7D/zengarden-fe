@@ -19,6 +19,7 @@ import { GetAllTrees } from "@/services/apiServices/treesService";
 import { GetBagItems } from "@/services/apiServices/itemService";
 import addIcon from "/images/add.png";
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
+import { CreateUserTree } from "@/services/apiServices/userTreesService";
 
 const TreeInfo = ({ onTreeSelect }) => {
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);

@@ -52,116 +52,116 @@ import { PauseTask } from "@/services/apiServices/taskService.js";
 import { CompleteTask } from "@/services/apiServices/taskService.js";
 
 // Sample tasks data
-const sampleTasks = [
-  {
-    taskId: 1,
-    taskName: "Learn React Basics",
-    taskDescription: "Study React hooks and components",
-    startDate: "2025-05-20T09:00:00.000Z",
-    endDate: "2025-05-20T12:00:00.000Z",
-    status: 0,
-    focusMethodName: "Pomodoro",
-    totalDuration: 60,
-    workDuration: 25,
-    breakTime: 5,
-    userTreeName: "Oak Tree",
-    taskTypeName: "Simple",
-    taskNote: "Focus on useState and useEffect",
-    taskResult: null,
-    remainingTime: 1 * 60,
-    priority: 1,
-  },
-  {
-    taskId: 2,
-    taskName: "Review Codebase",
-    taskDescription: "Analyze and review project codebase for improvements",
-    startDate: "2025-05-21T10:00:00.000Z",
-    endDate: "2025-05-21T12:00:00.000Z",
-    status: 0,
-    focusMethodName: "Pomodoro",
-    totalDuration: 60,
-    workDuration: 20,
-    breakTime: 5,
-    userTreeName: "Oak Tree",
-    taskTypeName: "Simple",
-    taskNote: "Check for code optimization opportunities",
-    taskResult: null,
-    remainingTime: 1 * 60,
-    priority: 2,
-  },
-  {
-    taskId: 3,
-    taskName: "Write Documentation",
-    taskDescription: "Document API endpoints and usage",
-    startDate: "2025-05-22T08:30:00.000Z",
-    endDate: "2025-05-22T11:30:00.000Z",
-    status: 0,
-    focusMethodName: "Pomodoro",
-    totalDuration: 60,
-    workDuration: 25,
-    breakTime: 5,
-    userTreeName: "Oak Tree",
-    taskTypeName: "Complex",
-    taskNote: "Include examples for each endpoint",
-    taskResult: null,
-    remainingTime: 3600,
-    priority: 3,
-  },
-  {
-    taskId: 4,
-    taskName: "Test API Endpoints",
-    taskDescription: "Perform integration tests on API endpoints",
-    startDate: "2025-05-23T09:00:00.000Z",
-    endDate: "2025-05-23T11:00:00.000Z",
-    status: 3,
-    focusMethodName: "Pomodoro",
-    totalDuration: 60,
-    workDuration: 25,
-    breakTime: 5,
-    userTreeName: "Oak Tree",
-    taskTypeName: "Challenge",
-    taskNote: "Ensure all endpoints return correct status codes",
-    taskResult: null,
-    remainingTime: 0,
-    priority: 4,
-  },
-  {
-    taskId: 5,
-    taskName: "Fix UI Bugs",
-    taskDescription: "Resolve UI alignment and responsiveness issues",
-    startDate: "2025-05-24T14:00:00.000Z",
-    endDate: "2025-05-24T16:00:00.000Z",
-    status: 4,
-    focusMethodName: "Pomodoro",
-    totalDuration: 60,
-    workDuration: 25,
-    breakTime: 5,
-    userTreeName: "Oak Tree",
-    taskTypeName: "Simple",
-    taskNote: "Focus on mobile responsiveness",
-    taskResult: null,
-    remainingTime: 0,
-    priority: 5,
-  },
-  {
-    taskId: 6,
-    taskName: "Plan Sprint",
-    taskDescription: "Prepare tasks and goals for the next sprint",
-    startDate: "2025-05-25T11:00:00.000Z",
-    endDate: "2025-05-25T13:00:00.000Z",
-    status: 3,
-    focusMethodName: "Pomodoro",
-    totalDuration: 60,
-    workDuration: 25,
-    breakTime: 5,
-    userTreeName: "Oak Tree",
-    taskTypeName: "Challenge",
-    taskNote: "Coordinate with team for task prioritization",
-    taskResult: null,
-    remainingTime: 0,
-    priority: 6,
-  },
-];
+// const sampleTasks = [
+//   {
+//     taskId: 1,
+//     taskName: "Learn React Basics",
+//     taskDescription: "Study React hooks and components",
+//     startDate: "2025-05-20T09:00:00.000Z",
+//     endDate: "2025-05-20T12:00:00.000Z",
+//     status: 0,
+//     focusMethodName: "Pomodoro",
+//     totalDuration: 60,
+//     workDuration: 25,
+//     breakTime: 5,
+//     userTreeName: "Oak Tree",
+//     taskTypeName: "Simple",
+//     taskNote: "Focus on useState and useEffect",
+//     taskResult: null,
+//     remainingTime: 1 * 60,
+//     priority: 1,
+//   },
+//   {
+//     taskId: 2,
+//     taskName: "Review Codebase",
+//     taskDescription: "Analyze and review project codebase for improvements",
+//     startDate: "2025-05-21T10:00:00.000Z",
+//     endDate: "2025-05-21T12:00:00.000Z",
+//     status: 0,
+//     focusMethodName: "Pomodoro",
+//     totalDuration: 60,
+//     workDuration: 20,
+//     breakTime: 5,
+//     userTreeName: "Oak Tree",
+//     taskTypeName: "Simple",
+//     taskNote: "Check for code optimization opportunities",
+//     taskResult: null,
+//     remainingTime: 1 * 60,
+//     priority: 2,
+//   },
+//   {
+//     taskId: 3,
+//     taskName: "Write Documentation",
+//     taskDescription: "Document API endpoints and usage",
+//     startDate: "2025-05-22T08:30:00.000Z",
+//     endDate: "2025-05-22T11:30:00.000Z",
+//     status: 0,
+//     focusMethodName: "Pomodoro",
+//     totalDuration: 60,
+//     workDuration: 25,
+//     breakTime: 5,
+//     userTreeName: "Oak Tree",
+//     taskTypeName: "Complex",
+//     taskNote: "Include examples for each endpoint",
+//     taskResult: null,
+//     remainingTime: 3600,
+//     priority: 3,
+//   },
+//   {
+//     taskId: 4,
+//     taskName: "Test API Endpoints",
+//     taskDescription: "Perform integration tests on API endpoints",
+//     startDate: "2025-05-23T09:00:00.000Z",
+//     endDate: "2025-05-23T11:00:00.000Z",
+//     status: 3,
+//     focusMethodName: "Pomodoro",
+//     totalDuration: 60,
+//     workDuration: 25,
+//     breakTime: 5,
+//     userTreeName: "Oak Tree",
+//     taskTypeName: "Challenge",
+//     taskNote: "Ensure all endpoints return correct status codes",
+//     taskResult: null,
+//     remainingTime: 0,
+//     priority: 4,
+//   },
+//   {
+//     taskId: 5,
+//     taskName: "Fix UI Bugs",
+//     taskDescription: "Resolve UI alignment and responsiveness issues",
+//     startDate: "2025-05-24T14:00:00.000Z",
+//     endDate: "2025-05-24T16:00:00.000Z",
+//     status: 4,
+//     focusMethodName: "Pomodoro",
+//     totalDuration: 60,
+//     workDuration: 25,
+//     breakTime: 5,
+//     userTreeName: "Oak Tree",
+//     taskTypeName: "Simple",
+//     taskNote: "Focus on mobile responsiveness",
+//     taskResult: null,
+//     remainingTime: 0,
+//     priority: 5,
+//   },
+//   {
+//     taskId: 6,
+//     taskName: "Plan Sprint",
+//     taskDescription: "Prepare tasks and goals for the next sprint",
+//     startDate: "2025-05-25T11:00:00.000Z",
+//     endDate: "2025-05-25T13:00:00.000Z",
+//     status: 3,
+//     focusMethodName: "Pomodoro",
+//     totalDuration: 60,
+//     workDuration: 25,
+//     breakTime: 5,
+//     userTreeName: "Oak Tree",
+//     taskTypeName: "Challenge",
+//     taskNote: "Coordinate with team for task prioritization",
+//     taskResult: null,
+//     remainingTime: 0,
+//     priority: 6,
+//   },
+// ];
 
 export default function Workspace() {
   const [tasks, setTasks] = useState([]);
@@ -247,173 +247,173 @@ export default function Workspace() {
     setCurrentIndex(globalAudioState.currentIndex);
   }, [globalAudioState.currentIndex]);
 
-  useEffect(() => {
-    // Restore active task from localStorage on page load
-    const savedTask = localStorage.getItem("currentTask");
-    if (savedTask) {
-      const { taskId, index, taskKey, status, remainingTime } =
-        JSON.parse(savedTask);
-      const task = tasks.find((t) => t.taskId === taskId);
-      if (task && index !== undefined && status === 1) {
-        setActiveTaskKey(taskKey);
-        setFocusedTask(task);
-        setTasks((prevTasks) =>
-          prevTasks.map((t, i) =>
-            i === index ? { ...t, status: 1, remainingTime } : t
-          )
-        );
-        setTimers((prev) => ({
-          ...prev,
-          [taskKey]: {
-            isWorkPhase: true,
-            currentWorkTime: task.workDuration * 60,
-            currentBreakTime: task.breakTime * 60,
-            remainingTime: remainingTime,
-            isRunning: true,
-            totalWorkCompleted: 0,
-            totalBreakCompleted: 0,
-          },
-        }));
+  // useEffect(() => {
+  //   // Restore active task from localStorage on page load
+  //   const savedTask = localStorage.getItem("currentTask");
+  //   if (savedTask) {
+  //     const { taskId, index, taskKey, status, remainingTime } =
+  //       JSON.parse(savedTask);
+  //     const task = tasks.find((t) => t.taskId === taskId);
+  //     if (task && index !== undefined && status === 1) {
+  //       setActiveTaskKey(taskKey);
+  //       setFocusedTask(task);
+  //       setTasks((prevTasks) =>
+  //         prevTasks.map((t, i) =>
+  //           i === index ? { ...t, status: 1, remainingTime } : t
+  //         )
+  //       );
+  //       setTimers((prev) => ({
+  //         ...prev,
+  //         [taskKey]: {
+  //           isWorkPhase: true,
+  //           currentWorkTime: task.workDuration * 60,
+  //           currentBreakTime: task.breakTime * 60,
+  //           remainingTime: remainingTime,
+  //           isRunning: true,
+  //           totalWorkCompleted: 0,
+  //           totalBreakCompleted: 0,
+  //         },
+  //       }));
 
-        // Resume timer
-        intervalRefs.current[taskKey] = setInterval(() => {
-          setTimers((prev) => {
-            const timer = prev[taskKey];
-            if (!timer || !timer.isRunning) return prev;
+  //       // Resume timer
+  //       intervalRefs.current[taskKey] = setInterval(() => {
+  //         setTimers((prev) => {
+  //           const timer = prev[taskKey];
+  //           if (!timer || !timer.isRunning) return prev;
 
-            let {
-              isWorkPhase,
-              currentWorkTime,
-              currentBreakTime,
-              remainingTime,
-              totalWorkCompleted,
-              totalBreakCompleted,
-            } = timer;
+  //           let {
+  //             isWorkPhase,
+  //             currentWorkTime,
+  //             currentBreakTime,
+  //             remainingTime,
+  //             totalWorkCompleted,
+  //             totalBreakCompleted,
+  //           } = timer;
 
-            if (remainingTime > 0) {
-              if (isWorkPhase) {
-                currentWorkTime -= 1;
-                remainingTime -= 1;
-                if (currentWorkTime <= 0) {
-                  totalWorkCompleted += task.workDuration * 60;
-                  isWorkPhase = false;
-                  currentWorkTime = task.workDuration * 60;
-                  currentBreakTime = task.breakTime * 60;
-                }
-              } else {
-                currentBreakTime -= 1;
-                remainingTime -= 1;
-                if (currentBreakTime <= 0) {
-                  totalBreakCompleted += task.breakTime * 60;
-                  isWorkPhase = true;
-                  currentWorkTime = task.workDuration * 60;
-                  currentBreakTime = task.breakTime * 60;
-                }
-              }
-            } else {
-              clearInterval(intervalRefs.current[taskKey]);
-              setTasks((prevTasks) =>
-                prevTasks.map((t, i) =>
-                  i === index ? { ...t, status: 4, remainingTime: 0 } : t
-                )
-              );
-              setActiveTaskKey(null);
-              setFocusedTask(null);
-              localStorage.removeItem("currentTask");
-              return {
-                ...prev,
-                [taskKey]: { ...timer, isRunning: false },
-              };
-            }
+  //           if (remainingTime > 0) {
+  //             if (isWorkPhase) {
+  //               currentWorkTime -= 1;
+  //               remainingTime -= 1;
+  //               if (currentWorkTime <= 0) {
+  //                 totalWorkCompleted += task.workDuration * 60;
+  //                 isWorkPhase = false;
+  //                 currentWorkTime = task.workDuration * 60;
+  //                 currentBreakTime = task.breakTime * 60;
+  //               }
+  //             } else {
+  //               currentBreakTime -= 1;
+  //               remainingTime -= 1;
+  //               if (currentBreakTime <= 0) {
+  //                 totalBreakCompleted += task.breakTime * 60;
+  //                 isWorkPhase = true;
+  //                 currentWorkTime = task.workDuration * 60;
+  //                 currentBreakTime = task.breakTime * 60;
+  //               }
+  //             }
+  //           } else {
+  //             clearInterval(intervalRefs.current[taskKey]);
+  //             setTasks((prevTasks) =>
+  //               prevTasks.map((t, i) =>
+  //                 i === index ? { ...t, status: 4, remainingTime: 0 } : t
+  //               )
+  //             );
+  //             setActiveTaskKey(null);
+  //             setFocusedTask(null);
+  //             localStorage.removeItem("currentTask");
+  //             return {
+  //               ...prev,
+  //               [taskKey]: { ...timer, isRunning: false },
+  //             };
+  //           }
 
-            setTasks((prevTasks) =>
-              prevTasks.map((t, i) =>
-                i === index ? { ...t, status: 1, remainingTime } : t
-              )
-            );
+  //           setTasks((prevTasks) =>
+  //             prevTasks.map((t, i) =>
+  //               i === index ? { ...t, status: 1, remainingTime } : t
+  //             )
+  //           );
 
-            localStorage.setItem(
-              "currentTask",
-              JSON.stringify({
-                taskId: task.taskId,
-                taskName: task.taskName,
-                remainingTime,
-                status: 1,
-                index,
-                taskKey,
-              })
-            );
+  //           localStorage.setItem(
+  //             "currentTask",
+  //             JSON.stringify({
+  //               taskId: task.taskId,
+  //               taskName: task.taskName,
+  //               remainingTime,
+  //               status: 1,
+  //               index,
+  //               taskKey,
+  //             })
+  //           );
 
-            return {
-              ...prev,
-              [taskKey]: {
-                ...timer,
-                isWorkPhase,
-                currentWorkTime,
-                currentBreakTime,
-                remainingTime,
-                totalWorkCompleted,
-                totalBreakCompleted,
-              },
-            };
-          });
-        }, 1000);
-      } else if (task && status === 2) {
-        setTimers((prev) => ({
-          ...prev,
-          [taskKey]: {
-            isWorkPhase: true,
-            currentWorkTime: task.workDuration * 60,
-            currentBreakTime: task.breakTime * 60,
-            remainingTime: remainingTime,
-            isRunning: false,
-            totalWorkCompleted: 0,
-            totalBreakCompleted: 0,
-          },
-        }));
-        setTasks((prevTasks) =>
-          prevTasks.map((t, i) =>
-            i === index ? { ...t, status: 2, remainingTime } : t
-          )
-        );
-      }
-    }
+  //           return {
+  //             ...prev,
+  //             [taskKey]: {
+  //               ...timer,
+  //               isWorkPhase,
+  //               currentWorkTime,
+  //               currentBreakTime,
+  //               remainingTime,
+  //               totalWorkCompleted,
+  //               totalBreakCompleted,
+  //             },
+  //           };
+  //         });
+  //       }, 1000);
+  //     } else if (task && status === 2) {
+  //       setTimers((prev) => ({
+  //         ...prev,
+  //         [taskKey]: {
+  //           isWorkPhase: true,
+  //           currentWorkTime: task.workDuration * 60,
+  //           currentBreakTime: task.breakTime * 60,
+  //           remainingTime: remainingTime,
+  //           isRunning: false,
+  //           totalWorkCompleted: 0,
+  //           totalBreakCompleted: 0,
+  //         },
+  //       }));
+  //       setTasks((prevTasks) =>
+  //         prevTasks.map((t, i) =>
+  //           i === index ? { ...t, status: 2, remainingTime } : t
+  //         )
+  //       );
+  //     }
+  //   }
 
-    // Initialize timers for tasks with status 1 or 2
-    const newTimers = {};
-    sampleTasks.forEach((task, index) => {
-      const taskKey = `task-${task.taskId}`; // Use taskId instead of index
-      if (task.status === 1 && !savedTask) {
-        newTimers[taskKey] = {
-          isWorkPhase: true,
-          currentWorkTime: task.workDuration * 60,
-          currentBreakTime: task.breakTime * 60,
-          remainingTime: task.remainingTime,
-          isRunning: true,
-          totalWorkCompleted: 0,
-          totalBreakCompleted: 0,
-        };
-      } else if (task.status === 2) {
-        newTimers[taskKey] = {
-          isWorkPhase: true,
-          currentWorkTime: task.workDuration * 60,
-          currentBreakTime: task.breakTime * 60,
-          remainingTime: task.remainingTime,
-          isRunning: false,
-          totalWorkCompleted: 0,
-          totalBreakCompleted: 0,
-        };
-      }
-    });
-    setTimers(newTimers);
+  //   // Initialize timers for tasks with status 1 or 2
+  //   const newTimers = {};
+  //   sampleTasks.forEach((task, index) => {
+  //     const taskKey = `task-${task.taskId}`; // Use taskId instead of index
+  //     if (task.status === 1 && !savedTask) {
+  //       newTimers[taskKey] = {
+  //         isWorkPhase: true,
+  //         currentWorkTime: task.workDuration * 60,
+  //         currentBreakTime: task.breakTime * 60,
+  //         remainingTime: task.remainingTime,
+  //         isRunning: true,
+  //         totalWorkCompleted: 0,
+  //         totalBreakCompleted: 0,
+  //       };
+  //     } else if (task.status === 2) {
+  //       newTimers[taskKey] = {
+  //         isWorkPhase: true,
+  //         currentWorkTime: task.workDuration * 60,
+  //         currentBreakTime: task.breakTime * 60,
+  //         remainingTime: task.remainingTime,
+  //         isRunning: false,
+  //         totalWorkCompleted: 0,
+  //         totalBreakCompleted: 0,
+  //       };
+  //     }
+  //   });
+  //   setTimers(newTimers);
 
-    // Cleanup intervals on unmount
-    return () => {
-      Object.values(intervalRefs.current).forEach((intervalId) =>
-        clearInterval(intervalId)
-      );
-    };
-  }, []);
+  //   // Cleanup intervals on unmount
+  //   return () => {
+  //     Object.values(intervalRefs.current).forEach((intervalId) =>
+  //       clearInterval(intervalId)
+  //     );
+  //   };
+  // }, []);
 
   const handleBackgroundChange = (url) => {
     setBackgroundUrl(url);
