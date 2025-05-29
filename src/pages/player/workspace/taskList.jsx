@@ -44,6 +44,8 @@ import "slick-carousel/slick/slick-theme.css";
 import { ClipboardList, CircleCheckBig, CircleX } from "lucide-react";
 import { useTreeExperience } from "@/context/TreeExperienceContext";
 import "./taskList.css"; // Import custom CSS
+import { GetAllFocusMethods } from "@/services/apiServices/focusMethodsService";
+import { CreateMultipleTask } from "@/services/apiServices/taskService";
 
 // DateTimePicker Component
 const DateTimePicker = ({ label, date, onDateChange, onTimeChange }) => {
@@ -154,9 +156,9 @@ const TaskList = ({
   useEffect(() => {
     setTaskCreateData((prev) => ({
       ...prev,
-      userTreeId: currentTree || null,
+      userTreeId: userTreeId || null,
     }));
-  }, [currentTree]);
+  }, [userTreeId]);
 
   const getPriorityLabel = (priority) => {
     switch (priority) {
@@ -374,11 +376,15 @@ const TaskList = ({
     setBreakTimeError("");
   };
 
+  const [allFocusMethods, setAllFocusMethods] = useState([]);
+  const [suggestedFocusMethod, setSuggestedFocusMethod] = useState(null);
+
   const handleNext = async () => {
     setIsLoadingNext(true);
     try {
       if (step === 1) {
         const response = await SuggestTaskFocusMethods(taskCreateData);
+        setSuggestedFocusMethod(response);
         setFocusSuggestion(response);
         setTaskCreateData((prev) => ({
           ...prev,
@@ -392,6 +398,9 @@ const TaskList = ({
       } else {
         setStep(3);
       }
+      if (step === 3) {
+        setStep(4);
+      }
     } catch (error) {
       console.error("Error fetching suggestions", error);
       toast.error("Failed to fetch focus method suggestions");
@@ -400,8 +409,182 @@ const TaskList = ({
     }
   };
 
+  useEffect(() => {
+    const fetchFocusMethods = async () => {
+      try {
+        const methods = await GetAllFocusMethods();
+        const filtered = methods.filter(
+          (method) =>
+            method.defaultDuration + method.defaultBreak <=
+            taskCreateData.totalDuration
+        );
+        setAllFocusMethods(filtered);
+      } catch (error) {
+        console.error("Failed to fetch all focus methods", error);
+      }
+    };
+
+    if (step === 2) {
+      fetchFocusMethods();
+    }
+  }, [step, taskCreateData.totalDuration]);
+
   const handleBack = () => {
     setStep(step - 1);
+  };
+
+  const getInitialSubtasks = (totalDuration) => {
+    if (totalDuration > 240) return 3;
+    if (totalDuration > 120) return 2;
+    return 1;
+  };
+
+  const handleCreateTask = async () => {
+    try {
+      setIsCreatingTask(true);
+
+      const taskData =
+        subtasks.length > 0
+          ? subtasks.map((subtask) => ({
+              focusMethodId: taskCreateData.focusMethodId,
+              taskTypeId: taskCreateData.taskTypeId,
+              userTreeId: userTreeId,
+              taskName: subtask.title,
+              taskDescription: taskCreateData.taskDescription,
+              totalDuration: subtask.duration,
+              startDate: taskCreateData.startDate,
+              endDate: taskCreateData.endDate,
+              workDuration: taskCreateData.workDuration,
+              breakTime: taskCreateData.breakTime,
+            }))
+          : [taskCreateData]; // fallback nếu không có subtasks
+
+      await CreateMultipleTask(taskData);
+
+      setIsTaskDialogOpen(false);
+      setStep(1);
+      setTaskCreateData({
+        focusMethodId: null,
+        taskTypeId: null,
+        userTreeId: userTreeId || null,
+        taskName: "",
+        taskDescription: "",
+        totalDuration: "",
+        startDate: "",
+        endDate: "",
+        workDuration: "",
+        breakTime: "",
+      });
+      setFocusSuggestion(null);
+      setSelectedDurationOption("");
+      setSelectedWorkOption("");
+      setSelectedBreakOption("");
+      setDurationError("");
+      setWorkDurationError("");
+      setBreakTimeError("");
+      setSubtasks([]);
+      toast.success("Task created successfully!");
+    } catch (error) {
+      console.error("Error creating task:", error);
+      toast.error("Failed to create task");
+    } finally {
+      setIsCreatingTask(false);
+    }
+  };
+
+  const [subtasks, setSubtasks] = useState([]);
+
+  useEffect(() => {
+    if (step === 3 && taskCreateData.taskName && subtasks.length === 0) {
+      const count = getInitialSubtasks(taskCreateData.totalDuration);
+      const defaultDuration = Math.floor(taskCreateData.totalDuration / count);
+      const baseName = taskCreateData.taskName;
+
+      const initial = Array.from({ length: count }, (_, i) => ({
+        id: i,
+        title: count > 1 ? `${baseName} (${i + 1})` : baseName,
+        duration: defaultDuration,
+      }));
+
+      setSubtasks(initial);
+    }
+  }, [
+    step,
+    taskCreateData.totalDuration,
+    taskCreateData.taskName,
+    subtasks.length,
+  ]);
+
+  const handleSubtaskChange = (index, field, value) => {
+    const updated = [...subtasks];
+
+    if (field === "duration") {
+      const newDuration = Number(value);
+      const otherTotal = subtasks.reduce(
+        (sum, t, i) => (i !== index ? sum + t.duration : sum),
+        0
+      );
+      const remaining = taskCreateData.totalDuration - newDuration;
+
+      if (remaining < 0) return;
+
+      updated[index].duration = newDuration;
+
+      const others = updated.filter((_, i) => i !== index);
+      const totalOther = others.reduce((sum, t) => sum + t.duration, 0);
+
+      if (totalOther > 0) {
+        // Tỷ lệ mới
+        updated.forEach((t, i) => {
+          if (i !== index) {
+            const ratio = t.duration / totalOther;
+            t.duration = Math.floor(remaining * ratio);
+          }
+        });
+
+        const totalNow = updated.reduce((sum, t) => sum + t.duration, 0);
+        const diff = taskCreateData.totalDuration - totalNow;
+        if (diff !== 0) {
+          const firstOther = updated.find((_, i) => i !== index);
+          if (firstOther) firstOther.duration += diff;
+        }
+      }
+    } else {
+      updated[index][field] = value;
+    }
+
+    setSubtasks(updated);
+  };
+
+  const handleAddSubtask = () => {
+    const baseName = taskCreateData.taskName || "Task";
+    const nextIndex = subtasks.length + 1;
+    setSubtasks((prev) => [
+      ...prev,
+      {
+        id: prev.length,
+        title: `${baseName} (${nextIndex})`,
+        duration: 0,
+      },
+    ]);
+  };
+
+  const handleRemoveSubtask = (index) => {
+    if (subtasks.length <= 1) return; // không cho xóa hết
+    const updated = [...subtasks];
+    updated.splice(index, 1);
+
+    // Cập nhật lại durations để vẫn đúng tổng (nếu cần)
+    const totalDuration = taskCreateData.totalDuration;
+    const totalNow = updated.reduce((sum, t) => sum + t.duration, 0);
+    const diff = totalDuration - totalNow;
+
+    if (diff > 0 && updated.length > 0) {
+      // cộng phần dư vào task đầu
+      updated[0].duration += diff;
+    }
+
+    setSubtasks(updated);
   };
 
   const SimpleDateTimePicker = ({
@@ -420,13 +603,13 @@ const TaskList = ({
           type="date"
           value={dateStr}
           onChange={(e) => onDateChange(e.target.value)}
-          className="border px-2 py-1 rounded"
+          className="border px-2 py-1 rounded bg-white text-black"
         />
         <input
           type="time"
           value={timeStr}
           onChange={(e) => onTimeChange(e.target.value)}
-          className="border px-2 py-1 rounded"
+          className="border px-2 py-1 rounded bg-white text-black"
         />
       </div>
     );
@@ -459,40 +642,6 @@ const TaskList = ({
     newDate.setMilliseconds(0);
 
     setTaskCreateData((prev) => ({ ...prev, [field]: newDate }));
-  };
-
-  const handleCreateTask = async () => {
-    try {
-      setIsCreatingTask(true);
-      const response = await CreateTask(taskCreateData);
-      setIsTaskDialogOpen(false);
-      setStep(1);
-      setTaskCreateData({
-        focusMethodId: null,
-        taskTypeId: null,
-        userTreeId: userTreeId || null,
-        taskName: "",
-        taskDescription: "",
-        totalDuration: "",
-        startDate: new Date().toISOString(),
-        endDate: new Date().toISOString(),
-        workDuration: "",
-        breakTime: "",
-      });
-      setFocusSuggestion(null);
-      setSelectedDurationOption("");
-      setSelectedWorkOption("");
-      setSelectedBreakOption("");
-      setDurationError("");
-      setWorkDurationError("");
-      setBreakTimeError("");
-      toast.success("Task created successfully!");
-    } catch (error) {
-      console.error("Error creating task:", error);
-      toast.error("Failed to create task");
-    } finally {
-      setIsCreatingTask(false);
-    }
   };
 
   // Carousel settings
@@ -972,17 +1121,18 @@ const TaskList = ({
             <DialogContent className="max-w-lg bg-white rounded-xl shadow-2xl p-6 task-dialog">
               <DialogHeader className="relative bg-gradient-to-r from-green-500 to-teal-500 p-4 rounded-t-xl shadow-md">
                 <DialogTitle className="text-2xl font-bold text-white tracking-tight">
-                  {step === 3 ? "Confirm Task" : "Create Task"}
+                  {step === 4 ? "Confirm Task" : "Create Task"}
                 </DialogTitle>
                 <DialogDescription className="text-sm text-gray-100 mt-1">
                   {step === 1 && "Fill in the details for your new task."}
                   {step === 2 && "Suggested focus method based on your task."}
-                  {step === 3 && "Review and confirm your task details."}
+                  {step === 3 && "Break down your tasks if required."}
+                  {step === 4 && "Review and confirm your task details."}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="flex justify-between items-center my-2 mb-0">
-                {[1, 2, 3].map((s) => (
+                {[1, 2, 3, 4].map((s) => (
                   <div key={s} className="flex flex-col items-center">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
@@ -1021,7 +1171,8 @@ const TaskList = ({
                     >
                       {s === 1 && "Task Details"}
                       {s === 2 && "Focus Method"}
-                      {s === 3 && "Confirm"}
+                      {s === 3 && "Break Task"}
+                      {s === 4 && "Confirm"}
                     </span>
                   </div>
                 ))}
@@ -1030,7 +1181,14 @@ const TaskList = ({
                 <div
                   className="h-full bg-green-500 transition-all duration-300"
                   style={{
-                    width: step === 1 ? "33%" : step === 2 ? "66%" : "100%",
+                    width:
+                      step === 1
+                        ? "25%"
+                        : step === 2
+                        ? "50%"
+                        : step === 3
+                        ? "75%"
+                        : "100%",
                   }}
                 ></div>
               </div>
@@ -1160,6 +1318,64 @@ const TaskList = ({
                     </div>
                   </div>
 
+                  <div className="space-y-1">
+                    <Label>Focus Method</Label>
+                    <Select
+                      value={taskCreateData.focusMethodId?.toString() ?? ""}
+                      onValueChange={(value) => {
+                        const selected = allFocusMethods.find(
+                          (method) => method.focusMethodId.toString() === value
+                        );
+
+                        if (selected) {
+                          const isSuggested =
+                            suggestedFocusMethod &&
+                            selected.focusMethodId ===
+                              suggestedFocusMethod.focusMethodId;
+
+                          const reason = isSuggested
+                            ? suggestedFocusMethod.reason
+                            : selected.description;
+
+                          setFocusSuggestion({
+                            ...selected,
+                            reason,
+                          });
+
+                          setTaskCreateData((prev) => ({
+                            ...prev,
+                            focusMethodId: selected.focusMethodId,
+                            workDuration: selected.defaultDuration,
+                            breakTime: selected.defaultBreak,
+                          }));
+
+                          setSelectedWorkOption(
+                            selected.defaultDuration.toString()
+                          );
+                          setSelectedBreakOption(
+                            selected.defaultBreak.toString()
+                          );
+                          setWorkDurationError("");
+                          setBreakTimeError("");
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a focus method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allFocusMethods.map((method) => (
+                          <SelectItem
+                            key={method.focusMethodId}
+                            value={method.focusMethodId.toString()}
+                          >
+                            {method.focusMethodName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>Work Duration (minutes)</Label>
                     <div className="grid grid-cols-2 gap-2">
@@ -1272,17 +1488,121 @@ const TaskList = ({
 
               {step === 3 && (
                 <div className="space-y-4">
-                  <p>
-                    <strong>Task Name:</strong> {taskCreateData.taskName}
+                  <h2 className="text-lg font-semibold text-primary">
+                    🔧 Break your task into smaller parts
+                  </h2>
+                  <p className="text-sm text-gray-600 italic">
+                    🧠 Recommended: Split into at least{" "}
+                    {getInitialSubtasks(taskCreateData.totalDuration)}{" "}
+                    subtask(s)
                   </p>
-                  <p>
-                    <strong>Description:</strong>{" "}
-                    {taskCreateData.taskDescription}
-                  </p>
-                  <p>
-                    <strong>Total Duration:</strong>{" "}
-                    {taskCreateData.totalDuration} minutes
-                  </p>
+
+                  {subtasks.map((task, index) => (
+                    <div
+                      key={task.id}
+                      className="border p-3 rounded-xl bg-gray-50 space-y-2 shadow-sm relative"
+                    >
+                      {subtasks.length >
+                        getInitialSubtasks(taskCreateData.totalDuration) && (
+                        <button
+                          className="absolute top-2 right-2 text-sm text-red-500 hover:underline"
+                          onClick={() => handleRemoveSubtask(index)}
+                        >
+                          ❌ Remove
+                        </button>
+                      )}
+                      <Input
+                        value={task.title}
+                        onChange={(e) =>
+                          handleSubtaskChange(index, "title", e.target.value)
+                        }
+                        placeholder="Subtask title"
+                      />
+                      <Input
+                        type="number"
+                        min={1}
+                        value={task.duration}
+                        onChange={(e) =>
+                          handleSubtaskChange(
+                            index,
+                            "duration",
+                            Number(e.target.value)
+                          )
+                        }
+                        placeholder="Duration (minutes)"
+                      />
+                    </div>
+                  ))}
+
+                  <Button
+                    onClick={handleAddSubtask}
+                    variant="outline"
+                    className="mt-2"
+                  >
+                    ➕ Add another subtask
+                  </Button>
+                </div>
+              )}
+
+              {step === 4 && (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold text-primary">
+                    📝 Review Your Task
+                  </h2>
+
+                  {subtasks.length > 1 ? (
+                    <>
+                      <p>
+                        <strong>Task Name:</strong> {taskCreateData.taskName}
+                      </p>
+                      <p>
+                        <strong>Description:</strong>{" "}
+                        {taskCreateData.taskDescription}
+                      </p>
+                      <p>
+                        <strong>Total Duration:</strong>{" "}
+                        {taskCreateData.totalDuration} minutes
+                      </p>
+
+                      <div className="space-y-2">
+                        <h3 className="font-semibold text-md mt-2">
+                          📌 Subtasks:
+                        </h3>
+                        {subtasks.map((subtask, index) => (
+                          <div
+                            key={subtask.id}
+                            className="border p-3 rounded-xl bg-gray-50 shadow-sm"
+                          >
+                            <p>
+                              <strong>{index + 1}. Title:</strong>{" "}
+                              {subtask.title}
+                            </p>
+                            <p>
+                              <strong>Duration:</strong> {subtask.duration}{" "}
+                              minutes
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    // Nếu chỉ 1 hoặc 0 subtask thì hiển thị thông tin taskCreateData
+                    <>
+                      <p>
+                        <strong>Task Name:</strong> {taskCreateData.taskName}
+                      </p>
+                      <p>
+                        <strong>Description:</strong>{" "}
+                        {taskCreateData.taskDescription}
+                      </p>
+                      <p>
+                        <strong>Total Duration:</strong>{" "}
+                        {taskCreateData.totalDuration} minutes
+                      </p>
+                    </>
+                  )}
+
+                  {/* Các phần luôn hiển thị */}
                   <p>
                     <strong>Start Date:</strong>{" "}
                     {format(new Date(taskCreateData.startDate), "PPP HH:mm")}
@@ -1317,7 +1637,7 @@ const TaskList = ({
                     Back
                   </Button>
                 )}
-                {step < 3 && (
+                {step < 4 && (
                   <Button
                     className="bg-green-600 text-white hover:bg-green-700"
                     onClick={handleNext}
@@ -1349,7 +1669,8 @@ const TaskList = ({
                     )}
                   </Button>
                 )}
-                {step === 3 && (
+
+                {step === 4 && (
                   <Button
                     className="bg-green-600 text-white hover:bg-green-700"
                     onClick={handleCreateTask}

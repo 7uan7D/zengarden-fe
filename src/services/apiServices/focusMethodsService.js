@@ -5,4 +5,7 @@ export async function SuggestTaskFocusMethods(taskData) {
   return response.data;
 }
 
-export async function GetAllFocusMethods() {}
+export async function GetAllFocusMethods() {
+  const response = await axios.get(`/FocusMethods`);
+  return response.data;
+}
