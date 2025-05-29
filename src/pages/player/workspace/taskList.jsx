@@ -420,13 +420,13 @@ const TaskList = ({
           type="date"
           value={dateStr}
           onChange={(e) => onDateChange(e.target.value)}
-          className="border px-2 py-1 rounded"
+          className="border px-2 py-1 rounded bg-white text-black"
         />
         <input
           type="time"
           value={timeStr}
           onChange={(e) => onTimeChange(e.target.value)}
-          className="border px-2 py-1 rounded"
+          className="border px-2 py-1 rounded bg-white text-black"
         />
       </div>
     );
