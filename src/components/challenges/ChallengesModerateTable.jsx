@@ -347,13 +347,15 @@ const ChallengesModerateTable = () => {
                                                     ${challenge.status === 0 ? 'bg-gray-200 text-gray-800'
                                                         : challenge.status === 1 ? 'bg-blue-200 text-blue-800'
                                                             : challenge.status === 2 ? 'bg-green-200 text-green-800'
-                                                                : 'bg-red-200 text-red-800'
+                                                                : challenge.status === 3 ? 'bg-red-200 text-red-800'
+                                                                    : 'bg-yellow-200 text-yellow-800'
                                                     }`}
                                                 >
                                                     {challenge.status === 0 ? 'Pending'
                                                         : challenge.status === 1 ? 'Active'
                                                             : challenge.status === 2 ? 'Expired'
-                                                                : 'Cancelled'}
+                                                                : challenge.status === 3 ? 'Cancelled'
+                                                                    : 'Rejected'}
                                                 </span>
                                             </td>
                                             <td className='px-5 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
