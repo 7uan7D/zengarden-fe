@@ -160,3 +160,8 @@ export async function UpdateTaskDurationById(taskId, totalDuration) {
   });
   return response.data;
 }
+
+export async function GetTaskXPInfoById(taskId) {
+  const response = await axios.get(`/Task/${taskId}/xp`);
+  return response.data;
+}

@@ -20,6 +20,7 @@ import { GetBagItems } from "@/services/apiServices/itemService";
 import addIcon from "/images/add.png";
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
 import { CreateUserTree } from "@/services/apiServices/userTreesService";
+import { GetTaskXPInfoById } from "@/services/apiServices/taskService";
 
 const TreeInfo = ({ onTreeSelect }) => {
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
@@ -46,6 +47,21 @@ const TreeInfo = ({ onTreeSelect }) => {
   const progress = treeExp
     ? (treeExp.totalXp / (treeExp.totalXp + treeExp.xpToNextLevel)) * 100
     : 0;
+
+  const currentTask = JSON.parse(localStorage.getItem("currentTask"));
+  const taskId = currentTask?.taskId;
+  const [taskXpInfo, setTaskXpInfo] = useState(null);
+
+  useEffect(() => {
+    const currentTask = JSON.parse(localStorage.getItem("currentTask"));
+    const taskId = currentTask?.taskId;
+
+    if (taskId) {
+      GetTaskXPInfoById(taskId)
+        .then((res) => setTaskXpInfo(res))
+        .catch((err) => console.error("Error fetching XP info:", err));
+    }
+  }, []);
 
   // Fetch trees
   useEffect(() => {
@@ -205,11 +221,37 @@ const TreeInfo = ({ onTreeSelect }) => {
                 {treeExp && (
                   <div className="flex flex-col gap-1">
                     <div className="relative w-full h-3 rounded-full bg-gray-200 overflow-hidden shadow-inner">
+                      {/* XP hiện tại (xanh dương đậm) */}
                       <div
-                        style={{ width: `${progress}%` }}
-                        className="h-full bg-gradient-to-r from-green-400 via-yellow-300 to-pink-400 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${
+                            (treeExp.totalXp /
+                              (treeExp.totalXp + treeExp.xpToNextLevel)) *
+                            100
+                          }%`,
+                        }}
+                        className="absolute left-0 top-0 h-full bg-blue-600 transition-all duration-300"
                       ></div>
+
+                      {/* XP preview từ task (cam) */}
+                      {taskXpInfo && (
+                        <div
+                          style={{
+                            width: `${
+                              (Math.min(
+                                treeExp.totalXp + taskXpInfo.totalXp,
+                                treeExp.totalXp + treeExp.xpToNextLevel
+                              ) /
+                                (treeExp.totalXp + treeExp.xpToNextLevel)) *
+                              100
+                            }%`,
+                          }}
+                          className="absolute left-0 top-0 h-full bg-orange-400 opacity-90 transition-all duration-300"
+                        ></div>
+                      )}
                     </div>
+
+                    {/* Text tổng số XP */}
                     <span className="text-xs font-medium text-gray-700 text-center">
                       {selectedTree.levelId === 4
                         ? "Level Max"
@@ -217,6 +259,16 @@ const TreeInfo = ({ onTreeSelect }) => {
                             treeExp.totalXp + treeExp.xpToNextLevel
                           } XP`}
                     </span>
+
+                    {/* XP sắp được nhận */}
+                    {taskXpInfo && (
+                      <span className="text-xs text-center text-orange-600 font-semibold">
+                        +{taskXpInfo.totalXp.toFixed(2)} XP is about to be
+                        received from the task
+                        {taskXpInfo.bonusItemName &&
+                          ` (included ${taskXpInfo.bonusItemName})`}
+                      </span>
+                    )}
                   </div>
                 )}
 
