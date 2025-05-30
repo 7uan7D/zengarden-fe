@@ -161,7 +161,8 @@ const TreeInfo = ({ onTreeSelect }) => {
   return (
     <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg h-[493px]">
       <CardContent className="p-6 h-full flex items-center justify-center">
-        <div className="bg-[#CCFFCC] text-black p-6 rounded-lg shadow-md inline items-center gap-6 w-full h-full">
+        <div className="flex flex-col sm:flex-row items-center gap-6 bg-green-50 text-black p-6 rounded-xl shadow-lg w-full max-w-3xl mx-auto transition hover:shadow-xl">
+          {/* Ảnh cây */}
           <div
             className="relative cursor-pointer"
             onClick={() => {
@@ -173,34 +174,43 @@ const TreeInfo = ({ onTreeSelect }) => {
               }
             }}
           >
-            <div className="w-40 h-40 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-105 transition-transform">
+            <div className="w-40 h-40 rounded-full border-4 border-green-300 shadow flex items-center justify-center bg-white hover:scale-105 transition-transform">
               <img
                 src={userTrees.length > 0 ? treeImageSrc : addIcon}
+                alt="Tree"
                 className={`object-contain ${
                   userTrees.length > 0 && (treeLevel === 1 || treeLevel === 2)
-                    ? "w-10 h-10"
-                    : "w-30 h-30"
+                    ? "w-12 h-12"
+                    : "w-24 h-24"
                 }`}
               />
             </div>
           </div>
 
-          <div className="flex-1">
+          {/* Thông tin cây */}
+          <div className="flex-1 w-full">
             {selectedTree ? (
-              <>
-                <h2 className="text-3xl font-bold text-[#609994] tracking-wide flex items-center gap-3">
-                  {selectedTree.name}
-                  <span className="text-base font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full shadow-inner">
+              <div className="flex flex-col gap-3 bg-white/90 p-4 rounded-lg shadow-md backdrop-blur-md">
+                {/* Tên cây + Level */}
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-green-700 flex items-center gap-1">
+                    🌳 {selectedTree.name}
+                  </h2>
+                  <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full shadow">
                     Level {selectedTree.levelId}
                   </span>
-                </h2>
+                </div>
+
+                {/* Thanh XP */}
                 {treeExp && (
-                  <div className="relative w-full mt-3 h-4 rounded-full bg-gray-200 overflow-hidden">
-                    <div
-                      style={{ width: `${progress}%` }}
-                      className="h-full bg-gradient-to-r from-[#a1d99b] via-[#f9d976] to-[#f49a8c] rounded-full"
-                    ></div>
-                    <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-700 drop-shadow-sm">
+                  <div className="flex flex-col gap-1">
+                    <div className="relative w-full h-3 rounded-full bg-gray-200 overflow-hidden shadow-inner">
+                      <div
+                        style={{ width: `${progress}%` }}
+                        className="h-full bg-gradient-to-r from-green-400 via-yellow-300 to-pink-400 rounded-full transition-all duration-300"
+                      ></div>
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 text-center">
                       {selectedTree.levelId === 4
                         ? "Level Max"
                         : `${treeExp.totalXp} / ${
@@ -209,33 +219,41 @@ const TreeInfo = ({ onTreeSelect }) => {
                     </span>
                   </div>
                 )}
-                <div className="mt-5 flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-medium text-gray-700">
+
+                {/* Equipped Items */}
+                <div className="flex flex-wrap gap-2 items-center mt-2">
+                  <span className="text-sm font-semibold text-gray-800">
                     Equipped Items:
                   </span>
-                  {equippedItems.map((item) => {
-                    const { bagItemId, item: itemData } = item;
-                    const { name, type, itemDetail } = itemData || {};
-                    const mediaUrl = itemData.itemDetail?.mediaUrl;
+                  {equippedItems.length > 0 ? (
+                    equippedItems.map((item) => {
+                      const { bagItemId, item: itemData } = item;
+                      const { name, type, itemDetail } = itemData || {};
+                      const mediaUrl = itemDetail?.mediaUrl;
 
-                    return (
-                      <span
-                        key={bagItemId}
-                        className="text-xs bg-[#83aa6c] text-white px-3 py-1 rounded-full shadow hover:opacity-90 transition flex items-center"
-                      >
-                        {type !== 4 && mediaUrl && (
-                          <img
-                            src={mediaUrl}
-                            alt={name}
-                            className="w-5 h-5 mr-2 object-contain"
-                          />
-                        )}
-                        {name}
-                      </span>
-                    );
-                  })}
+                      return (
+                        <span
+                          key={bagItemId}
+                          className="flex items-center gap-1 text-xs bg-green-500 text-white px-2 py-0.5 rounded-full shadow hover:bg-green-600 transition"
+                        >
+                          {type !== 4 && mediaUrl && (
+                            <img
+                              src={mediaUrl}
+                              alt={name}
+                              className="w-4 h-4 object-contain"
+                            />
+                          )}
+                          {name}
+                        </span>
+                      );
+                    })
+                  ) : (
+                    <span className="text-xs italic text-gray-500">
+                      No items equipped
+                    </span>
+                  )}
                 </div>
-              </>
+              </div>
             ) : (
               <p className="text-sm italic text-gray-500">
                 Haven't chosen any tree yet
