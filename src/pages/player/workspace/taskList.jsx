@@ -198,13 +198,19 @@ const TaskList = ({
   // Filter and sort tasks to prioritize status 1
   const filteredTasks = tasks
     .filter((task) => {
+      const isVisibleStatus = task.status !== 3 && task.status !== 4;
+
+      if (!isVisibleStatus) return false;
+
       if (activeTab === "Simple & Complex") {
         return (
-          task.taskTypeName === "Simple" || task.taskTypeName === "Complex"
+          (task.taskTypeName === "Simple" || task.taskTypeName === "Complex") &&
+          isVisibleStatus
         );
       } else if (activeTab === "Challenge") {
-        return task.taskTypeName === "Challenge";
+        return task.taskTypeName === "Challenge" && isVisibleStatus;
       }
+
       return false;
     })
     .sort((a, b) => {
