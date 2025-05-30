@@ -200,10 +200,11 @@ const TaskList = ({
     .filter((task) => {
       if (activeTab === "Simple & Complex") {
         return (
-          task.taskTypeName === "Simple" || task.taskTypeName === "Complex"
+          (task.taskTypeName === "Simple" || task.taskTypeName === "Complex") &&
+          task.status === 0
         );
       } else if (activeTab === "Challenge") {
-        return task.taskTypeName === "Challenge";
+        return task.taskTypeName === "Challenge" && task.status === 0;
       }
       return false;
     })
@@ -730,9 +731,9 @@ const TaskList = ({
               <Slider {...sliderSettings}>
                 {filteredTasks.map((task, index) => {
                   const taskKey = `task-${task.taskId}`;
-                  if (focusedTask && focusedTask.taskId !== task.taskId) {
+                  if (focusedTask && (focusedTask.taskId !== task.taskId || focusedTask.status !== 0)) {
                     return null;
-                  }
+                  } // Skip tasks that are not focused or not in status 0
 
                   const remainingTime = task.remainingTime || 0;
                   const timer = timers[taskKey] || {};
@@ -1065,7 +1066,7 @@ const TaskList = ({
                                     "Resume"
                                   )}
                                 </Button>
-                                {remainingTime <= 120 && remainingTime >= 0 && (
+                                {remainingTime <= 300 && remainingTime >= 0 && (
                                   <Button
                                     style={{
                                       width: "100px",
@@ -1272,7 +1273,7 @@ const TaskList = ({
                       </p>
                     )}
                   </div>
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-row gap-4"> {/* Date and Time Pickers - đổi hiển thị ngang dọc */}
                     <SimpleDateTimePicker
                       label="Start Date"
                       value={taskCreateData.startDate}

@@ -14,11 +14,11 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import "../task/index.css";
-import { GetAllTasks } from "@/services/apiServices/taskService";
 import { GetTaskByUserId } from "@/services/apiServices/taskService";
 import { UpdateTaskById2 } from "@/services/apiServices/taskService";
 import { DeleteTaskById } from "@/services/apiServices/taskService";
 import parseJwt from "@/services/parseJwt";
+import { toast } from "sonner";
 
 const taskTypeIdMap = {
   Simple: 2,
@@ -93,7 +93,6 @@ export default function TaskTab({ userTreeId }) {
     }
   }, [selectedTask]);
 
-  // Hàm định dạng thời gian
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -102,7 +101,6 @@ export default function TaskTab({ userTreeId }) {
       .padStart(2, "0")}`;
   };
 
-  // Hàm định dạng ngày giờ
   const formatDateTime = (dateString) => {
     return new Date(dateString).toLocaleString("vi-VN", {
       dateStyle: "short",
@@ -110,7 +108,6 @@ export default function TaskTab({ userTreeId }) {
     });
   };
 
-  // Hàm xác định nhãn độ ưu tiên
   const getPriorityLabel = (priority) => {
     switch (priority) {
       case 1:
@@ -126,7 +123,6 @@ export default function TaskTab({ userTreeId }) {
     }
   };
 
-  // Hàm xác định trạng thái task
   const getStatusLabel = (status) => {
     switch (status) {
       case 0:
@@ -143,35 +139,32 @@ export default function TaskTab({ userTreeId }) {
     }
   };
 
-  // Hàm xử lý khi nhấp vào task
   const handleTaskClick = (task) => {
     setSelectedTask(task);
     setIsDialogOpen(true);
   };
 
-  // Hàm hiển thị cột task
   const renderTaskColumn = (title, taskList, columnKey) => {
     const filteredTasks =
       activeTabs[columnKey] === "all"
         ? taskList
         : activeTabs[columnKey] === "current"
-        ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
-        : taskList.filter((task) => task.status === 3);
+          ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
+          : taskList.filter((task) => task.status === 3);
 
     const sortedTasks = [...filteredTasks].sort(
       (a, b) => a.priority - b.priority
     );
 
-    // Tính chiều cao động cho cột
-    const taskHeight = 95; // Chiều cao mỗi task (px)
-    const gap = 12; // Khoảng cách giữa các task (px)
-    const padding = 16 * 2; // Padding top + bottom (px)
+    const taskHeight = 85;
+    const gap = 8;
+    const padding = 0;
     const calculatedHeight =
       sortedTasks.length > 0
         ? sortedTasks.length * taskHeight +
           (sortedTasks.length - 1) * gap +
           padding
-        : 150; // Chiều cao tối thiểu nếu không có task
+        : 150;
 
     return (
       <div className="task-column-container">
@@ -211,17 +204,14 @@ export default function TaskTab({ userTreeId }) {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
+          style={{ minHeight: `${calculatedHeight}px` }}
         >
-          <div className="grid" style={{ minHeight: `${calculatedHeight}px` }}>
+          <div className="task-list">
             {sortedTasks.length === 0 ? (
               <p className="text-gray-500 text-center">No tasks available</p>
             ) : (
               sortedTasks.map((task, index) => {
                 const remainingTime = task.remainingTime || 0;
-                const currentTaskStatus =
-                  task.status === 1 ? 1 : task.status === 2 ? 2 : 0;
-
-                // Tính toán progress bar
                 const totalDurationSeconds = task.totalDuration * 60;
                 const elapsedTime = totalDurationSeconds - remainingTime;
                 const cycleDuration = (task.workDuration + task.breakTime) * 60;
@@ -273,22 +263,22 @@ export default function TaskTab({ userTreeId }) {
                             task.priority <= 2
                               ? "high"
                               : task.priority <= 4
-                              ? "medium"
-                              : "low"
+                                ? "medium"
+                                : "low"
                           } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
                         >
                           {getPriorityLabel(task.priority)}
                         </div>
                       )}
-                      <div className="flex-1 flex flex-col justify-between text-left p-4">
-                        <div>
+                      <div className="flex-1 flex flex-col gap-1 text-left">
+                        <div className="min-h-[24px]">
                           <span className="text-gray-700 font-medium">
                             {task.taskName}
                           </span>
                         </div>
-                        <div className="flex flex-col gap-1 text-left">
-                          <div className="progress-bar-container">
-                            <div className="progress-bar flex h-2 rounded overflow-hidden">
+                        <div className="flex flex-col gap-1">
+                          <div className="progress-bar-container h-2">
+                            <div className="progress-bar flex h-full rounded overflow-hidden">
                               {phases.map((phase, idx) => (
                                 <div
                                   key={idx}
@@ -307,14 +297,16 @@ export default function TaskTab({ userTreeId }) {
                               ))}
                             </div>
                           </div>
-                          {task.status === 0 && (
-                            <div className="text-xs text-gray-500 mt-1">
+                          <div className="min-h-[8px] text-xs text-gray-500">
+                            {task.status === 0 ? (
                               <span className="text-gray-400">Not Started</span>
-                            </div>
-                          )}
+                            ) : (
+                              <span> </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-2 p-4">
+                      <div className="flex flex-col items-start gap-2 p-5 pl-0">
                         {task.status === 0 ? (
                           <span
                             className="flex items-center gap-1 text-sm"
@@ -373,7 +365,7 @@ export default function TaskTab({ userTreeId }) {
       )}
       {selectedTask && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>
                 {selectedTask?.taskName || "Task Details"}
@@ -383,11 +375,16 @@ export default function TaskTab({ userTreeId }) {
               </DialogDescription>
             </DialogHeader>
 
-            {selectedTask && (
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-800">
-                {/* Editable Fields */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mt-6 text-sm text-gray-800 task-tab-dialog-container" style={{ display: "block" }}>
+              <div
+                className="grid gap-6 task-tab-dialog-grid"
+                style={{ gridTemplateColumns: "1fr 1fr", gridTemplateAreas: '"editable read-only"' }}
+              >
+                <div className="space-y-4 editable-fields" style={{ gridArea: "editable" }}>
+                  <h3 className="text-lg font-semibold text-gray-700">
+                    Editable Fields
+                  </h3>
+                  <div className="grid gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Start Date
@@ -439,7 +436,6 @@ export default function TaskTab({ userTreeId }) {
                         const value = parseInt(e.target.value);
                         const taskType = editTaskData.TaskType;
 
-                        // Xác định phạm vi hợp lệ
                         const min = taskType === "Simple" ? 30 : 180;
                         const max = taskType === "Simple" ? 179 : Infinity;
 
@@ -545,8 +541,6 @@ export default function TaskTab({ userTreeId }) {
                             >
                               {selectedTask.taskResult}
                             </a>
-
-                            {/* Nếu là ảnh thì preview */}
                             {selectedTask.taskResult.match(
                               /\.(jpeg|jpg|png|gif)$/i
                             ) && (
@@ -556,8 +550,6 @@ export default function TaskTab({ userTreeId }) {
                                 className="max-w-full h-auto rounded"
                               />
                             )}
-
-                            {/* Nếu là PDF thì preview bằng iframe */}
                             {selectedTask.taskResult.match(/\.pdf$/i) && (
                               <iframe
                                 src={selectedTask.taskResult}
@@ -578,8 +570,10 @@ export default function TaskTab({ userTreeId }) {
                   </div>
                 </div>
 
-                {/* Read-Only Fields */}
-                <div className="space-y-4">
+                <div className="space-y-4 read-only-fields" style={{ gridArea: "read-only" }}>
+                  <h3 className="text-lg font-semibold text-gray-700">
+                    Read-Only Fields
+                  </h3>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Tree
@@ -611,12 +605,12 @@ export default function TaskTab({ userTreeId }) {
                     <label className="block text-sm font-medium text-gray-700">
                       Focus Method
                     </label>
-                    <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                    <div className="mt-1 rounded-md border p-2 bg-gray-50 mt-0">
                       {selectedTask.focusMethodName}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Work Duration
@@ -647,7 +641,7 @@ export default function TaskTab({ userTreeId }) {
                   )}
                 </div>
               </div>
-            )}
+            </div>
 
             <DialogFooter>
               <Button
@@ -655,7 +649,6 @@ export default function TaskTab({ userTreeId }) {
                   try {
                     await DeleteTaskById(selectedTask.taskId);
                     toast.success("Task deleted!");
-
                     setIsDialogOpen(false);
                   } catch (err) {
                     console.error("Delete failed:", err);
@@ -689,7 +682,6 @@ export default function TaskTab({ userTreeId }) {
               >
                 Update
               </Button>
-
               <Button onClick={() => setIsDialogOpen(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
