@@ -50,6 +50,8 @@ import { GetTaskByUserTreeId } from "@/services/apiServices/taskService.js";
 import { StartTask } from "@/services/apiServices/taskService.js";
 import { PauseTask } from "@/services/apiServices/taskService.js";
 import { CompleteTask } from "@/services/apiServices/taskService.js";
+import { GetUserConfigByUserId } from "@/services/apiServices/userConfigService.js";
+import parseJwt from "@/services/parseJwt.js";
 
 // Sample tasks data
 // const sampleTasks = [
@@ -419,6 +421,28 @@ export default function Workspace() {
     setBackgroundUrl(url);
   };
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const parsedToken = token ? parseJwt(token) : null;
+    const userId = parsedToken?.sub;
+
+    const fetchUserConfig = async () => {
+      try {
+        const response = await GetUserConfigByUserId(userId);
+        if (response?.backgroundConfig) {
+          setBackgroundUrl(response.backgroundConfig);
+          localStorage.setItem("backgroundUrl", response.backgroundConfig); // optional
+        }
+      } catch (error) {
+        console.error("Lỗi khi gọi API cấu hình người dùng:", error);
+      }
+    };
+
+    if (userId) {
+      fetchUserConfig();
+    }
+  }, []);
+
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
   };
@@ -448,7 +472,7 @@ export default function Workspace() {
   };
 
   const handleTaskAction = async (task, index, action) => {
-    const taskKey = `task-${task.taskId}`; // Use taskId instead of index
+    const taskKey = `task-${task.taskId}`;
     try {
       setLoadingTaskKey(taskKey);
 
@@ -542,6 +566,7 @@ export default function Workspace() {
                 status: 1,
                 index,
                 taskKey,
+                savedAt: Date.now(),
               })
             );
 
@@ -569,6 +594,7 @@ export default function Workspace() {
             status: 1,
             index,
             taskKey,
+            savedAt: Date.now(),
           })
         );
       } else if (action === "pause") {
@@ -612,6 +638,7 @@ export default function Workspace() {
             status: 2,
             index,
             taskKey,
+            savedAt: Date.now(),
           })
         );
       } else if (action === "finish") {
@@ -648,12 +675,151 @@ export default function Workspace() {
   };
 
   useEffect(() => {
-    return () => {
-      Object.values(intervalRefs.current).forEach((intervalId) =>
-        clearInterval(intervalId)
-      );
-    };
+    const savedTaskStr = localStorage.getItem("currentTask");
+    if (!savedTaskStr) return;
+
+    const savedTask = JSON.parse(savedTaskStr);
+
+    const now = Date.now();
+    const elapsedSeconds = Math.floor((now - savedTask.savedAt) / 1000);
+
+    // Cập nhật lại remainingTime trừ đi elapsedSeconds
+    let updatedRemainingTime = savedTask.remainingTime - elapsedSeconds;
+    if (updatedRemainingTime < 0) updatedRemainingTime = 0;
+    const {
+      taskId,
+      taskName,
+      remainingTime,
+      status,
+      index,
+      taskKey,
+      workDuration,
+      breakTime,
+      isWorkPhase = true,
+    } = savedTask;
+
+    setActiveTaskKey(taskKey);
+    setFocusedTask({ taskId, taskName });
+
+    setTimers((prev) => ({
+      ...prev,
+      [taskKey]: {
+        isWorkPhase,
+        currentWorkTime: workDuration * 60,
+        currentBreakTime: breakTime * 60,
+        remainingTime,
+        isRunning: status === 1, // important: chạy tiếp nếu status=1 (running)
+        totalWorkCompleted: 0,
+        totalBreakCompleted: 0,
+      },
+    }));
+
+    setTasks((prevTasks) =>
+      prevTasks.map((t, i) =>
+        i === index ? { ...t, status, remainingTime } : t
+      )
+    );
+
+    if (status === 1) {
+      if (intervalRefs.current[taskKey]) {
+        clearInterval(intervalRefs.current[taskKey]);
+      }
+      intervalRefs.current[taskKey] = setInterval(() => {
+        setTimers((prev) => {
+          const timer = prev[taskKey];
+          if (!timer || !timer.isRunning) return prev;
+
+          let {
+            isWorkPhase,
+            currentWorkTime,
+            currentBreakTime,
+            remainingTime,
+            totalWorkCompleted,
+            totalBreakCompleted,
+          } = timer;
+
+          if (remainingTime > 0) {
+            if (isWorkPhase) {
+              currentWorkTime -= 1;
+              remainingTime -= 1;
+              if (currentWorkTime <= 0) {
+                totalWorkCompleted += workDuration * 60;
+                isWorkPhase = false;
+                currentWorkTime = workDuration * 60;
+                currentBreakTime = breakTime * 60;
+              }
+            } else {
+              currentBreakTime -= 1;
+              remainingTime -= 1;
+              if (currentBreakTime <= 0) {
+                totalBreakCompleted += breakTime * 60;
+                isWorkPhase = true;
+                currentWorkTime = workDuration * 60;
+                currentBreakTime = breakTime * 60;
+              }
+            }
+          } else {
+            clearInterval(intervalRefs.current[taskKey]);
+            setTasks((prevTasks) =>
+              prevTasks.map((t, i) =>
+                i === index ? { ...t, status: 4, remainingTime: 0 } : t
+              )
+            );
+            setActiveTaskKey(null);
+            setFocusedTask(null);
+            localStorage.removeItem("currentTask");
+            return {
+              ...prev,
+              [taskKey]: { ...timer, isRunning: false },
+            };
+          }
+
+          setTasks((prevTasks) =>
+            prevTasks.map((t, i) =>
+              i === index ? { ...t, status: 1, remainingTime } : t
+            )
+          );
+
+          localStorage.setItem(
+            "currentTask",
+            JSON.stringify({
+              taskId,
+              taskName,
+              remainingTime,
+              status: 1,
+              index,
+              taskKey,
+              workDuration,
+              breakTime,
+              isWorkPhase,
+              savedAt: Date.now(),
+            })
+          );
+
+          return {
+            ...prev,
+            [taskKey]: {
+              ...timer,
+              isWorkPhase,
+              currentWorkTime,
+              currentBreakTime,
+              remainingTime,
+              totalWorkCompleted,
+              totalBreakCompleted,
+            },
+          };
+        });
+      }, 1000);
+    }
   }, []);
+
+  // useEffect(() => {
+  //   return () => {
+  //     Object.values(intervalRefs.current).forEach((intervalId) =>
+  //       clearInterval(intervalId)
+  //     );
+  //   };
+  // }, []);
 
   const sidebarTabs = [
     { name: "Your Space", icon: <LayoutDashboard size={24} /> },
