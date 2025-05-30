@@ -345,10 +345,10 @@ const ChallengesModerateTable = () => {
                                                 <span
                                                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                                     ${challenge.status === 0 ? 'bg-gray-200 text-gray-800'
-                                                        : challenge.status === 1 ? 'bg-blue-200 text-blue-800'
-                                                            : challenge.status === 2 ? 'bg-green-200 text-green-800'
+                                                        : challenge.status === 1 ? 'bg-green-200 text-green-800'
+                                                            : challenge.status === 2 ? 'bg-yellow-200 text-yellow-800'
                                                                 : challenge.status === 3 ? 'bg-red-200 text-red-800'
-                                                                    : 'bg-yellow-200 text-yellow-800'
+                                                                    : 'bg-orange-200 text-orange-800'
                                                     }`}
                                                 >
                                                     {challenge.status === 0 ? 'Pending'
@@ -402,21 +402,22 @@ const ChallengesModerateTable = () => {
                                         {challenge.description}
                                     </p>
 
-                                    <p className='text-gray-400 text-left text-sm'>
+                                    <div className='text-gray-400 text-left text-sm'>
                                         {challenge.tasks.length === 0 ? (
-                                            <p className='text-gray-200 text-sm font-bold mr-1'>No tasks available</p>
+                                            <p className='text-gray-200 text-sm font-bold'>No tasks available</p>
                                         ) : (
                                             <>
-                                                <p className='text-gray-200 text-sm font-bold mr-1'>Tasks: </p>
-                                                {challenge.tasks.map((task) => (
-                                                    <ul key={task.taskId} className='list-disc list-inside'>
-                                                        <li className='text-gray-400 text-sm'>{task.taskName}</li>
-                                                    </ul>
-                                                ))}
+                                                <p className='text-gray-200 text-sm font-bold mb-1'>Tasks: </p>
+                                                <ul className='list-disc list-inside ml-4'>
+                                                    {challenge.tasks.map((task) => (
+                                                        <li key={task.taskId} className='text-gray-400 text-sm'>
+                                                            {task.taskName}
+                                                        </li>
+                                                    ))}
+                                                </ul>
                                             </>
                                         )}
-
-                                    </p>
+                                    </div>
 
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Start Date: </p>
