@@ -137,9 +137,8 @@
 /* Grid container for widgets */
 .home-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(3, 1fr); /* 3 columns for Tree, Challenges, Marketplace */
   gap: 1.5rem;
-  align-items: start; /* Mỗi ô có chiều cao riêng */
 }
 
 @media (min-width: 768px) {
@@ -153,7 +152,7 @@
     grid-template-columns: repeat(3, 1fr);
   }
   .task-widget {
-    grid-column: span 2; /* Task widget chiếm 2 cột */
+    grid-column: span 3; /* Task widget chiếm 3 cột */
   }
 }
 
@@ -161,6 +160,10 @@
 .widget-card {
   height: auto; /* Chiều cao dựa trên nội dung */
   min-height: 150px; /* Đảm bảo không quá ngắn */
+}
+
+.widget-card > .button-container {
+  margin-top: auto;
 }
 
 /* Calendar Widget */

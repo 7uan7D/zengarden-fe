@@ -52,12 +52,8 @@
   border-radius: 0.4rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 1rem;
-  height: 88%;
+  overflow: visible !important; /* Prevent task clipping */
 } /* Trang trí cột task với nền trắng, bo góc, bóng đổ nhẹ, và chiều cao full */
-
-.task-column {
-  padding: 2%;
-}
 
 .task-column-title {
   font-size: 1.15rem;
@@ -65,10 +61,6 @@
   text-align: center;
 } /* Trang trí tiêu đề cột task với kích thước chữ lớn, đậm, căn giữa, và viền dưới */
 
-.task-column-title.daily {
-  color: #3b82f6; /* Blue-500 for Daily Task */
-  background: none;
-}
 .task-column-title.simple {
   color: #22c55e; /* Green-500 for Simple Task */
   background: none;
@@ -87,14 +79,37 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem;
+  padding-bottom: 0 !important; /* Đảm bảo padding dưới không bị ghi đè */
   background: #f9fafb;
   border-radius: 0.5rem;
   transition: background 0.2s ease;
+  align-items: stretch; /* Ensure both sides of the task item stretch to the same height */
+  height: 95px; /* Consistent minimum height for all task items */
+  box-sizing: border-box;
 } /* Trang trí mỗi task với bố cục flex, nền xám nhạt, bo góc, và hiệu ứng đổi màu khi hover */
 
-.task-item:hover {
-  background: #f1f5f9;
-} /* Tạo hiệu ứng nền sáng hơn khi hover vào task */
+.task-item .flex-1 {
+  display: flex;
+  flex-direction: column;
+}
+
+.task-item .progress-bar-container {
+  height: 8px;
+  width: 230px; /* Fixed width for all progress bars */
+}
+
+.task-item .progress-bar {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Match the gap used in calculatedHeight */
+  width: 100%;
+  min-height: inherit; /* Inherit minHeight from task-column */
+}
 
 .task-info {
   display: flex;
@@ -278,4 +293,24 @@
 
 .ant-picker-header button:hover {
   background: none; /* Loại bỏ hiệu ứng hover */
+}
+.task-tab-dialog-container {
+  max-width: 100%; /* Prevent overflow */
+  overflow: auto; /* Add scroll if content overflows */
+}
+
+.task-tab-dialog-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas: "editable read-only";
+  gap: 1.5rem;
+}
+
+@media (max-width: 767px) {
+  .task-tab-dialog-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "editable"
+      "read-only";
+  }
 }

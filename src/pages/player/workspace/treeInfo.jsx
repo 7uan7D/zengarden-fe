@@ -173,7 +173,7 @@ const TreeInfo = ({ onTreeSelect }) => {
               }
             }}
           >
-            <div className="w-40 h-40 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
+            <div className="w-40 h-40 mx-auto rounded-full border-4 border-green-300 shadow-md flex items-center justify-center hover:scale-105 transition-transform">
               <img
                 src={userTrees.length > 0 ? treeImageSrc : addIcon}
                 className={`object-contain ${

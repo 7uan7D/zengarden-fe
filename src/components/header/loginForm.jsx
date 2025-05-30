@@ -162,11 +162,11 @@ const LoginForm = ({ setIsLoggedIn, setIsSheetOpen }) => {
                 <span>Use Phone Number</span>
                 <Switch checked={usePhone} onCheckedChange={setUsePhone} />
               </div>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
+              <div className="form-grid gap-4">
+                <div className="form-row flex items-center gap-2">
                   <Label
                     htmlFor={usePhone ? "phone" : "email"}
-                    className="text-right"
+                    className={usePhone ? "phone-label w-1/3" : "email-label w-1/3"}
                   >
                     {usePhone ? "Phone Number" : "Email"}
                   </Label>
@@ -174,7 +174,7 @@ const LoginForm = ({ setIsLoggedIn, setIsSheetOpen }) => {
                     id={usePhone ? "phone" : "email"}
                     type={usePhone ? "tel" : "email"}
                     placeholder={usePhone ? "0123456789" : "example@email.com"}
-                    className="col-span-3"
+                    className={usePhone ? "phone-input w-2/3" : "email-input w-2/3"}
                     value={usePhone ? credentials.phone : credentials.email}
                     onChange={(e) =>
                       setCredentials({
@@ -184,15 +184,15 @@ const LoginForm = ({ setIsLoggedIn, setIsSheetOpen }) => {
                     }
                   />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="password" className="text-right">
+                <div className="form-row flex items-center gap-2">
+                  <Label htmlFor="password" className="password-label w-1/3">
                     Password
                   </Label>
                   <Input
                     id="password"
                     type="password"
                     placeholder="••••••••"
-                    className="col-span-3"
+                    className="password-input w-2/3"
                     value={credentials.password}
                     onChange={(e) =>
                       setCredentials({
@@ -205,7 +205,7 @@ const LoginForm = ({ setIsLoggedIn, setIsSheetOpen }) => {
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <SheetFooter>
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading} className="login-button">
                   {isLoading ? (
                     <div className="flex items-center gap-2">
                       <span className="animate-spin w-4 h-4 border-2 border-t-transparent border-white rounded-full" />
