@@ -81,14 +81,17 @@ export default function TaskTab({ userTreeId }) {
     TotalDuration: selectedTask?.totalDuration || 0,
     TaskType: selectedTask?.taskTypeName || "Simple",
     TaskTypeId: taskTypeIdMap[selectedTask?.taskTypeName] || 2,
+    taskNote: selectedTask?.taskNote || "",
   });
 
   useEffect(() => {
+    console.log("Selected Task:", selectedTask);
     if (selectedTask) {
       setEditTaskData({
         TotalDuration: selectedTask.totalDuration || 0,
         TaskType: selectedTask.taskTypeName || "Simple",
         TaskTypeId: taskTypeIdMap[selectedTask.taskTypeName] || 2,
+        taskNote: selectedTask.taskNote || "",
       });
     }
   }, [selectedTask]);
@@ -400,26 +403,110 @@ export default function TaskTab({ userTreeId }) {
                 {selectedTask?.taskDescription || "No description available"}
               </DialogDescription>
             </DialogHeader>
-
             <div
-              className="mt-6 text-sm text-gray-800 task-tab-dialog-container"
-              style={{ display: "block" }}
+              className="max-h-[70vh] overflow-y-auto px-4"
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "#cbd5e0 #edf2f7",
+              }}
             >
               <div
-                className="grid gap-6 task-tab-dialog-grid"
-                style={{
-                  gridTemplateColumns: "1fr 1fr",
-                  gridTemplateAreas: '"editable read-only"',
-                }}
+                className="mt-6 text-sm text-gray-800 task-tab-dialog-container"
+                style={{ display: "block" }}
               >
-                <div
-                  className="space-y-4 editable-fields"
-                  style={{ gridArea: "editable" }}
-                >
-                  <h3 className="text-lg font-semibold text-gray-700">
-                    Editable Fields
-                  </h3>
-                  <div className="grid gap-4">
+                <div className="grid gap-6 task-tab-dialog-grid">
+                  {/* Read-Only Section */}
+                  <div className="space-y-4 read-only-fields">
+                    <h3 className="text-lg font-semibold text-gray-700">
+                      Read-Only Fields
+                    </h3>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Tree
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {selectedTask.userTreeName}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Status
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {
+                          {
+                            0: "Not Started",
+                            1: "In Progress",
+                            2: "Paused",
+                            3: "Completed",
+                            4: "Expired",
+                            5: "Canceled",
+                          }[selectedTask.status]
+                        }
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Focus Method
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {selectedTask.focusMethodName}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Total Duration
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {editTaskData.TotalDuration} minutes
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Task Type
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {editTaskData.TaskType}
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Work Duration
+                        </label>
+                        <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                          {selectedTask.workDuration} minutes
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Break Time
+                        </label>
+                        <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                          {selectedTask.breakTime} minutes
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedTask.remainingTime !== null && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Remaining Time
+                        </label>
+                        <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                          {formatTime(
+                            parseTimeToSeconds(selectedTask.remainingTime)
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         Start Date
@@ -438,6 +525,7 @@ export default function TaskTab({ userTreeId }) {
                         })}
                       </div>
                     </div>
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
                         End Date
@@ -456,233 +544,133 @@ export default function TaskTab({ userTreeId }) {
                         })}
                       </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="block font-medium text-gray-700">
-                      Total Duration (minutes)
-                    </label>
-                    <input
-                      type="number"
-                      value={editTaskData.TotalDuration}
-                      min={editTaskData.TaskType === "Simple" ? 30 : 180}
-                      max={editTaskData.TaskType === "Simple" ? 179 : undefined}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value);
-                        const taskType = editTaskData.TaskType;
-
-                        const min = taskType === "Simple" ? 30 : 180;
-                        const max = taskType === "Simple" ? 179 : Infinity;
-
-                        if (value >= min && value <= max) {
-                          setEditTaskData({
-                            ...editTaskData,
-                            TotalDuration: value,
-                          });
-                        } else {
-                          toast.error(
-                            `Total Duration for '${taskType}' must be between ${min} and ${
-                              max === Infinity ? "∞" : max
-                            } minutes.`
-                          );
-                        }
-                      }}
-                      disabled={
-                        editTaskData.TaskTypeId !== 2 &&
-                        editTaskData.TaskTypeId !== 3
-                      }
-                      className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-medium text-gray-700">
-                      Task Type
-                    </label>
-                    <select
-                      value={editTaskData.TaskType}
-                      onChange={(e) => {
-                        const selectedType = e.target.value;
-                        const currentDuration = editTaskData.TotalDuration;
-
-                        const isValidDuration =
-                          (selectedType === "Simple" &&
-                            currentDuration >= 30 &&
-                            currentDuration < 180) ||
-                          (selectedType === "Complex" &&
-                            currentDuration >= 180);
-
-                        if (!isValidDuration) {
-                          const newDuration =
-                            selectedType === "Simple" ? 30 : 180;
-                          toast.info(
-                            `Invalid duration for type '${selectedType}'. Updated to ${newDuration} minutes.`
-                          );
-                          setEditTaskData({
-                            ...editTaskData,
-                            TaskType: selectedType,
-                            TaskTypeId: taskTypeIdMap[selectedType],
-                            TotalDuration: newDuration,
-                          });
-                        } else {
-                          setEditTaskData({
-                            ...editTaskData,
-                            TaskType: selectedType,
-                            TaskTypeId: taskTypeIdMap[selectedType],
-                          });
-                        }
-                      }}
-                      disabled={
-                        editTaskData.TaskTypeId !== 2 &&
-                        editTaskData.TaskTypeId !== 3
-                      }
-                      className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <option value="Simple">Simple (30 - 180 minutes)</option>
-                      <option value="Complex">
-                        Complex (Above 180 minutes)
-                      </option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Note
-                    </label>
-                    <div className="mt-1 rounded-md border p-2 bg-gray-50">
-                      {selectedTask.taskNote ? (
-                        selectedTask.taskNote
-                      ) : (
-                        <span className="text-gray-400 italic">
-                          There are no notes
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Result
-                    </label>
-                    <div className="mt-1 rounded-md border p-2 bg-gray-50">
-                      {selectedTask.taskResult ? (
-                        isValidUrl(selectedTask.taskResult) ? (
-                          <div className="space-y-2">
-                            <a
-                              href={selectedTask.taskResult}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 underline"
-                            >
-                              {selectedTask.taskResult}
-                            </a>
-                            {selectedTask.taskResult.match(
-                              /\.(jpeg|jpg|png|gif)$/i
-                            ) && (
-                              <img
-                                src={selectedTask.taskResult}
-                                alt="Task Result Preview"
-                                className="max-w-full h-auto rounded"
-                              />
-                            )}
-                            {selectedTask.taskResult.match(/\.pdf$/i) && (
-                              <iframe
-                                src={selectedTask.taskResult}
-                                title="Task Result PDF"
-                                className="w-full h-64 border rounded"
-                              ></iframe>
-                            )}
-                          </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Result
+                      </label>
+                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
+                        {selectedTask.taskResult ? (
+                          isValidUrl(selectedTask.taskResult) ? (
+                            <div className="space-y-2">
+                              <a
+                                href={selectedTask.taskResult}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 underline"
+                              >
+                                {selectedTask.taskResult}
+                              </a>
+                              {selectedTask.taskResult.match(
+                                /\.(jpeg|jpg|png|gif)$/i
+                              ) && (
+                                <img
+                                  src={selectedTask.taskResult}
+                                  alt="Task Result Preview"
+                                  className="max-w-full h-auto rounded"
+                                />
+                              )}
+                              {selectedTask.taskResult.match(/\.pdf$/i) && (
+                                <iframe
+                                  src={selectedTask.taskResult}
+                                  title="Task Result PDF"
+                                  className="w-full h-64 border rounded"
+                                />
+                              )}
+                            </div>
+                          ) : (
+                            <span>{selectedTask.taskResult}</span>
+                          )
                         ) : (
-                          <span>{selectedTask.taskResult}</span>
-                        )
-                      ) : (
-                        <span className="text-gray-400 italic">
-                          No result available
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  className="space-y-4 read-only-fields"
-                  style={{ gridArea: "read-only" }}
-                >
-                  <h3 className="text-lg font-semibold text-gray-700">
-                    Read-Only Fields
-                  </h3>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Tree
-                    </label>
-                    <div className="mt-1 rounded-md border p-2 bg-gray-50">
-                      {selectedTask.userTreeName}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Status
-                    </label>
-                    <div className="mt-1 rounded-md border p-2 bg-gray-50">
-                      {
-                        {
-                          0: "Not Started",
-                          1: "In Progress",
-                          2: "Paused",
-                          3: "Completed",
-                          4: "Expired",
-                          5: "Canceled",
-                        }[selectedTask.status]
-                      }
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Focus Method
-                    </label>
-                    <div className="mt-1 rounded-md border p-2 bg-gray-50 mt-0">
-                      {selectedTask.focusMethodName}
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Work Duration
-                      </label>
-                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
-                        {selectedTask.workDuration} minutes
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Break Time
-                      </label>
-                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
-                        {selectedTask.breakTime} minutes
-                      </div>
-                    </div>
-                  </div>
-
-                  {selectedTask.remainingTime !== null && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Remaining Time
-                      </label>
-                      <div className="mt-1 rounded-md border p-2 bg-gray-50">
-                        {formatTime(
-                          parseTimeToSeconds(selectedTask.remainingTime)
+                          <span className="text-gray-400 italic">
+                            No result available
+                          </span>
                         )}
                       </div>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Editable Section */}
+                  <div className="space-y-4 editable-fields">
+                    <h3 className="text-lg font-semibold text-gray-700">
+                      Editable Fields
+                    </h3>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Note
+                      </label>
+                      <textarea
+                        value={editTaskData.taskNote || ""}
+                        onChange={(e) =>
+                          setEditTaskData({
+                            ...editTaskData,
+                            taskNote: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Task File
+                      </label>
+                      <input
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt,.zip"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          const maxFileSize = 10 * 1024 * 1024; // 10MB
+                          const allowedExtensions = [
+                            ".jpg",
+                            ".jpeg",
+                            ".png",
+                            ".pdf",
+                            ".doc",
+                            ".docx",
+                            ".txt",
+                            ".zip",
+                          ];
+
+                          if (file) {
+                            const fileExt = file.name
+                              .substring(file.name.lastIndexOf("."))
+                              .toLowerCase();
+                            if (!allowedExtensions.includes(fileExt)) {
+                              toast.error(
+                                `File type not allowed. Only: ${allowedExtensions.join(
+                                  ", "
+                                )}`
+                              );
+                              return;
+                            }
+
+                            if (file.size > maxFileSize) {
+                              toast.error(
+                                "File is too large. Max size is 10MB."
+                              );
+                              return;
+                            }
+
+                            setEditTaskData({
+                              ...editTaskData,
+                              taskFile: file,
+                            });
+                          } else {
+                            setEditTaskData({
+                              ...editTaskData,
+                              taskFile: null,
+                            });
+                          }
+                        }}
+                        className="block w-full text-sm text-gray-900 bg-white border border-gray-300 rounded-md shadow-sm cursor-pointer focus:outline-none"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-
             <DialogFooter>
               <Button
                 onClick={async () => {
@@ -703,8 +691,8 @@ export default function TaskTab({ userTreeId }) {
                 onClick={async () => {
                   try {
                     const payload = {
-                      TotalDuration: editTaskData.TotalDuration,
-                      TaskTypeId: taskTypeIdMap[editTaskData.TaskType],
+                      taskNote: editTaskData.taskNote,
+                      taskFile: editTaskData.taskFile,
                     };
 
                     await UpdateTaskById2(selectedTask.taskId, payload);
