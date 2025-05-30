@@ -101,6 +101,21 @@ export default function TaskTab({ userTreeId }) {
       .padStart(2, "0")}`;
   };
 
+  const parseTimeToSeconds = (timeStr) => {
+    if (!timeStr) return 0;
+    const parts = timeStr.split(":").map(Number);
+    if (parts.length === 3) {
+      // HH:MM:SS
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    } else if (parts.length === 2) {
+      // MM:SS
+      return parts[0] * 60 + parts[1];
+    } else if (parts.length === 1) {
+      return parts[0];
+    }
+    return 0;
+  };
+
   const formatDateTime = (dateString) => {
     return new Date(dateString).toLocaleString("vi-VN", {
       dateStyle: "short",
@@ -149,8 +164,8 @@ export default function TaskTab({ userTreeId }) {
       activeTabs[columnKey] === "all"
         ? taskList
         : activeTabs[columnKey] === "current"
-          ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
-          : taskList.filter((task) => task.status === 3);
+        ? taskList.filter((task) => task.status !== 4 && task.status !== 3)
+        : taskList.filter((task) => task.status === 3);
 
     const sortedTasks = [...filteredTasks].sort(
       (a, b) => a.priority - b.priority
@@ -211,39 +226,50 @@ export default function TaskTab({ userTreeId }) {
               <p className="text-gray-500 text-center">No tasks available</p>
             ) : (
               sortedTasks.map((task, index) => {
-                const remainingTime = task.remainingTime || 0;
                 const totalDurationSeconds = task.totalDuration * 60;
-                const elapsedTime = totalDurationSeconds - remainingTime;
+                const remainingTimeSeconds = parseTimeToSeconds(
+                  task.remainingTime
+                );
+                const elapsedTime = totalDurationSeconds - remainingTimeSeconds;
                 const cycleDuration = (task.workDuration + task.breakTime) * 60;
                 const completedCycles = Math.floor(elapsedTime / cycleDuration);
                 const timeInCurrentCycle = elapsedTime % cycleDuration;
 
+                // console.log("Elapsed:", elapsedTime);
+                // console.log("Cycle Duration:", cycleDuration);
+                // console.log("Completed Cycles:", completedCycles);
+                // console.log("Time in Current Cycle:", timeInCurrentCycle);
+
                 const phases = [];
+
+                // Completed cycles
                 for (let i = 0; i < completedCycles; i++) {
                   phases.push({
                     type: "work",
                     duration: task.workDuration * 60,
                   });
-                  phases.push({
-                    type: "break",
-                    duration: task.breakTime * 60,
-                  });
+                  phases.push({ type: "break", duration: task.breakTime * 60 });
                 }
 
-                if (timeInCurrentCycle < task.workDuration * 60) {
-                  phases.push({
-                    type: "work",
-                    duration: timeInCurrentCycle,
-                  });
+                // Pha hiện tại
+                const workDurationSec = task.workDuration * 60;
+                const breakDurationSec = task.breakTime * 60;
+
+                // const sumOfPhases = phases.reduce(
+                //   (acc, cur) => acc + cur.duration,
+                //   0
+                // );
+                // console.log("TotalDuration:", totalDurationSeconds);
+                // console.log("Sum of all phases:", sumOfPhases);
+
+                if (timeInCurrentCycle < workDurationSec) {
+                  // Đang trong work phase
+                  phases.push({ type: "work", duration: timeInCurrentCycle });
                 } else {
-                  phases.push({
-                    type: "work",
-                    duration: task.workDuration * 60,
-                  });
-                  phases.push({
-                    type: "break",
-                    duration: timeInCurrentCycle - task.workDuration * 60,
-                  });
+                  // Đang trong break phase
+                  phases.push({ type: "work", duration: workDurationSec });
+                  const timeIntoBreak = timeInCurrentCycle - workDurationSec;
+                  phases.push({ type: "break", duration: timeIntoBreak });
                 }
 
                 return (
@@ -263,8 +289,8 @@ export default function TaskTab({ userTreeId }) {
                             task.priority <= 2
                               ? "high"
                               : task.priority <= 4
-                                ? "medium"
-                                : "low"
+                              ? "medium"
+                              : "low"
                           } absolute top-0 right-0 font-bold text-white px-2 py-1 rounded priority_custom cursor-pointer`}
                         >
                           {getPriorityLabel(task.priority)}
@@ -375,12 +401,21 @@ export default function TaskTab({ userTreeId }) {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="mt-6 text-sm text-gray-800 task-tab-dialog-container" style={{ display: "block" }}>
+            <div
+              className="mt-6 text-sm text-gray-800 task-tab-dialog-container"
+              style={{ display: "block" }}
+            >
               <div
                 className="grid gap-6 task-tab-dialog-grid"
-                style={{ gridTemplateColumns: "1fr 1fr", gridTemplateAreas: '"editable read-only"' }}
+                style={{
+                  gridTemplateColumns: "1fr 1fr",
+                  gridTemplateAreas: '"editable read-only"',
+                }}
               >
-                <div className="space-y-4 editable-fields" style={{ gridArea: "editable" }}>
+                <div
+                  className="space-y-4 editable-fields"
+                  style={{ gridArea: "editable" }}
+                >
                   <h3 className="text-lg font-semibold text-gray-700">
                     Editable Fields
                   </h3>
@@ -570,7 +605,10 @@ export default function TaskTab({ userTreeId }) {
                   </div>
                 </div>
 
-                <div className="space-y-4 read-only-fields" style={{ gridArea: "read-only" }}>
+                <div
+                  className="space-y-4 read-only-fields"
+                  style={{ gridArea: "read-only" }}
+                >
                   <h3 className="text-lg font-semibold text-gray-700">
                     Read-Only Fields
                   </h3>
@@ -635,7 +673,9 @@ export default function TaskTab({ userTreeId }) {
                         Remaining Time
                       </label>
                       <div className="mt-1 rounded-md border p-2 bg-gray-50">
-                        {formatTime(selectedTask.remainingTime)}
+                        {formatTime(
+                          parseTimeToSeconds(selectedTask.remainingTime)
+                        )}
                       </div>
                     </div>
                   )}
