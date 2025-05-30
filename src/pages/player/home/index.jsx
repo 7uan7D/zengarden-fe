@@ -17,6 +17,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import { GetAllChallenges } from "@/services/apiServices/challengeService";
 import { GetAllUserChallenges } from "@/services/apiServices/userChallengeService";
+import { GetUserInfo } from "@/services/apiServices/userService";
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -25,7 +26,6 @@ const HomePage = () => {
   const [user, setUser] = useState(null);
   const [currentTree, setCurrentTree] = useState(null);
   const [tasks, setTasks] = useState({
-    daily: [],
     simple: [],
     complex: [],
     challenge: [],
@@ -54,7 +54,6 @@ const HomePage = () => {
       }
 
       const categorizedTasks = {
-        daily: taskData.filter((task) => task.taskTypeName === "Daily"),
         simple: taskData.filter((task) => task.taskTypeName === "Simple"),
         complex: taskData.filter((task) => task.taskTypeName === "Complex"),
         challenge: taskData.filter((task) => task.taskTypeName === "Challenge"),
@@ -119,9 +118,9 @@ const HomePage = () => {
           const taskEnd = dayjs(task.endDate);
           return (
             (taskStart.isSameOrAfter(startOfWeek) &&
-             taskStart.isSameOrBefore(endOfWeek)) ||
+              taskStart.isSameOrBefore(endOfWeek)) ||
             (taskEnd.isSameOrAfter(startOfWeek) &&
-             taskEnd.isSameOrBefore(endOfWeek))
+              taskEnd.isSameOrBefore(endOfWeek))
           );
         })
         .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
@@ -167,7 +166,15 @@ const HomePage = () => {
     const token = localStorage.getItem("token");
     if (token) {
       const userId = parseJwt(token).sub;
-      setUser({ username: "Farmer" });
+      // Fetch user info to get user details (current is userName)
+      GetUserInfo(userId)
+        .then((data) => {
+          setUser(data); // Set user with actual data
+        })
+        .catch((error) => {
+          console.error("Failed to load user:", error);
+          setUser(null); // Fallback to null if fetch fails
+        });
 
       fetchUserTrees(userId);
       fetchMarketplaceItems();
@@ -210,8 +217,8 @@ const HomePage = () => {
         availableChallenges.length > 0
           ? availableChallenges[0]
           : challengesData.length > 1
-          ? challengesData[1]
-          : challengesData[0];
+            ? challengesData[1]
+            : challengesData[0];
 
       setSelectedChallenge(challengeToShow);
     }
@@ -344,7 +351,7 @@ const HomePage = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-gray-800">
-          Welcome back, {user?.username || "Farmer"}!
+          Welcome back, {user?.userName || "Farmer"}!
         </h1>
         <p className="text-gray-500 mt-1">
           Let's grow your garden and achieve your goals today.
@@ -355,18 +362,16 @@ const HomePage = () => {
       <div className="home-grid">
         {/* Task Widget */}
         <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow widget-card task-widget">
-          <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-3">
             <Clock className="w-6 h-6 text-cyan-600" />
             <h2 className="text-2xl font-semibold text-gray-800">Your Tasks</h2>
           </div>
           <div className="space-y-2">
-            {["daily", "simple", "complex", "challenge"].map((type) => (
+            {["simple", "complex", "challenge"].map((type) => (
               <div key={type} className="flex items-center">
                 <span
                   className={`inline-block w-24 text-center py-2 font-medium text-sm rounded-tl-lg rounded-bl-lg ${
-                    type === "daily"
-                      ? "bg-cyan-100 text-cyan-700"
-                      : type === "simple"
+                    type === "simple"
                       ? "bg-green-100 text-green-700"
                       : type === "complex"
                       ? "bg-purple-100 text-purple-700"
@@ -446,203 +451,212 @@ const HomePage = () => {
           </Button>
         </Card>
 
-        {/* Trees Widget */}
+        {/* Tree Widget */}
         <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow widget-card">
-          <div className="flex items-center gap-3 mb-4">
-            <Leaf className="w-6 h-6 text-green-600" />
-            <h2 className="text-2xl font-semibold text-gray-800">Your Tree</h2>
+          <div className="flex flex-col h-full">
+            <div className="flex items-center gap-3 mb-4">
+              <Leaf className="w-6 h-6 text-green-600" />
+              <h2 className="text-2xl font-semibold text-gray-800">Your Tree</h2>
+            </div>
+            <div className="text-center flex-1">
+              {userTrees.length > 0 ? (
+                <>
+                  <img
+                    src={displayedTree.imageUrl || "/tree-1.png"}
+                    alt={displayedTree.name}
+                    className="w-32 h-32 mx-auto mb-4"
+                  />
+                  <p className="font-semibold text-gray-800">
+                    {displayedTree.name}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    You owned {userTrees.length} trees in your garden
+                  </p>
+                </>
+              ) : (
+                <>
+                  <img
+                    src="/images/HD_Flower_Pot.webp"
+                    alt="The Pot"
+                    className="w-32 h-32 mx-auto mb-4"
+                  />
+                  <p className="font-semibold text-gray-800">
+                    No Tree
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    No tree owned
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="button-container mt-auto">
+              <Button
+                className="w-full bg-green-600 text-white hover:bg-green-700"
+                asChild
+              >
+                <Link to="/tree">Manage Trees</Link>
+              </Button>
+            </div>
           </div>
-          <div className="text-center">
-            <img
-              src={displayedTree.imageUrl || "/tree-1.png"}
-              alt={displayedTree.name}
-              className="w-32 h-32 mx-auto mb-4"
-            />
-            <p className="font-semibold text-gray-800">
-              {displayedTree.name}
-            </p>
-            <p className="text-sm text-gray-500">
-              {userTrees.length > 0 ? `You owned ${userTrees.length} trees in your garden` : "No trees owned"}
-            </p>
-          </div>
-          <Button
-            className="mt-4 w-full bg-green-600 text-white hover:bg-green-700"
-            asChild
-          >
-            <Link to="/tree">Manage Trees</Link>
-          </Button>
         </Card>
 
         {/* Challenges Widget */}
         <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow widget-card">
-          <div className="flex items-center gap-3 mb-4">
-            <Trophy className="w-6 h-6 text-yellow-600" />
-            <h2 className="text-2xl font-semibold text-gray-800">Challenges</h2>
-          </div>
-          <div className="text-center">
-            {selectedChallenge ? (
-              <>
-                <p className="font-semibold text-gray-800">
-                  {selectedChallenge.challengeName}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Reward: {selectedChallenge.reward} coins
-                </p>
-                <p className="text-sm text-gray-500">
-                  Start: {new Date(selectedChallenge.startDate).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-                <p className="text-sm text-gray-500">
-                  End: {new Date(selectedChallenge.endDate).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-gray-500">No challenges available</p>
-            )}
-            <div className="h-16 w-16 bg-yellow-100 rounded-full mx-auto mt-4 flex items-center justify-center">
-              <Trophy className="w-8 h-8 text-yellow-600" />
+          <div className="flex flex-col h-full">
+            <div className="flex items-center gap-3 mb-4">
+              <Trophy className="w-6 h-6 text-yellow-600" />
+              <h2 className="text-2xl font-semibold text-gray-800">Challenges</h2>
+            </div>
+            <div className="text-center flex-1">
+              {selectedChallenge ? (
+                <>
+                  <p className="font-semibold text-gray-800">
+                    {selectedChallenge.challengeName}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Reward: {selectedChallenge.reward} coins
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Start: {new Date(selectedChallenge.startDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    End: {new Date(selectedChallenge.endDate).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <div className="h-16 w-16 bg-yellow-100 rounded-full mx-auto mt-4 flex items-center justify-center">
+                    <Trophy className="w-8 h-8 text-yellow-600" />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-500">No challenges available</p>
+                  <div className="h-16 w-16 bg-yellow-100 rounded-full mx-auto mt-4 flex items-center justify-center">
+                    <Trophy className="w-8 h-8 text-yellow-600" />
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="button-container mt-auto">
+              <Button
+                className="w-full bg-yellow-600 text-white hover:bg-yellow-700"
+                asChild
+              >
+                <Link to="/challenges">View Challenges</Link>
+              </Button>
             </div>
           </div>
-          <Button
-            className="mt-4 w-full bg-yellow-600 text-white hover:bg-yellow-700"
-            asChild
-          >
-            <Link to="/challenges">View Challenges</Link>
-          </Button>
-        </Card>
-
-        {/* Calendar Widget */}
-        <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow widget-card calendar-widget">
-          <div className="flex items-center gap-3 mb-4">
-            <Calendar className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-semibold text-gray-800">Calendar</h2>
-          </div>
-          <ul className="text-sm text-gray-600 space-y-2">
-            {weeklyTasks.length > 0 ? (
-              weeklyTasks.map((task) => (
-                <li key={task.taskId} className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-600 rounded-full" />
-                  {dayjs(task.startDate).format("MMM DD")}: {task.taskName}
-                </li>
-              ))
-            ) : (
-              <li className="text-sm text-gray-500">No tasks this week</li>
-            )}
-          </ul>
-          <Button
-            className="mt-4 w-full bg-blue-600 text-white hover:bg-blue-700"
-            asChild
-          >
-            <Link to="/calendar">View Calendar</Link>
-          </Button>
         </Card>
 
         {/* Marketplace Widget */}
         <Card className="p-6 bg-white shadow-lg rounded-xl hover:shadow-xl transition-shadow widget-card">
-          <div className="flex items-center gap-3 mb-4">
-            <ShoppingCart className="w-6 h-6 text-purple-600" />
-            <h2 className="text-2xl font-semibold text-gray-800">Marketplace</h2>
-          </div>
-          <div className="text-center">
-            {marketplaceItems.length > 0 ? (
-              <div className="home-carousel-container">
-                <div className="highlight-banner">
-                  <span>Highlight</span>
-                </div>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentSlideIndex}
-                    initial={{ opacity: 0, x: 100 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
-                    transition={{ duration: 0.5 }}
-                    className="carousel-slide"
+          <div className="flex flex-col h-full">
+            <div className="flex items-center gap-3 mb-4">
+              <ShoppingCart className="w-6 h-6 text-purple-600" />
+              <h2 className="text-2xl font-semibold text-gray-800">Marketplace</h2>
+            </div>
+            <div className="text-center flex-1">
+              {marketplaceItems.length > 0 ? (
+                <div className="home-carousel-container pb-1">
+                  <div className="highlight-banner">
+                    <span>Highlight</span>
+                  </div>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentSlideIndex}
+                      initial={{ opacity: 0, x: 100 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -100 }}
+                      transition={{ duration: 0.5 }}
+                      className="carousel-slide"
+                    >
+                      {(() => {
+                        const item = marketplaceItems[currentSlideIndex];
+                        return (
+                          <>
+                            {item.category === "Music" ? (
+                              <div className="relative w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mx-auto mb-4">
+                                <button
+                                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-sm"
+                                  onClick={() => {
+                                    const audio = new Audio(item.itemDetail.mediaUrl);
+                                    audio.currentTime = 0;
+                                    audio.play();
+                                    audio.ontimeupdate = () => {
+                                      if (audio.currentTime > 15) {
+                                        audio.pause();
+                                        audio.currentTime = 0;
+                                      }
+                                    };
+                                  }}
+                                >
+                                  ▶️ Preview
+                                </button>
+                              </div>
+                            ) : (
+                              <img
+                                src={item.itemDetail.mediaUrl}
+                                alt={item.name}
+                                className={`mx-auto mb-4 ${
+                                  item.category === "Background" ? "w-64 h-16 object-cover rounded-lg" : "h-16 w-16 object-cover rounded-lg"
+                                }`}
+                              />
+                            )}
+                            <p className={`font-semibold ${rarityColorMap[item.rarity?.toLowerCase()] || "text-gray-400"}`}>
+                              {item.rarity}
+                            </p>
+                            <p className="font-semibold text-gray-800">{item.name}</p>
+                            <p className="text-sm text-gray-500 flex items-center justify-center">
+                              <img src="/images/coin.png" alt="Coin" className="w-5 h-5 mr-1" />
+                              {item.cost}
+                            </p>
+                          </>
+                        );
+                      })()}
+                    </motion.div>
+                  </AnimatePresence>
+                  <motion.button
+                    className="carousel-btn prev"
+                    onClick={goToPrevious}
                   >
-                    {(() => {
-                      const item = marketplaceItems[currentSlideIndex];
-                      return (
-                        <>
-                          {item.category === "Music" ? (
-                            <div className="relative w-16 h-16 bg-gray-100 rounded-lg overflow-hidden mx-auto mb-4">
-                              <button
-                                className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-sm"
-                                onClick={() => {
-                                  const audio = new Audio(item.itemDetail.mediaUrl);
-                                  audio.currentTime = 0;
-                                  audio.play();
-                                  audio.ontimeupdate = () => {
-                                    if (audio.currentTime > 15) {
-                                      audio.pause();
-                                      audio.currentTime = 0;
-                                    }
-                                  };
-                                }}
-                              >
-                                ▶️ Preview
-                              </button>
-                            </div>
-                          ) : (
-                            <img
-                              src={item.itemDetail.mediaUrl}
-                              alt={item.name}
-                              className={`mx-auto mb-4 ${
-                                item.category === "Background" ? "w-64 h-16 object-cover rounded-lg" : "h-16 w-16 object-cover rounded-lg"
-                              }`}
-                            />
-                          )}
-                          <p className={`font-semibold ${rarityColorMap[item.rarity?.toLowerCase()] || "text-gray-400"}`}>
-                            {item.rarity}
-                          </p>
-                          <p className="font-semibold text-gray-800">{item.name}</p>
-                          <p className="text-sm text-gray-500 flex items-center justify-center">
-                            <img src="/images/coin.png" alt="Coin" className="w-5 h-5 mr-1" />
-                            {item.cost}
-                          </p>
-                        </>
-                      );
-                    })()}
-                  </motion.div>
-                </AnimatePresence>
-                <motion.button
-                  className="carousel-btn prev"
-                  onClick={goToPrevious}
-                >
-                  ❮
-                </motion.button>
-                <motion.button
-                  className="carousel-btn next"
-                  onClick={goToNext}
-                >
-                  ❯
-                </motion.button>
-                <div className="carousel-dots">
-                  {marketplaceItems.map((_, index) => (
-                    <motion.span
-                      key={index}
-                      className={`dot ${index === currentSlideIndex ? "active" : ""}`}
-                      onClick={() => goToSlide(index)}
-                      whileHover={{ scale: 1 }}
-                    />
-                  ))}
+                    ❮
+                  </motion.button>
+                  <motion.button
+                    className="carousel-btn next"
+                    onClick={goToNext}
+                  >
+                    ❯
+                  </motion.button>
+                  <div className="carousel-dots">
+                    {marketplaceItems.map((_, index) => (
+                      <motion.span
+                        key={index}
+                        className={`dot ${index === currentSlideIndex ? "active" : ""}`}
+                        onClick={() => goToSlide(index)}
+                        whileHover={{ scale: 1 }}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500">No items available</p>
-            )}
+              ) : (
+                <p className="text-sm text-gray-500">No items available</p>
+              )}
+            </div>
+            <div className="button-container mt-auto">
+              <Button
+                className="w-full bg-purple-600 text-white hover:bg-purple-700"
+                asChild
+              >
+                <Link to="/marketplace">View Marketplace</Link>
+              </Button>
+            </div>
           </div>
-          <Button
-            className="mt-4 w-full bg-purple-600 text-white hover:bg-purple-700"
-            asChild
-          >
-            <Link to="/marketplace">View Marketplace</Link>
-          </Button>
         </Card>
       </div>
     </motion.div>

@@ -148,7 +148,7 @@ const Header = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.clear();
     toast.success("Signed out!");
     navigate("/");
     window.location.reload();
