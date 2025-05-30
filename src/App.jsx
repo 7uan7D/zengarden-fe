@@ -43,6 +43,8 @@ import DataRefreshModerate from "./pages/DataRefreshModerate";
 import parseJwt from "./services/parseJwt";
 import { Navigate } from "react-router-dom";
 import TasksDurationModerate from "./pages/TasksDurationModerate";
+import Success from "./pages/player/payment/success";
+import Fail from "./pages/player/payment/fail";
 
 const pageVariants = {
   initial: { opacity: 0 },
