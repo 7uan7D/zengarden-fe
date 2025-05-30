@@ -454,7 +454,7 @@ const TaskList = ({
           ? subtasks.map((subtask) => ({
               focusMethodId: taskCreateData.focusMethodId,
               taskTypeId: taskCreateData.taskTypeId,
-              userTreeId: userTreeId,
+              userTreeId,
               taskName: subtask.title,
               taskDescription: taskCreateData.taskDescription,
               totalDuration: subtask.duration,
@@ -463,10 +463,14 @@ const TaskList = ({
               workDuration: taskCreateData.workDuration,
               breakTime: taskCreateData.breakTime,
             }))
-          : [taskCreateData]; // fallback nếu không có subtasks
+          : [taskCreateData];
 
-      await CreateMultipleTask(taskData);
+      const newTasks = await CreateMultipleTask(taskData);
 
+      // ✅ Cập nhật danh sách task ngay
+      setTasks((prevTasks) => [...prevTasks, ...newTasks]);
+
+      // ✅ Reset form
       setIsTaskDialogOpen(false);
       setStep(1);
       setTaskCreateData({
@@ -489,6 +493,7 @@ const TaskList = ({
       setWorkDurationError("");
       setBreakTimeError("");
       setSubtasks([]);
+
       toast.success("Task created successfully!");
     } catch (error) {
       console.error("Error creating task:", error);
@@ -679,6 +684,13 @@ const TaskList = ({
     ],
   };
 
+  const [hasSelectedTree, setHasSelectedTree] = useState(false);
+
+  useEffect(() => {
+    const treeId = localStorage.getItem("selectedTreeId");
+    setHasSelectedTree(!!treeId);
+  }, []);
+
   return (
     <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
       <CardContent className="p-6">
@@ -689,45 +701,53 @@ const TaskList = ({
           transition={{ duration: 0.5 }}
         >
           <div className="flex justify-between items-center">
-            <div className="flex gap-2">
-              <Button
-                className={`px-4 py-2 text-sm font-medium ${
-                  activeTab === "Simple & Complex"
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }`}
-                onClick={() => setActiveTab("Simple & Complex")}
-              >
-                Simple & Complex
-              </Button>
-              <Button
-                className={`px-4 py-2 text-sm font-medium ${
-                  activeTab === "Challenge"
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }`}
-                onClick={() => setActiveTab("Challenge")}
-              >
-                Challenge
-              </Button>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                  Create Task
+            {!focusedTask && (
+              <div className="flex gap-2">
+                <Button
+                  className={`px-4 py-2 text-sm font-medium ${
+                    activeTab === "Simple & Complex"
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                  onClick={() => setActiveTab("Simple & Complex")}
+                >
+                  Simple & Complex
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48 relative">
-                <DropdownMenuItem onClick={() => handleOpen("Simple Task", 2)}>
-                  Simple Task <br />
-                  (30-180 minutes)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleOpen("Complex Task", 3)}>
-                  Complex Task <br />
-                  (Above 180 minutes)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <Button
+                  className={`px-4 py-2 text-sm font-medium ${
+                    activeTab === "Challenge"
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                  onClick={() => setActiveTab("Challenge")}
+                >
+                  Challenge
+                </Button>
+              </div>
+            )}
+            {!focusedTask && hasSelectedTree && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                    Create Task
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 relative">
+                  <DropdownMenuItem
+                    onClick={() => handleOpen("Simple Task", 2)}
+                  >
+                    Simple Task <br />
+                    (30-180 minutes)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleOpen("Complex Task", 3)}
+                  >
+                    Complex Task <br />
+                    (Above 180 minutes)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
           <div className="task-column-container" style={{ maxHeight: "410px" }}>
             {filteredTasks.length === 0 ? (
