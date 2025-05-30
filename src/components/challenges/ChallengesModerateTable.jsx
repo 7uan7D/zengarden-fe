@@ -350,9 +350,9 @@ const ChallengesModerateTable = () => {
                                                                 : 'bg-red-200 text-red-800'
                                                     }`}
                                                 >
-                                                    {challenge.status === 0 ? 'Not Started'
+                                                    {challenge.status === 0 ? 'Pending'
                                                         : challenge.status === 1 ? 'Active'
-                                                            : challenge.status === 2 ? 'Completed'
+                                                            : challenge.status === 2 ? 'Expired'
                                                                 : 'Cancelled'}
                                                 </span>
                                             </td>
