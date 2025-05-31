@@ -58,10 +58,10 @@ const Header = () => {
     if (role === "Player") {
       setNavItems([
         { path: "/home", label: "Home", hasUpdate: false },
-        { path: "/task", label: "Tasks", hasUpdate: false },
+        // { path: "/task", label: "Tasks", hasUpdate: false },
         { path: "/workspace", label: "Workspace", hasUpdate: false },
         { path: "/tree", label: "Trees", hasUpdate: false },
-        { path: "/calendar", label: "Calendar", hasUpdate: false },
+        // { path: "/calendar", label: "Calendar", hasUpdate: false },
         { path: "/marketplace", label: "Marketplace", hasUpdate: false },
         { path: "/challenges", label: "Challenges", hasUpdate: false },
       ]);
@@ -148,7 +148,7 @@ const Header = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.clear();
     toast.success("Signed out!");
     navigate("/");
     window.location.reload();

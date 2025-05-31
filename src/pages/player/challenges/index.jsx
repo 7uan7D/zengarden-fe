@@ -608,163 +608,191 @@ export default function Challenges({ challenges }) {
                   </Dialog>
 
                   {cat === "My Challenges" &&
-                    filteredUserChallenges.map((item) => (
-                      <motion.div
-                        key={item.userChallengeId}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: 0.1 }}
-                      >
-                        <Popover>
-                          <Card
-                            className="relative"
-                            onClick={() => {
-                              setSelectedChallengeId(item.challengeId);
-                              setOpenDialog(true);
-                            }}
-                          >
-                            <CardContent className="flex flex-col items-start p-4 cursor-pointer">
-                              <p className="font-semibold">
-                                {item.challengeName}
-                              </p>
+                    (filteredUserChallenges.length === 0 ? (
+                      <p className="text-2xl font-bold text-center text-gray-500 mt-4">
+                        There is no challenge.
+                      </p>
+                    ) : (
+                      filteredUserChallenges.map((item) => (
+                        <motion.div
+                          key={item.userChallengeId}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.1 }}
+                        >
+                          <Popover>
+                            <Card
+                              className="relative"
+                              onClick={() => {
+                                setSelectedChallengeId(item.challengeId);
+                                setOpenDialog(true);
+                              }}
+                            >
+                              <CardContent className="flex flex-col items-start p-4 cursor-pointer">
+                                <p className="font-semibold">
+                                  {item.challengeName}
+                                </p>
 
-                              <p className="text-sm text-gray-500 flex items-center text-left mb-3">
-                                {item.description}
-                              </p>
+                                <p className="text-sm text-gray-500 flex items-center text-left mb-3">
+                                  {item.description}
+                                </p>
 
-                              <p className="text-sm text-gray-500 flex items-center">
-                                Reward{" "}
-                                <Trophy className="ml-1" color="orange" />:
-                                <span className="font-bold ml-1">
-                                  {item.reward} coins
-                                </span>
-                              </p>
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  Reward{" "}
+                                  <Trophy className="ml-1" color="orange" />:
+                                  <span className="font-bold ml-1">
+                                    {item.reward} coins
+                                  </span>
+                                </p>
 
-                              <p className="text-sm text-gray-500 flex items-center">
-                                Including:
-                                {/* <Verified className="ml-1" color="navy" />: */}
-                                <span className="font-bold ml-1">
-                                  {item.tasks ? item.tasks.length : 0} task(s)
-                                </span>
-                              </p>
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  Including:
+                                  <span className="font-bold ml-1">
+                                    {item.tasks ? item.tasks.length : 0} task(s)
+                                  </span>
+                                </p>
 
-                              <p className="text-sm text-gray-500 flex items-center">
-                                Start Date:
-                                <span className="font-bold ml-1">
-                                  {new Date(item.startDate).toLocaleDateString(
-                                    "en-US",
-                                    {
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  Start Date:
+                                  <span className="font-bold ml-1">
+                                    {new Date(
+                                      item.startDate
+                                    ).toLocaleDateString("en-US", {
                                       month: "short",
                                       day: "numeric",
                                       year: "numeric",
                                       hour: "numeric",
                                       minute: "numeric",
                                       second: "numeric",
-                                    }
-                                  )}
-                                </span>
-                              </p>
+                                    })}
+                                  </span>
+                                </p>
 
-                              <p className="text-sm text-gray-500 flex items-center">
-                                End Date:
-                                <span className="font-bold ml-1">
-                                  {new Date(item.endDate).toLocaleDateString(
-                                    "en-US",
-                                    {
-                                      month: "short",
-                                      day: "numeric",
-                                      year: "numeric",
-                                      hour: "numeric",
-                                      minute: "numeric",
-                                      second: "numeric",
-                                    }
-                                  )}
-                                </span>
-                              </p>
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  End Date:
+                                  <span className="font-bold ml-1">
+                                    {new Date(item.endDate).toLocaleDateString(
+                                      "en-US",
+                                      {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                        hour: "numeric",
+                                        minute: "numeric",
+                                        second: "numeric",
+                                      }
+                                    )}
+                                  </span>
+                                </p>
 
-                              <p className="text-sm text-gray-500 flex items-center">
-                                Type:{" "}
-                                <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs ml-1">
-                                  {/* get challenge type by id */}
-                                  {challengeTypesData
-                                    .filter(
-                                      (type) =>
-                                        type.challengeTypeId ===
-                                        item.challengeTypeId
-                                    )
-                                    .map((type) => type.challengeTypeName)}
-                                </span>
-                              </p>
+                                <p className="text-sm text-gray-500 flex items-center">
+                                  Type:
+                                  <span className="bg-gray-200 text-gray-600 px-2 py-1 rounded-full text-xs ml-1">
+                                    {challengeTypesData
+                                      .filter(
+                                        (type) =>
+                                          type.challengeTypeId ===
+                                          item.challengeTypeId
+                                      )
+                                      .map((type) => type.challengeTypeName)}
+                                  </span>
+                                </p>
 
-                              <div className="flex items-center mt-3">
-                                {userChallengeInfo.find(
-                                  (challenge) =>
-                                    challenge.challengeId ===
-                                      parseInt(item.challengeId) &&
-                                    challenge.status !== 4 &&
-                                    challenge.challengeRole >= 1
-                                ) ? (
-                                  <Button
-                                    variant="destructive"
-                                    onClick={() =>
-                                      handleLeaveChallenge(item.challengeId)
-                                    }
+                                <p className="text-sm text-gray-500 flex items-center mt-2">
+                                  Status:
+                                  <span
+                                    className={`ml-1 font-bold ${
+                                      item.status === 0
+                                        ? "text-yellow-500"
+                                        : item.status === 1
+                                        ? "text-green-600"
+                                        : item.status === 2
+                                        ? "text-gray-500"
+                                        : "text-red-500"
+                                    }`}
                                   >
-                                    <BookX className="mr-2 h-4 w-4" /> Leave
-                                    Challenge
-                                  </Button>
-                                ) : userChallengeInfo.find(
-                                    (challenge) =>
-                                      challenge.challengeId ===
-                                        parseInt(item.challengeId) &&
-                                      challenge.status === 4
-                                  ) ? (
-                                  <Button
-                                    variant="outline"
-                                    className="text-red-500"
-                                    disabled
-                                  >
-                                    <XCircle className="mr-2 h-4 w-4" /> Already
-                                    Left
-                                  </Button>
-                                ) : userChallengeInfo.find(
+                                    {item.status === 0
+                                      ? "Pending"
+                                      : item.status === 1
+                                      ? "Active"
+                                      : item.status === 2
+                                      ? "Expired"
+                                      : "Canceled"}
+                                  </span>
+                                </p>
+
+                                <div className="flex items-center mt-3">
+                                  {userChallengeInfo.find(
                                     (challenge) =>
                                       challenge.challengeId ===
                                         parseInt(item.challengeId) &&
                                       challenge.status !== 4 &&
-                                      challenge.challengeRole === 0
+                                      challenge.challengeRole >= 1
                                   ) ? (
-                                  <Button
-                                    variant="outline"
-                                    className="text-red-500"
-                                    disabled
-                                  >
-                                    <XCircle className="mr-2 h-4 w-4" /> You
-                                    Created This Challenge
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    onClick={() => handleJoinChallenge(id)}
-                                  >
-                                    <BookCheck className="mr-2 h-4 w-4" /> Join
-                                    Challenge
-                                  </Button>
-                                )}
-                              </div>
-                            </CardContent>
-                          </Card>
-                          <PopoverContent
-                            className="w-64 text-sm"
-                            side="top"
-                            align="center"
-                          >
-                            <p className="font-semibold">{item.name}</p>
-                            <p className="text-gray-500 text-left text-sm">
-                              {item.description}
-                            </p>
-                          </PopoverContent>
-                        </Popover>
-                      </motion.div>
+                                    <Button
+                                      variant="destructive"
+                                      onClick={() =>
+                                        handleLeaveChallenge(item.challengeId)
+                                      }
+                                    >
+                                      <BookX className="mr-2 h-4 w-4" /> Leave
+                                      Challenge
+                                    </Button>
+                                  ) : userChallengeInfo.find(
+                                      (challenge) =>
+                                        challenge.challengeId ===
+                                          parseInt(item.challengeId) &&
+                                        challenge.status === 4
+                                    ) ? (
+                                    <Button
+                                      variant="outline"
+                                      className="text-red-500"
+                                      disabled
+                                    >
+                                      <XCircle className="mr-2 h-4 w-4" />{" "}
+                                      Already Left
+                                    </Button>
+                                  ) : userChallengeInfo.find(
+                                      (challenge) =>
+                                        challenge.challengeId ===
+                                          parseInt(item.challengeId) &&
+                                        challenge.status !== 4 &&
+                                        challenge.challengeRole === 0
+                                    ) ? (
+                                    <Button
+                                      variant="outline"
+                                      className="text-red-500"
+                                      disabled
+                                    >
+                                      <XCircle className="mr-2 h-4 w-4" /> You
+                                      Created This Challenge
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      onClick={() =>
+                                        handleJoinChallenge(item.challengeId)
+                                      }
+                                    >
+                                      <BookCheck className="mr-2 h-4 w-4" />{" "}
+                                      Join Challenge
+                                    </Button>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                            <PopoverContent
+                              className="w-64 text-sm"
+                              side="top"
+                              align="center"
+                            >
+                              <p className="font-semibold">{item.name}</p>
+                              <p className="text-gray-500 text-left text-sm">
+                                {item.description}
+                              </p>
+                            </PopoverContent>
+                          </Popover>
+                        </motion.div>
+                      ))
                     ))}
                 </div>
               </TabsContent>
