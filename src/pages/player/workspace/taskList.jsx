@@ -198,13 +198,19 @@ const TaskList = ({
   // Filter and sort tasks to prioritize status 1
   const filteredTasks = tasks
     .filter((task) => {
+      const isVisibleStatus = task.status !== 3 && task.status !== 4;
+
+      if (!isVisibleStatus) return false;
+
       if (activeTab === "Simple & Complex") {
         return (
-          task.taskTypeName === "Simple" || task.taskTypeName === "Complex"
+          (task.taskTypeName === "Simple" || task.taskTypeName === "Complex") &&
+          isVisibleStatus
         );
       } else if (activeTab === "Challenge") {
-        return task.taskTypeName === "Challenge";
+        return task.taskTypeName === "Challenge" && isVisibleStatus;
       }
+
       return false;
     })
     .sort((a, b) => {
@@ -448,7 +454,7 @@ const TaskList = ({
           ? subtasks.map((subtask) => ({
               focusMethodId: taskCreateData.focusMethodId,
               taskTypeId: taskCreateData.taskTypeId,
-              userTreeId: userTreeId,
+              userTreeId,
               taskName: subtask.title,
               taskDescription: taskCreateData.taskDescription,
               totalDuration: subtask.duration,
@@ -457,10 +463,14 @@ const TaskList = ({
               workDuration: taskCreateData.workDuration,
               breakTime: taskCreateData.breakTime,
             }))
-          : [taskCreateData]; // fallback nếu không có subtasks
+          : [taskCreateData];
 
-      await CreateMultipleTask(taskData);
+      const newTasks = await CreateMultipleTask(taskData);
 
+      // ✅ Cập nhật danh sách task ngay
+      setTasks((prevTasks) => [...prevTasks, ...newTasks]);
+
+      // ✅ Reset form
       setIsTaskDialogOpen(false);
       setStep(1);
       setTaskCreateData({
@@ -483,6 +493,7 @@ const TaskList = ({
       setWorkDurationError("");
       setBreakTimeError("");
       setSubtasks([]);
+
       toast.success("Task created successfully!");
     } catch (error) {
       console.error("Error creating task:", error);
@@ -673,6 +684,13 @@ const TaskList = ({
     ],
   };
 
+  const [hasSelectedTree, setHasSelectedTree] = useState(false);
+
+  useEffect(() => {
+    const treeId = localStorage.getItem("selectedTreeId");
+    setHasSelectedTree(!!treeId);
+  }, []);
+
   return (
     <Card className="bg-white/80 backdrop-blur-md border-2 border-green-300 shadow-lg">
       <CardContent className="p-6">
@@ -683,45 +701,53 @@ const TaskList = ({
           transition={{ duration: 0.5 }}
         >
           <div className="flex justify-between items-center">
-            <div className="flex gap-2">
-              <Button
-                className={`px-4 py-2 text-sm font-medium ${
-                  activeTab === "Simple & Complex"
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }`}
-                onClick={() => setActiveTab("Simple & Complex")}
-              >
-                Simple & Complex
-              </Button>
-              <Button
-                className={`px-4 py-2 text-sm font-medium ${
-                  activeTab === "Challenge"
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }`}
-                onClick={() => setActiveTab("Challenge")}
-              >
-                Challenge
-              </Button>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                  Create Task
+            {!focusedTask && (
+              <div className="flex gap-2">
+                <Button
+                  className={`px-4 py-2 text-sm font-medium ${
+                    activeTab === "Simple & Complex"
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                  onClick={() => setActiveTab("Simple & Complex")}
+                >
+                  Simple & Complex
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48 relative">
-                <DropdownMenuItem onClick={() => handleOpen("Simple Task", 2)}>
-                  Simple Task <br />
-                  (30-180 minutes)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleOpen("Complex Task", 3)}>
-                  Complex Task <br />
-                  (Above 180 minutes)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                <Button
+                  className={`px-4 py-2 text-sm font-medium ${
+                    activeTab === "Challenge"
+                      ? "bg-green-600 text-white"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                  onClick={() => setActiveTab("Challenge")}
+                >
+                  Challenge
+                </Button>
+              </div>
+            )}
+            {!focusedTask && hasSelectedTree && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                    Create Task
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-48 relative">
+                  <DropdownMenuItem
+                    onClick={() => handleOpen("Simple Task", 2)}
+                  >
+                    Simple Task <br />
+                    (30-180 minutes)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleOpen("Complex Task", 3)}
+                  >
+                    Complex Task <br />
+                    (Above 180 minutes)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
           <div className="task-column-container" style={{ maxHeight: "410px" }}>
             {filteredTasks.length === 0 ? (
@@ -804,190 +830,243 @@ const TaskList = ({
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
                       <Card
-                        className="task-item relative mb-3 p-4"
+                        className="relative mb-4 rounded-2xl shadow-lg bg-white p-6 flex flex-col gap-4"
                         style={{ height: "375px" }}
                       >
+                        {/* Label ưu tiên */}
                         {["Simple", "Complex", "Challenge"].includes(
                           task.taskTypeName
                         ) && (
                           <div
-                            className={`priority-label priority-${
-                              task.priority <= 2
-                                ? "high"
-                                : task.priority <= 4
-                                ? "medium"
-                                : "low"
-                            } absolute top-0 right-0 font-bold text-white px-3 py-1 rounded priority_custom`}
+                            className={`absolute top-2 right-2 text-xs font-bold px-3 py-1 rounded-full shadow-sm
+          ${
+            task.priority <= 2
+              ? "bg-red-500 text-white"
+              : task.priority <= 4
+              ? "bg-yellow-500 text-white"
+              : "bg-green-500 text-white"
+          }`}
                           >
                             {getPriorityLabel(task.priority || 1)}
                           </div>
                         )}
-                        <div className="w-full h-full flex flex-col gap-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <ClipboardList className="w-5 h-5 text-green-600" />
-                              <span className="text-lg font-semibold text-gray-700">
-                                {task.taskName}
-                              </span>
-                            </div>
-                          </div>
 
-                          {currentTaskStatus === 0 && (
-                            <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                              <div className="flex flex-col text-lg gap-4">
+                        {/* Tiêu đề */}
+                        <div className="flex items-center gap-2 mb-4">
+                          <ClipboardList className="w-5 h-5 text-green-600" />
+                          <h2 className="text-lg font-semibold text-gray-800 truncate">
+                            {task.taskName}
+                          </h2>
+                        </div>
+
+                        {/* Thông tin task khi chưa bắt đầu */}
+                        {currentTaskStatus === 0 && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-white shadow rounded-lg text-gray-700">
+                            {/* Cột trái */}
+                            <div className="flex flex-col gap-3 text-sm">
+                              <div>
+                                <p className="font-bold text-gray-800">
+                                  Description
+                                </p>
                                 <p
-                                  className="text-left task-description"
+                                  className="truncate text-gray-700"
                                   title={
                                     task.taskDescription ||
                                     "No description provided"
                                   }
                                 >
-                                  <strong>Description:</strong>{" "}
                                   {task.taskDescription ||
                                     "No description provided"}
                                 </p>
-                                <p className="text-left">
-                                  <strong>Start Date:</strong>{" "}
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-800">
+                                  Start Date
+                                </p>
+                                <p>
                                   {task.startDate
                                     ? formatDate(task.startDate)
                                     : "N/A"}
                                 </p>
-                                <p className="text-left">
-                                  <strong>End Date:</strong>{" "}
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-800">
+                                  End Date
+                                </p>
+                                <p>
                                   {task.endDate
                                     ? formatDate(task.endDate)
                                     : "N/A"}
                                 </p>
-                                <p className="text-left">
-                                  <strong>Focus Method:</strong>{" "}
-                                  {task.focusMethodName || "N/A"}
-                                </p>
                               </div>
-                              <div className="flex flex-col gap-4 text-lg">
-                                <p className="text-left">
-                                  <strong>Remaining Time:</strong>{" "}
-                                  {formatTime(remainingTime)}
+                              <div>
+                                <p className="font-bold text-gray-800">
+                                  Focus Method
                                 </p>
-                                <p className="text-left">
-                                  <strong>Tree:</strong>{" "}
-                                  {task.userTreeName || "N/A"}
-                                </p>
-                                <p className="text-left">
-                                  <strong>Task Type:</strong>{" "}
-                                  {task.taskTypeName || "N/A"}
-                                </p>
-                                <p className="text-left">
-                                  <strong>Note:</strong>{" "}
-                                  {task.taskNote || "No note provided"}
-                                </p>
+                                <p>{task.focusMethodName || "N/A"}</p>
                               </div>
                             </div>
-                          )}
 
-                          {(currentTaskStatus === 1 ||
-                            currentTaskStatus === 2) && (
-                            <div className="flex justify-center">
-                              <div className="relative w-40 h-40">
+                            {/* Cột phải */}
+                            <div className="flex flex-col gap-3 text-sm">
+                              <div>
+                                <p className="font-bold text-gray-800">
+                                  Remaining Time
+                                </p>
+                                <p>{formatTime(remainingTime)}</p>
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-800">Tree</p>
+                                <p>{task.userTreeName || "N/A"}</p>
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-800">
+                                  Task Type
+                                </p>
+                                <p>{task.taskTypeName || "N/A"}</p>
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-800">Note</p>
+                                <p>{task.taskNote || "No note provided"}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Vòng tròn đồng hồ khi đang chạy */}
+                        {(currentTaskStatus === 1 ||
+                          currentTaskStatus === 2) && (
+                          <div className="flex justify-center">
+                            <div className="relative w-32 h-32">
+                              <svg
+                                className="w-full h-full"
+                                viewBox="0 0 100 100"
+                              >
+                                <circle
+                                  className="text-gray-200"
+                                  strokeWidth="8"
+                                  stroke="currentColor"
+                                  fill="transparent"
+                                  r="44"
+                                  cx="50"
+                                  cy="50"
+                                />
+                                {phases.map((phase, idx) => {
+                                  const phaseDuration = phase.duration;
+                                  const phasePercentage =
+                                    (phaseDuration / totalDurationSeconds) *
+                                    100;
+                                  const dashLength =
+                                    (phasePercentage / 100) * circumference;
+                                  const dashOffset = cumulativeOffset;
+                                  cumulativeOffset += dashLength;
+
+                                  return (
+                                    <circle
+                                      key={idx}
+                                      className={
+                                        phase.type === "work"
+                                          ? "text-blue-500"
+                                          : "text-yellow-500"
+                                      }
+                                      strokeWidth="8"
+                                      stroke="currentColor"
+                                      fill="transparent"
+                                      r="44"
+                                      cx="50"
+                                      cy="50"
+                                      strokeDasharray={`${dashLength} ${circumference}`}
+                                      strokeDashoffset={-dashOffset}
+                                      transform="rotate(-90 50 50)"
+                                    />
+                                  );
+                                })}
+                              </svg>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                <span className="text-base font-bold text-gray-800">
+                                  {formatTime(remainingTime)}
+                                </span>
+                                <span
+                                  className={`text-xs ${
+                                    isWorkPhase
+                                      ? "text-blue-500"
+                                      : "text-yellow-500"
+                                  } font-medium`}
+                                >
+                                  {isWorkPhase ? "Work" : "Break"}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {isWorkPhase
+                                    ? formatTime(currentWorkTime)
+                                    : formatTime(currentBreakTime)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Nút hành động */}
+                        <div className="flex justify-center gap-2 mt-2">
+                          {task.status === 3 ? (
+                            <span className="flex items-center gap-1 text-sm text-green-500 font-medium">
+                              <CircleCheckBig className="w-4 h-4" /> Done
+                            </span>
+                          ) : task.status === 4 ? (
+                            <span className="flex items-center gap-1 text-sm text-red-500 font-medium">
+                              <CircleX className="w-4 h-4" /> Expired
+                            </span>
+                          ) : task.status === 0 ? (
+                            <Button
+                              style={{ width: "100px", height: "40px" }}
+                              onClick={() =>
+                                handleTaskAction(task, index, "start")
+                              }
+                              className="bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg"
+                              disabled={
+                                (activeTaskKey !== null &&
+                                  activeTaskKey !== taskKey) ||
+                                loadingTaskKey === taskKey
+                              }
+                            >
+                              {loadingTaskKey === taskKey ? (
                                 <svg
-                                  className="w-full h-full"
-                                  viewBox="0 0 100 100"
+                                  className="animate-spin h-5 w-5 text-white mx-auto"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
                                 >
                                   <circle
-                                    className="text-gray-200"
-                                    strokeWidth="8"
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
                                     stroke="currentColor"
-                                    fill="transparent"
-                                    r="44"
-                                    cx="50"
-                                    cy="50"
+                                    strokeWidth="4"
                                   />
-                                  {phases.map((phase, idx) => {
-                                    const phaseDuration = phase.duration;
-                                    const phasePercentage =
-                                      (phaseDuration / totalDurationSeconds) *
-                                      100;
-                                    const dashLength =
-                                      (phasePercentage / 100) * circumference;
-                                    const dashOffset = cumulativeOffset;
-                                    cumulativeOffset += dashLength;
-
-                                    return (
-                                      <circle
-                                        key={idx}
-                                        className={
-                                          phase.type === "work"
-                                            ? "text-blue-500"
-                                            : "text-yellow-500"
-                                        }
-                                        strokeWidth="8"
-                                        stroke="currentColor"
-                                        fill="transparent"
-                                        r="44"
-                                        cx="50"
-                                        cy="50"
-                                        strokeDasharray={`${dashLength} ${circumference}`}
-                                        strokeDashoffset={-dashOffset}
-                                        transform="rotate(-90 50 50)"
-                                      />
-                                    );
-                                  })}
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V4a4 4 0 00-4 4H4z"
+                                  />
                                 </svg>
-                                <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center text-center">
-                                  <span className="text-lg font-bold text-gray-700">
-                                    {formatTime(remainingTime)}
-                                  </span>
-                                  <span
-                                    className={`text-sm ${
-                                      isWorkPhase
-                                        ? "text-blue-500"
-                                        : "text-yellow-500"
-                                    } font-medium`}
-                                  >
-                                    {isWorkPhase ? "Work" : "Break"}
-                                  </span>
-                                  <span className="text-sm text-gray-500">
-                                    {isWorkPhase
-                                      ? formatTime(currentWorkTime)
-                                      : formatTime(currentBreakTime)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="flex justify-center gap-4">
-                            {task.status === 3 ? (
-                              <span
-                                className="flex items-center gap-1 text-sm"
-                                style={{ color: "#22c55e" }}
-                              >
-                                <CircleCheckBig className="w-4 h-4" />
-                                Done
-                              </span>
-                            ) : task.status === 4 ? (
-                              <span
-                                className="flex items-center gap-1 text-sm"
-                                style={{ color: "#ef4444" }}
-                              >
-                                <CircleX className="w-4 h-4" />
-                                Expired
-                              </span>
-                            ) : task.status === 0 ? (
-                              <>
+                              ) : (
+                                "Start"
+                              )}
+                            </Button>
+                          ) : (
+                            <>
+                              {remainingTime <= 300 ? (
                                 <Button
                                   style={{
                                     width: "100px",
                                     height: "45px",
                                   }}
-                                  onClick={() =>
-                                    handleTaskAction(task, index, "start")
-                                  }
-                                  className="bg-green-500 hover:bg-green-600"
-                                  disabled={
-                                    (activeTaskKey !== null &&
-                                      activeTaskKey !== taskKey) ||
-                                    loadingTaskKey === taskKey
-                                  }
+                                  onClick={() => {
+                                    setSelectedTask({ task, index });
+                                    setIsFinishDialogOpen(true);
+                                  }}
+                                  className="bg-orange-500 hover:bg-orange-600"
+                                  disabled={loadingTaskKey === taskKey}
                                 >
                                   {loadingTaskKey === taskKey ? (
                                     <svg
@@ -1011,12 +1090,10 @@ const TaskList = ({
                                       />
                                     </svg>
                                   ) : (
-                                    "Start"
+                                    "Finish"
                                   )}
                                 </Button>
-                              </>
-                            ) : (
-                              <>
+                              ) : (
                                 <Button
                                   style={{
                                     width: "100px",
@@ -1065,48 +1142,9 @@ const TaskList = ({
                                     "Resume"
                                   )}
                                 </Button>
-                                {remainingTime <= 120 && remainingTime >= 0 && (
-                                  <Button
-                                    style={{
-                                      width: "100px",
-                                      height: "45px",
-                                    }}
-                                    onClick={() => {
-                                      setSelectedTask({ task, index });
-                                      setIsFinishDialogOpen(true);
-                                    }}
-                                    className="bg-orange-500 hover:bg-orange-600"
-                                    disabled={loadingTaskKey === taskKey}
-                                  >
-                                    {loadingTaskKey === taskKey ? (
-                                      <svg
-                                        className="animate-spin h-5 w-5 text-white mx-auto"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <circle
-                                          className="opacity-25"
-                                          cx="12"
-                                          cy="12"
-                                          r="10"
-                                          stroke="currentColor"
-                                          strokeWidth="4"
-                                        />
-                                        <path
-                                          className="opacity-75"
-                                          fill="currentColor"
-                                          d="M4 12a8 8 0 018-8V4a4 4 0 00-4 4H4z"
-                                        />
-                                      </svg>
-                                    ) : (
-                                      "Finish"
-                                    )}
-                                  </Button>
-                                )}
-                              </>
-                            )}
-                          </div>
+                              )}
+                            </>
+                          )}
                         </div>
                       </Card>
                     </motion.div>

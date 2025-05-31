@@ -983,8 +983,50 @@ export default function Workspace() {
                 </Label>
                 <input
                   type="file"
+                  accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt,.zip"
                   className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
-                  onChange={(e) => setTaskFile(e.target.files[0])}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    const maxFileSize = 10 * 1024 * 1024; // 10MB
+                    const allowedExtensions = [
+                      ".jpg",
+                      ".jpeg",
+                      ".png",
+                      ".pdf",
+                      ".doc",
+                      ".docx",
+                      ".txt",
+                      ".zip",
+                    ];
+
+                    if (file) {
+                      const ext = file.name
+                        .substring(file.name.lastIndexOf("."))
+                        .toLowerCase();
+
+                      if (!allowedExtensions.includes(ext)) {
+                        toast.error(
+                          `Invalid file type. Allowed: ${allowedExtensions.join(
+                            ", "
+                          )}`
+                        );
+                        e.target.value = ""; // clear input
+                        setTaskFile(null);
+                        return;
+                      }
+
+                      if (file.size > maxFileSize) {
+                        toast.error("File too large. Max size is 10MB.");
+                        e.target.value = "";
+                        setTaskFile(null);
+                        return;
+                      }
+
+                      setTaskFile(file);
+                    } else {
+                      setTaskFile(null);
+                    }
+                  }}
                 />
               </div>
               <DialogFooter>

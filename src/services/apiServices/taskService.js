@@ -31,9 +31,12 @@ export async function GetTaskByUserTreeId(userTreeId) {
 
 export async function UpdateTaskById2(taskId, taskData) {
   const formData = new FormData();
+  formData.append("taskNote", taskData.taskNote || "");
 
-  formData.append("TotalDuration", taskData.TotalDuration?.toString() || "0");
-  formData.append("TaskTypeId", taskData.TaskTypeId?.toString() || "1");
+  if (taskData.taskFile) {
+    formData.append("TaskFile", taskData.taskFile);
+  }
+
   const response = await axios.patch(`/Task/Update-Task/${taskId}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
@@ -155,5 +158,10 @@ export async function UpdateTaskDurationById(taskId, totalDuration) {
   const response = await axios.patch(`/Task/${taskId}/duration`, {
     totalDuration: totalDuration,
   });
+  return response.data;
+}
+
+export async function GetTaskXPInfoById(taskId) {
+  const response = await axios.get(`/Task/${taskId}/xp`);
   return response.data;
 }
