@@ -8,12 +8,17 @@ import {
   Music,
   Images,
 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
 import "../musicPlayerController/index.css";
 import { GetBagItems, UseItem } from "@/services/apiServices/itemService";
 import parseJwt from "@/services/parseJwt";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { GetBagItemsByUserId } from "@/services/apiServices/itemService";
 
 // Đối tượng toàn cục quản lý trạng thái âm thanh
 export const globalAudioState = {
@@ -109,9 +114,9 @@ export default function MusicPlayerController({
       try {
         const token = localStorage.getItem("token");
         const decoded = parseJwt(token);
-        const bagId = decoded.sub;
+        const userId = decoded.sub;
 
-        const items = await GetBagItems(bagId);
+        const items = await GetBagItemsByUserId(userId);
         const ownedMusicItems = items.filter(
           (item) => item.item?.type === 4 && item.quantity > 0
         );
@@ -237,10 +242,9 @@ export function FullMusicPlayer({
       try {
         const token = localStorage.getItem("token");
         const decoded = parseJwt(token);
-        const bagId = decoded.sub;
+        const userId = decoded.sub;
 
-        const items = await GetBagItems(bagId);
-
+        const items = await GetBagItemsByUserId(userId);
         // Lấy danh sách nhạc
         const ownedMusicItems = items.filter(
           (item) => item.item?.type === 4 && item.quantity > 0
@@ -284,7 +288,9 @@ export function FullMusicPlayer({
       setBackgroundList(updatedItems);
     } catch (error) {
       console.error("Error equipping background:", error);
-      toast.error(error.response?.data?.message || "Failed to equip background!");
+      toast.error(
+        error.response?.data?.message || "Failed to equip background!"
+      );
     }
   };
 
@@ -293,11 +299,13 @@ export function FullMusicPlayer({
     try {
       const token = localStorage.getItem("token");
       const decoded = parseJwt(token);
-      const bagId = decoded.sub;
-      const items = await GetBagItems(bagId);
+      const userId = decoded.sub;
+
+      const items = await GetBagItemsByUserId(userId);
       const ownedBackgroundItems = items.filter(
         (item) => item.item?.type === 3 && item.quantity > 0
       );
+
       return ownedBackgroundItems.map((item) => ({
         bagItemId: item.bagItemId,
         title: item.item.name,
@@ -316,7 +324,10 @@ export function FullMusicPlayer({
       <div className="flex-1">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" className="text-left flex items-center gap-2">
+            <Button
+              variant="ghost"
+              className="text-left flex items-center gap-2"
+            >
               <Music className="h-4 w-4 text-gray-600" />
               <span className="text-sm font-medium text-gray-800 truncate max-w-[200px]">
                 {musicList[globalAudioState.currentIndex]?.title ||
@@ -330,10 +341,11 @@ export function FullMusicPlayer({
                 musicList.map((track, index) => (
                   <li
                     key={index}
-                    className={`text-sm p-2 rounded cursor-pointer ${globalAudioState.currentIndex === index
+                    className={`text-sm p-2 rounded cursor-pointer ${
+                      globalAudioState.currentIndex === index
                         ? "bg-gray-200"
                         : "hover:bg-gray-100"
-                      }`}
+                    }`}
                     onClick={() =>
                       loadAudioPlayer(
                         index,
@@ -389,7 +401,11 @@ export function FullMusicPlayer({
       <div className="flex-1 flex justify-end">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm" className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2"
+            >
               <Images className="h-4 w-4 text-gray-600" />
             </Button>
           </PopoverTrigger>
@@ -401,7 +417,8 @@ export function FullMusicPlayer({
                 size="sm"
                 className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white/90 text-gray-600 z-10 rounded-full shadow-md p-2"
                 onClick={() => {
-                  const container = document.getElementById("background-scroll");
+                  const container =
+                    document.getElementById("background-scroll");
                   container.scrollBy({ left: -224, behavior: "smooth" }); // Cuộn trái 224px
                 }}
               >
@@ -413,7 +430,8 @@ export function FullMusicPlayer({
                 size="sm"
                 className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white/90 text-gray-600 z-10 rounded-full shadow-md p-2"
                 onClick={() => {
-                  const container = document.getElementById("background-scroll");
+                  const container =
+                    document.getElementById("background-scroll");
                   container.scrollBy({ left: 224, behavior: "smooth" }); // Cuộn phải 224px
                 }}
               >
@@ -443,7 +461,9 @@ export function FullMusicPlayer({
                               ? "bg-gray-500/80 cursor-not-allowed"
                               : "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-md hover:shadow-lg"
                           }`}
-                          onClick={() => handleEquipBackground(bg.bagItemId, bg.url)}
+                          onClick={() =>
+                            handleEquipBackground(bg.bagItemId, bg.url)
+                          }
                           disabled={bg.isEquipped}
                         >
                           {bg.isEquipped ? "Equipped" : "Equip"}

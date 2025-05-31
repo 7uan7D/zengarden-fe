@@ -47,6 +47,11 @@ export async function GetBagItems(bagId) {
   return response.data;
 }
 
+export async function GetBagItemsByUserId(userId) {
+  const response = await axios.get(`/BagItems/user/${userId}`);
+  return response.data;
+}
+
 export async function GetItemDetailByItemId(itemId) {
   const response = await axios.get(`/Item/${itemId}`);
   return response.data;

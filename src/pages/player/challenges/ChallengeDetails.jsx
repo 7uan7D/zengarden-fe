@@ -171,12 +171,16 @@ export default function ChallengeDetails(props) {
   const handleJoinChallenge = async (challengeId) => {
     if (!token) return;
 
-    if (!UserTrees || UserTrees.length === 0 || !UserTrees[0]?.userTreeId) {
-      console.error("User tree is not available.");
+    // Lấy selectedTreeId từ localStorage
+    const selectedTreeId = localStorage.getItem("selectedTreeId");
+
+    if (!selectedTreeId) {
+      console.error("Selected tree ID is not available in localStorage.");
       return;
     }
 
-    const userTreeId = parseInt(UserTrees[0].userTreeId);
+    const userTreeId = parseInt(selectedTreeId, 10);
+
     console.log(
       "Joining challenge with ID:",
       challengeId,
@@ -190,9 +194,7 @@ export default function ChallengeDetails(props) {
       toast.success("Joined challenge successfully!");
       setTimeout(() => {
         window.location.reload();
-      }, 3000);
-
-      // handle join challenge logic here
+      }, 2000);
     } catch (error) {
       console.error("Error joining challenge:", error);
       toast.error("Failed to join challenge. Please try again.");
