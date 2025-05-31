@@ -63,7 +63,7 @@ const ChallengesModerateTable = () => {
 
     const [selectWinnerChange, setSelectWinnerChange] = useState({
         userId: 0,
-        reason: "string"
+        reason: ""
     })
 
     useEffect(() => {
@@ -387,8 +387,8 @@ const ChallengesModerateTable = () => {
                                                 </button>
                                                 {/* <button
                                                     onClick={() => handleSelectWinnerClick(challenge.challengeId)}
-                                                    className={`bg-transparent ${challenge.status !== 2 ? 'text-gray-500' : 'text-yellow-600 hover:text-yellow-500'}`}
-                                                    disabled={challenge.status !== 2}
+                                                    className={`bg-transparent ${challenge.status !== 1 && challenge.status !== 2 ? 'text-gray-500' : 'text-yellow-600 hover:text-yellow-500'}`}
+                                                    disabled={challenge.status !== 1 && challenge.status !== 2}
                                                 >
                                                     Select Winner
                                                 </button> */}
@@ -719,7 +719,7 @@ const ChallengesModerateTable = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* <Dialog open={openSelectWinner} onOpenChange={setOpenSelectWinner}>
+            <Dialog open={openSelectWinner} onOpenChange={setOpenSelectWinner}>
                 <DialogContent className='dialog-overlay bg-gray-800 text-white'>
                     <DialogHeader>
                         <DialogTitle>Select Winner</DialogTitle>
@@ -818,7 +818,7 @@ const ChallengesModerateTable = () => {
                         </TabsContent>
                     </Tabs>
                 </DialogContent>
-            </Dialog> */}
+            </Dialog>
         </motion.div>
     )
 }
