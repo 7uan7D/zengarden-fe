@@ -22,6 +22,7 @@ const ChallengesModerateTable = () => {
     const [openEditChallenge, setOpenEditChallenge] = useState(false)
     const [openStartChallenge, setOpenStartChallenge] = useState(false)
     const [openCancelChallenge, setOpenCancelChallenge] = useState(false)
+    const [openRejectChallenge, setOpenRejectChallenge] = useState(false)
     const [openSelectWinner, setOpenSelectWinner] = useState(false)
     const [openStates, setOpenStates] = useState({})
     const [isLoading, setIsLoading] = useState(false)
@@ -62,7 +63,7 @@ const ChallengesModerateTable = () => {
 
     const [selectWinnerChange, setSelectWinnerChange] = useState({
         userId: 0,
-        reason: "string"
+        reason: ""
     })
 
     useEffect(() => {
@@ -191,6 +192,27 @@ const ChallengesModerateTable = () => {
         }
     }
 
+    const handleRejectClick = (challengeId) => {
+        setSelectedChallengeId(challengeId)
+        setOpenRejectChallenge(true)
+    }
+
+    const handleRejectChallenge = async () => {
+        setIsLoading(true)
+        try {
+            await CancelChallengeById(selectedChallengeId)
+            toast.success('The challenge has been rejected!')
+            setTimeout(() => {
+                window.location.reload()
+            }, 3000)
+        } catch (error) {
+            console.log('Failed to reject challenge:', error)
+            toast.error('Reject challenge failed!')
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     const handleEditClick = (challengeId) => {
         setSelectedChallengeId(challengeId)
         setOpenEditChallenge(true)
@@ -247,29 +269,6 @@ const ChallengesModerateTable = () => {
             }
         }
     }
-
-    // const handleDeleteClick = (taskId) => {
-    //     setSelectedTaskId(taskId)
-    //     setOpenDeleteTask(true)
-    // }
-
-    // const handleDeleteTask = async () => {
-    //     if (selectedTaskId) {
-    //         setIsLoading(true)
-    //         try {
-    //             await DeleteTaskById(selectedTaskId)
-    //             toast.success('Task has been deleted successfully!')
-    //             setTimeout(() => {
-    //                 window.location.reload()
-    //             }, 3000)
-    //         } catch (error) {
-    //             console.log('Failed to delete task:', error)
-    //             toast.error('Delete task failed!')
-    //         } finally {
-    //             setIsLoading(false)
-    //         }
-    //     }
-    // }
 
     return (
         <motion.div
@@ -345,15 +344,17 @@ const ChallengesModerateTable = () => {
                                                 <span
                                                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                                     ${challenge.status === 0 ? 'bg-gray-200 text-gray-800'
-                                                        : challenge.status === 1 ? 'bg-blue-200 text-blue-800'
-                                                            : challenge.status === 2 ? 'bg-green-200 text-green-800'
-                                                                : 'bg-red-200 text-red-800'
+                                                        : challenge.status === 1 ? 'bg-green-200 text-green-800'
+                                                            : challenge.status === 2 ? 'bg-yellow-200 text-yellow-800'
+                                                                : challenge.status === 3 ? 'bg-red-200 text-red-800'
+                                                                    : 'bg-orange-200 text-orange-800'
                                                     }`}
                                                 >
-                                                    {challenge.status === 0 ? 'Not Started'
+                                                    {challenge.status === 0 ? 'Pending'
                                                         : challenge.status === 1 ? 'Active'
-                                                            : challenge.status === 2 ? 'Completed'
-                                                                : 'Cancelled'}
+                                                            : challenge.status === 2 ? 'Expired'
+                                                                : challenge.status === 3 ? 'Cancelled'
+                                                                    : 'Rejected'}
                                                 </span>
                                             </td>
                                             <td className='px-5 py-4 text-left whitespace-nowrap text-sm text-gray-300'>
@@ -372,15 +373,22 @@ const ChallengesModerateTable = () => {
                                                 </button>
                                                 <button
                                                     onClick={() => handleCancelClick(challenge.challengeId)}
-                                                    className={`bg-transparent ${challenge.status === 2 || challenge.status === 3 ? 'text-gray-500' : 'text-red-400 hover:text-red-300'}`}
-                                                    disabled={challenge.status === 2 || challenge.status === 3}
+                                                    className={`bg-transparent ${challenge.status === 2 || challenge.status === 3 || challenge.status === 4 ? 'text-gray-500' : 'text-red-400 hover:text-red-300'}`}
+                                                    disabled={challenge.status === 2 || challenge.status === 3 || challenge.status === 4}
                                                 >
                                                     Cancel
                                                 </button>
+                                                <button
+                                                    onClick={() => handleRejectClick(challenge.challengeId)}
+                                                    className={`bg-transparent ${challenge.status === 2 || challenge.status === 3 || challenge.status === 4 ? 'text-gray-500' : 'text-orange-400 hover:text-orange-300'}`}
+                                                    disabled={challenge.status === 2 || challenge.status === 3 || challenge.status === 4}
+                                                >
+                                                    Reject
+                                                </button>
                                                 {/* <button
                                                     onClick={() => handleSelectWinnerClick(challenge.challengeId)}
-                                                    className={`bg-transparent ${challenge.status !== 2 ? 'text-gray-500' : 'text-yellow-600 hover:text-yellow-500'}`}
-                                                    disabled={challenge.status !== 2}
+                                                    className={`bg-transparent ${challenge.status !== 1 && challenge.status !== 2 ? 'text-gray-500' : 'text-yellow-600 hover:text-yellow-500'}`}
+                                                    disabled={challenge.status !== 1 && challenge.status !== 2}
                                                 >
                                                     Select Winner
                                                 </button> */}
@@ -400,21 +408,22 @@ const ChallengesModerateTable = () => {
                                         {challenge.description}
                                     </p>
 
-                                    <p className='text-gray-400 text-left text-sm'>
+                                    <div className='text-gray-400 text-left text-sm'>
                                         {challenge.tasks.length === 0 ? (
-                                            <p className='text-gray-200 text-sm font-bold mr-1'>No tasks available</p>
+                                            <p className='text-gray-200 text-sm font-bold'>No tasks available</p>
                                         ) : (
                                             <>
-                                                <p className='text-gray-200 text-sm font-bold mr-1'>Tasks: </p>
-                                                {challenge.tasks.map((task) => (
-                                                    <ul key={task.taskId} className='list-disc list-inside'>
-                                                        <li className='text-gray-400 text-sm'>{task.taskName}</li>
-                                                    </ul>
-                                                ))}
+                                                <p className='text-gray-200 text-sm font-bold mb-1'>Tasks: </p>
+                                                <ul className='list-disc list-inside ml-4'>
+                                                    {challenge.tasks.map((task) => (
+                                                        <li key={task.taskId} className='text-gray-400 text-sm'>
+                                                            {task.taskName}
+                                                        </li>
+                                                    ))}
+                                                </ul>
                                             </>
                                         )}
-
-                                    </p>
+                                    </div>
 
                                     <p className='text-gray-400 text-left text-sm'>
                                         <p className='text-gray-200 text-sm font-bold mr-1'>Start Date: </p>
@@ -565,6 +574,45 @@ const ChallengesModerateTable = () => {
                 </DialogContent>
             </Dialog>
 
+            <Dialog open={openRejectChallenge} onOpenChange={setOpenRejectChallenge}>
+                <DialogContent className='dialog-overlay bg-gray-800 text-white'>
+                    <DialogHeader>
+                        <DialogTitle>Reject Challenge</DialogTitle>
+                    </DialogHeader>
+                    <Tabs className='w-[462px]'>
+                        <TabsContent className='p-4'>
+                            <Card className='bg-gray-800 text-white'>
+                                <CardHeader>
+                                    <CardDescription className='text-gray-400'>
+                                        Reject this challenge.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className='space-y-2 bg-gray-800'>
+                                    <div className='space-y-1'>
+                                        <Label>Do you want to reject this challenge?</Label>
+                                    </div>
+                                </CardContent>
+                                <CardFooter>
+                                    <Button
+                                        className='bg-[#83aa6c] text-white'
+                                        onClick={handleRejectChallenge}
+                                        disabled={isLoading}
+                                    >
+                                        Reject Challenge
+                                    </Button>
+                                    <Button
+                                        className='bg-red-400 text-white ml-2'
+                                        onClick={() => setOpenRejectChallenge(false)}
+                                    >
+                                        Exit
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                </DialogContent>
+            </Dialog>
+
             <Dialog open={openEditChallenge} onOpenChange={setOpenEditChallenge}>
                 <DialogContent className='dialog-overlay bg-gray-800 text-white'>
                     <DialogHeader>
@@ -671,7 +719,7 @@ const ChallengesModerateTable = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* <Dialog open={openSelectWinner} onOpenChange={setOpenSelectWinner}>
+            <Dialog open={openSelectWinner} onOpenChange={setOpenSelectWinner}>
                 <DialogContent className='dialog-overlay bg-gray-800 text-white'>
                     <DialogHeader>
                         <DialogTitle>Select Winner</DialogTitle>
@@ -770,7 +818,7 @@ const ChallengesModerateTable = () => {
                         </TabsContent>
                     </Tabs>
                 </DialogContent>
-            </Dialog> */}
+            </Dialog>
         </motion.div>
     )
 }

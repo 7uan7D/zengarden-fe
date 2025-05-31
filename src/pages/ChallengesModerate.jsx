@@ -111,13 +111,13 @@ const ChallengesModerate = () => {
                     <StatCard name='Canceled Challenges' icon={XCircle} value={challengeStats.canceledChallenges} color='#FF6B6B' />
                 </motion.div>
 
-                <div className="flex justify-between items-center mb-4">
+                {/* <div className="flex justify-between items-center mb-4">
                     <p />
                     <Button className="bg-teal-700 text-gray hover:bg-teal-900" onClick={handleCreateChallengeClick}>
                         <Plus className="h-4 w-4" />
                         Create Challenge
                     </Button>
-                </div>
+                </div> */}
 
                 <ChallengesModerateTable />
 
