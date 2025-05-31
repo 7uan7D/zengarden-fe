@@ -1,7 +1,7 @@
-import { BarChart2, DollarSign, Menu, Settings, ShoppingBag, TrendingUp, Users, ScrollText, CalendarCheck, Trophy, Leaf, PackageOpen } from "lucide-react"
-import React from "react"
-import { AnimatePresence, motion } from "framer-motion"
-import { Link } from "react-router-dom"
+import { BarChart2, DollarSign, Menu, Settings, ShoppingBag, TrendingUp, Users, ScrollText, CalendarCheck, Trophy, Leaf, PackageOpen } from "lucide-react";
+import React from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Link, useLocation } from "react-router-dom";
 import parseJwt from "../../services/parseJwt";
 
 const SIDEBAR_ITEMS = [
@@ -28,30 +28,31 @@ const SIDEBAR_ITEMS = [
     // { name: 'Sales', icon: DollarSign, color: '#10B981', href: '/sales', role: 'Moderator' },
     // { name: 'Analytics', icon: TrendingUp, color: '#3B82F6', href: '/analytics', role: 'Moderator' },
     { name: 'Settings', icon: Settings, color: '#6366F1', href: '/settings', role: 'Moderator' },
-];
+]
 
 function getUserRole() {
-    const token = localStorage.getItem("token");
-    if (!token) return null;
+    const token = localStorage.getItem("token")
+    if (!token) return null
     try {
-        const decoded = parseJwt(token);
-        return decoded.role || null;
+        const decoded = parseJwt(token)
+        return decoded.role || null
     } catch (error) {
-        console.error("Invalid token", error);
-        return null;
+        console.error("Invalid token", error)
+        return null
     }
 }
 
 const Sidebar = () => {
-    const role = getUserRole();
-    const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
+    const role = getUserRole()
+    const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
+    const location = useLocation()
 
     const sidebarItemsToRender = SIDEBAR_ITEMS.filter(item => {
         if (!role) {
-            return false;
+            return false
         }
-        return item.role === role;
-    });
+        return item.role === role
+    })
 
     return (
         <motion.div
@@ -70,31 +71,32 @@ const Sidebar = () => {
                 </motion.button>
 
                 <nav className='mt-8 flex-grow'>
-                    {sidebarItemsToRender.map((item, index) => (
-                        <Link key={item.href} to={item.href}>
-                            <motion.div
-                                className='flex items-center p-4 text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors mb-2'
-                            >
-                                <item.icon size={20} style={{ color: item.color, minWidth: '20px' }} />
+                    {sidebarItemsToRender.map((item, index) => {
+                        const isActive = location.pathname === item.href
+                        return (
+                            <Link key={item.href} to={item.href}>
+                                <motion.div
+                                    className={`flex items-center p-4 text-sm font-medium rounded-lg transition-colors mb-2 ${isActive ? 'bg-gray-700' : 'hover:bg-gray-700'}`}
+                                >
+                                    <item.icon size={20} style={{ color: item.color, minWidth: '20px' }} />
 
-                                <AnimatePresence>
-                                    {isSidebarOpen && (
-                                        <motion.span
-
-                                            className='ml-4 whitespace-nowrap'
-                                            initial={{ opacity: 0, width: 0 }}
-                                            animate={{ opacity: 1, width: 'auto' }}
-                                            exit={{ opacity: 0, width: 0 }}
-                                            transition={{ duration: 0.2, delay: 0.3 }}
-
-                                        >
-                                            {item.name}
-                                        </motion.span>
-                                    )}
-                                </AnimatePresence>
-                            </motion.div>
-                        </Link>
-                    ))}
+                                    <AnimatePresence>
+                                        {isSidebarOpen && (
+                                            <motion.span
+                                                className='ml-4 whitespace-nowrap'
+                                                initial={{ opacity: 0, width: 0 }}
+                                                animate={{ opacity: 1, width: 'auto' }}
+                                                exit={{ opacity: 0, width: 0 }}
+                                                transition={{ duration: 0.2, delay: 0.3 }}
+                                            >
+                                                {item.name}
+                                            </motion.span>
+                                        )}
+                                    </AnimatePresence>
+                                </motion.div>
+                            </Link>
+                        )
+                    })}
                 </nav>
             </div>
         </motion.div>
