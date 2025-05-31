@@ -147,10 +147,16 @@ const TreeInfo = ({ onTreeSelect }) => {
       }
       const userId = parseJwt(token).sub;
       const result = await CreateUserTree(userId, newTreeName);
+
       if (result) {
         toast.success("Tree created successfully!");
         setIsCreateTreeDialogOpen(false);
         setNewTreeName("");
+
+        // ✅ Lưu userTreeId của cây mới vào localStorage
+        localStorage.setItem("selectedTreeId", result.userTreeId);
+
+        // ✅ Cập nhật danh sách cây người dùng
         const updatedUserTrees = await GetUserTreeByUserId(userId);
         setUserTrees(updatedUserTrees);
       }

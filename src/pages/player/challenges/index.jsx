@@ -698,6 +698,29 @@ export default function Challenges({ challenges }) {
                                   </span>
                                 </p>
 
+                                <p className="text-sm text-gray-500 flex items-center mt-2">
+                                  Status:
+                                  <span
+                                    className={`ml-1 font-bold ${
+                                      item.status === 0
+                                        ? "text-yellow-500"
+                                        : item.status === 1
+                                        ? "text-green-600"
+                                        : item.status === 2
+                                        ? "text-gray-500"
+                                        : "text-red-500"
+                                    }`}
+                                  >
+                                    {item.status === 0
+                                      ? "Pending"
+                                      : item.status === 1
+                                      ? "Active"
+                                      : item.status === 2
+                                      ? "Expired"
+                                      : "Canceled"}
+                                  </span>
+                                </p>
+
                                 <div className="flex items-center mt-3">
                                   {userChallengeInfo.find(
                                     (challenge) =>
