@@ -228,12 +228,16 @@ export default function Challenges({ challenges }) {
   const handleJoinChallenge = async (challengeId) => {
     if (!token) return;
 
-    if (!UserTrees || UserTrees.length === 0 || !UserTrees[0]?.userTreeId) {
-      console.error("User tree is not available.");
+    // Lấy selectedTreeId từ localStorage
+    const selectedTreeId = localStorage.getItem("selectedTreeId");
+
+    if (!selectedTreeId) {
+      console.error("Selected tree ID is not available in localStorage.");
       return;
     }
 
-    const userTreeId = parseInt(UserTrees[0].userTreeId);
+    const userTreeId = parseInt(selectedTreeId, 10);
+
     console.log(
       "Joining challenge with ID:",
       challengeId,

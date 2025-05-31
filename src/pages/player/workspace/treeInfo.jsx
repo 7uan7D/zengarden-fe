@@ -21,6 +21,7 @@ import addIcon from "/images/add.png";
 import { GetUserTreeByUserId } from "@/services/apiServices/userTreesService";
 import { CreateUserTree } from "@/services/apiServices/userTreesService";
 import { GetTaskXPInfoById } from "@/services/apiServices/taskService";
+import { GetBagItemsByUserId } from "@/services/apiServices/itemService";
 
 const TreeInfo = ({ onTreeSelect }) => {
   const [isTreeDialogOpen, setIsTreeDialogOpen] = useState(false);
@@ -120,12 +121,12 @@ const TreeInfo = ({ onTreeSelect }) => {
     const fetchEquippedItems = async () => {
       const token = localStorage.getItem("token");
       const payload = parseJwt(token);
-      const bagId = payload?.sub;
+      const userId = payload?.sub;
 
-      if (!bagId) return;
+      if (!userId) return;
 
       try {
-        const items = await GetBagItems(bagId);
+        const items = await GetBagItemsByUserId(userId);
         const filtered = items.filter((item) => item.isEquipped);
         setEquippedItems(filtered);
       } catch (err) {
