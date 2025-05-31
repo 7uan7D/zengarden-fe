@@ -148,11 +148,7 @@ const Header = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("backgroundUrl");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("token");
-    localStorage.removeItem("selectedTreeId");
-
+    localStorage.clear();
     toast.success("Signed out!");
     navigate("/");
     window.location.reload();
