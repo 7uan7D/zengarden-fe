@@ -170,3 +170,17 @@ export async function SelectChallengeWinner(challengeId, winners) {
   );
   return response.data;
 }
+
+export async function RejectChallengeById(challengeId) {
+  const token = localStorage.getItem("token");
+  const response = await axios.put(
+    `/Challenges/reject/${challengeId}`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return response.data;
+}
