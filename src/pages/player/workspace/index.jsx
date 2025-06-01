@@ -537,14 +537,20 @@ export default function Workspace() {
               }
             } else {
               clearInterval(intervalRefs.current[taskKey]);
-              setTasks((prevTasks) =>
-                prevTasks.map((t, i) =>
-                  i === index ? { ...t, status: 4, remainingTime: 0 } : t
-                )
-              );
+              delete intervalRefs.current[taskKey];
               setActiveTaskKey(null);
               setFocusedTask(null);
+
+              setTasks((prevTasks) =>
+                prevTasks.map((t) =>
+                  t.taskId === task.taskId
+                    ? { ...t, status: 4, remainingTime: 0 }
+                    : t
+                )
+              );
+
               localStorage.removeItem("currentTask");
+
               return {
                 ...prev,
                 [taskKey]: { ...timer, isRunning: false },
@@ -552,8 +558,10 @@ export default function Workspace() {
             }
 
             setTasks((prevTasks) =>
-              prevTasks.map((t, i) =>
-                i === index ? { ...t, status: 1, remainingTime } : t
+              prevTasks.map((t) =>
+                t.taskId === task.taskId
+                  ? { ...t, status: 1, remainingTime }
+                  : t
               )
             );
 
